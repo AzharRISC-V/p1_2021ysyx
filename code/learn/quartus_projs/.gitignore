@@ -28,3 +28,8 @@
 **/simulation/modelsim/*.sft
 **/simulation/modelsim/*.xrf
 **/simulation/modelsim/*.do
+
+# 忽略 sim 文件夹内的中间文件
+**/sim/tb/work/
+**/sim/tb/*.wlf
+
