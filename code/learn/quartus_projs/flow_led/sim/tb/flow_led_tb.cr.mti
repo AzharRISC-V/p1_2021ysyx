@@ -5,4 +5,11 @@ Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
 Top level modules:
 	flow_led
 
+} {} {}} D:/p2021ysyx/code/learn/quartus_projs/flow_led/sim/tb/flow_led_tb.v {1 {vlog -work work -vopt -stats=none D:/p2021ysyx/code/learn/quartus_projs/flow_led/sim/tb/flow_led_tb.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module flow_led_tb
+
+Top level modules:
+	flow_led_tb
+
 } {} {}}
