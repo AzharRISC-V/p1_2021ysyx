@@ -2,8 +2,13 @@
 **/par/db/
 **/par/incremental_db/
 **/par/output_files/
-**/*.qsf
-**/*.qws
+**/par/*.qws
+**/par/*.rpt
+**/par/*.done
+**/par/*.summary
+**/par/*.pin
+**/par/*.sof
+**/par/*.smsg
 
 # 忽略 modelsim 中间文件
 **/@_opt/
@@ -22,3 +27,4 @@
 **/simulation/modelsim/*.sdo
 **/simulation/modelsim/*.sft
 **/simulation/modelsim/*.xrf
+**/simulation/modelsim/*.do
