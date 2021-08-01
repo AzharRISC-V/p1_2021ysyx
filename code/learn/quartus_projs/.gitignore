@@ -1,0 +1,12 @@
+# 忽略 quartus 中间文件
+**/par/db/
+**/par/incremental_db/
+**/par/output_files/
+
+# 忽略 modelsim 中间文件
+**/@_opt/
+**/_temp/
+**/_tempmsg/
+
+# 忽略 bak 文件
+**/*.bak

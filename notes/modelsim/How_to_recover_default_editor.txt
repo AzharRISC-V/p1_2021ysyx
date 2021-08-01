@@ -1,0 +1,20 @@
+一、modelsim使用默认编辑器的方法？
+
+建议的方法
+1. 删除所有 .v 开始的项
+2. 如果还有问题，删除modelsim的注册表项
+Computer\HKEY_CURRENT_USER\Software\Model Technology Incorporated\ModelSim
+
+
+网上的方法：
+(Search for and) run regedit command.
+In the left sidebar of the regedit GUI, navigate to \Computer\HKEY_CLASSES_ROOT.
+Delete the ".vhd" directory.
+Navigate to \Computer\HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts.
+Delete the ".vhd" directory.
+Navigate to \Computer\HKEY_CURRENT_USER\Software\Microsoft\Windows\Roaming\OpenWith\FileExts.
+Delete the ".vhd" directory.
+You may or may not need to restart ModelSim and/or your computer.
+
+
+二、更换外部编辑器
