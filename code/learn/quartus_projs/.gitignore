@@ -10,3 +10,7 @@
 
 # 忽略 bak 文件
 **/*.bak
+
+# 忽略 simulation 文件
+**/simulation/modelsim/rtl_work/
+**/simulation/modelsim/verilog_libs/
