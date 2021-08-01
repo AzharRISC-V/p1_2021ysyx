@@ -2,6 +2,8 @@
 **/par/db/
 **/par/incremental_db/
 **/par/output_files/
+**/*.qsf
+**/*.qws
 
 # 忽略 modelsim 中间文件
 **/@_opt/
@@ -14,3 +16,9 @@
 # 忽略 simulation 文件
 **/simulation/modelsim/rtl_work/
 **/simulation/modelsim/verilog_libs/
+**/simulation/modelsim/msim_transcript
+**/simulation/modelsim/vsim.wlf
+**/simulation/modelsim/*.vo
+**/simulation/modelsim/*.sdo
+**/simulation/modelsim/*.sft
+**/simulation/modelsim/*.xrf

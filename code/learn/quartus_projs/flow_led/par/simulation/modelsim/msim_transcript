@@ -18,7 +18,6 @@
 # }
 # 
 # vlib verilog_libs/altera_ver
-# ** Warning: (vlib-34) Library already exists at "verilog_libs/altera_ver".
 # vmap altera_ver ./verilog_libs/altera_ver
 # Model Technology ModelSim SE-64 vmap 10.6d Lib Mapping Utility 2018.02 Feb 24 2018
 # vmap altera_ver ./verilog_libs/altera_ver 
@@ -26,7 +25,7 @@
 # Modifying modelsim.ini
 # vlog -vlog01compat -work altera_ver {d:/devtools/altera/13.1/quartus/eda/sim_lib/altera_primitives.v}
 # Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
-# Start time: 11:07:37 on Aug 01,2021
+# Start time: 11:30:55 on Aug 01,2021
 # vlog -reportprogress 300 -vlog01compat -work altera_ver d:/devtools/altera/13.1/quartus/eda/sim_lib/altera_primitives.v 
 # -- Compiling module global
 # -- Compiling module carry
@@ -104,18 +103,17 @@
 # 	alt_iobuf_diff
 # 	alt_bidir_diff
 # 	alt_bidir_buf
-# End time: 11:07:37 on Aug 01,2021, Elapsed time: 0:00:00
+# End time: 11:30:55 on Aug 01,2021, Elapsed time: 0:00:00
 # Errors: 0, Warnings: 0
 # 
 # vlib verilog_libs/lpm_ver
-# ** Warning: (vlib-34) Library already exists at "verilog_libs/lpm_ver".
 # vmap lpm_ver ./verilog_libs/lpm_ver
 # Model Technology ModelSim SE-64 vmap 10.6d Lib Mapping Utility 2018.02 Feb 24 2018
 # vmap lpm_ver ./verilog_libs/lpm_ver 
 # Modifying modelsim.ini
 # vlog -vlog01compat -work lpm_ver {d:/devtools/altera/13.1/quartus/eda/sim_lib/220model.v}
 # Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
-# Start time: 11:07:38 on Aug 01,2021
+# Start time: 11:30:56 on Aug 01,2021
 # vlog -reportprogress 300 -vlog01compat -work lpm_ver d:/devtools/altera/13.1/quartus/eda/sim_lib/220model.v 
 # -- Compiling module LPM_MEMORY_INITIALIZATION
 # -- Compiling module LPM_HINT_EVALUATION
@@ -179,18 +177,17 @@
 # 	lpm_inpad
 # 	lpm_outpad
 # 	lpm_bipad
-# End time: 11:07:38 on Aug 01,2021, Elapsed time: 0:00:00
+# End time: 11:30:56 on Aug 01,2021, Elapsed time: 0:00:00
 # Errors: 0, Warnings: 0
 # 
 # vlib verilog_libs/sgate_ver
-# ** Warning: (vlib-34) Library already exists at "verilog_libs/sgate_ver".
 # vmap sgate_ver ./verilog_libs/sgate_ver
 # Model Technology ModelSim SE-64 vmap 10.6d Lib Mapping Utility 2018.02 Feb 24 2018
 # vmap sgate_ver ./verilog_libs/sgate_ver 
 # Modifying modelsim.ini
 # vlog -vlog01compat -work sgate_ver {d:/devtools/altera/13.1/quartus/eda/sim_lib/sgate.v}
 # Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
-# Start time: 11:07:38 on Aug 01,2021
+# Start time: 11:30:56 on Aug 01,2021
 # vlog -reportprogress 300 -vlog01compat -work sgate_ver d:/devtools/altera/13.1/quartus/eda/sim_lib/sgate.v 
 # -- Compiling module oper_add
 # -- Compiling module oper_addsub
@@ -232,18 +229,17 @@
 # 	oper_decoder
 # 	oper_bus_mux
 # 	oper_latch
-# End time: 11:07:38 on Aug 01,2021, Elapsed time: 0:00:00
+# End time: 11:30:56 on Aug 01,2021, Elapsed time: 0:00:00
 # Errors: 0, Warnings: 0
 # 
 # vlib verilog_libs/altera_mf_ver
-# ** Warning: (vlib-34) Library already exists at "verilog_libs/altera_mf_ver".
 # vmap altera_mf_ver ./verilog_libs/altera_mf_ver
 # Model Technology ModelSim SE-64 vmap 10.6d Lib Mapping Utility 2018.02 Feb 24 2018
 # vmap altera_mf_ver ./verilog_libs/altera_mf_ver 
 # Modifying modelsim.ini
 # vlog -vlog01compat -work altera_mf_ver {d:/devtools/altera/13.1/quartus/eda/sim_lib/altera_mf.v}
 # Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
-# Start time: 11:07:38 on Aug 01,2021
+# Start time: 11:30:56 on Aug 01,2021
 # vlog -reportprogress 300 -vlog01compat -work altera_mf_ver d:/devtools/altera/13.1/quartus/eda/sim_lib/altera_mf.v 
 # -- Compiling module lcell
 # -- Compiling module ALTERA_MF_MEMORY_INITIALIZATION
@@ -368,18 +364,17 @@
 # 	altserial_flash_loader
 # 	sld_virtual_jtag_basic
 # 	altsource_probe
-# End time: 11:07:38 on Aug 01,2021, Elapsed time: 0:00:00
+# End time: 11:30:57 on Aug 01,2021, Elapsed time: 0:00:01
 # Errors: 0, Warnings: 0
 # 
 # vlib verilog_libs/altera_lnsim_ver
-# ** Warning: (vlib-34) Library already exists at "verilog_libs/altera_lnsim_ver".
 # vmap altera_lnsim_ver ./verilog_libs/altera_lnsim_ver
 # Model Technology ModelSim SE-64 vmap 10.6d Lib Mapping Utility 2018.02 Feb 24 2018
 # vmap altera_lnsim_ver ./verilog_libs/altera_lnsim_ver 
 # Modifying modelsim.ini
 # vlog -sv -work altera_lnsim_ver {d:/devtools/altera/13.1/quartus/eda/sim_lib/altera_lnsim.sv}
 # Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
-# Start time: 11:07:39 on Aug 01,2021
+# Start time: 11:30:57 on Aug 01,2021
 # vlog -reportprogress 300 -sv -work altera_lnsim_ver d:/devtools/altera/13.1/quartus/eda/sim_lib/altera_lnsim.sv 
 # -- Compiling package altera_lnsim_functions
 # -- Compiling package altera_generic_pll_functions
@@ -1872,18 +1867,17 @@
 # 	altera_pll_reconfig_tasks
 # 	altera_syncram
 # 	altera_pll
-# End time: 11:07:40 on Aug 01,2021, Elapsed time: 0:00:01
+# End time: 11:30:58 on Aug 01,2021, Elapsed time: 0:00:01
 # Errors: 0, Warnings: 1430
 # 
 # vlib verilog_libs/cycloneive_ver
-# ** Warning: (vlib-34) Library already exists at "verilog_libs/cycloneive_ver".
 # vmap cycloneive_ver ./verilog_libs/cycloneive_ver
 # Model Technology ModelSim SE-64 vmap 10.6d Lib Mapping Utility 2018.02 Feb 24 2018
 # vmap cycloneive_ver ./verilog_libs/cycloneive_ver 
 # Modifying modelsim.ini
 # vlog -vlog01compat -work cycloneive_ver {d:/devtools/altera/13.1/quartus/eda/sim_lib/cycloneive_atoms.v}
 # Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
-# Start time: 11:07:40 on Aug 01,2021
+# Start time: 11:30:59 on Aug 01,2021
 # vlog -reportprogress 300 -vlog01compat -work cycloneive_ver d:/devtools/altera/13.1/quartus/eda/sim_lib/cycloneive_atoms.v 
 # -- Compiling UDP CYCLONEIVE_PRIM_DFFE
 # -- Compiling UDP CYCLONEIVE_PRIM_DFFEAS
@@ -1959,7 +1953,7 @@
 # 	cycloneive_jtag
 # 	cycloneive_crcblock
 # 	cycloneive_oscillator
-# End time: 11:07:41 on Aug 01,2021, Elapsed time: 0:00:01
+# End time: 11:30:59 on Aug 01,2021, Elapsed time: 0:00:00
 # Errors: 0, Warnings: 0
 # 
 # if {[file exists rtl_work]} {
@@ -1973,29 +1967,29 @@
 # 
 # vlog -vlog01compat -work work +incdir+D:/p2021ysyx/code/learn/quartus_projs/flow_led/rtl {D:/p2021ysyx/code/learn/quartus_projs/flow_led/rtl/flow_led.v}
 # Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
-# Start time: 11:07:41 on Aug 01,2021
+# Start time: 11:30:59 on Aug 01,2021
 # vlog -reportprogress 300 -vlog01compat -work work "+incdir+D:/p2021ysyx/code/learn/quartus_projs/flow_led/rtl" D:/p2021ysyx/code/learn/quartus_projs/flow_led/rtl/flow_led.v 
 # -- Compiling module flow_led
 # 
 # Top level modules:
 # 	flow_led
-# End time: 11:07:41 on Aug 01,2021, Elapsed time: 0:00:00
+# End time: 11:30:59 on Aug 01,2021, Elapsed time: 0:00:00
 # Errors: 0, Warnings: 0
 # 
 # vlog -vlog01compat -work work +incdir+D:/p2021ysyx/code/learn/quartus_projs/flow_led/par/simulation/modelsim {D:/p2021ysyx/code/learn/quartus_projs/flow_led/par/simulation/modelsim/flow_led_tb.vt}
 # Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
-# Start time: 11:07:41 on Aug 01,2021
+# Start time: 11:30:59 on Aug 01,2021
 # vlog -reportprogress 300 -vlog01compat -work work "+incdir+D:/p2021ysyx/code/learn/quartus_projs/flow_led/par/simulation/modelsim" D:/p2021ysyx/code/learn/quartus_projs/flow_led/par/simulation/modelsim/flow_led_tb.vt 
 # -- Compiling module flow_led_tb
 # 
 # Top level modules:
 # 	flow_led_tb
-# End time: 11:07:41 on Aug 01,2021, Elapsed time: 0:00:00
+# End time: 11:30:59 on Aug 01,2021, Elapsed time: 0:00:00
 # Errors: 0, Warnings: 0
 # 
 # vsim -t 1ps -L altera_ver -L lpm_ver -L sgate_ver -L altera_mf_ver -L altera_lnsim_ver -L cycloneive_ver -L rtl_work -L work -voptargs="+acc"  flow_led_tb
 # vsim -t 1ps -L altera_ver -L lpm_ver -L sgate_ver -L altera_mf_ver -L altera_lnsim_ver -L cycloneive_ver -L rtl_work -L work -voptargs=""+acc"" flow_led_tb 
-# Start time: 11:07:41 on Aug 01,2021
+# Start time: 11:30:59 on Aug 01,2021
 # ** Note: (vsim-3812) Design is being optimized...
 # Loading work.flow_led_tb(fast)
 # Loading work.flow_led(fast)
@@ -2009,5 +2003,5 @@
 # ** Note: $stop    : D:/p2021ysyx/code/learn/quartus_projs/flow_led/par/simulation/modelsim/flow_led_tb.vt(23)
 #    Time: 1100 ns  Iteration: 0  Instance: /flow_led_tb
 # Break in Module flow_led_tb at D:/p2021ysyx/code/learn/quartus_projs/flow_led/par/simulation/modelsim/flow_led_tb.vt line 23
-# End time: 11:08:06 on Aug 01,2021, Elapsed time: 0:00:25
+# End time: 11:31:25 on Aug 01,2021, Elapsed time: 0:00:26
 # Errors: 0, Warnings: 0
