@@ -1,0 +1,139 @@
+$date
+	Wed Aug 04 22:28:01 2021
+$end
+$version
+	Icarus Verilog
+$end
+$timescale
+	1ns
+$end
+$scope module MAC_tb $end
+$var wire 16 ! out [15:0] $end
+$var reg 8 " a [7:0] $end
+$var reg 8 # b [7:0] $end
+$var reg 1 $ clk $end
+$var reg 1 % clr $end
+$scope module u1 $end
+$var wire 8 & a [7:0] $end
+$var wire 8 ' b [7:0] $end
+$var wire 1 $ clk $end
+$var wire 1 % clr $end
+$var wire 16 ( sum [15:0] $end
+$var reg 16 ) out [15:0] $end
+$scope function mult $end
+$var reg 8 * a [7:0] $end
+$var reg 8 + b [7:0] $end
+$var reg 16 , result [15:0] $end
+$var integer 32 - i [31:0] $end
+$upscope $end
+$upscope $end
+$upscope $end
+$enddefinitions $end
+#0
+$dumpvars
+b1000 -
+b0 ,
+b0 +
+b0 *
+b0 )
+b0 (
+b0 '
+b0 &
+1%
+0$
+b0 #
+b0 "
+b0 !
+$end
+#20
+b1010 (
+b1000 -
+b1010 ,
+b1010 +
+b1 *
+b1010 #
+b1010 '
+b1 "
+b1 &
+0%
+1$
+#40
+b1000 -
+b1010 ,
+b10 *
+b10 "
+b10 &
+0$
+#60
+b1010 !
+b1010 )
+b11110 (
+b10100 ,
+b1000 -
+b11 *
+b11 "
+b11 &
+1$
+#80
+b1000 -
+b10100 ,
+b100 *
+b100 "
+b100 &
+0$
+#100
+b11110 !
+b11110 )
+b111100 (
+b1000 -
+b11110 ,
+b101 *
+b101 "
+b101 &
+1$
+#120
+b1000 -
+b11110 ,
+b110 *
+b110 "
+b110 &
+0$
+#140
+b111100 !
+b111100 )
+b1100100 (
+b1000 -
+b101000 ,
+b111 *
+b111 "
+b111 &
+1$
+#160
+b1000 -
+b101000 ,
+b1000 *
+b1000 "
+b1000 &
+0$
+#180
+b1100100 !
+b1100100 )
+b10010110 (
+b1000 -
+b110010 ,
+b1001 *
+b1001 "
+b1001 &
+1$
+#200
+b1000 -
+b110010 ,
+b1010 *
+b1010 "
+b1010 &
+0$
+#220
+b11001000 (
+b10010110 !
+b10010110 )
+1$
