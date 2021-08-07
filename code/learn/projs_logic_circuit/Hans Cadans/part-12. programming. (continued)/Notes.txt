@@ -1,0 +1,32 @@
+ part-12. programming. (continued)
+
+Post by Hans Cadans , Sat May 14, 2016 10:37 am
+Hi, everybody
+
+I'am ashamed, that I've written so little, the last six months.
+Fortunately, I can say, that not making the program was the issue, but
+actionally the explanation in particular the translation of it.
+
+Most of the time I've spent on the explanation,
+and often, when I wrote something, I wasn't quite satisfied (I still ain't)
+
+Now I've finally made up my mind and I present here part-12.
+This part shows you, in which way, instructions, memory- and registervalues
+are made visible.
+
+Because of the computer is running you cannot put in a new program directly.
+Neither you can put in memory- and/or registervalues.
+In this part I explain you how these data are made visible.
+
+In a next part (when the keyboard-routines are working properly)
+I let you see how you can edit these values, and how you can choose new locations,
+which you can edit.
+
+Best regards,
+Hans Cadans
+
+Attachments
+
+    Part-12.CircuitProject
+        (2.03 MiB) Downloaded 605 times
+

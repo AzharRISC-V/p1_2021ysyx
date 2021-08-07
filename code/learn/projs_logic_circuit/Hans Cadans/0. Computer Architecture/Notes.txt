@@ -1,0 +1,30 @@
+ Computer Architecture
+
+Post by Hans Cadans , Sat Apr 11, 2015 12:44 pm
+To everybody, who¡¯s interested
+
+To understand this complex design, I¡¯ve divided the whole circuit into several little circuits.
+I will upload this circuits from time to time, (hopefully every two or three weeks).
+You¡¯ll get an explanation within every circuit. Then you can give any comments, suggestions
+and/or improvements.
+To avoid wasting time, in figuring out how stuff works, we all have to use the same basic circuits.
+Therefore I¡¯ll also upload my library. This library contains the most basic circuits.
+If you feel, this library is not complete enough, I will update it, with your suggestion c.q. improvement. If you upload your suggestions/improvements, you have to document them well, in such a way, that everybody can understand the new item.
+
+At first I will show you the Architecture. To make you understand, in a easy way, all the possibilities of this design, I've attached
+PowerPoint Presentation. This presentation shows you the DataPath for the different instructions. The instructions IN and OUT are left away intentionally.
+Also a WORD-document is added to explain the different slides.
+This Architecture will be the startng-point for our design. If you have suggestions/questions, feel free to make/ask them.
+
+Next time I will present you the ALU.
+
+Hans Cadans
+
+Attachments
+
+    Load-Store Machine.ppt
+        (389 KiB) Downloaded 731 times
+
+    Topic.doc
+        (27 KiB) Downloaded 594 times
+

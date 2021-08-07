@@ -1,0 +1,23 @@
+ part-08. ARMCB + Display
+
+Post by Hans Cadans , Fri Aug 07, 2015 5:39 am
+In this new topic, the displays are implemented.
+Dislays are not supplied with a hex-to-7segment decoder. In this case I've used a LUT
+(Look Up Table).
+
+There two versions of the display. One version approaches the real world most.
+In a sense, that they can be considered as used in a multiplexed way.
+The other version has it's own memory.
+
+I've written a routine, that shows you the name of this design.
+The name comes scrolling in from the right hand.
+The same routine will be used (less or more) for scanning the keyboard.
+
+SU next time.
+Hans Cadans
+
+Attachments
+
+    Part-08.CircuitProject
+        (1.36 MiB) Downloaded 835 times
+

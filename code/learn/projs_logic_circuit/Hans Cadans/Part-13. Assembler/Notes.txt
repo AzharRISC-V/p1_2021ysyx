@@ -1,0 +1,28 @@
+ Part-13. Assembler
+
+Post by Hans Cadans , Tue Jul 12, 2016 7:44 am
+Hi, everybody.
+
+The last weeks I've worked hard to make an assembler for my ISA. (It is made in EXCEL)
+Well, I've to say, that I'am inspired by mcostalba.
+
+One of my wishes was, to have a tool, that would be able to translate mnemonics and
+produce the ROM-file. Furthermore, I want you to understand how stuff works.
+
+So I have made it as transparant as possible. Right of the main-screen you find
+all the operations, that are needed to accomplish this task.
+If there is anything, you don't understand, feel free to ask.
+
+Of course, all sheets are protected, to prevent you from wrong operations.
+It also assures me, that the assembler will work properly.
+
+If you encounter some errors, please let me know.
+If you would like to have an unprotected version of this "program", send me a PM.
+
+Hans Cadans
+
+Attachments
+
+    Assembler-02.xlsm
+        (2.43 MiB) Downloaded 591 times
+

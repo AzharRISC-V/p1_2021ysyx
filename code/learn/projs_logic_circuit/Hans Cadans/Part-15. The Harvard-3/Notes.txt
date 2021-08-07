@@ -1,0 +1,33 @@
+ Part-15. The Harvard-3
+
+Post by Hans Cadans , Thu Mar 16, 2017 10:10 am
+L.s,
+
+Finally, a programmable interrupt controller is integrated in my design.
+I had to change several things to make it work. Fortunately I did succeed.
+
+All the changes are mentioned on the property-page of MAIN-circuit.
+I've tried to explain everything, to the best of my ability. (explain it in English, shortly and clearly)
+
+To understand the program, I've added the assembler (It is a EXCEL-file)
+With this EXCEL-file, you can make the Program-ROM, the Data-ROM and the ROM with the micro-routines.
+Everything is documented as good as possible, so read this file.
+
+The other EXCEL-file contains a multiplication program. You can use this file, to make your own programs.
+I like to change the keyboard. At this moment, it is scanned by the monitor.
+Next time the keyboard will generate an interrupt, which will start a service routine.
+This routine will be much shorter, so pushing a button will give a quicker reaction.
+
+Hans Cadans
+
+Attachments
+
+    Multiplier.xlsm
+        (2.46 MiB) Downloaded 768 times
+
+    Source-15.xlsm
+        (5.04 MiB) Downloaded 762 times
+
+    Part-15.CircuitProject
+        (2.37 MiB) Downloaded 1052 times
+

@@ -1,0 +1,66 @@
+ part-13a. Key Service Routines
+
+Post by Hans Cadans , Sun Oct 16, 2016 3:13 am
+Hi every one.
+
+First I have to say, I'm sorry, that it took so long to write this part.
+I wrote the service routines for the next group keys:
+Prog, Mem, Reg, Move and Rela
+
+Inside the groups Prog and Mem, you can use the function-keys:
+Data, Addr, +, -, INS and DEL
+
+Inside the group Reg you can use the function-keys:
+Data, Addr, + and -.
+
+data: you can edit the addressed location in Program- or Data-memory, or the addressed register
+addr: you can type the address of the location, or register you wanna edit
++ : go to the next location in memory, or to the next register
+- : go to the previous location in memory, or to the previous register
+INS : insert new data at the current location. (all data inside the same block of 256 words shift up)
+DEL : delete the data at the current location. (all data inside the same block of 256 words shift down)
+
+Inside the group Move and Rela, you can use the function-keys:
++, -
+
+The Move operation displaces a block of data to an other place.
+It consists of three steps: input start-, end- destination-address.
++ : go to the next step
+- : go to the previous step
+
+The Rela operation calculates the relative jump from one place to another .
+It consists of two steps: input start-, end- destination-address.
++ : go to the next step
+- : go to the previous step
+
+Further more I've added some more functionality to the assembler (a excel application).
+Now you can also create a Data-ROM. You will find a lot of explanation in this assembler.
+On the sheet "Key services" you see the keys, that will be served, and those which won't, until now. (in red)
+I will soon write these service routines. (Easy to say, hard to do)
+
+At this moment you already can type a program in Program-Memory. You can fill Data-Memory with long-term data.
+You can initiate register-values. You only cannot run your program yet.
+I will try to realize this in the next few weeks (or month's). In any case, as quick as possible.
+With the buttons PC and Go, you will be able to run your program.
+With the buttons SBR and CBR, you can enter (or clear) a breakpoint in your progam.
+When your program meets this address, the program stops and you can examine some values.
+With the button "Step" you will able to execute your program, step by step, and in this way you can see,
+if your program does the things, it has to do
+
+And I have fixed some bugs, so I will also attach the new circuit.
+Feel free to ask me anything about these applications.
+
+See you
+Hans Cadans
+
+P.s.
+You can run the BIOS (Monitor) by using the buttons "RESET" and "User".
+
+Attachments
+
+    Source-13a.xlsm
+        (3.19 MiB) Downloaded 482 times
+
+    Part-13a.CircuitProject
+        (1.96 MiB) Downloaded 597 times
+

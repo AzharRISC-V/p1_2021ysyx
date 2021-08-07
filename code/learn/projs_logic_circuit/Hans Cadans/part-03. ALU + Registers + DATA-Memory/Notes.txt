@@ -1,0 +1,30 @@
+ part-03. ALU+Registers+DATA-Memory
+
+Post by Hans Cadans , Tue May 26, 2015 11:41 am
+Hi everyone,
+
+In this topic, I will expand the former topics with DATA-Memory.
+Because I've used a 16-bits Address-Bus, you can apply 64 K Memory.
+
+I've divided Memory in 16 "cards". Each card consists of 4K. and has
+it's own start-address. For 4K Memory, you need 12 bits (b11-b0),
+so the remaining bits (b15-b12) are used for selection of a card.
+
+Each card has it's own address-register and a 12-bits Full-Adder.
+With these components you can use two address-methods,
+absolute- and indexed addressing.
+Two examples are given in the attached file.
+
+This is the last example, in which you have to manually execute
+all the buttons. Next time I will present you the Control-Unit.
+This unit will take care of most actions.
+In the meantime you can (have to) use the buttons,
+this will help you to understand the Control-Unit.
+
+Hans Cadans
+
+Attachments
+
+    Part-03.CircuitProject
+        (1005.07 KiB) Downloaded 659 times
+

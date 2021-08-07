@@ -1,0 +1,25 @@
+ part-04. ARM + Control Unit
+
+Post by Hans Cadans , Thu Jun 04, 2015 12:00 pm
+Hi everyone,
+
+This is part 4.
+In the attached file, you will find a great part of the Control Unit.
+This unit almost does all the work for you. Now you don't have to set anymore all the control lines.
+All the buttons you have used to control the proper lines, are now in ROM.
+The "Opcode" you use now, is the address of a location in ROM.
+All the bits (32) of that location control one or another part of the circuit.
+
+I've added a file, in which a program (a kind of) is present.
+This program searches for the highest value in a table and places this on location "0" of the Memory Card.
+
+Next time the whole circuit will run automatically.
+I hope to place that new file in, about two weeks.
+
+Hans Cadans
+
+Attachments
+
+    Part-04.CircuitProject
+        (1.01 MiB) Downloaded 588 times
+

@@ -1,0 +1,27 @@
+ part-07. ARMCB + Procedures
+
+Post by Hans Cadans , Sun Jul 19, 2015 11:04 pm
+Hi everyone,
+
+I'm sorry, that I'm not on time with writing the new topic.
+Alas I'm a week later than I hoped.
+
+The last three weeks, when I was designing the I/O-hardware, I realised that the possibility of calling procedures
+would be very easy. So the topic introduces you to calling subroutines. Also I implemented PUSH-/POP-instructions.
+The PUSH-instruction, saves the value of a register in memory, for later use. POP-instruction gets this value back.
+
+Last week when I finished these instructions, I realised that these instructions affect the flags.
+They are not meant to do this. So I had to change them.
+
+Now implementing the I/O- routines will be much easier.
+This week I'm gonna start, making these routines
+
+
+Best regards
+Hans Cadans
+
+Attachments
+
+    Part-07.CircuitProject
+        (1.19 MiB) Downloaded 506 times
+

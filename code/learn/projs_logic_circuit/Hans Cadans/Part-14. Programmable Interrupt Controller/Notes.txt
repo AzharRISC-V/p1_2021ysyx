@@ -1,0 +1,31 @@
+ Part-14. Programmable Interrupt Controller
+
+Post by Hans Cadans , Mon Dec 19, 2016 1:05 pm
+Hi, everybody.
+
+While designing the Harvard-2, I felt, more and more, the need of handling interrupts.
+So I decided to design an interrupt handler.
+
+Easy said, but I think, I did succeed in making such a circuit.
+The interrupt controller can handle 8 interrupts, it determines, itself, the priority.
+
+The Harvard-2, uses the opcode 0xAD, to call a subroutine. To call a subroutine, one needs an address to call.
+In this sense, the controller is programmable. You can program the controller with the opcode,
+with 8 addresses for interrupt service routines and you can change, in a simple way, the priority of the channels.
+
+In the next topic I will modify the Harvard-2, in such a way, that it can work along with this controller.
+Of course, I designed this controller, with the properties of the Harvard-2 in mind.
+
+The PIC has not been finished yet. If you have a design of your own, you will, maybe, have to make some modifications or expansions.
+You also can wait for my next topic.
+Feel free to ask me anything, if something is not quite clear.
+
+At last I wish everyone a Merry Christmas and a Happy New Year.
+
+Hans Cadans
+
+Attachments
+
+    PIC-03.CircuitProject
+        (622.31 KiB) Downloaded 621 times
+

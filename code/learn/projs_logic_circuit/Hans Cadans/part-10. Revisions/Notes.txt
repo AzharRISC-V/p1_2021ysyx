@@ -1,0 +1,27 @@
+ part-10. Revisions
+
+Post by Hans Cadans , Mon Nov 30, 2015 12:54 am
+Hi, everyone.
+
+At the moment, I wrote part-09, I had to conclude, that the design would not fulfill
+all desires. Alas, a vacation in the US, during the month September, didn't work along
+
+I thought, that I would need a month time, to change the design, in such a way,
+that it would operate better.
+Unfortunately, it took more time than I thought. I wouldn't change it, bit by bit.
+That is, in my opinion, too ennoying for the reader.
+Even though, it is possible, that I've forgotten something.
+
+I mentioned all the changes, and I hope improvements, in Main Circuit of this part.
+Also I wrote a little program, that shows you, how to read/write to Program Memory.
+
+From now on, I hope to write the Monitor (BIOS). I don't hope, I've to make changes anymore.
+Though you'll never know.
+
+Hans Cadans
+
+Attachments
+
+    Part-10.CircuitProject
+        (1.98 MiB) Downloaded 607 times
+

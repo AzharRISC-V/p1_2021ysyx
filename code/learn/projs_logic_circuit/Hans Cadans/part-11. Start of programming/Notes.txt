@@ -1,0 +1,22 @@
+ part-11. Start of programming
+
+Post by Hans Cadans , Mon Dec 14, 2015 12:38 pm
+Hi,
+
+In this part, I make a start, programming the monitor (BIOS)
+This monitor will enable you, to write your own programs
+
+You can find all the possible instructions in the CU. (10. Units, 05.01 IR+CU)
+At the property page of the ROM, near the micro-counter, you'll see all instructions.
+
+In the Rom, which is called "Monitor", you can find the start of this program.
+The attached file also contains a read-me-first file, and an explanation of the first part of the program.
+
+Best Regards
+Hans Cadans
+
+Attachments
+
+    Part-11.CircuitProject
+        (2 MiB) Downloaded 796 times
+

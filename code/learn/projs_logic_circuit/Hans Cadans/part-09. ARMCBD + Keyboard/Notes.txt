@@ -1,0 +1,30 @@
+ part-09. ARMCBD + Keyboard
+
+Post by Hans Cadans , Thu Sep 03, 2015 6:36 am
+Hi, everone.
+
+I've just finished this part, containing the keyboard.
+I'm happy to upload this design, just before my vacation in the U.S.A.
+
+To make it easy to understand, I also have attached some extra files.
+The EXCEL-file, contains all the mnemonics you can use at this moment.
+The WORD-doc. contains an explanation of all the routines, used for controlling the keyboard.
+
+Next time, I like to make some changes, in order to get a better performance.
+Furthermore, I will write some more utility-routines. Of course there is still a lot to do.
+The service-routines for the keyboard have to be expanded.
+
+Best regards
+Hans Cadans
+
+Attachments
+
+    programma-logic.docx
+        (17.82 KiB) Downloaded 601 times
+
+    Part-09.CircuitProject
+        (1.46 MiB) Downloaded 605 times
+
+    assembler.xlsx
+        (12.9 KiB) Downloaded 553 times
+

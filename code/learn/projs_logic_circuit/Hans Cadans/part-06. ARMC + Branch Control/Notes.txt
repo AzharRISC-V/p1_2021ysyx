@@ -1,0 +1,19 @@
+ part-06. ARMC + Branch Control
+
+Post by Hans Cadans , Wed Jul 01, 2015 1:22 pm
+Hi everybody,
+With the implementation of branch control, new possibilities have been added.
+
+I don't know yet, what I'm gonna do next time. Maybe a keyboard or building the BIOS.
+In fact you will need both at the same time. The input of the keyboard is totally controlled by BIOS.
+
+Also you need a display, to see what you typing. I have to think about it,
+
+Best Regards
+Hans Cadans
+
+Attachments
+
+    Part-06.CircuitProject
+        (1.24 MiB) Downloaded 592 times
+

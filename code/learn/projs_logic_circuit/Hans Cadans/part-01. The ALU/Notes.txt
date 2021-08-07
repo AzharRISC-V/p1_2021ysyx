@@ -1,0 +1,24 @@
+ part-01. The ALU
+
+Post by Hans Cadans , Tue Apr 28, 2015 12:53 pm
+Hi Everyone,
+
+In this topic, I will present you the ALU, we're gonna use in the new computer.
+It's a 16-bits ALU. Most of the partial circuits are documented.
+So you have to be able to understand, how these circuits work.
+
+The description/documentation of these circuits is more intensive than I thought.
+So it took me more time to translate everything into English,
+I hope, you will understand it all. Excuse me, if, maybe, I have made some mistakes/errors.
+
+When you have questions, remarks, improvements, suggestion and so on, feel free to react.
+Next time I will load up, the complete Register-Bank.
+This bank consists of 4 dedicated registers and 12 general purpose registers (and 12 spare-/shadow- registers)
+
+Hans Cadans
+
+Attachments
+
+    Part-1.CircuitProject
+        (477.34 KiB) Downloaded 908 times
+

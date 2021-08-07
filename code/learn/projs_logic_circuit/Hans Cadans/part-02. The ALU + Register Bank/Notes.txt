@@ -1,0 +1,21 @@
+ part-02. The ALU + Register Bank
+
+Post by Hans Cadans , Tue May 12, 2015 12:04 pm
+Hello,
+
+In this topic I continue with expanding the design with a Register Bank.
+This is a set of 16-bits registers. There are always 16 registers available.
+The bank also contains 12 spare registers.
+The registers R0 - R11 can be replaced by the registers R'0 - R'11.
+Registers R12 - R15 always remain the same, because some data must always be available
+(for example the Stack Pointer).
+In about two weeks I will come up with Data Memory.
+This memory is divided in several 4K units. Each unit has it's own, adjustable, range.
+
+Hans Cadans
+
+Attachments
+
+    Part-02.CircuitProject
+        (772.64 KiB) Downloaded 610 times
+
