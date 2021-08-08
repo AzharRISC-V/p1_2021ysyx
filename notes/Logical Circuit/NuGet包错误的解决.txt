@@ -1,0 +1,10 @@
+2021/8/8 9:00
+如果提示NuGet包错误，还原时也失败（只会在本地查找），则一种可能的决绝办法是增加额外的服务器地址：
+1.
+https://www.nuget.org/api/v2/
+2.
+https://api.nuget.org/v3/index.json
+
+单击工具>选择NuGet管理器>程序包管理器设置
+选择NuGet包管理器>程序包源>添加获取包源位置（https://www.nuget.org/api/v2/）名称可随意
+最后再重启vs，然后在点击NuGet还原就好了！！！
