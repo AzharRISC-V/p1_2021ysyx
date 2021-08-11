@@ -13,6 +13,53 @@ filename = os.path.join(dirname, "micro.bin")
 # 填充 HLT 指令
 micro = [pin.HLT for _ in range(0x10000)]
 
+
+def compile_addr2(addr, ir, psw, index):
+    global micro
+
+    op = ir & 0xF0
+    amd = (ir >> 2) & 3     # 目的操作数寻址方式
+    ams = ir & 3            # 源操作数寻址方式
+
+    # 查找指令是否存在？
+    INST = ASM.INSTRUCTIONS[2]
+    if op not in INST:
+        micro[addr] = pin.CYC
+        return
+    
+    # 查找该指令的寻址方式是否存在？
+    am = (amd, ams)
+    if am not in INST[op]:
+        micro[addr] = pin.CYC
+        return
+    
+    # 得到具体执行的指令
+    EXEC = INST[op][am]
+    if index < len(EXEC):
+        micro[addr] = EXEC[index]
+    else:
+        micro[addr] = pin.CYC
+
+def compile_addr1(addr, ir, psw, index):
+    pass
+def compile_addr0(addr, ir, psw, index):
+    global micro
+
+    op = ir
+
+    # 查找指令是否存在？
+    INST = ASM.INSTRUCTIONS[0]
+    if op not in INST:
+        micro[addr] = pin.CYC
+        return
+    
+    # 得到具体执行的指令
+    EXEC = INST[op]
+    if index < len(EXEC):
+        micro[addr] = EXEC[index]
+    else:
+        micro[addr] = pin.CYC
+
 # 用 ASM.FETCH 来填充
 for addr in range(0x10000):
     ir = addr >> 8              # bit[15:8]
@@ -21,6 +68,20 @@ for addr in range(0x10000):
 
     if cyc < len(ASM.FETCH):
         micro[addr] = ASM.FETCH[cyc]
+        continue
+
+    addr2 = ir & (1 << 7)   # 二地址指令
+    addr1 = ir & (1 << 6)
+
+    index = cyc - len(ASM.FETCH)
+
+    if addr2:
+        compile_addr2(addr, ir, psw, index)
+    elif addr1:
+        compile_addr1(addr, ir, psw, index)
+    else:
+        compile_addr0(addr, ir, psw, index)
+
 
 # 写入文件
 with open(filename, "wb") as file:

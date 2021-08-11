@@ -84,4 +84,21 @@ PC_OUT = PC_CS
 PC_IN = PC_CS | PC_WE
 PC_INC = PC_CS | PC_WE | PC_EN
 
+
+CYC = 2 ** 30       # 使 微程序 的 指令周期 清零
 HLT = 2 ** 31
+
+
+# 二地址指令(2 Address)
+ADDR2 = 1 << 7
+ADDR2_SHIFT = 4     # 左移4位
+
+# 一地址指令(1 Address)
+ADDR1 = 1 << 6
+ADDR1_SHIFT = 2     # 左移2位
+
+# 四种寻址方式（AM：Address Mode)
+AM_INS = 0
+AM_REG = 1
+AM_DIR = 2  # 直接寻址
+AM_IND = 3  # 寄存器间接寻址
