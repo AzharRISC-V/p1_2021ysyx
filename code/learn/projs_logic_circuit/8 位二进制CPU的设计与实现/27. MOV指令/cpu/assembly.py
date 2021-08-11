@@ -42,6 +42,3 @@ INSTRUCTIONS = {
         ]
     }
 }
-
-print(MOV)
-print(bin(MOV))

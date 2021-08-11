@@ -3,7 +3,7 @@
 	<lc:Project>
 		<lc:ProjectId>403e9fe7-7664-48cf-b9a5-90dceb6109ab</lc:ProjectId>
 		<lc:Zoom>0.969662921348325</lc:Zoom>
-		<lc:Frequency>9</lc:Frequency>
+		<lc:Frequency>50</lc:Frequency>
 		<lc:LogicalCircuitId>5de1e4cf-dc34-490b-8b22-f167239f456f</lc:LogicalCircuitId>
 		<lc:CategoryInputOutputCollapsed>True</lc:CategoryInputOutputCollapsed>
 	</lc:Project>
@@ -15,6 +15,18 @@
 	</lc:CollapsedCategory>
 	<lc:CollapsedCategory>
 		<lc:Name>Utils</lc:Name>
+	</lc:CollapsedCategory>
+	<lc:CollapsedCategory>
+		<lc:Name>Basic</lc:Name>
+	</lc:CollapsedCategory>
+	<lc:CollapsedCategory>
+		<lc:Name>CU</lc:Name>
+	</lc:CollapsedCategory>
+	<lc:CollapsedCategory>
+		<lc:Name>Memory</lc:Name>
+	</lc:CollapsedCategory>
+	<lc:CollapsedCategory>
+		<lc:Name>Test</lc:Name>
 	</lc:CollapsedCategory>
 	<lc:LogicalCircuit>
 		<lc:LogicalCircuitId>5de1e4cf-dc34-490b-8b22-f167239f456f</lc:LogicalCircuitId>
@@ -3120,7 +3132,7 @@ ABAAAAAgAAAAQAAAAIA=</lc:Data>
 		<lc:OnStart>Data</lc:OnStart>
 		<lc:AddressBitWidth>16</lc:AddressBitWidth>
 		<lc:DataBitWidth>8</lc:DataBitWidth>
-		<lc:Data>hAswAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+		<lc:Data>hAgFhAgFhAkKhAoLhAgwhAswPwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
