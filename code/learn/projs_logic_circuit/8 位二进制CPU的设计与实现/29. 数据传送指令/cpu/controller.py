@@ -66,10 +66,12 @@ for addr in range(0x10000):
     psw = (addr >> 4) & 0xF     # bit[7:4]
     cyc = addr & 0xF            # bit[3:0]
 
+    # 取值阶段，6个微操作
     if cyc < len(ASM.FETCH):
         micro[addr] = ASM.FETCH[cyc]
         continue
 
+    # 译码阶段，根据 二地址、一地址、零地址的不同类型分别译码，产生 CU 信号
     addr2 = ir & (1 << 7)   # 二地址指令
     addr1 = ir & (1 << 6)
 

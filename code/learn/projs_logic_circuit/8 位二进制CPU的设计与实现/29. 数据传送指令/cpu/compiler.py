@@ -75,7 +75,19 @@ class Code(object):
         # 如果是 十六进制数
         if re.match(r'^0X[0-9A-F]+$', addr):
             return pin.AM_INS, int(addr, 16)
-        # 其他寻址方式暂不支持
+        # [xx] 直接寻址 - 十进制
+        match = re.match(r'^\[([0-9]+)\]$', addr)
+        if match:
+            return pin.AM_DIR, int(match.group(1))
+        # [xx] 直接寻址 - 十六进制
+        match = re.match(r'^\[(0X[0-9A-F]+)\]$', addr)
+        if match:
+            return pin.AM_DIR, int(match.group(1), 16)
+        # [r] 间接寻址
+        match = re.match(r'^\[(.+)\]$', addr)
+        if match and match.group(1) in REGISTERS:
+            return pin.AM_IND, REGISTERS[match.group(1)]
+
         raise SyntaxError(self)
 
     def prepare_source(self):
@@ -107,6 +119,16 @@ class Code(object):
         op = self.get_op()
         amd,dst = self.get_am(self.dst)
         ams,src = self.get_am(self.src)
+
+        # 如果是二地址指令，但寻址方式不支持时，报错
+        if src and (amd, ams) not in ASM.INSTRUCTIONS[2][op]:
+            raise SyntaxError(self)
+        # 如果是一地址指令，也判断寻址方式是否支持
+        if not src and dst and amd not in ASM.INSTRUCTIONS[1][op]:
+            raise SyntaxError(self)
+        # 如果是一地址指令，判断op是否支持
+        if not src and not dst and op not in ASM.INSTRUCTIONS[0]:
+            raise SyntaxError(self)
 
         if op in OP2SET:
             ir = op | (amd << 2) | ams
@@ -159,7 +181,7 @@ def main():
         print(f"Syntax error at {e.code}")
         return
     
-    print("Compile finished!")
+    print("User program compile finished!")
 
 if __name__ == "__main__":
     main()

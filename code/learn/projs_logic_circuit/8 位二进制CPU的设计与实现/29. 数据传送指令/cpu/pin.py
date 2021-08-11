@@ -28,9 +28,9 @@ MAR_OUT = MAR
 MDR_OUT = MDR
 RAM_OUT = RAM
 IR_OUT = IR
-DST_OUT = DST
-SRC_OUT = SRC
-A_OUT = A
+DST_OUT = DST       # 将DST数据送入总线上
+SRC_OUT = SRC       # 将SRC数据送到总线上，常用于立即数寻址。
+A_OUT = A           # 将A数据送入总线上
 B_OUT = B
 C_OUT = C
 D_OUT = D
@@ -71,10 +71,10 @@ VEC_IN = VEC << _DST_SHIFT
 T1_IN = T1 << _DST_SHIFT
 T2_IN = T2 << _DST_SHIFT
 
-SRC_R = 2 ** 10
-SRC_W = 2 ** 11
-DST_R = 2 ** 12
-DST_W = 2 ** 13
+SRC_R = 2 ** 10         # 将SRC表示的那个寄存器的数送到总线，常用于寄存器寻址
+SRC_W = 2 ** 11         # 将总线数据写入SRC表示的那个寄存器
+DST_R = 2 ** 12         # 将DST表示的那个寄存器的数据送到总线
+DST_W = 2 ** 13         # 将总线数据写入DST表示的那个寄存器
 
 PC_WE = 2 ** 14
 PC_CS = 2 ** 15
