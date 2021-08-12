@@ -19,10 +19,14 @@ codes = []
 
 # 二地址指令
 OP2 = {
-    "MOV" : ASM.MOV
+    "MOV" : ASM.MOV,
+    "ADD" : ASM.ADD,
+    "SUB" : ASM.SUB
 }
 
 OP1 = {
+    "INC" : ASM.INC,
+    "DEC" : ASM.DEC,
 }
 OP0 = {
     "NOP" : ASM.NOP,
@@ -66,7 +70,7 @@ class Code(object):
     # 返回：寻址方式, 寄存器编号或立即数
     def get_am(self, addr):
         if not addr:
-            return 0,0
+            return None, None       # None 是空值，判断： if a is None, if a is not None
         if addr in REGISTERS:
             return pin.AM_REG, REGISTERS[addr]
         # 如果是 十进制数，则返回立即数
@@ -121,14 +125,23 @@ class Code(object):
         ams,src = self.get_am(self.src)
 
         # 如果是二地址指令，但寻址方式不支持时，报错
-        if src and (amd, ams) not in ASM.INSTRUCTIONS[2][op]:
+        if src is not None and (amd, ams) not in ASM.INSTRUCTIONS[2][op]:
             raise SyntaxError(self)
         # 如果是一地址指令，也判断寻址方式是否支持
-        if not src and dst and amd not in ASM.INSTRUCTIONS[1][op]:
+        if src is None and dst is not None and amd not in ASM.INSTRUCTIONS[1][op]:
             raise SyntaxError(self)
         # 如果是一地址指令，判断op是否支持
-        if not src and not dst and op not in ASM.INSTRUCTIONS[0]:
+        if src is None and dst is None and op not in ASM.INSTRUCTIONS[0]:
             raise SyntaxError(self)
+
+        # 如果是 None，则处理成 0
+        # or：从左到右计算表达式，返回第一个为真的值
+        # and：从左到右计算表达式，返回第一个为假的值
+        # dst or 0 : 当 dst 是 None 时，返回 0; 当 dst 不是 None 时，返回 dst 的值
+        amd = amd or 0
+        ams = ams or 0
+        dst = dst or 0
+        src = src or 0
 
         if op in OP2SET:
             ir = op | (amd << 2) | ams

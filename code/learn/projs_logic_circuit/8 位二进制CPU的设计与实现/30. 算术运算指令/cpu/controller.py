@@ -41,7 +41,30 @@ def compile_addr2(addr, ir, psw, index):
         micro[addr] = pin.CYC
 
 def compile_addr1(addr, ir, psw, index):
-    pass
+
+    global micro
+
+    op = ir & 0xFC
+    amd = ir & 3     # 目的操作数寻址方式
+    
+    # 查找指令是否存在？
+    INST = ASM.INSTRUCTIONS[1]
+    if op not in INST:
+        micro[addr] = pin.CYC
+        return
+    
+    # 查找该指令的寻址方式是否存在？
+    if amd not in INST[op]:
+        micro[addr] = pin.CYC
+        return
+    
+    # 得到具体执行的指令
+    EXEC = INST[op][amd]
+    if index < len(EXEC):
+        micro[addr] = EXEC[index]
+    else:
+        micro[addr] = pin.CYC
+    
 def compile_addr0(addr, ir, psw, index):
     global micro
 
@@ -72,8 +95,8 @@ for addr in range(0x10000):
         continue
 
     # 译码阶段，根据 二地址、一地址、零地址的不同类型分别译码，产生 CU 信号
-    addr2 = ir & (1 << 7)   # 二地址指令
-    addr1 = ir & (1 << 6)
+    addr2 = ir & pin.ADDR2   # 二地址指令
+    addr1 = ir & pin.ADDR1
 
     index = cyc - len(ASM.FETCH)
 

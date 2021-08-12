@@ -1,44 +1,46 @@
-; MOV C, 5
+; ADD立即数寻址
+; MOV D, 1;
+; ADD D, 5;
 
-; MOV D, C
+; ADD寄存器寻址
 
-; MOV D, [5]
+;（一般的）
+; MOV D, 4
+; MOV C, 7
+; ADD D, C;
 
-; MOV A, 6;
+; PSW - 溢出
+; MOV D, 250
+; MOV C, 7
+; ADD D, C;
 
-; MOV D, [A];
+; PSW - 零
+; MOV D, 0
+; MOV C, 0
+; ADD D, C;
 
-; MOV [0x2F], 5
+; SUB
 
-; MOV C, 0x18
-; MOV [0x2F], C
+; 立即数寻址
+; MOV D, 5
+; SUB D, 5
 
-; MOV [0x2E], 0x18
-; MOV [0x2F], [0x2E]
+; 寄存器寻址
+; MOV D, 5
+; MOV C, 4
+; SUB D, C
 
-; 8. 
-; MOV [18], 0x19
-; MOV C, 18
-; MOV [0x2F], [C]
+; INC & DEC
+MOV D, 0
+INC D
+INC D
+INC D
+INC D
+INC D
+DEC D
+DEC D
+DEC D
+DEC D
+DEC D
 
-; 9.
-; MOV A, 0x30
-; MOV [A], 3
-
-; 10.
-; MOV A, 0x30
-; MOV B, 0x31
-; MOV [A], B
-
-; 11.
-; MOV [0x30], 0xF0
-; MOV A,0x33
-; MOV [A], [0x30]
-
-; 12.
-MOV [0x30], 0xF0
-MOV D, 0x30
-MOV C, 0x18
-MOV [C], [D]        ; 结果是 [0x18] <-- 0xF0
-
-hlt
+HLT     ; 期望 D = 6

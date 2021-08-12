@@ -277,4 +277,8 @@
 
 30. 算术运算指令
 
+    * 中央处理器 —— 硬布线控制器和微程序控制器
+
+      https://blog.csdn.net/starter_____/article/details/98736854
+
 31. 

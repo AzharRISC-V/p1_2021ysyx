@@ -14,8 +14,17 @@ FETCH = [
     pin.RAM_OUT | pin.SRC_IN | pin.PC_INC,  # 取 RAM 数据并存入 SRC， PC + 1
 ]
 
+# 汇编指令编码
+
+## 二地址，从0开始编码
 MOV = (0 << pin.ADDR2_SHIFT) | pin.ADDR2
 ADD = (1 << pin.ADDR2_SHIFT) | pin.ADDR2
+SUB = (2 << pin.ADDR2_SHIFT) | pin.ADDR2
+
+## 一地址，从0开始编码
+INC = (0 << pin.ADDR1_SHIFT) | pin.ADDR1
+DEC = (1 << pin.ADDR1_SHIFT) | pin.ADDR1
+
 
 NOP = 0
 HLT = 0x3F
@@ -93,9 +102,54 @@ INSTRUCTIONS = {
                 pin.DST_R | pin.MAR_IN,         # 将 DST 所在寄存器的值，送入MAR
                 pin.RAM_IN | pin.T1_OUT,        # 将 T1 送入 RAM
             ],
+        },
+        ADD: {
+            # 以（目的操作数、源操作数的寻址方式）作为 key
+            # 1. ADD A, 3
+            (pin.AM_REG, pin.AM_INS) : [
+                pin.DST_R | pin.A_IN,           # 目的操作数（寄存器的值）送入 A
+                pin.SRC_OUT | pin.B_IN,         # 源操作数（立即数）送入 B
+                pin.OP_ADD | pin.ALU_OUT | pin.DST_W | pin.ALU_PSW,
+            ],
+            # 2. ADD A, B
+            (pin.AM_REG, pin.AM_REG) : [
+                pin.DST_R | pin.A_IN,           # 目的操作数（寄存器的值）送入 A
+                pin.SRC_R | pin.B_IN,           # 源操作数（寄存器的值）送入 B
+                pin.OP_ADD | pin.ALU_OUT | pin.DST_W | pin.ALU_PSW,
+            ],
+        },
+        SUB: {
+            # 以（目的操作数、源操作数的寻址方式）作为 key
+            # 1. ADD A, 3
+            (pin.AM_REG, pin.AM_INS) : [
+                pin.DST_R | pin.A_IN,           # 目的操作数（寄存器的值）送入 A
+                pin.SRC_OUT | pin.B_IN,         # 源操作数（立即数）送入 B
+                pin.OP_SUB | pin.ALU_OUT | pin.DST_W | pin.ALU_PSW,
+            ],
+            # 2. ADD A, B
+            (pin.AM_REG, pin.AM_REG) : [
+                pin.DST_R | pin.A_IN,           # 目的操作数（寄存器的值）送入 A
+                pin.SRC_R | pin.B_IN,           # 源操作数（寄存器的值）送入 B
+                pin.OP_SUB | pin.ALU_OUT | pin.DST_W | pin.ALU_PSW,
+            ],
         }
     },
-    1 : {},
+    1 : {
+        INC: {
+            # 1. INC A
+            (pin.AM_REG) : [
+                pin.DST_R | pin.A_IN,
+                pin.OP_INC | pin.ALU_OUT | pin.DST_W | pin.ALU_PSW,
+            ],
+        },
+        DEC: {
+            # 1. DEC A
+            (pin.AM_REG) : [
+                pin.DST_R | pin.A_IN,
+                pin.OP_DEC | pin.ALU_OUT | pin.DST_W | pin.ALU_PSW,
+            ],
+        },
+    },
     0 : {
         NOP : [
             pin.CYC,
