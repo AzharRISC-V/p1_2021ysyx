@@ -78,6 +78,7 @@ namespace LogicCircuit {
 		public bool IsRunning { get { return this.evaluationThread != null && this.evaluationThread.IsAlive && this.running; } }
 
 		private static int HalfPeriod(int frequency) {
+			// 500ms
 			return 500 / frequency;
 		}
 
