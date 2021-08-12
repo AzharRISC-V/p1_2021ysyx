@@ -1,0 +1,93 @@
+﻿<Window x:Class="LogicCircuit.DialogOptions"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:lc="clr-namespace:LogicCircuit"
+	xmlns:properties="clr-namespace:LogicCircuit.Properties"
+	xmlns:glob="clr-namespace:System.Globalization;assembly=mscorlib"
+	WindowStartupLocation="CenterOwner"
+	Title="{x:Static properties:Resources.TitleOptions}"
+	Style="{StaticResource DialogFixedWindow}"
+>
+	<Window.Resources>
+		<Style TargetType="{x:Type GroupBox}">
+			<Setter Property="Margin" Value="0,5,0,0"/>
+		</Style>
+
+		<Style x:Key="CultureTranslation" TargetType="TextBlock">
+			<Setter Property="FlowDirection" Value="LeftToRight"/>
+			<Style.Triggers>
+				<DataTrigger Binding="{Binding Path=Name}" Value="en">
+					<Setter Property="Visibility" Value="Collapsed"/>
+				</DataTrigger>
+			</Style.Triggers>
+		</Style>
+
+		<DataTemplate x:Key="LanguageName" DataType="{x:Type glob:CultureInfo}">
+			<StackPanel Orientation="Horizontal">
+				<StackPanel.Style>
+					<Style TargetType="StackPanel">
+						<Setter Property="FlowDirection" Value="LeftToRight"/>
+						<Style.Triggers>
+							<DataTrigger Binding="{Binding Path=TextInfo.IsRightToLeft}" Value="True">
+								<Setter Property="FlowDirection" Value="RightToLeft"/>
+							</DataTrigger>
+						</Style.Triggers>
+					</Style>
+				</StackPanel.Style>
+
+				<TextBlock Text="{Binding Path=NativeName}"/>
+				<TextBlock Text=" - " Style="{StaticResource CultureTranslation}"/>
+				<TextBlock Text="{Binding Path=DisplayName}" Style="{StaticResource CultureTranslation}"/>
+			</StackPanel>
+		</DataTemplate>
+	</Window.Resources>
+
+	<StackPanel Orientation="Vertical" Margin="8,0">
+		<GroupBox HorizontalAlignment="Stretch" VerticalAlignment="Top"
+			Header="{x:Static properties:Resources.TitleFileOptions}"
+		>
+			<lc:AutoGrid>
+				<CheckBox Grid.ColumnSpan="2" Name="loadLastFile"
+					Content="{x:Static properties:Resources.TitleLoadLastFile}"
+				/>
+
+				<Label Content="{x:Static properties:Resources.TitleMaxRecentFiles}"/>
+				<ComboBox Name="maxRecentFiles" ItemsSource="{Binding RecentFileRange}"/>
+
+				<CheckBox Grid.ColumnSpan="2" Name="autoSave" Content="{x:Static properties:Resources.TitleAutoSave}"/>
+				<StackPanel Grid.ColumnSpan="2" Orientation="Horizontal" Margin="25,0,0,0" IsEnabled="{Binding ElementName=autoSave, Path=IsChecked}">
+					<ComboBox ItemsSource="{Binding Path=AutoSaveIntervalList}" SelectedItem="{Binding Path=AutoSaveInterval}"/>
+					<TextBlock Text="{x:Static properties:Resources.TitleMinutesUnits}" VerticalAlignment="Center" Margin="5,1"/>
+				</StackPanel>
+			</lc:AutoGrid>
+		</GroupBox>
+
+		<GroupBox HorizontalAlignment="Stretch" VerticalAlignment="Top"
+			Header="{x:Static properties:Resources.TitleDisplayOptions}"
+		>
+			<lc:AutoGrid>
+				<CheckBox Grid.ColumnSpan="2" Name="showGrid"
+					Content="{x:Static properties:Resources.TitleShowGrid}"
+				/>
+
+				<Label Content="{x:Static properties:Resources.TitleGateShape}"/>
+				<ComboBox Name="gateShape" ItemsSource="{Binding Path=GateShapeList}"/>
+			</lc:AutoGrid>
+		</GroupBox>
+
+		<GroupBox HorizontalAlignment="Stretch" VerticalAlignment="Top"
+			Header="{x:Static properties:Resources.TitleCulture}"
+		>
+			<lc:AutoWidthComboBox HorizontalAlignment="Stretch"
+				ItemsSource="{x:Static lc:App.AvailableCultures}"
+				SelectedItem="{Binding Path=CurrentCulture}"
+				ItemTemplate="{StaticResource LanguageName}"
+			/>
+		</GroupBox>
+
+		<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+			<Button Content="{x:Static properties:Resources.TitleOK}" IsDefault="True" Click="OkButtonClick"/>
+			<Button Content="{x:Static properties:Resources.TitleCancel}" IsCancel="True"/>
+		</StackPanel>
+	</StackPanel>
+</Window>

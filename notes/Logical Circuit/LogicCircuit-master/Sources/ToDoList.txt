@@ -1,0 +1,31 @@
+ToDo list:
+
+smarter wires
+Tunnels
+
+hdl: convert to and logical circuit in it.
+FPGA
+
+Colors of symbols
+
+=== Function Optimization Ideas ===
+Local optimizations.
+Local optimizations applicable to individual basic block, so the blocks without any extra receivers in the middle.
+
+Note that constant folding is not applicable as there no compile time constants in the logic circuit.
+Remove double NOTs if there is no another receiver between them.
+Remove or simplify functions receiving same parameter.
+Simplify Function followed by another function if there is no another receiver between them.
+Eliminate common sub expressions.
+Grouping up few primitive functions to complex one (dynamically built?) if there is no another receivers in the middle.
+
+Global optimizations.
+
+
+=== Feature not implementing ===
+Power up root: to much hassle to start up the runtime.
+For example if user has circuit that is not on the execution tree. or when the execution tree has multiple of current circuits.
+
+Backward navigation on circuits
+It is already implemented ad Ctrl-Tab and Ctrl-Shift-Tab
+Keyboard device - can be built with displays feature

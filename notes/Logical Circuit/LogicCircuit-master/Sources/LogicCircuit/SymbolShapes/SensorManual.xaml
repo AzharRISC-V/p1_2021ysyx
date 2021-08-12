@@ -1,0 +1,20 @@
+﻿<Border
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:properties="clr-namespace:LogicCircuit.Properties"
+	FlowDirection="{x:Static properties:Resources.FlowDirection}"
+	BorderBrush="Black" BorderThickness="1" CornerRadius="6" Background="{StaticResource SensorBackground}"
+>
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="*"/>
+			<RowDefinition Height="Auto"/>
+		</Grid.RowDefinitions>
+		<TextBlock Grid.Row="0" HorizontalAlignment="Center" Text="{x:Static properties:Resources.NameSensor}"/>
+		<TextBox Grid.Row="1" Name="ProbeView" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="5,0" IsEnabled="False" MaxLength="8" SpellCheck.IsEnabled="False" MinWidth="55"
+			ToolTip="{x:Static properties:Resources.ToolTipSensorManualValue}"
+		/>
+		<TextBlock Grid.Row="2" Name="Notation" HorizontalAlignment="Center" />
+	</Grid>
+</Border>

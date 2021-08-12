@@ -1,0 +1,32 @@
+﻿<Window x:Class="LogicCircuit.DialogButton"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:lc="clr-namespace:LogicCircuit"
+	xmlns:properties="clr-namespace:LogicCircuit.Properties"
+	WindowStartupLocation="CenterOwner"
+	Title="{x:Static properties:Resources.NameButton}"
+	Style="{StaticResource DialogWindow}"
+	FocusManager.FocusedElement="{Binding ElementName=name}"
+>
+	<lc:AutoGrid Margin="3">
+		<Label Content="{x:Static properties:Resources.TitleNotation}"/>
+		<TextBox Name="name" ToolTip="{x:Static properties:Resources.ToolTipButtonNotation}"/>
+
+		<CheckBox Grid.Column="1" Name="isToggle"
+			Content="{x:Static properties:Resources.TitleIsToggle}" ToolTip="{x:Static properties:Resources.ToolTipIsToggle}"
+		/>
+
+		<CheckBox Grid.Column="1" Name="inverted" Content="{x:Static properties:Resources.TitleInverted}"/>
+
+		<Label Content="{x:Static properties:Resources.TitlePinSide}"/>
+		<lc:AutoWidthComboBox x:Name="side" ItemsSource="{x:Static lc:PinDescriptor.PinSideRange}" ToolTip="{x:Static properties:Resources.ToolTipDevicePinSide}"/>
+
+		<Label Content="{x:Static properties:Resources.TitleDescription}"/>
+		<TextBox Name="note" Style="{StaticResource NoteEditor}"/>
+
+		<StackPanel Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+			<Button Content="{x:Static properties:Resources.TitleOK}" IsDefault="True" Click="ButtonOkClick"/>
+			<Button Content="{x:Static properties:Resources.TitleCancel}" IsCancel="True"/>
+		</StackPanel>
+	</lc:AutoGrid>
+</Window>

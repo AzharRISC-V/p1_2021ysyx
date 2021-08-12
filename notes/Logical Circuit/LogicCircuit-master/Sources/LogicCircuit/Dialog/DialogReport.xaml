@@ -1,0 +1,13 @@
+﻿<Window x:Class="LogicCircuit.DialogReport"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:lc="clr-namespace:LogicCircuit"
+	xmlns:properties="clr-namespace:LogicCircuit.Properties"
+	WindowStartupLocation="CenterOwner"
+	Title="{Binding Source={x:Static properties:Resources.CommandToolsReport}, Mode=OneTime}"
+	Style="{StaticResource DialogWindow}"
+>
+	<Grid>
+		<FlowDocumentReader Margin="8" ViewingMode="Scroll" Document="{Binding Path=Document}"/>
+	</Grid>
+</Window>

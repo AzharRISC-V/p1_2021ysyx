@@ -1,0 +1,32 @@
+﻿<Window x:Class="LogicCircuit.DialogFind"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:lc="clr-namespace:LogicCircuit"
+	xmlns:properties="clr-namespace:LogicCircuit.Properties"
+	WindowStartupLocation="CenterOwner"
+	Title="{x:Static properties:Resources.TitleFind}"
+	Style="{StaticResource DialogWindow}"
+	WindowStyle="ToolWindow"
+	FocusManager.FocusedElement="{Binding ElementName=filter}"
+>
+	<lc:AutoGrid Margin="3" ColumnWidths="Auto;*;Auto">
+		<Label Content="{x:Static properties:Resources.TitleSearchPattern}" VerticalAlignment="Center"/>
+		<TextBox Name="filter" Text="{Binding Path=SearchFilter, UpdateSourceTrigger=PropertyChanged}"/>
+		<Button Content="{x:Static properties:Resources.TitleSearch}" Click="ButtonSearchClick" IsDefault="True">
+			<Button.Style>
+				<Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+					<Style.Triggers>
+						<DataTrigger Binding="{Binding ElementName=filter, Path=Text.Length}" Value="0">
+							<Setter Property="IsEnabled" Value="False"/>
+						</DataTrigger>
+					</Style.Triggers>
+				</Style>
+			</Button.Style>
+		</Button>
+
+		<ListBox Grid.ColumnSpan="3" Name="resultList" Margin="5,0,5,5" DisplayMemberPath="Name"
+			MouseDoubleClick="resultListMouseDoubleClick"
+			PreviewKeyUp="resultListPreviewKeyUp"
+		/>
+	</lc:AutoGrid>
+</Window>

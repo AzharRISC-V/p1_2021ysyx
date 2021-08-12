@@ -1,0 +1,33 @@
+﻿<Window x:Class="LogicCircuit.DialogHyperlink"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:lc="clr-namespace:LogicCircuit"
+	xmlns:properties="clr-namespace:LogicCircuit.Properties"
+	WindowStartupLocation="CenterOwner"
+	Title="{x:Static properties:Resources.CommandHyperlink}"
+	Style="{StaticResource DialogWindow}"
+	MinWidth="320"
+	MinHeight="200"
+	FocusManager.FocusedElement="{Binding ElementName=hyperlinkText}"
+>
+	<lc:AutoGrid>
+		<Label Content="{x:Static properties:Resources.TitleText}"/>
+		<TextBox Name="hyperlinkText"
+			Text="{Binding Path=HyperlinkText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+		/>
+
+		<Label Content="{x:Static properties:Resources.TitleHyperlink}"/>
+		<TextBox Name="hyperlinkUrl" SpellCheck.IsEnabled="False"
+			Text="{Binding Path=HyperlinkUrl, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+		/>
+
+		<TextBlock Grid.ColumnSpan="2" lc:AutoGrid.RowHeight="*" Text="{Binding Path=Error}" HorizontalAlignment="Center" VerticalAlignment="Center"
+			FontSize="12" FontWeight="Bold"
+		/>
+
+		<StackPanel Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+			<Button Content="{x:Static properties:Resources.TitleOK}" IsDefault="True" Click="ButtonOkClick" IsEnabled="{Binding Path=IsValidHyperlink}"/>
+			<Button Content="{x:Static properties:Resources.TitleCancel}" IsCancel="True"/>
+		</StackPanel>
+	</lc:AutoGrid>
+</Window>

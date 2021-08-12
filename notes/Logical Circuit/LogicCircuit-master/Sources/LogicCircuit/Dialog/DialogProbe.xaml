@@ -1,0 +1,23 @@
+﻿<Window x:Class="LogicCircuit.DialogProbe"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:lc="clr-namespace:LogicCircuit"
+	xmlns:properties="clr-namespace:LogicCircuit.Properties"
+	WindowStartupLocation="CenterOwner"
+	Title="{x:Static properties:Resources.CircuitProbeName}"
+	Style="{StaticResource DialogWindow}"
+	FocusManager.FocusedElement="{Binding ElementName=name}"
+>
+	<lc:AutoGrid Margin="3">
+		<Label Content="{x:Static properties:Resources.TitleName}"/>
+		<TextBox Name="name" MaxLength="4"/>
+
+		<Label Content="{x:Static properties:Resources.TitleDescription}"/>
+		<TextBox Name="description" Style="{StaticResource NoteEditor}"/>
+
+		<StackPanel Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+			<Button Content="{x:Static properties:Resources.TitleOK}" IsDefault="True" Click="ButtonOkClick"/>
+			<Button Content="{x:Static properties:Resources.TitleCancel}" IsCancel="True"/>
+		</StackPanel>
+	</lc:AutoGrid>
+</Window>

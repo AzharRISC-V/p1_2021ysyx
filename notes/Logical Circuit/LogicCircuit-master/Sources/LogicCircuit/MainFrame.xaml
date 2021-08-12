@@ -1,0 +1,725 @@
+﻿<Window x:Class="LogicCircuit.Mainframe"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+	xmlns:lc="clr-namespace:LogicCircuit"
+	xmlns:properties="clr-namespace:LogicCircuit.Properties"
+	xmlns:diag="clr-namespace:System.Diagnostics;assembly=WindowsBase"
+	FlowDirection="{x:Static properties:Resources.FlowDirection}"
+	MinWidth="550"
+	MinHeight="400"
+	Title="{Binding Path=Editor.Caption}"
+	Left="{Binding Path=WindowLocation.X, Mode=TwoWay}"
+	Top="{Binding Path=WindowLocation.Y, Mode=TwoWay}"
+	Width="{Binding Path=WindowLocation.Width, Mode=TwoWay}"
+	Height="{Binding Path=WindowLocation.Height, Mode=TwoWay}"
+	WindowState="{Binding Path=WindowLocation.WindowState, Mode=TwoWay}"
+	Background="{StaticResource WindowBackground}"
+	ResizeMode="CanResizeWithGrip"
+	SnapsToDevicePixels="True"
+
+	Keyboard.KeyDown="WindowKeyDown"
+	Keyboard.KeyUp="WindowKeyUp"
+>
+	<Window.Resources>
+		<Storyboard x:Key="initLayout">
+			<lc:GridLengthAnimation Duration="0:0:1"
+				Storyboard.TargetName="runningTree"
+				Storyboard.TargetProperty="Height"
+				From="{Binding ElementName=runningTree, Path=Height}"
+				To="0*"
+			/>
+			<lc:GridLengthAnimation Duration="0:0:1"
+				Storyboard.TargetName="projectBrowser"
+				Storyboard.TargetProperty="Height"
+				From="{Binding ElementName=projectBrowser, Path=Height}"
+				To="1*"
+			/>
+		</Storyboard>
+
+		<Storyboard x:Key="openRunningTree">
+			<lc:GridLengthAnimation Duration="0:0:0.2"
+				Storyboard.TargetName="runningTree"
+				Storyboard.TargetProperty="Height"
+				From="0*"
+				To="1*"
+			/>
+			<lc:GridLengthAnimation Duration="0:0:0.2"
+				Storyboard.TargetName="projectBrowser"
+				Storyboard.TargetProperty="Height"
+				From="1*"
+				To="0*"
+			/>
+		</Storyboard>
+
+		<Storyboard x:Key="openProjectBrowser">
+			<lc:GridLengthAnimation Duration="0:0:0.5"
+				Storyboard.TargetName="runningTree"
+				Storyboard.TargetProperty="Height"
+				From="1*"
+				To="0*"
+			/>
+			<lc:GridLengthAnimation Duration="0:0:0.5"
+				Storyboard.TargetName="projectBrowser"
+				Storyboard.TargetProperty="Height"
+				From="0*"
+				To="1*"
+			/>
+		</Storyboard>
+
+		<CollectionViewSource x:Key="circuitDescriptorList" Source="{Binding Path=Editor.CircuitDescriptorList.CircuitDescriptors}">
+			<CollectionViewSource.GroupDescriptions>
+				<PropertyGroupDescription PropertyName="Category"/>
+			</CollectionViewSource.GroupDescriptions>
+		</CollectionViewSource>
+	</Window.Resources>
+
+	<Window.Triggers>
+		<EventTrigger RoutedEvent="Window.Loaded">
+			<BeginStoryboard Storyboard="{StaticResource initLayout}"/>
+		</EventTrigger>
+	</Window.Triggers>
+
+	<lc:AutoGrid ColumnWidths="*">
+		<!-- Main Menu -->
+		<Menu Padding="3,1" Background="Transparent">
+			<MenuItem Header="{x:Static properties:Resources.MenuHeaderFile}">
+				<lc:CommandMenuItem Command="{Binding Path=CommandNew}"/>
+				<lc:CommandMenuItem Command="{Binding Path=CommandOpen}"/>
+				<lc:CommandMenuItem Header="{x:Static properties:Resources.CommandFileOpenRecent}" ItemsSource="{Binding Source={x:Static lc:Settings.User}, Path=RecentFiles}">
+					<lc:CommandMenuItem.Resources>
+						<Style TargetType="MenuItem">
+							<Setter Property="Header" Value="{Binding}"/>
+							<Setter Property="Command" Value="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=CommandOpenRecent}"/>
+							<Setter Property="CommandParameter" Value="{Binding}"/>
+						</Style>
+					</lc:CommandMenuItem.Resources>
+				</lc:CommandMenuItem>
+				<Separator/>
+				<lc:CommandMenuItem Command="{Binding Path=CommandSave}"/>
+				<lc:CommandMenuItem Command="{Binding Path=CommandSaveAs}"/>
+				<Separator/>
+				<lc:CommandMenuItem Command="{Binding Path=CommandImport}"/>
+				<lc:CommandMenuItem Command="{Binding Path=CommandExportImage}"/>
+				<Separator/>
+				<lc:CommandMenuItem Command="{Binding Path=CommandClose}"/>
+			</MenuItem>
+			<MenuItem Header="{x:Static properties:Resources.MenuHeaderEdit}">
+				<lc:CommandMenuItem Command="{Binding Path=Editor.CommandUndo}"/>
+				<lc:CommandMenuItem Command="{Binding Path=Editor.CommandRedo}"/>
+				<Separator />
+				<lc:CommandMenuItem Command="{Binding Path=Editor.CommandCut}"/>
+				<lc:CommandMenuItem Command="{Binding Path=Editor.CommandCopy}"/>
+				<lc:CommandMenuItem Command="{Binding Path=Editor.CommandPaste}"/>
+				<lc:CommandMenuItem Command="{Binding Path=Editor.CommandDelete}"/>
+				<Separator />
+				<lc:CommandMenuItem Command="{Binding Path=Editor.CommandSelectAll}"/>
+				<lc:CommandMenuItem Command="{Binding Path=Editor.CommandSelectAllWires}"/>
+				<lc:CommandMenuItem Command="{Binding Path=Editor.CommandSelectFreeWires}"/>
+				<lc:CommandMenuItem Command="{Binding Path=Editor.CommandSelectFloatingSymbols}"/>
+				<lc:CommandMenuItem Command="{Binding Path=Editor.CommandSelectAllButWires}"/>
+				<lc:CommandMenuItem Command="{Binding Path=Editor.CommandUnselectAllWires}"/>
+				<lc:CommandMenuItem Command="{Binding Path=Editor.CommandUnselectAllButWires}"/>
+				<Separator />
+				<lc:CommandMenuItem Command="{Binding Path=Editor.CommandSelectAllProbes}"/>
+				<lc:CommandMenuItem Command="{Binding Path=Editor.CommandSelectAllProbesWithWire}"/>
+				<Separator />
+				<lc:CommandMenuItem Command="{Binding Path=Editor.CommandRotateLeft}"/>
+				<lc:CommandMenuItem Command="{Binding Path=Editor.CommandRotateRight}"/>
+			</MenuItem>
+			<MenuItem Header="{x:Static properties:Resources.MenuHeaderCircuit}">
+				<lc:CommandMenuItem Command="{Binding Path=Editor.CommandCircuitProject}"/>
+				<lc:CommandMenuItem Command="{Binding Path=Editor.CommandCircuitCurrent}"/>
+				<lc:CommandMenuItem Command="{Binding Path=Editor.CommandCircuitNew}"/>
+				<lc:CommandMenuItem Command="{Binding Path=Editor.CommandCircuitDelete}"/>
+				<lc:CommandMenuItem Command="{Binding Path=Editor.CommandCircuitUsage}"/>
+				<lc:CommandMenuItem Command="{Binding Path=Editor.CommandFind}"/>
+				<Separator />
+				<lc:CommandMenuItem Command="{Binding Path=Editor.CommandTruthTable}"/>
+				<lc:CommandMenuItem Command="{Binding Path=Editor.CommandPower}"/>
+			</MenuItem>
+			<MenuItem Header="{x:Static properties:Resources.MenuHeaderTools}">
+				<lc:CommandMenuItem Command="{Binding Path=Editor.CommandReport}"/>
+				<lc:CommandMenuItem Command="{Binding Path=Editor.CommandOscilloscope}"/>
+				<lc:CommandMenuItem Command="{Binding Path=CommandIronPython}"/>
+				<lc:CommandMenuItem Command="{Binding Path=CommandOptions}"/>
+			</MenuItem>
+			<MenuItem Header="{x:Static properties:Resources.MenuHeaderHelp}">
+				<lc:CommandMenuItem Command="{Binding Path=CommandHelp}"/>
+				<Separator />
+				<lc:CommandMenuItem Command="{Binding Path=CommandAbout}"/>
+			</MenuItem>
+		</Menu>
+
+		<!-- Main content of the window -->
+		<Grid lc:AutoGrid.RowHeight="*" Margin="3" Name="splitGrid">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="{Binding Path=ProjectWidth.Value, Mode=TwoWay}"/> <!-- Left column with List of circuit descriptors and runtime tree -->
+				<ColumnDefinition Width="Auto"/> <!-- Column Splitter -->
+				<ColumnDefinition Width="{Binding Path=DiagramWidth.Value, Mode=TwoWay}" MinWidth="100"
+					MaxWidth="{Binding ElementName=splitGrid, Path=ActualWidth, Converter={StaticResource DoubleAdderConverter}, ConverterParameter=-100}"
+				/> <!-- Main Diagram -->
+			</Grid.ColumnDefinitions>
+
+			<!-- Left column with List of circuits and properties and Running map tree -->
+			<Grid Grid.Column="0">
+				<Grid.RowDefinitions>
+					<RowDefinition Height="1*" Name="runningTree"/>
+					<RowDefinition Height="0*" Name="projectBrowser"/>
+				</Grid.RowDefinitions>
+
+				<!-- Top row with Running map tree -->
+				<GroupBox Grid.Row="0" Header="{x:Static properties:Resources.TitleRunningCircuit}">
+					<lc:AutoGrid ColumnWidths="*">
+						<TreeView BorderThickness="0"
+							ItemsSource="{Binding Path=Editor.CircuitRunner.Root}"
+							MouseDoubleClick="RunningMapDoubleClick"
+							SelectedItemChanged="RunningMapTreeViewSelectedItemChanged"
+							VirtualizingStackPanel.IsVirtualizing="True"
+						>
+							<TreeView.ItemContainerStyle>
+								<Style TargetType="TreeViewItem">
+									<Setter Property="BorderThickness" Value="2"/>
+									<Style.Triggers>
+										<DataTrigger Binding="{Binding Path=IsRoot}" Value="True">
+											<Setter Property="IsExpanded" Value="True"/>
+										</DataTrigger>
+										<DataTrigger Binding="{Binding Path=IsCurrent}" Value="True">
+											<Setter Property="IsSelected" Value="True"/>
+											<Setter Property="IsExpanded" Value="True"/>
+											<Setter Property="BorderBrush" Value="{StaticResource MarkerStroke}"/>
+										</DataTrigger>
+									</Style.Triggers>
+								</Style>
+							</TreeView.ItemContainerStyle>
+							<TreeView.Resources>
+								<HierarchicalDataTemplate DataType="{x:Type lc:CircuitMap}" ItemsSource="{Binding Path=Children}">
+									<StackPanel Orientation="Horizontal" ToolTip="{Binding Path=Circuit.ToolTip}">
+										<ContentControl Content="{Binding Path=CircuitGlyph}" FlowDirection="LeftToRight" SnapsToDevicePixels="False">
+											<ContentControl.LayoutTransform>
+												<ScaleTransform ScaleX="0.5" ScaleY="0.5"/>
+											</ContentControl.LayoutTransform>
+										</ContentControl>
+										<TextBlock Text="{Binding Path=Circuit.Notation}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+										<TextBlock Text="{Binding Path=CircuitSymbol.Point}" VerticalAlignment="Center" Margin="8,0"/>
+									</StackPanel>
+								</HierarchicalDataTemplate>
+							</TreeView.Resources>
+						</TreeView>
+
+						<Separator HorizontalAlignment="Stretch" Margin="5,3"/>
+
+						<StackPanel Orientation="Horizontal">
+							<Label Content="{x:Static properties:Resources.TitleFrequency}" Target="{Binding ElementName=frequency}" Margin="0"/>
+							<Slider Width="100" x:Name="frequency" VerticalAlignment="Center" Background="{StaticResource SliderBackground}"
+								Minimum="1" Maximum="200" Value="{Binding Path=Editor.Frequency, Mode=TwoWay}"
+								Ticks="1,10,20,30,40,50"
+								LargeChange="10"
+								SmallChange="1"
+								IsEnabled="{Binding Path=Editor.Power}"
+								IsMoveToPointEnabled="True"
+								TickPlacement="TopLeft"
+								ToolTip="{x:Static properties:Resources.ToolTipFrequency}"
+							/>
+							<TextBlock Text="{Binding Path=Editor.Frequency}" VerticalAlignment="Center" Margin="3,0"/>
+						</StackPanel>
+
+						<CheckBox
+							IsChecked="{Binding Path=Editor.IsMaximumSpeed, Mode=TwoWay}"
+							IsEnabled="{Binding Path=Editor.Power}"
+						>
+							<CheckBox.ToolTip>
+								<!-- This can cause problems on some cultures as the structure of the markup is non-localizable -->
+								<Span>
+									<Run Text="{x:Static properties:Resources.ToolTipIsMaximumSpeed1}"/>
+									<LineBreak/>
+									<Bold><Run Text="{x:Static properties:Resources.MessageWarning}"/></Bold>
+									<Run Text="{x:Static properties:Resources.ToolTipIsMaximumSpeed2}"/>
+								</Span>
+							</CheckBox.ToolTip>
+							<CheckBox.Content>
+								<Span>
+									<Run Text="{x:Static properties:Resources.TitleIsMaximumSpeed1}"/>
+									<LineBreak/>
+									<Bold><Run Text="{x:Static properties:Resources.MessageWarning}"/></Bold>
+									<Run Text="{x:Static properties:Resources.TitleIsMaximumSpeed2}"/>
+								</Span>
+							</CheckBox.Content>
+						</CheckBox>
+
+						<StackPanel Orientation="Horizontal">
+							<TextBlock Text="{x:Static properties:Resources.TitleActualFrequency}" Margin="5,3"/>
+							<TextBlock Text="{Binding Path=Editor.ActualFrequency, FallbackValue=0, StringFormat=N1}" Margin="3"/>
+						</StackPanel>
+					</lc:AutoGrid>
+				</GroupBox>
+
+				<!-- Bottom row with List of circuit descriptors -->
+				<GroupBox Grid.Row="1" Header="{x:Static properties:Resources.TitleProject}">
+					<ListView SelectionMode="Single" BorderThickness="0" HorizontalContentAlignment="Stretch"
+						ItemsSource="{Binding Source={StaticResource circuitDescriptorList}}"
+					>
+						<ListView.GroupStyle>
+							<GroupStyle ContainerStyle="{StaticResource CircuitDescriptorGroup}"/>
+						</ListView.GroupStyle>
+
+						<ListView.Resources>
+							<Style TargetType="ContentControl">
+								<Setter Property="IsTabStop" Value="False"/>
+								<Setter Property="VerticalAlignment" Value="Center"/>
+								<Setter Property="MinWidth" Value="75"/>
+								<Setter Property="Margin" Value="3,3,8,3"/>
+								<Setter Property="Content" Value="{Binding Path=CircuitGlyph.Glyph}"/>
+								<Setter Property="FlowDirection" Value="LeftToRight"/>
+								<Setter Property="LayoutTransform">
+									<Setter.Value>
+										<ScaleTransform ScaleX="0.75" ScaleY="0.75"/>
+									</Setter.Value>
+								</Setter>
+								<Setter Property="SnapsToDevicePixels" Value="False"/>
+							</Style>
+
+							<Style x:Key="DescriptorPanel" TargetType="StackPanel">
+								<Setter Property="Orientation" Value="Horizontal"/>
+								<Setter Property="Background" Value="Transparent"/>
+								<EventSetter Event="MouseDown" Handler="DescriptorMouseDown"/>
+								<EventSetter Event="MouseUp" Handler="DescriptorMouseUp"/>
+								<EventSetter Event="MouseMove" Handler="DescriptorMouseMove"/>
+							</Style>
+
+							<Style x:Key="PropertyLabel" TargetType="TextBlock">
+								<Setter Property="VerticalAlignment" Value="Center"/>
+								<Setter Property="Margin" Value="5,0"/>
+							</Style>
+
+							<Style x:Key="CircuitName" TargetType="TextBlock">
+								<Setter Property="Text" Value="{Binding Path=Circuit.Name}"/>
+								<Setter Property="VerticalAlignment" Value="Center"/>
+								<Setter Property="Margin" Value="16,0,0,0"/>
+							</Style>
+
+							<Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+								<Setter Property="Margin" Value="1"/>
+							</Style>
+
+							<Style TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}">
+								<Setter Property="Margin" Value="1"/>
+							</Style>
+
+							<Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+								<Setter Property="Margin" Value="1"/>
+							</Style>
+
+							<Style TargetType="lc:AutoWidthComboBox" BasedOn="{StaticResource {x:Type lc:AutoWidthComboBox}}">
+								<Setter Property="Margin" Value="1"/>
+							</Style>
+
+							<Style x:Key="PropertyGrid" TargetType="lc:AutoGrid">
+								<Setter Property="VerticalAlignment" Value="Center"/>
+							</Style>
+
+							<DataTemplate DataType="{x:Type lc:GateDescriptor}">
+								<DataTemplate.Resources>
+									<Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+										<Setter Property="MinWidth" Value="42"/>
+										<Style.Triggers>
+											<DataTrigger Binding="{Binding Path=InputCountRangeLength}" Value="0">
+												<Setter Property="Visibility" Value="Hidden"/>
+											</DataTrigger>
+										</Style.Triggers>
+									</Style>
+								</DataTemplate.Resources>
+								<StackPanel Style="{StaticResource DescriptorPanel}">
+									<ContentControl/>
+									<ComboBox
+										SelectedItem="{Binding Path=InputCount, Mode=TwoWay}"
+										ItemsSource="{Binding Path=InputCountRange}"
+										ToolTip="{x:Static properties:Resources.ToolTipGateInputCount}"
+									/>
+									<TextBlock Style="{StaticResource CircuitName}"/>
+								</StackPanel>
+							</DataTemplate>
+
+							<DataTemplate DataType="{x:Type lc:ProbeDescriptor}">
+								<StackPanel Style="{StaticResource DescriptorPanel}">
+									<ContentControl/>
+									<TextBox MaxLength="4" Text="{Binding Path=Name}"/>
+									<TextBlock Style="{StaticResource PropertyLabel}" Text="{x:Static properties:Resources.CaptionName}"/>
+									<TextBlock Style="{StaticResource CircuitName}" Text="{x:Static properties:Resources.CircuitProbeName}"/>
+								</StackPanel>
+							</DataTemplate>
+
+							<DataTemplate DataType="{x:Type lc:ButtonDescriptor}">
+								<StackPanel Style="{StaticResource DescriptorPanel}">
+									<ContentControl/>
+									<lc:AutoGrid Style="{StaticResource PropertyGrid}">
+										<TextBox Text="{Binding Path=Notation, Mode=TwoWay}"
+											ToolTip="{x:Static properties:Resources.ToolTipButtonNotation}"
+										/>
+										<TextBlock Style="{StaticResource PropertyLabel}" Text="{x:Static properties:Resources.CaptionNotation}"/>
+										<CheckBox Grid.ColumnSpan="2"
+											IsChecked="{Binding Path=IsToggle}"
+											Content="{x:Static properties:Resources.TitleIsToggle}"
+											ToolTip="{x:Static properties:Resources.ToolTipIsToggle}"
+										/>
+										<lc:AutoWidthComboBox
+											ItemsSource="{x:Static lc:PinDescriptor.PinSideRange}"
+											SelectedItem="{Binding Path=PinSide, Mode=TwoWay}"
+											ToolTip="{x:Static properties:Resources.ToolTipDevicePinSide}"
+										/>
+										<TextBlock Style="{StaticResource PropertyLabel}" Text="{x:Static properties:Resources.CaptionPinSide}"/>
+									</lc:AutoGrid>
+									<TextBlock Style="{StaticResource CircuitName}"/>
+								</StackPanel>
+							</DataTemplate>
+
+							<DataTemplate DataType="{x:Type lc:ConstantDescriptor}">
+								<StackPanel Style="{StaticResource DescriptorPanel}">
+									<ContentControl/>
+									<lc:AutoGrid Style="{StaticResource PropertyGrid}">
+										<ComboBox ItemsSource="{x:Static lc:PinDescriptor.BitWidthRange}"
+											SelectedItem="{Binding Path=BitWidth}"
+											ToolTip="{x:Static properties:Resources.ToolTipConstantBitWidth}"
+										/>
+										<TextBlock Style="{StaticResource PropertyLabel}" Text="{x:Static properties:Resources.CaptionBitWidth}"/>
+
+										<TextBox MaxLength="8" CharacterCasing="Upper"
+											Text="{Binding Path=Value, Mode=TwoWay}"
+											ToolTip="{x:Static properties:Resources.ToolTipConstantValue}"
+										/>
+										<TextBlock Style="{StaticResource PropertyLabel}" Text="{x:Static properties:Resources.CaptionValue}"/>
+
+										<lc:AutoWidthComboBox
+											SelectedItem="{Binding Path=PinSide, Mode=TwoWay}"
+											ItemsSource="{x:Static lc:PinDescriptor.PinSideRange}"
+											ToolTip="{x:Static properties:Resources.ToolTipDevicePinSide}"
+										/>
+										<TextBlock Style="{StaticResource PropertyLabel}" Text="{x:Static properties:Resources.CaptionPinSide}"/>
+									</lc:AutoGrid>
+									<TextBlock Style="{StaticResource CircuitName}"/>
+								</StackPanel>
+							</DataTemplate>
+
+							<DataTemplate DataType="{x:Type lc:SensorDescriptor}">
+								<StackPanel Style="{StaticResource DescriptorPanel}">
+									<ContentControl/>
+									<lc:AutoGrid Style="{StaticResource PropertyGrid}">
+										<lc:AutoWidthComboBox HorizontalAlignment="Stretch"
+											ItemsSource="{x:Static lc:SensorDescriptor.SensorTypes}"
+											SelectedItem="{Binding Path=SensorType}"
+											ToolTip="{x:Static properties:Resources.ToolTipSensorType}"
+										/>
+										<TextBlock Style="{StaticResource PropertyLabel}" Text="{x:Static properties:Resources.CaptionSensorType}"/>
+
+										<ComboBox ItemsSource="{x:Static lc:PinDescriptor.BitWidthRange}"
+											SelectedItem="{Binding Path=BitWidth}"
+											ToolTip="{x:Static properties:Resources.ToolTipSensorBitWidth}"
+										/>
+										<TextBlock Style="{StaticResource PropertyLabel}" Text="{x:Static properties:Resources.CaptionBitWidth}"/>
+
+										<lc:AutoWidthComboBox HorizontalAlignment="Stretch"
+											SelectedItem="{Binding Path=PinSide, Mode=TwoWay}"
+											ItemsSource="{x:Static lc:PinDescriptor.PinSideRange}"
+											ToolTip="{x:Static properties:Resources.ToolTipDevicePinSide}"
+										/>
+										<TextBlock Style="{StaticResource PropertyLabel}" Text="{x:Static properties:Resources.CaptionPinSide}"/>
+
+										<TextBox MaxLength="8"
+											Text="{Binding Path=Notation, Mode=TwoWay}"
+											ToolTip="{x:Static properties:Resources.ToolTipSensorNotation}"
+										/>
+										<TextBlock Style="{StaticResource PropertyLabel}" Text="{x:Static properties:Resources.CaptionNotation}"/>
+									</lc:AutoGrid>
+									<TextBlock Style="{StaticResource CircuitName}"/>
+								</StackPanel>
+							</DataTemplate>
+
+							<DataTemplate DataType="{x:Type lc:SoundDescriptor}">
+								<StackPanel Style="{StaticResource DescriptorPanel}">
+									<ContentControl/>
+									<lc:AutoGrid Style="{StaticResource PropertyGrid}">
+										<lc:AutoWidthComboBox
+											SelectedItem="{Binding Path=PinSide, Mode=TwoWay}"
+											ItemsSource="{x:Static lc:PinDescriptor.PinSideRange}"
+											ToolTip="{x:Static properties:Resources.ToolTipDevicePinSide}"
+										/>
+										<TextBlock Style="{StaticResource PropertyLabel}" Text="{x:Static properties:Resources.CaptionPinSide}"/>
+
+										<TextBox MaxLength="8"
+											Text="{Binding Path=Notation, Mode=TwoWay}"
+											ToolTip="{x:Static properties:Resources.ToolTipSoundNotation}"
+										/>
+										<TextBlock Style="{StaticResource PropertyLabel}" Text="{x:Static properties:Resources.CaptionNotation}"/>
+									</lc:AutoGrid>
+									<TextBlock Style="{StaticResource CircuitName}"/>
+								</StackPanel>
+							</DataTemplate>
+
+							<DataTemplate DataType="{x:Type lc:MemoryDescriptor}">
+								<StackPanel Style="{StaticResource DescriptorPanel}">
+									<ContentControl/>
+									<lc:AutoGrid Style="{StaticResource PropertyGrid}">
+										<ComboBox ItemsSource="{x:Static lc:MemoryDescriptor.AddressBitWidthRange}"
+											SelectedItem="{Binding Path=AddressBitWidth}"
+											ToolTip="{x:Static properties:Resources.ToolTipAddressBitWidth}"
+										/>
+										<TextBlock Style="{StaticResource PropertyLabel}" Text="{x:Static properties:Resources.CaptionAddressBitWidth}"/>
+
+										<ComboBox ItemsSource="{x:Static lc:PinDescriptor.BitWidthRange}"
+											SelectedItem="{Binding Path=DataBitWidth}"
+											ToolTip="{x:Static properties:Resources.ToolTipDataBitWidth}"
+										/>
+										<TextBlock Style="{StaticResource PropertyLabel}" Text="{x:Static properties:Resources.CaptionDataBitWidth}"/>
+									</lc:AutoGrid>
+									<TextBlock Style="{StaticResource CircuitName}" Text="{Binding Path=Circuit.Notation}"/>
+								</StackPanel>
+							</DataTemplate>
+
+							<DataTemplate DataType="{x:Type lc:LedMatrixDescriptor}">
+								<StackPanel Style="{StaticResource DescriptorPanel}">
+									<ContentControl/>
+									<lc:AutoGrid Style="{StaticResource PropertyGrid}">
+										<lc:AutoWidthComboBox ItemsSource="{x:Static lc:LedMatrixDescriptor.MatrixTypes}"
+											SelectedItem="{Binding Path=MatrixType}"
+											ToolTip="{x:Static properties:Resources.ToolTipLedMatrixType}"
+										/>
+										<TextBlock Style="{StaticResource PropertyLabel}" Text="{x:Static properties:Resources.CaptionLedMatrixType}"/>
+
+										<ComboBox
+											ItemsSource="{x:Static lc:LedMatrixDescriptor.RowsRange}"
+											SelectedItem="{Binding Path=Rows}"
+											ToolTip="{x:Static properties:Resources.ToolTipRows}"
+										/>
+										<TextBlock Style="{StaticResource PropertyLabel}" Text="{x:Static properties:Resources.CaptionRows}"/>
+
+										<ComboBox
+											ItemsSource="{x:Static lc:LedMatrixDescriptor.ColumnsRange}"
+											SelectedItem="{Binding Path=Columns}"
+											ToolTip="{x:Static properties:Resources.ToolTipColumns}"
+										/>
+										<TextBlock Style="{StaticResource PropertyLabel}" Text="{x:Static properties:Resources.CaptionColumns}"/>
+									</lc:AutoGrid>
+									<TextBlock Style="{StaticResource CircuitName}" Text="{Binding Path=Circuit.Notation}"/>
+								</StackPanel>
+							</DataTemplate>
+
+							<DataTemplate DataType="{x:Type lc:GraphicsArrayDescriptor}">
+								<StackPanel Style="{StaticResource DescriptorPanel}">
+									<ContentControl/>
+									<lc:AutoGrid Style="{StaticResource PropertyGrid}">
+										<ComboBox
+											ItemsSource="{x:Static lc:GraphicsArrayDescriptor.DataBitWidthRange}"
+											SelectedItem="{Binding Path=DataBitWidth}"
+											ToolTip="{x:Static properties:Resources.ToolTipDataBitWidth}"
+										/>
+										<TextBlock Style="{StaticResource PropertyLabel}" Text="{x:Static properties:Resources.CaptionDataBitWidth}"/>
+
+										<ComboBox
+											ItemsSource="{x:Static lc:GraphicsArrayDescriptor.BitsPerPixelRange}"
+											SelectedItem="{Binding Path=BitsPerPixel}"
+											ToolTip="{x:Static properties:Resources.ToolTipGraphicsArrayBPP}"
+										/>
+										<TextBlock Style="{StaticResource PropertyLabel}" Text="{x:Static properties:Resources.CaptionGraphicsArrayBPP}"/>
+									</lc:AutoGrid>
+									<TextBlock Style="{StaticResource CircuitName}" Text="{Binding Path=Circuit.Notation}"/>
+								</StackPanel>
+							</DataTemplate>
+
+							<DataTemplate DataType="{x:Type lc:PinDescriptor}">
+								<StackPanel Style="{StaticResource DescriptorPanel}">
+									<ContentControl/>
+									<lc:AutoGrid Style="{StaticResource PropertyGrid}">
+										<ComboBox
+											ItemsSource="{x:Static lc:PinDescriptor.BitWidthRange}"
+											SelectedItem="{Binding Path=BitWidth}"
+											ToolTip="{x:Static properties:Resources.ToolTipPinBitWidth}"
+										/>
+										<TextBlock Style="{StaticResource PropertyLabel}" Text="{x:Static properties:Resources.CaptionBitWidth}"/>
+
+										<lc:AutoWidthComboBox
+											SelectedItem="{Binding Path=PinSide, Mode=TwoWay}"
+											ItemsSource="{x:Static lc:PinDescriptor.PinSideRange}"
+											ToolTip="{x:Static properties:Resources.ToolTipPinSide}"
+										/>
+										<TextBlock Style="{StaticResource PropertyLabel}" Text="{x:Static properties:Resources.CaptionSide}"/>
+									</lc:AutoGrid>
+									<TextBlock Style="{StaticResource CircuitName}" Text="{x:Static properties:Resources.NamePin}"/>
+								</StackPanel>
+							</DataTemplate>
+
+							<DataTemplate DataType="{x:Type lc:SplitterDescriptor}">
+								<StackPanel Style="{StaticResource DescriptorPanel}">
+									<ContentControl RenderTransformOrigin="0.4,0">
+										<ContentControl.RenderTransform>
+											<ScaleTransform ScaleX="{Binding ElementName=directions, Path=SelectedItem.Flip, FallbackValue=1}"/>
+										</ContentControl.RenderTransform>
+									</ContentControl>
+									<lc:AutoGrid Style="{StaticResource PropertyGrid}">
+										<ComboBox ItemsSource="{Binding Path=PinCountRange}"
+											SelectedItem="{Binding Path=PinCount}"
+											ToolTip="{x:Static properties:Resources.ToolTipSplitterPinNumber}"
+										/>
+										<TextBlock Style="{StaticResource PropertyLabel}" Text="{x:Static properties:Resources.CaptionSplitterPinNumber}"/>
+
+										<ComboBox ItemsSource="{Binding Path=BitWidthRange}"
+											SelectedItem="{Binding Path=BitWidth}"
+											ToolTip="{x:Static properties:Resources.ToolTipSplitterBitWidth}"
+										/>
+										<TextBlock Style="{StaticResource PropertyLabel}" Text="{x:Static properties:Resources.CaptionSplitterBitWidth}"/>
+
+										<lc:AutoWidthComboBox Name="directions"
+											ItemsSource="{Binding Path=DirectionRange}"
+											SelectedItem="{Binding Path=Direction}"
+											ToolTip="{x:Static properties:Resources.ToolTipSplitterRotation}"
+										/>
+										<TextBlock Style="{StaticResource PropertyLabel}" Text="{x:Static properties:Resources.CaptionSplitterDirection}"/>
+									</lc:AutoGrid>
+									<TextBlock Style="{StaticResource CircuitName}"/>
+								</StackPanel>
+							</DataTemplate>
+
+							<DataTemplate DataType="{x:Type lc:LogicalCircuitDescriptor}">
+								<Border BorderThickness="1">
+									<Border.Style>
+										<Style TargetType="Border">
+											<Style.Triggers>
+												<DataTrigger Binding="{Binding Path=IsCurrent}" Value="True">
+													<Setter Property="BorderBrush" Value="{StaticResource MarkerStroke}"/>
+												</DataTrigger>
+											</Style.Triggers>
+										</Style>
+									</Border.Style>
+									<StackPanel Style="{StaticResource DescriptorPanel}">
+										<ContentControl/>
+										<TextBlock Style="{StaticResource CircuitName}"/>
+									</StackPanel>
+								</Border>
+							</DataTemplate>
+
+							<DataTemplate DataType="{x:Type lc:TextNoteDescriptor}">
+								<StackPanel Style="{StaticResource DescriptorPanel}" ToolTip="{x:Static properties:Resources.ToolTipDescriptorText}" Background="Transparent">
+									<StackPanel Orientation="Vertical" MinWidth="50" Margin="3">
+										<TextBlock FontFamily="Georgia" FontSize="16" FontWeight="Bold" Margin="5" Text="{x:Static properties:Resources.CaptionTextNote1}"/>
+										<TextBlock FontFamily="Georgia" FontSize="14" FontStyle="Italic" Margin="5" Text="{x:Static properties:Resources.CaptionTextNote2}"/>
+									</StackPanel>
+									<TextBlock Style="{StaticResource CircuitName}"/>
+								</StackPanel>
+							</DataTemplate>
+						</ListView.Resources>
+					</ListView>
+				</GroupBox>
+			</Grid>
+
+			<!-- Column Splitter -->
+			<GridSplitter Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Width="4" Background="Transparent"/>
+
+			<!-- Main Diagram -->
+			<GroupBox Grid.Column="2" Header="{Binding Path=Editor.Project.LogicalCircuit.Name, FallbackValue=''}" HeaderTemplate="{StaticResource ignoreHotkey}">
+				<ScrollViewer Name="DiagramScroll"
+					HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible"
+					LostFocus="DiagramLostFocus" LostKeyboardFocus="DiagramLostKeyboardFocus"
+					FlowDirection="LeftToRight"
+				>
+					<Canvas Name="Diagram" HorizontalAlignment="Left" VerticalAlignment="Top"
+						Width="{x:Static lc:Symbol.LogicalCircuitWidth}"
+						Height="{x:Static lc:Symbol.LogicalCircuitHeight}"
+						Style="{StaticResource LogicCircuitBackground}"
+						AllowDrop="True"
+						DragOver="DiagramDragOver"
+						Drop="DiagramDrop"
+						MouseDown="DiagramMouseDown"
+						MouseUp="DiagramMouseUp"
+						MouseMove="DiagramMouseMove"
+						MouseWheel="DiagramMouseWheel"
+						LostFocus="DiagramLostFocus"
+						LostKeyboardFocus="DiagramLostKeyboardFocus"
+						SnapsToDevicePixels="False"
+					>
+						<Canvas.LayoutTransform>
+							<ScaleTransform
+								ScaleX="{Binding ElementName=zoom, Path=Value}"
+								ScaleY="{Binding ElementName=zoom, Path=Value}"
+							/>
+						</Canvas.LayoutTransform>
+					</Canvas>
+				</ScrollViewer>
+			</GroupBox>
+		</Grid>
+
+		<!-- Status bar of the window -->
+		<StatusBar>
+			<StatusBarItem DockPanel.Dock="Right">
+				<StackPanel Orientation="Horizontal">
+					<Label Content="{x:Static properties:Resources.TitleZoom}" Target="{Binding ElementName=zoom}" Margin="0"/>
+					<Slider Width="100" x:Name="zoom" VerticalAlignment="Center" Background="{StaticResource SliderBackground}"
+						Minimum="0.1" Maximum="3" Value="{Binding Path=Editor.Zoom, Mode=TwoWay, FallbackValue=1}"
+						IsMoveToPointEnabled="True"
+						TickPlacement="TopLeft"
+						Ticks="0, 0.5, 1, 1.5, 2, 2.5, 3"
+						ToolTip="{x:Static properties:Resources.ToolTipZoom}"
+					>
+						<Slider.LayoutTransform>
+							<ScaleTransform ScaleX="1" ScaleY="0.8"/>
+						</Slider.LayoutTransform>
+					</Slider>
+					<TextBlock VerticalAlignment="Center" MinWidth="50" Margin="3,0"
+						Text="{Binding Path=Editor.Zoom, StringFormat=P0}"
+						ToolTip="{x:Static properties:Resources.ToolTipCurrentZoom}"
+					/>
+
+					<!-- This check box is invisible and only used for controlling animation in left column when power switches on and off. -->
+					<CheckBox IsChecked="{Binding Path=Editor.Power}" Visibility="Collapsed" IsTabStop="False">
+						<CheckBox.Triggers>
+							<EventTrigger RoutedEvent="CheckBox.Checked">
+								<BeginStoryboard HandoffBehavior="SnapshotAndReplace" Storyboard="{StaticResource openRunningTree}"/>
+							</EventTrigger>
+							<EventTrigger RoutedEvent="CheckBox.Unchecked">
+								<BeginStoryboard HandoffBehavior="SnapshotAndReplace" Storyboard="{StaticResource openProjectBrowser}"/>
+							</EventTrigger>
+						</CheckBox.Triggers>
+					</CheckBox>
+
+					<!-- This canvas is invisible and used to control colors of power button -->
+					<Canvas Name="powerMetter" Visibility="Collapsed">
+						<Canvas.Style>
+							<Style TargetType="Canvas">
+								<Setter Property="Background" Value="Gray"/>
+								<Setter Property="ToolTip" Value="{x:Static properties:Resources.PowerOff}"/>
+								<Style.Triggers>
+									<DataTrigger Binding="{Binding Path=Editor.Power}" Value="True">
+										<Setter Property="Background" Value="Red"/>
+										<Setter Property="ToolTip" Value="{x:Static properties:Resources.PowerOn}"/>
+									</DataTrigger>
+								</Style.Triggers>
+							</Style>
+						</Canvas.Style>
+					</Canvas>
+					<!-- Power Button -->
+					<Border MinWidth="20" MinHeight="20"
+						BorderThickness="2"
+						CornerRadius="3"
+						BorderBrush="{x:Static SystemColors.GradientActiveCaptionBrush}"
+						Background="{x:Static SystemColors.ControlBrush}"
+						ToolTip="{Binding ElementName=powerMetter, Path=ToolTip}"
+						MouseDown="PowerButtonMouseDown"
+						Margin="5,0,15,2"
+					>
+						<Grid>
+							<Ellipse StrokeThickness="2" Width="15" Height="15" Margin="2"
+								Stroke="{Binding ElementName=powerMetter, Path=Background}"
+							/>
+							<Rectangle StrokeThickness="2" Width="6" Height="13" Margin="0, -6, 0, 0"
+								Fill="{Binding ElementName=powerMetter, Path=Background}"
+								Stroke="{x:Static SystemColors.ControlBrush}"
+							/>
+						</Grid>
+					</Border>
+				</StackPanel>
+			</StatusBarItem>
+
+			<StatusBarItem DockPanel.Dock="Left">
+				<TextBlock Margin="8,0" Text="{Binding Path=Status}" VerticalAlignment="Center" ToolTip="{Binding Path=Status}"/>
+			</StatusBarItem>
+		</StatusBar>
+	</lc:AutoGrid>
+</Window>

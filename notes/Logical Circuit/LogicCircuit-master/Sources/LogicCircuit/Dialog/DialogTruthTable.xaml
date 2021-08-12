@@ -1,0 +1,110 @@
+﻿<Window x:Class="LogicCircuit.DialogTruthTable"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:lc="clr-namespace:LogicCircuit"
+	xmlns:properties="clr-namespace:LogicCircuit.Properties"
+	WindowStartupLocation="CenterOwner"
+	Title="{x:Static properties:Resources.CommandTruthTable}"
+	Style="{StaticResource DialogWindow}"
+	MinWidth="480" MinHeight="320"
+	FocusManager.FocusedElement="{Binding ElementName=dataGrid}"
+>
+	<Window.Resources>
+		<BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+		<lc:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+	</Window.Resources>
+
+	<Grid>
+		<lc:AutoGrid IsEnabled="{Binding Path=ShowProgress, Converter={StaticResource InverseBooleanConverter}}" ColumnWidths="Auto;*;Auto;Auto">
+			<Label Content="{x:Static properties:Resources.TitleFilter}" VerticalAlignment="Center"/>
+			<ComboBox Name="filter" IsEditable="True" ItemsSource="{Binding Path=OldFilters}">
+				<ComboBox.ItemTemplate>
+					<DataTemplate>
+						<lc:AutoGrid ColumnWidths="*;Auto" Width="{Binding ElementName=filter, Path=ActualWidth}">
+							<TextBlock Text="{Binding Path=.}" TextWrapping="Wrap"/>
+							<Button Style="{StaticResource TinyButton}"
+								Content="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=CommandDeleteOldFilter.Icon}"
+								Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=CommandDeleteOldFilter}"
+								CommandParameter="{Binding Path=.}"
+							/>
+						</lc:AutoGrid>
+					</DataTemplate>
+				</ComboBox.ItemTemplate>
+			</ComboBox>
+			<CheckBox VerticalAlignment="Center"
+				Content="{x:Static properties:Resources.TitleInvert}"
+				IsChecked="{Binding Path=InvertFilter}"
+			/>
+			<Button Name="buttonApply" Click="ButtonApplyClick" VerticalAlignment="Center"
+				Content="{x:Static properties:Resources.TitleApply}"
+				IsDefault="{Binding ElementName=filter, Path=IsFocused}"
+			/>
+
+			<DataGrid Grid.ColumnSpan="4" Name="dataGrid" AutoGenerateColumns="False" IsReadOnly="True" Margin="3"
+				VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Standard"
+				ItemsSource="{Binding Path=TruthTable}"
+			>
+				<DataGrid.CellStyle>
+					<Style TargetType="DataGridCell">
+						<Setter Property="HorizontalAlignment" Value="Right"/>
+					</Style>
+				</DataGrid.CellStyle>
+			</DataGrid>
+
+			<WrapPanel Grid.ColumnSpan="3" Orientation="Horizontal" VerticalAlignment="Top">
+				<WrapPanel.Resources>
+					<Style TargetType="TextBlock">
+						<Setter Property="Margin" Value="5,2"/>
+					</Style>
+				</WrapPanel.Resources>
+			
+				<TextBlock Text="{Binding Path=TotalRows, StringFormat={x:Static properties:Resources.TitleTotalRows}}"/>
+				<TextBlock Text="{Binding Path=TruthTable.Count, StringFormat={x:Static properties:Resources.TitleDisplayedRows}}"/>
+
+				<TextBlock Visibility="{Binding Path=Truncated, Converter={StaticResource BooleanToVisibilityConverter}}" TextWrapping="Wrap" Foreground="Red"
+					Text="{x:Static properties:Resources.MessageTruthTableTooBig}"
+				/>
+			</WrapPanel>
+
+			<Button Name="buttonOk" VerticalAlignment="Bottom"
+				Content="{x:Static properties:Resources.TitleOK}"
+				IsDefault="{Binding ElementName=filter, Path=IsFocused, Converter={StaticResource InverseBooleanConverter}}" IsCancel="True"
+			/>
+		</lc:AutoGrid>
+
+		<Grid Background="#80000000" Visibility="{Binding Path=ShowProgress, Converter={StaticResource BooleanToVisibilityConverter}}" Opacity="0">
+			<Grid.Style>
+				<Style TargetType="Grid">
+					<Style.Triggers>
+						<DataTrigger Binding="{Binding Path=ShowProgress}" Value="True">
+							<DataTrigger.EnterActions>
+								<BeginStoryboard>
+									<Storyboard>
+										<DoubleAnimation
+											Storyboard.TargetProperty="(Grid.Opacity)"
+											Duration="0:0:0.75"
+											From="0"
+											To="1"
+										>
+											<DoubleAnimation.EasingFunction>
+												<QuinticEase EasingMode="EaseIn"/>
+											</DoubleAnimation.EasingFunction>
+										</DoubleAnimation>
+									</Storyboard>
+								</BeginStoryboard>
+							</DataTrigger.EnterActions>
+						</DataTrigger>
+						<DataTrigger Binding="{Binding Path=ShowProgress}" Value="False">
+							<Setter Property="Opacity" Value="0"/>
+						</DataTrigger>
+					</Style.Triggers>
+				</Style>
+			</Grid.Style>
+			
+			<StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center">
+				<ProgressBar Minimum="0" Maximum="100" Value="{Binding Path=Progress}" Width="200" Height="15" HorizontalAlignment="Center"/>
+				<Button Content="{x:Static properties:Resources.TitleStop}" Click="ButtonStopClick" HorizontalAlignment="Center"/>
+			</StackPanel>
+		</Grid>
+	</Grid>
+</Window>

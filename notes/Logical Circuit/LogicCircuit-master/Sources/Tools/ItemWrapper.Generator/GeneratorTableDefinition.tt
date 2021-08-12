@@ -1,0 +1,218 @@
+﻿<#@ template language="C#" inherits="Transformation" #>
+<#@ import namespace="System.Linq" #>
+	// Defines the shape of the table <#=this.Table.Name#>
+	internal partial struct <#=this.Table.Name#>Data {
+<#
+foreach(Column column in this.Table.Columns) {
+	if(string.IsNullOrEmpty(column.Check)) {
+#>
+		public <#=column.Type#> <#=column.Name#>;
+<#	} else {#>
+		private <#=column.Type#> field<#=column.Name#>;
+		public <#=column.Type#> <#=column.Name#> {
+			get { return this.field<#=column.Name#>; }
+			set { this.field<#=column.Name#> = <#=column.Check#>(value); }
+		}
+<#
+	}
+}
+if(this.RealmType == RealmType.Universe) {#>
+		internal <#=this.Table.Name#> <#=this.Table.Name#>;
+<#}#>
+		// Field accessors
+<#
+foreach(Column column in this.Table.Columns) {
+	string defaultValue = (column.Default != null) ? column.Default : "default";
+	string format;
+	switch(column.Type) {
+	case "string":
+		format = column.IgnoreCase ? "StringComparer.OrdinalIgnoreCase.Compare({0}, {1})" : "StringComparer.Ordinal.Compare({0}, {1})";
+		if(column.Default != null) {
+			defaultValue = this.MakeString(defaultValue);
+		} else {
+			defaultValue = "null";
+		}
+		break;
+	case "int":
+		format = "Math.Sign((long){0} - (long){1})";
+		break;
+	case "float":
+	case "double":
+		format = "Math.Sign({0} - {1})";
+		break;
+	case "bool":
+	case "Guid":
+	default:
+		format = "{0}.CompareTo({1})";
+		break;
+	}
+	Func<string, string, string> compare = (l, r) => string.Format(format, l, r);
+#>
+		// Accessor of the <#=column.Name#> field
+<#if(column.Type == "RowId") {#>
+		public sealed class <#=column.Name#>Field : RowIdField<<#=this.Table.Name#>Data> {
+			public static readonly <#=column.Name#>Field Field = new <#=column.Name#>Field();
+			private <#=column.Name#>Field() : base("<#=column.Name#>") {}
+			public override RowId GetValue(ref <#=this.Table.Name#>Data record) {
+				return record.<#=column.Name#>;
+			}
+			public override void SetValue(ref <#=this.Table.Name#>Data record, RowId value) {
+				record.<#=column.Name#> = value;
+			}
+		}
+<#} else {#>
+		public sealed class <#=column.Name#>Field : IField<<#=this.Table.Name#>Data, <#=column.Type#>><#if(this.Table.Persistent) {#>, IFieldSerializer<<#=this.Table.Name#>Data><#}#> {
+			public static readonly <#=column.Name#>Field Field = new <#=column.Name#>Field();
+			private <#=column.Name#>Field() {}
+			public string Name { get { return "<#=column.Name#>"; } }
+			public int Order { get; set; }
+			public <#=column.Type#> DefaultValue { get { return <#=defaultValue#>; } }
+			public <#=column.Type#> GetValue(ref <#=this.Table.Name#>Data record) {
+				return record.<#=column.Name#>;
+			}
+			public void SetValue(ref <#=this.Table.Name#>Data record, <#=column.Type#> value) {
+				record.<#=column.Name#> = value;
+			}
+			public int Compare(ref <#=this.Table.Name#>Data l, ref <#=this.Table.Name#>Data r) {
+				return <#=compare("l." + column.Name, "r." + column.Name)#>;
+			}
+			public int Compare(<#=column.Type#> l, <#=column.Type#> r) {
+				return <#=compare("l", "r")#>;
+			}
+<#
+	if(this.Table.Persistent) {
+		string parse = "text";
+		switch(column.Type) {
+		case "string":
+			break;
+		case "int":
+			parse = "int.Parse(text, CultureInfo.InvariantCulture)";
+			break;
+		case "float":
+			parse = "float.Parse(text, CultureInfo.InvariantCulture)";
+			break;
+		case "double":
+			parse = "double.Parse(text, CultureInfo.InvariantCulture)";
+			break;
+		case "bool":
+			parse = "bool.Parse(text)";
+			break;
+		case "Guid":
+			parse = "new Guid(text)";
+			break;
+		case "System.Windows.Media.Color":
+			parse = "(System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(text)";
+			break;
+		default:
+			parse = "EnumHelper.Parse<" + column.Type + ">(text, this.DefaultValue)";
+			break;
+		}
+#>
+
+			// Implementation of interface IFieldSerializer<<#=this.Table.Name#>Data>
+			bool IFieldSerializer<<#=this.Table.Name#>Data>.NeedToSave(ref <#=this.Table.Name#>Data data) {
+				return this.Compare(data.<#=column.Name#>, this.DefaultValue) != 0;
+			}
+			string IFieldSerializer<<#=this.Table.Name#>Data>.GetTextValue(ref <#=this.Table.Name#>Data data) {
+				return string.Format(CultureInfo.InvariantCulture, "{0}", data.<#=column.Name#>);
+			}
+			void IFieldSerializer<<#=this.Table.Name#>Data>.SetDefault(ref <#=this.Table.Name#>Data data) {
+				data.<#=column.Name#> = this.DefaultValue;
+			}
+			void IFieldSerializer<<#=this.Table.Name#>Data>.SetTextValue(ref <#=this.Table.Name#>Data data, string text) {
+				data.<#=column.Name#> = <#=parse#>;
+			}
+<#	}#>
+		}
+<#}#>
+
+<#
+}
+if(this.RealmType == RealmType.Universe) {#>
+		// Special field used to access items wrapper of this record from record.
+		// This is used when no other universes is used
+		internal sealed class <#=this.Table.Name#>Field : IField<<#=this.Table.Name#>Data, <#=this.Table.Name#>> {
+			public static readonly <#=this.Table.Name#>Field Field = new <#=this.Table.Name#>Field();
+			private <#=this.Table.Name#>Field() {}
+			public string Name { get { return "<#=this.Table.Name#>Wrapper"; } }
+			public int Order { get; set; }
+			public <#=this.Table.Name#> DefaultValue { get { return null; } }
+			public <#=this.Table.Name#> GetValue(ref <#=this.Table.Name#>Data record) {
+				return record.<#=this.Table.Name#>;
+			}
+			public void SetValue(ref <#=this.Table.Name#>Data record, <#=this.Table.Name#> value) {
+				record.<#=this.Table.Name#> = value;
+			}
+			public int Compare(ref <#=this.Table.Name#>Data l, ref <#=this.Table.Name#>Data r) {
+				return this.Compare(l.<#=this.Table.Name#>, r.<#=this.Table.Name#>);
+			}
+			public int Compare(<#=this.Table.Name#> l, <#=this.Table.Name#> r) {
+				if(object.ReferenceEquals(l, r)) return 0;
+				if(l == null) return -1;
+				if(r == null) return 1;
+				return l.<#=this.Table.Name#>RowId.CompareTo(r.<#=this.Table.Name#>RowId);
+			}
+		}
+
+<#}#>
+		private static readonly IField<<#=this.Table.Name#>Data>[] fields = {
+<#foreach(Column column in this.Table.Columns) {#>
+			<#=column.Name#>Field.Field,
+<#}#>
+<#if(this.RealmType == RealmType.Universe) {#>
+			<#=this.Table.Name#>Field.Field
+<#}#>
+		};
+
+		// Creates table.
+		public static TableSnapshot<<#=this.Table.Name#>Data> CreateTable(StoreSnapshot store) {
+			TableSnapshot<<#=this.Table.Name#>Data> table = new TableSnapshot<<#=this.Table.Name#>Data>(store, "<#=this.Table.Name#>", <#=this.Table.Name#>Data.fields);
+			// Create all but foreign keys of the table
+<#
+foreach(Key key in this.Table.Keys) {
+	if(key.IsUnique() || key.IsIndex()) { // this will ignore only foreign keys
+		string function = key.IsUnique() ? "MakeUnique" : "CreateIndex";
+		if(key.KeyType == KeyType.Auto) {
+#>
+			table.MakeAutoUnique();
+<#
+		} else if(key.Count == 1) {
+			string primary = "";
+			if(key.IsUnique()) {
+				if(key.IsPrimary()) {
+					primary = ", true";
+				} else {
+					primary = ", false";
+				}
+			}
+#>
+			table.<#=function#>("<#=key.Name#>", <#=this.Table.Name#>Data.<#=key[0].Name#>Field.Field <#=primary#>);
+<#
+		} else {
+#>
+			table.<#=function#>("<#=key.Name#>", <#=this.Table.Name#>Data.<#=key[0].Name#>Field.Field, <#=this.Table.Name#>Data.<#=key[1].Name#>Field.Field);
+<#
+		}
+	}
+}
+#>
+			// Return created table
+			return table;
+		}
+
+		// Creates all foreign keys of the table
+		public static void CreateForeignKeys(StoreSnapshot store) {
+<#if(this.Table.Keys.Any(k => k.IsForeign())) {#>
+			TableSnapshot<<#=this.Table.Name#>Data> table = (TableSnapshot<<#=this.Table.Name#>Data>)store.Table("<#=this.Table.Name#>");
+<#
+foreach(Key key in this.Table.Keys) {
+	if(key.IsForeign()) {
+#>
+			table.CreateForeignKey("<#=key.Name#>", store.Table("<#=key.ParentName#>"), <#=this.Table.Name#>Data.<#=key[0].Name#>Field.Field, ForeignKeyAction.<#=key.Action#>, <#=key.AllowsDefault ? "true" : "false"#>);
+<#
+		}
+	}
+}
+#>
+		}
+	}

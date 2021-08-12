@@ -1,0 +1,145 @@
+﻿<Window x:Class="LogicCircuit.DialogText"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:lc="clr-namespace:LogicCircuit"
+	xmlns:properties="clr-namespace:LogicCircuit.Properties"
+	WindowStartupLocation="CenterOwner"
+	Title="{x:Static properties:Resources.TextNotation}"
+	MinWidth="580" MinHeight="300"
+	Style="{StaticResource DialogWindow}"
+	FocusManager.FocusedElement="{Binding ElementName=editor}"
+>
+	<lc:AutoGrid ColumnWidths="*">
+		<ToolBarTray>
+			<ToolBarTray.Resources>
+				<lc:RemoveAcceleratorConverter x:Key="RemoveAcceleratorConverter"/>
+				<lc:VectorImageLoaderConverter x:Key="VectorImageLoaderConverter"/>
+				<ScaleTransform x:Key="toolImageZoom" ScaleX="1.5" ScaleY="1.5"/>
+
+				<Style TargetType="ToggleButton" x:Key="toolToggleButton">
+					<Setter Property="CommandTarget" Value="{Binding ElementName=editor}"/>
+					<Setter Property="VerticalAlignment" Value="Stretch"/>
+					<Setter Property="Width" Value="{Binding RelativeSource={x:Static RelativeSource.Self}, Path=ActualHeight}"/>
+					<Setter Property="ToolTip" Value="{Binding RelativeSource={x:Static RelativeSource.Self}, Path=Command.Text, Converter={StaticResource RemoveAcceleratorConverter}}"/>
+					<Style.Triggers>
+						<Trigger Property="IsEnabled" Value="False">
+							<Setter Property="Opacity" Value="0.5"/>
+						</Trigger>
+					</Style.Triggers>
+				</Style>
+
+				<Style TargetType="ContentControl" x:Key="toolIcon">
+					<Setter Property="LayoutTransform" Value="{StaticResource toolImageZoom}"/>
+				</Style>
+			</ToolBarTray.Resources>
+			<!-- Edit Toolbar -->
+			<ToolBar Band="{Binding Path=EditToolBarBand.Value, Mode=TwoWay}" BandIndex="{Binding Path=EditToolBarBandIndex.Value, Mode=TwoWay}">
+				<ToggleButton Style="{StaticResource toolToggleButton}" Command="ApplicationCommands.Cut">
+					<ContentControl Content="{Binding Converter={StaticResource VectorImageLoaderConverter}, ConverterParameter='Icon\\EditCut.xaml'}" Style="{StaticResource toolIcon}"/>
+				</ToggleButton>
+				<ToggleButton Style="{StaticResource toolToggleButton}" Command="ApplicationCommands.Copy">
+					<ContentControl Content="{Binding Converter={StaticResource VectorImageLoaderConverter}, ConverterParameter='Icon\\EditCopy.xaml'}" Style="{StaticResource toolIcon}"/>
+				</ToggleButton>
+				<ToggleButton Style="{StaticResource toolToggleButton}" Command="ApplicationCommands.Paste">
+					<ContentControl Content="{Binding Converter={StaticResource VectorImageLoaderConverter}, ConverterParameter='Icon\\EditPaste.xaml'}" Style="{StaticResource toolIcon}"/>
+				</ToggleButton>
+
+				<Separator/>
+
+				<ToggleButton Style="{StaticResource toolToggleButton}" Command="ApplicationCommands.Undo">
+					<ContentControl Content="{Binding Converter={StaticResource VectorImageLoaderConverter}, ConverterParameter='Icon\\EditUndo.xaml'}" Style="{StaticResource toolIcon}"/>
+				</ToggleButton>
+				<ToggleButton Style="{StaticResource toolToggleButton}" Command="ApplicationCommands.Redo">
+					<ContentControl Content="{Binding Converter={StaticResource VectorImageLoaderConverter}, ConverterParameter='Icon\\EditRedo.xaml'}" Style="{StaticResource toolIcon}"/>
+				</ToggleButton>
+			</ToolBar>
+			<!-- Font Toolbar -->
+			<ToolBar Band="{Binding Path=FontToolBarBand.Value, Mode=TwoWay}" BandIndex="{Binding Path=FontToolBarBandIndex.Value, Mode=TwoWay}">
+				<ComboBox Name="comboBoxFontFamily" Width="150" ItemsSource="{Binding Path=FontFamilies}" SelectedItem="{Binding Path=CurrentFontFamily}" ToolTip="{x:Static properties:Resources.ToolTipFontFamily}">
+					<ComboBox.ItemTemplate>
+						<DataTemplate>
+							<TextBlock Text="{Binding Path=Source}" FontFamily="{Binding}" FontSize="16" ToolTip="{Binding}"/>
+						</DataTemplate>
+					</ComboBox.ItemTemplate>
+				</ComboBox>
+
+				<ComboBox Width="50" ItemsSource="{Binding Path=FontSizes}" SelectedItem="{Binding Path=CurrentFontSize}" ToolTip="{x:Static properties:Resources.ToolTipFontSize}" VerticalAlignment="Stretch"
+					Height="{Binding ElementName=comboBoxFontFamily, Path=ActualHeight}"
+				/>
+
+				<ToggleButton Name="boldButton" Style="{StaticResource toolToggleButton}" Command="EditingCommands.ToggleBold" IsChecked="{Binding Path=IsBoldFont, Mode=OneWay}">
+					<TextBlock FontSize="18" FontWeight="Bold">B</TextBlock>
+				</ToggleButton>
+				<ToggleButton Style="{StaticResource toolToggleButton}" Command="EditingCommands.ToggleItalic" IsChecked="{Binding Path=IsItalicFont, Mode=OneWay}">
+					<TextBlock FontSize="18" FontWeight="Bold" FontStyle="Italic">I</TextBlock>
+				</ToggleButton>
+				<ToggleButton Style="{StaticResource toolToggleButton}" Command="EditingCommands.ToggleUnderline" IsChecked="{Binding Path=IsUnderlineFont, Mode=OneWay}">
+					<TextBlock FontSize="18" FontWeight="Bold" TextDecorations="Underline">U</TextBlock>
+				</ToggleButton>
+				<ToggleButton Style="{StaticResource toolToggleButton}" Command="EditingCommands.IncreaseFontSize">
+					<ContentControl Content="{Binding Converter={StaticResource VectorImageLoaderConverter}, ConverterParameter='Icon\\EditIncreaseFontSize.xaml'}" Style="{StaticResource toolIcon}"/>
+				</ToggleButton>
+				<ToggleButton Style="{StaticResource toolToggleButton}" Command="EditingCommands.DecreaseFontSize">
+					<ContentControl Content="{Binding Converter={StaticResource VectorImageLoaderConverter}, ConverterParameter='Icon\\EditDecreaseFontSize.xaml'}" Style="{StaticResource toolIcon}"/>
+				</ToggleButton>
+
+				<lc:ColorPicker ColorPickerMode="Background" ToolTip="{x:Static properties:Resources.ToolTipBackgroundColor}"
+					SelectedColor="{Binding Path=HighlightColor, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged, NotifyOnTargetUpdated=True}"
+				/>
+				<lc:ColorPicker ColorPickerMode="Foreground" ToolTip="{x:Static properties:Resources.ToolTipFontColor}"
+					SelectedColor="{Binding Path=ForegroundColor, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged, NotifyOnTargetUpdated=True}"
+				/>
+			</ToolBar>
+			<!-- Paragraph Toolbar -->
+			<ToolBar Band="{Binding Path=ParaToolBarBand.Value, Mode=TwoWay}" BandIndex="{Binding Path=ParaToolBarBandIndex.Value, Mode=TwoWay}">
+				<ToggleButton Style="{StaticResource toolToggleButton}" Command="EditingCommands.ToggleBullets" IsChecked="{Binding Path=IsBulleted, Mode=OneWay}">
+					<ContentControl Content="{Binding Converter={StaticResource VectorImageLoaderConverter}, ConverterParameter='Icon\\EditBulletList.xaml'}" Style="{StaticResource toolIcon}"/>
+				</ToggleButton>
+				<ToggleButton Style="{StaticResource toolToggleButton}" Command="EditingCommands.ToggleNumbering" IsChecked="{Binding Path=IsNumbered, Mode=OneWay}">
+					<ContentControl Content="{Binding Converter={StaticResource VectorImageLoaderConverter}, ConverterParameter='Icon\\EditOrderedList.xaml'}" Style="{StaticResource toolIcon}"/>
+				</ToggleButton>
+
+				<Separator />
+
+				<ToggleButton Style="{StaticResource toolToggleButton}" Command="EditingCommands.AlignLeft" IsChecked="{Binding Path=IsLeftAlignment, Mode=OneWay}">
+					<ContentControl Content="{Binding Converter={StaticResource VectorImageLoaderConverter}, ConverterParameter='Icon\\EditLeftJustify.xaml'}" Style="{StaticResource toolIcon}"/>
+				</ToggleButton>
+				<ToggleButton Style="{StaticResource toolToggleButton}" Command="EditingCommands.AlignCenter" IsChecked="{Binding Path=IsCenterAlignment, Mode=OneWay}">
+					<ContentControl Content="{Binding Converter={StaticResource VectorImageLoaderConverter}, ConverterParameter='Icon\\EditTextCenter.xaml'}" Style="{StaticResource toolIcon}"/>
+				</ToggleButton>
+				<ToggleButton Style="{StaticResource toolToggleButton}" Command="EditingCommands.AlignRight" IsChecked="{Binding Path=IsRightAlignment, Mode=OneWay}">
+					<ContentControl Content="{Binding Converter={StaticResource VectorImageLoaderConverter}, ConverterParameter='Icon\\EditRightJustify.xaml'}" Style="{StaticResource toolIcon}"/>
+				</ToggleButton>
+				<ToggleButton Style="{StaticResource toolToggleButton}" Command="EditingCommands.AlignJustify" IsChecked="{Binding Path=IsJustifyAlignment, Mode=OneWay}">
+					<ContentControl Content="{Binding Converter={StaticResource VectorImageLoaderConverter}, ConverterParameter='Icon\\EditJustify.xaml'}" Style="{StaticResource toolIcon}"/>
+				</ToggleButton>
+				<ToggleButton Style="{StaticResource toolToggleButton}" Command="EditingCommands.IncreaseIndentation" IsChecked="False">
+					<ContentControl Content="{Binding Converter={StaticResource VectorImageLoaderConverter}, ConverterParameter='Icon\\EditTextIndent.xaml'}" Style="{StaticResource toolIcon}"/>
+				</ToggleButton>
+				<ToggleButton Style="{StaticResource toolToggleButton}" Command="EditingCommands.DecreaseIndentation" IsChecked="False">
+					<ContentControl Content="{Binding Converter={StaticResource VectorImageLoaderConverter}, ConverterParameter='Icon\\EditTextOutdent.xaml'}" Style="{StaticResource toolIcon}"/>
+				</ToggleButton>
+			</ToolBar>
+			<!-- Other Toolbar -->
+			<ToolBar Band="{Binding Path=OtherToolBarBand.Value, Mode=TwoWay}" BandIndex="{Binding Path=OtherToolBarBandIndex.Value, Mode=TwoWay}">
+				<ToggleButton Style="{StaticResource toolToggleButton}" Command="{Binding Path=HyperlinkCommand}">
+					<ContentControl Content="{Binding Converter={StaticResource VectorImageLoaderConverter}, ConverterParameter='Icon\\Hyperlink.xaml'}" Style="{StaticResource toolIcon}"/>
+				</ToggleButton>
+
+				<ToggleButton Style="{StaticResource toolToggleButton}" Command="{Binding Path=InsertImageCommand}">
+					<ContentControl Content="{Binding Converter={StaticResource VectorImageLoaderConverter}, ConverterParameter='Icon\\Image.xaml'}" Style="{StaticResource toolIcon}"/>
+				</ToggleButton>
+			</ToolBar>
+		</ToolBarTray>
+
+		<RichTextBox Name="editor" AcceptsReturn="True" AcceptsTab="True" SpellCheck.IsEnabled="True" TextChanged="editorTextChanged" SelectionChanged="editorSelectionChanged"
+			VerticalScrollBarVisibility="Auto"
+			HorizontalScrollBarVisibility="Auto"
+		/>
+
+		<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+			<Button Content="{x:Static properties:Resources.TitleOK}" IsDefault="True" Click="ButtonOkClick"/>
+			<Button Content="{x:Static properties:Resources.TitleCancel}" IsCancel="True"/>
+		</StackPanel>
+	</lc:AutoGrid>
+</Window>

@@ -1,0 +1,70 @@
+﻿<UserControl x:Class="LogicCircuit.ControlMemoryEditor"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:lc="clr-namespace:LogicCircuit"
+>
+	<UserControl.Resources>
+		<Style x:Key="cellViewer" TargetType="TextBlock">
+			<Style.Triggers>
+				<Trigger Property="Validation.HasError" Value="true">
+					<Setter Property="ToolTip" Value="{Binding RelativeSource={RelativeSource Self}, Path=(Validation.Errors)[0].ErrorContent}"/>
+					<Setter Property="Background" Value="#5FFF0000"/>
+				</Trigger>
+			</Style.Triggers>
+		</Style>
+
+		<Style x:Key="cellEditor" TargetType="TextBox">
+			<Setter Property="MaxLength" Value="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=DataDigits}"/>
+			<Style.Triggers>
+				<Trigger Property="Validation.HasError" Value="true">
+					<Setter Property="ToolTip" Value="{Binding RelativeSource={RelativeSource Self}, Path=(Validation.Errors)[0].ErrorContent}"/>
+				</Trigger>
+			</Style.Triggers>
+		</Style>
+	</UserControl.Resources>
+
+	<DataGrid Name="dataGrid"
+		AutoGenerateColumns="False"
+		Background="Transparent"
+		HorizontalGridLinesBrush="{x:Static SystemColors.ControlLightBrush}"
+		VerticalGridLinesBrush="{x:Static SystemColors.ControlLightBrush}"
+		SelectionUnit="Cell"
+		MinColumnWidth="20"
+		MaxColumnWidth="100"
+		CanUserAddRows="False"
+		CanUserDeleteRows="False"
+		CanUserReorderColumns="False"
+		CanUserResizeRows="False"
+		CanUserSortColumns="False"
+		IsReadOnly="{Binding RelativeSource={RelativeSource AncestorType=lc:ControlMemoryEditor}, Path=IsReadOnly}"
+	>
+		<DataGrid.RowStyle>
+			<Style TargetType="DataGridRow">
+				<Setter Property="HorizontalAlignment" Value="Left"/>
+				<Style.Triggers>
+					<Trigger Property="IsMouseOver" Value="True">
+						<Setter Property="Background" Value="{x:Static SystemColors.InactiveSelectionHighlightBrush}"/>
+					</Trigger>
+				</Style.Triggers>
+			</Style>
+		</DataGrid.RowStyle>
+
+		<DataGrid.RowHeaderStyle>
+			<Style TargetType="DataGridRowHeader">
+				<Setter Property="Content" Value="{Binding Path=RowIndex}"/>
+				<Setter Property="Padding" Value="8,2"/>
+			</Style>
+		</DataGrid.RowHeaderStyle>
+
+		<DataGrid.RowValidationErrorTemplate>
+			<!-- Empty template will not show exclamation mark on errors which is not clearing up when user fixes the errors. -->
+			<ControlTemplate/>
+		</DataGrid.RowValidationErrorTemplate>
+
+		<DataGrid.ColumnHeaderStyle>
+			<Style TargetType="DataGridColumnHeader">
+				<Setter Property="HorizontalContentAlignment" Value="Center"/>
+			</Style>
+		</DataGrid.ColumnHeaderStyle>
+	</DataGrid>
+</UserControl>

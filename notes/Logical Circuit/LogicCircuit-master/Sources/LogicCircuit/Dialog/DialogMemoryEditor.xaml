@@ -1,0 +1,91 @@
+﻿<Window x:Class="LogicCircuit.DialogMemoryEditor"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:lc="clr-namespace:LogicCircuit"
+	xmlns:properties="clr-namespace:LogicCircuit.Properties"
+	WindowStartupLocation="CenterOwner"
+	Style="{StaticResource DialogWindow}"
+	MinWidth="590" MinHeight="350"
+	FocusManager.FocusedElement="{Binding ElementName=addressBitWidth}"
+>
+	<Window.Resources>
+		<Style TargetType="{x:Type ComboBox}" BasedOn="{StaticResource {x:Type ComboBox}}">
+			<Setter Property="HorizontalAlignment" Value="Left"/>
+		</Style>
+
+		<Style x:Key="ramOnly" TargetType="{x:Type FrameworkElement}">
+			<Style.Triggers>
+				<DataTrigger Binding="{Binding Path=Memory.Writable}" Value="False">
+					<Setter Property="IsEnabled" Value="False"/>
+					<Setter Property="Visibility" Value="Collapsed"/>
+				</DataTrigger>
+			</Style.Triggers>
+		</Style>
+
+		<Style x:Key="dataAllowed" TargetType="{x:Type FrameworkElement}">
+			<Setter Property="IsEnabled" Value="False"/>
+			<Style.Triggers>
+				<DataTrigger Binding="{Binding ElementName=onStart, Path=SelectedItem.Value}" Value="{x:Static lc:MemoryOnStart.Data}">
+					<Setter Property="IsEnabled" Value="True"/>
+				</DataTrigger>
+			</Style.Triggers>
+		</Style>
+	</Window.Resources>
+
+	<lc:AutoGrid Margin="3">
+		<Label Content="{x:Static properties:Resources.TitleAddressBitWidth}"/>
+		<ComboBox Name="addressBitWidth" SelectionChanged="MemorySizeChanged" ToolTip="{x:Static properties:Resources.ToolTipAddressBitWidth}"/>
+
+		<Label Content="{x:Static properties:Resources.TitleDataBitWidth}"/>
+		<ComboBox Name="dataBitWidth" SelectionChanged="MemorySizeChanged" ToolTip="{x:Static properties:Resources.ToolTipDataBitWidth}"/>
+
+		<StackPanel Style="{StaticResource ramOnly}" VerticalAlignment="Center">
+			<Label Content="{x:Static properties:Resources.TitleWriteOn}" Target="{Binding ElementName=writeOn}"/>
+		</StackPanel>
+		<StackPanel Style="{StaticResource ramOnly}" VerticalAlignment="Center">
+			<lc:AutoWidthComboBox x:Name="writeOn" ToolTip="{x:Static properties:Resources.ToolTipRamWriteOn}"/>
+		</StackPanel>
+
+		<StackPanel Style="{StaticResource ramOnly}" VerticalAlignment="Center">
+			<Label Content="{x:Static properties:Resources.TitleMemoryOnStart}" Target="{Binding ElementName=onStart}"/>
+		</StackPanel>
+		<StackPanel Style="{StaticResource ramOnly}" VerticalAlignment="Center">
+			<lc:AutoWidthComboBox x:Name="onStart"
+				ToolTip="{x:Static properties:Resources.ToolTipMemoryOnStart}"
+			/>
+		</StackPanel>
+		<CheckBox Grid.Column="1" Name="checkBoxDualPort" Content="{x:Static properties:Resources.TitleDualPort}"/>
+
+		<Grid Grid.ColumnSpan="2" lc:AutoGrid.RowHeight="*" Name="splitGrid">
+			<Grid.RowDefinitions>
+				<RowDefinition Height="{Binding Path=DataHeight.Value, Mode=TwoWay}"/>
+				<RowDefinition Height="Auto"/>
+				<RowDefinition Height="{Binding Path=NoteHeight.Value, Mode=TwoWay}" MinHeight="60"
+					MaxHeight="{Binding ElementName=splitGrid, Path=ActualHeight, Converter={StaticResource DoubleAdderConverter}, ConverterParameter=-75}"
+				/>
+			</Grid.RowDefinitions>
+
+			<GroupBox Grid.Row="0" Header="{x:Static properties:Resources.TitleData}" Margin="3,3,3,0">
+				<lc:ControlMemoryEditor FunctionMemory="{Binding Path=FunctionMemory}" Style="{StaticResource dataAllowed}"/>
+			</GroupBox>
+
+			<GridSplitter Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="3" Background="Transparent"/>
+
+			<GroupBox Grid.Row="2" Margin="3,0,3,3" Header="{x:Static properties:Resources.CaptionNote}">
+				<TextBox Name="note" Style="{StaticResource NoteEditor}" BorderThickness="0"/>
+			</GroupBox>
+		</Grid>
+
+		<Grid Grid.ColumnSpan="2">
+			<StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Style="{StaticResource dataAllowed}">
+				<Button Content="{x:Static properties:Resources.TitleLoad}" Click="ButtonLoadClick" ToolTip="{x:Static properties:Resources.ToolTipLoadData}"/>
+				<Button Content="{x:Static properties:Resources.TitleSaveAs}" Click="ButtonSaveClick" ToolTip="{x:Static properties:Resources.ToolTipSaveData}"/>
+			</StackPanel>
+
+			<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+				<Button Content="{x:Static properties:Resources.TitleOK}" IsDefault="True" Click="ButtonOkClick"/>
+				<Button Content="{x:Static properties:Resources.TitleCancel}" IsCancel="True"/>
+			</StackPanel>
+		</Grid>
+	</lc:AutoGrid>
+</Window>

@@ -1,0 +1,432 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Store xmlns="clr-namespace:ItemWrapper.Generator;assembly=ItemWrapper.Generator"
+	Namespace="LogicCircuit" Name="CircuitProject"
+	PersistencePrefix="lc" PersistenceNamespace="http://LogicCircuit.net/2.0.0.9/CircuitProject.xsd"
+>
+
+	<!--
+		Change history
+		Version 1.0.0.2 - changing semantic of Wire. Now wire is line segment and conductor is set of wires and connection is child of conductor.
+		There is no transformation from version 1.0.0.1 to 1.0.0.2 so all existing files will be lost.
+
+		Version 1.0.0.3 - no schema changes. Introduction of the new version is just to prevent loading the new file with newly introduced tri state buffers
+		by old version of program that does not support such gates. A simple transformation is required to change namespace so no user data will be lost.
+
+		Version 2.0.0.1 - Moving to new store. Adding Frequency and IsMaximumSpeed to project. Adding JamNotation to Pin. Adding TextNote.
+		Version 2.0.0.2 - Adding Note to memory modules, collapse state to categories.
+		Version 2.0.0.3 - Adding note field to button and constant. Adding LedMatrix circuits.
+		Version 2.0.0.4 - removing Odd and Even functions and replace them with XOR and XOR NOT
+		Version 2.0.0.5 - Adding MemoryOnStart to memory circuits
+		Version 2.0.0.6 - Adding IsDisplay property to LogicalCircuit. Making Probe separate circuit to enable naming of it.
+		Version 2.0.0.7 - Adding PinSide to Button and Constant. Adding Sensor, Sound, and GraphicsArray circuits. LogicalCircuit.Description and Project.Description both renamed to Note.
+		Version 2.0.0.8 - Adding Inverted flag to the button, adding index on pin so it can be rearranged on the symbol's side, adding startup circuit to project
+		Version 2.0.0.9 - Adding zoom to graphics array. Adding Validators field to LogicalCircuit. Adding DualPort to memory.
+	-->
+
+	<Table Name="Project">
+		<Table.Columns>
+			<Column Name="ProjectId" Type="Guid" ReadOnly="true"/>
+			<Column Name="Name" Type="string" Default="Circuit Project"/>
+			<Column Name="Note" Type="string" Default=""/>
+			<Column Name="Zoom" Type="double" Default="1" Check="Project.CheckZoom"/>
+			<Column Name="Frequency" Type="int" Default="10" Check="Project.CheckFrequency"/>
+			<Column Name="IsMaximumSpeed" Type="bool" Default="false"/>
+			<Column Name="LogicalCircuitId" Type="Guid"/>
+			<Column Name="StartupCircuitId" Type="Guid" Default="default"/>
+			<Column Name="CategoryTextNoteCollapsed" Type="bool" Default="false"/>
+			<Column Name="CategoryInputOutputCollapsed" Type="bool" Default="false"/>
+			<Column Name="CategoryPrimitivesCollapsed" Type="bool" Default="false"/>
+		</Table.Columns>
+		<Table.Keys>
+			<Key Name="PK_Project" KeyType="Primary">
+				<Column Name="ProjectId"/>
+			</Key>
+
+			<Key Name="FK_LogicalCircuit_Project" KeyType="Foreign" ParentName="LogicalCircuit" Action="Restrict">
+				<Column Name="LogicalCircuitId"/>
+			</Key>
+
+			<Key Name="FK_StartupCircuit_Project" KeyType="Foreign" ParentName="LogicalCircuit" Action="SetDefault" AllowsDefault="true">
+				<Column Name="StartupCircuitId"/>
+			</Key>
+		</Table.Keys>
+	</Table>
+
+	<Table Name="CollapsedCategory">
+		<Table.Columns>
+			<Column Name="Name" Type="string" Default=""/>
+		</Table.Columns>
+		<Table.Keys>
+			<Key Name="PK_CollapsedCategory" KeyType="Primary">
+				<Column Name="Name"/>
+			</Key>
+		</Table.Keys>
+	</Table>
+
+	<Table Name="Circuit" ItemModifier="Abstract"  Persistent="False">
+		<Table.Columns>
+			<Column Name="CircuitId" Type="Guid" ReadOnly="true"/>
+		</Table.Columns>
+
+		<Table.Keys>
+			<Key Name="PK_Circuit" KeyType="Primary">
+				<Column Name="CircuitId"/>
+			</Key>
+		</Table.Keys>
+	</Table>
+
+	<Table Name="DevicePin" Persistent="False" ItemBaseClass="BasePin">
+		<Table.Columns>
+			<Column Name="PinId" Type="Guid" ReadOnly="true"/>
+			<Column Name="CircuitId" Type="Guid" PropertyOverrides="true" AccessModifier="Protected" PropertyNamePrefix="Pin"/>
+			<Column Name="BitWidth" Type="int" Default="1" Check="BasePin.CheckBitWidth" ReadOnly="true" AccessModifier="Private" PropertyNamePrefix="Pin"/>
+			<Column Name="PinType" Type="PinType" Default="PinType.Input" PropertyOverrides="true" ReadOnly="true" AccessModifier="Protected" PropertyNamePrefix="Pin"/>
+			<Column Name="PinSide" Type="PinSide" Default="PinSide.Left" PropertyOverrides="true"/>
+			<Column Name="Inverted" Type="bool" Default="false" AccessModifier="Private" PropertyNamePrefix="Pin"/>
+			<Column Name="Name" Type="string" PropertyOverrides="true"/>
+			<Column Name="Note" Type="string" Default="" PropertyOverrides="true"/>
+			<Column Name="JamNotation" Type="string" Default="" PropertyOverrides="true"/>
+		</Table.Columns>
+
+		<Table.Keys>
+			<Key Name="PK_DevicePin" KeyType="Subclass" ParentName="Circuit" Action="Cascade">
+				<Column Name="PinId"/>
+			</Key>
+
+			<Key Name="AK_DevicePinName" KeyType="Unique">
+				<Column Name="CircuitId"/>
+				<Column Name="Name"/>
+			</Key>
+
+			<!--
+				This foreign key is set to restrict because deleting of parent circuit should clear both this record and circuit record referenced by subclass key,
+				but it is impossible to delete this super class just following referential integrity rules. So deletion of all circuits that are using device pins
+				should first delete all the pins associated with it and them delete itself. To enforce this set action on this key to restrict.
+			-->
+			<Key Name="FK_Circuit_DevicePin" KeyType="Foreign" ParentName="Circuit" Action="Restrict">
+				<Column Name="CircuitId"/>
+			</Key>
+
+			<Key Name="IX_Circuit_DevicePin" KeyType="Index">
+				<Column Name="CircuitId"/>
+			</Key>
+		</Table.Keys>
+	</Table>
+
+	<Table Name="Gate" Persistent="False">
+		<Table.Columns>
+			<Column Name="GateId" Type="Guid" ReadOnly="true"/>
+		</Table.Columns>
+
+		<Table.Keys>
+			<Key Name="PK_Gate" KeyType="Subclass" ParentName="Circuit" Action="Cascade">
+				<Column Name="GateId"/>
+			</Key>
+		</Table.Keys>
+	</Table>
+
+	<Table Name="LogicalCircuit">
+		<Table.Columns>
+			<Column Name="LogicalCircuitId" Type="Guid" ReadOnly="true"/>
+			<Column Name="Name" Type="string" Default="Main" PropertyOverrides="true"/>
+			<Column Name="Notation" Type="string" Default="" PropertyOverrides="true"/>
+			<Column Name="Note" Type="string" Default="" PropertyOverrides="true"/>
+			<Column Name="Category" Type="string" Default="" PropertyOverrides="true"/>
+			<Column Name="IsDisplay" Type="bool" Default="false" PropertyOverrides="true"/>
+			<!-- List of expression to use in truth table filter -->
+			<Column Name="Validators" Type="string" Default=""/>
+		</Table.Columns>
+
+		<Table.Keys>
+			<Key Name="PK_LogicalCircuit" KeyType="Subclass" ParentName="Circuit" Action="Cascade">
+				<Column Name="LogicalCircuitId"/>
+			</Key>
+
+			<Key Name="AK_LogicalCircuit_Name" KeyType="Unique">
+				<Column Name="Name"/>
+			</Key>
+		</Table.Keys>
+	</Table>
+
+	<Table Name="Pin" ItemBaseClass="BasePin">
+		<Table.Columns>
+			<Column Name="PinId" Type="Guid" ReadOnly="true"/>
+			<Column Name="CircuitId" Type="Guid" PropertyOverrides="true" AccessModifier="Protected" PropertyNamePrefix="Pin"/>
+			<Column Name="BitWidth" Type="int" Default="1" Check="BasePin.CheckBitWidth" PropertyOverrides="true"/>
+			<Column Name="PinType" Type="PinType" Default="PinType.Input" PropertyOverrides="true" ReadOnly="true" AccessModifier="Protected" PropertyNamePrefix="Pin"/>
+			<Column Name="PinSide" Type="PinSide" Default="PinSide.Left" PropertyOverrides="true"/>
+			<Column Name="Inverted" Type="bool" Default="false" PropertyOverrides="true"/>
+			<Column Name="Name" Type="string" PropertyOverrides="true"/>
+			<Column Name="Note" Type="string" Default="" PropertyOverrides="true"/>
+			<Column Name="JamNotation" Type="string" Default="" PropertyOverrides="true"/>
+			<Column Name="Index" Type="int" Default="0"/>
+		</Table.Columns>
+
+		<Table.Keys>
+			<Key Name="PK_Pin" KeyType="Subclass" ParentName="Circuit" Action="Cascade">
+				<Column Name="PinId"/>
+			</Key>
+
+			<Key Name="AK_Pin_Name" KeyType="Unique">
+				<Column Name="CircuitId"/>
+				<Column Name="Name"/>
+			</Key>
+
+			<Key Name="FK_Circuit_Pin" KeyType="Foreign" ParentName="Circuit" Action="Restrict">
+				<Column Name="CircuitId"/>
+			</Key>
+
+			<Key Name="IX_Circuit_Pin" KeyType="Index">
+				<Column Name="CircuitId"/>
+			</Key>
+		</Table.Keys>
+	</Table>
+
+	<Table Name="CircuitProbe">
+		<Table.Columns>
+			<Column Name="CircuitProbeId" Type="Guid" ReadOnly="true"/>
+			<Column Name="Name" Type="string" Default="" Check="this.CheckName" PropertyOverrides="true"/>
+			<Column Name="Note" Type="string" Default="" PropertyOverrides="true"/>
+		</Table.Columns>
+
+		<Table.Keys>
+			<Key Name="PK_CircuitProbe" KeyType="Subclass" ParentName="Circuit" Action="Cascade">
+				<Column Name="CircuitProbeId"/>
+			</Key>
+			<Key Name="AK_CircuitProbe_Name" KeyType="Unique">
+				<Column Name="Name"/>
+			</Key>
+		</Table.Keys>
+	</Table>
+
+	<Table Name="Constant">
+		<Table.Columns>
+			<Column Name="ConstantId" Type="Guid" ReadOnly="true"/>
+			<Column Name="BitWidth" Type="int" Default="1" Check="BasePin.CheckBitWidth"/>
+			<Column Name="Value" Type="int" Default="0" AccessModifier="Private"/>
+			<Column Name="PinSide" Type="PinSide" Default="PinSide.Right"/>
+			<Column Name="Note" Type="string" Default="" PropertyOverrides="true"/>
+		</Table.Columns>
+
+		<Table.Keys>
+			<Key Name="PK_Constant" KeyType="Subclass" ParentName="Circuit" Action="Cascade">
+				<Column Name="ConstantId"/>
+			</Key>
+		</Table.Keys>
+	</Table>
+
+	<Table Name="CircuitButton">
+		<Table.Columns>
+			<Column Name="CircuitButtonId" Type="Guid" ReadOnly="true"/>
+			<Column Name="Notation" Type="string" Default="" PropertyOverrides="true"/>
+			<Column Name="IsToggle" Type="bool" Default="false"/>
+			<Column Name="PinSide" Type="PinSide" Default="PinSide.Right"/>
+			<Column Name="Inverted" Type="bool" Default="false"/>
+			<Column Name="Width" Type="int" Default="2"/>
+			<Column Name="Height" Type="int" Default="2"/>
+			<Column Name="Note" Type="string" Default="" PropertyOverrides="true"/>
+		</Table.Columns>
+
+		<Table.Keys>
+			<Key Name="PK_CircuitButton" KeyType="Subclass" ParentName="Circuit" Action="Cascade">
+				<Column Name="CircuitButtonId"/>
+			</Key>
+		</Table.Keys>
+	</Table>
+
+	<Table Name="Memory">
+		<Table.Columns>
+			<Column Name="MemoryId" Type="Guid" ReadOnly="true"/>
+			<Column Name="Writable" Type="bool"/>
+			<Column Name="WriteOn1" Type="bool" Default="false"/>
+			<Column Name="OnStart" Type="MemoryOnStart" Default="MemoryOnStart.Random"/>
+			<Column Name="AddressBitWidth" Type="int" Check="Memory.CheckAddressBitWidth"/>
+			<Column Name="DataBitWidth" Type="int" Check="BasePin.CheckBitWidth"/>
+			<Column Name="DualPort" Type="bool" Default="false"/>
+			<Column Name="Data" Type="string" Default="" AccessModifier="Private"/>
+			<Column Name="Note" Type="string" Default="" PropertyOverrides="true"/>
+		</Table.Columns>
+
+		<Table.Keys>
+			<Key Name="PK_Memory" KeyType="Subclass" ParentName="Circuit" Action="Cascade">
+				<Column Name="MemoryId"/>
+			</Key>
+		</Table.Keys>
+	</Table>
+
+	<Table Name="LedMatrix">
+		<Table.Columns>
+			<Column Name="LedMatrixId" Type="Guid" ReadOnly="true"/>
+			<Column Name="MatrixType" Type="LedMatrixType" Default="LedMatrixType.Individual"/>
+			<Column Name="CellShape" Type="LedMatrixCellShape" Default="LedMatrixCellShape.Round"/>
+			<Column Name="Rows" Type="int" Check="LedMatrix.Check"/>
+			<Column Name="Columns" Type="int" Check="LedMatrix.Check"/>
+			<Column Name="Colors" Type="int" Check="LedMatrix.CheckColors" Default="1"/>
+			<Column Name="Note" Type="string" Default="" PropertyOverrides="true"/>
+		</Table.Columns>
+
+		<Table.Keys>
+			<Key Name="PK_LedMatrix" KeyType="Subclass" ParentName="Circuit" Action="Cascade">
+				<Column Name="LedMatrixId"/>
+			</Key>
+		</Table.Keys>
+	</Table>
+
+	<Table Name="Splitter">
+		<Table.Columns>
+			<Column Name="SplitterId" Type="Guid" ReadOnly="true"/>
+			<Column Name="BitWidth" Type="int" Check="BasePin.CheckBitWidth"/>
+			<Column Name="PinCount" Type="int" Check="BasePin.CheckBitWidth"/>
+			<Column Name="Clockwise" Type="bool"/>
+		</Table.Columns>
+
+		<Table.Keys>
+			<Key Name="PK_Splitter" KeyType="Subclass" ParentName="Circuit" Action="Cascade">
+				<Column Name="SplitterId"/>
+			</Key>
+		</Table.Keys>
+	</Table>
+
+	<Table Name="Sensor">
+		<Table.Columns>
+			<Column Name="SensorId" Type="Guid" ReadOnly="true"/>
+			<Column Name="SensorType" Type="SensorType" Default="SensorType.Random"/>
+			<Column Name="BitWidth" Type="int" Default="1" Check="BasePin.CheckBitWidth"/>
+			<Column Name="PinSide" Type="PinSide" Default="PinSide.Right"/>
+			<Column Name="Notation" Type="string" Default="" PropertyOverrides="true"/>
+			<Column Name="Data" Type="string" Default=""/>
+			<Column Name="Note" Type="string" Default="" PropertyOverrides="true"/>
+		</Table.Columns>
+
+		<Table.Keys>
+			<Key Name="PK_Sensor" KeyType="Subclass" ParentName="Circuit" Action="Cascade">
+				<Column Name="SensorId"/>
+			</Key>
+		</Table.Keys>
+	</Table>
+
+	<Table Name="Sound">
+		<Table.Columns>
+			<Column Name="SoundId" Type="Guid" ReadOnly="true"/>
+			<Column Name="PinSide" Type="PinSide" Default="PinSide.Left"/>
+			<Column Name="Notation" Type="string" Default="" PropertyOverrides="true"/>
+			<Column Name="Note" Type="string" Default="" PropertyOverrides="true"/>
+		</Table.Columns>
+
+		<Table.Keys>
+			<Key Name="PK_Sound" KeyType="Subclass" ParentName="Circuit" Action="Cascade">
+				<Column Name="SoundId"/>
+			</Key>
+		</Table.Keys>
+	</Table>
+
+	<Table Name="GraphicsArray">
+		<Table.Columns>
+			<Column Name="GraphicsArrayId" Type="Guid" ReadOnly="true"/>
+			<Column Name="WriteOn1" Type="bool" Default="false"/>
+			<Column Name="OnStart" Type="MemoryOnStart" Check="GraphicsArray.CheckOnStart" Default="MemoryOnStart.Zeros"/>
+			<Column Name="DataBitWidth" Type="int" Check="GraphicsArray.CheckBitWidth" Default="8"/>
+			<Column Name="BitsPerPixel" Type="int" Check="GraphicsArray.CheckBitsPerPixel" Default="1"/>
+			<Column Name="Width" Type="int" Check="GraphicsArray.CheckWidth" Default="160"/>
+			<Column Name="Height" Type="int" Check="GraphicsArray.CheckHeight" Default="120"/>
+			<Column Name="Zoom" Type="int" Check="GraphicsArray.CheckZoom" Default="1"/>
+			<Column Name="Note" Type="string" Default="" PropertyOverrides="true"/>
+		</Table.Columns>
+
+		<Table.Keys>
+			<Key Name="PK_GraphicsArray" KeyType="Subclass" ParentName="Circuit" Action="Cascade">
+				<Column Name="GraphicsArrayId"/>
+			</Key>
+		</Table.Keys>
+	</Table>
+
+	<Table Name="CircuitSymbol" ItemBaseClass="CircuitGlyph">
+		<Table.Columns>
+			<Column Name="CircuitSymbolId" Type="Guid" ReadOnly="true"/>
+			<Column Name="CircuitId" Type="Guid" ReadOnly="true" PropertyOverrides="true" AccessModifier="Protected" PropertyNamePrefix="Symbol"/>
+			<Column Name="LogicalCircuitId" Type="Guid" PropertyOverrides="true" AccessModifier="Protected" PropertyNamePrefix="Symbol"/>
+			<Column Name="X" Type="int"/>
+			<Column Name="Y" Type="int"/>
+			<Column Name="Rotation" Type="Rotation" Default="Rotation.Up"/>
+		</Table.Columns>
+
+		<Table.Keys>
+			<Key Name="PK_CircuitSymbol" KeyType="Primary">
+				<Column Name="CircuitSymbolId"/>
+			</Key>
+
+			<Key Name="FK_Circuit_CircuitSymbol" KeyType="Foreign" ParentName="Circuit" Action="Cascade">
+				<Column Name="CircuitId"/>
+			</Key>
+
+			<Key Name="IX_Circuit_CircuitSymbol" KeyType="Index">
+				<Column Name="CircuitId"/>
+			</Key>
+
+			<!--
+				Deletion of the LogicalCircuit should first delete all the symbols associated with it and then delete itself.
+				Otherwise it impossible to cascade delete circuits that can have only one circuit symbol like buttons, constants etc.
+				So set action to restrict here to enforce this.
+			-->
+			<Key Name="FK_LogicalCircuit_CircuitSymbol" KeyType="Foreign" ParentName="LogicalCircuit" Action="Restrict">
+				<Column Name="LogicalCircuitId"/>
+			</Key>
+
+			<Key Name="IX_LogicalCircuit_CircuitSymbol" KeyType="Index">
+				<Column Name="LogicalCircuitId"/>
+			</Key>
+		</Table.Keys>
+	</Table>
+
+	<Table Name="Wire" ItemBaseClass="Symbol">
+		<Table.Columns>
+			<Column Name="WireId" Type="Guid" ReadOnly="true"/>
+			<Column Name="LogicalCircuitId" Type="Guid" PropertyOverrides="true" AccessModifier="Protected" PropertyNamePrefix="Symbol"/>
+			<Column Name="X1" Type="int"/>
+			<Column Name="Y1" Type="int"/>
+			<Column Name="X2" Type="int"/>
+			<Column Name="Y2" Type="int"/>
+		</Table.Columns>
+
+		<Table.Keys>
+			<Key Name="PK_Wire" KeyType="Primary">
+				<Column Name="WireId"/>
+			</Key>
+
+			<Key Name="FK_LogicalCircuit_Wire" KeyType="Foreign" ParentName="LogicalCircuit" Action="Cascade">
+				<Column Name="LogicalCircuitId"/>
+			</Key>
+
+			<Key Name="IX_LogicalCircuit_Wire" KeyType="Index">
+				<Column Name="LogicalCircuitId"/>
+			</Key>
+		</Table.Keys>
+	</Table>
+
+	<Table Name="TextNote" ItemBaseClass="Symbol">
+		<Table.Columns>
+			<Column Name="TextNoteId" Type="Guid" ReadOnly="true"/>
+			<Column Name="LogicalCircuitId" Type="Guid" PropertyOverrides="true" AccessModifier="Protected" PropertyNamePrefix="Symbol"/>
+			<Column Name="X" Type="int"/>
+			<Column Name="Y" Type="int"/>
+			<Column Name="Width" Type="int" Default="10"/>
+			<Column Name="Height" Type="int" Default="10"/>
+			<Column Name="Note" Type="string" Default=""/>
+			<Column Name="Rotation" Type="Rotation" Default="Rotation.Up"/>
+		</Table.Columns>
+
+		<Table.Keys>
+			<Key Name="PK_TextNote" KeyType="Primary">
+				<Column Name="TextNoteId"/>
+			</Key>
+
+			<Key Name="FK_LogicalCircuit_TextNote" KeyType="Foreign" ParentName="LogicalCircuit" Action="Cascade">
+				<Column Name="LogicalCircuitId"/>
+			</Key>
+
+			<Key Name="IX_LogicalCircuit_TextNote" KeyType="Index">
+				<Column Name="LogicalCircuitId"/>
+			</Key>
+		</Table.Keys>
+	</Table>
+</Store>

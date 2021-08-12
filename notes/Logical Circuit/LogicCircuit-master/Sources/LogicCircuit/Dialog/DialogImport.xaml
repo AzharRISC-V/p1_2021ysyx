@@ -1,0 +1,95 @@
+﻿<Window x:Class="LogicCircuit.DialogImport"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:lc="clr-namespace:LogicCircuit"
+	xmlns:properties="clr-namespace:LogicCircuit.Properties"
+	WindowStartupLocation="CenterOwner"
+	Title="{x:Static properties:Resources.ImportTitle}"
+	Style="{StaticResource DialogWindow}"
+	MinWidth="555" MinHeight="240"
+	FocusManager.FocusedElement="{Binding ElementName=listView}"
+>
+	<Window.Resources>
+		<CollectionViewSource x:Key="circuitInfoList" Source="{Binding Path=List}">
+			<CollectionViewSource.GroupDescriptions>
+				<PropertyGroupDescription PropertyName="Circuit.Category"/>
+			</CollectionViewSource.GroupDescriptions>
+		</CollectionViewSource>
+	</Window.Resources>
+
+	<lc:AutoGrid>
+		<StackPanel Grid.ColumnSpan="2" Orientation="Horizontal">
+			<StackPanel.Resources>
+				<Style TargetType="TextBlock">
+					<Setter Property="Margin" Value="5"/>
+					<Setter Property="VerticalAlignment" Value="Top"/>
+				</Style>
+			</StackPanel.Resources>
+			<TextBlock Text="{x:Static properties:Resources.TitleFileName}"/>
+			<TextBlock Text="{Binding Path=FileName, Mode=OneTime}" TextWrapping="Wrap"/>
+		</StackPanel>
+
+		<ListView Grid.ColumnSpan="2" Name="listView" ItemsSource="{Binding Source={StaticResource circuitInfoList}}" Margin="3">
+			<ListView.GroupStyle>
+				<GroupStyle ContainerStyle="{StaticResource CircuitDescriptorGroup}"/>
+			</ListView.GroupStyle>
+
+			<ListView.View>
+				<GridView AllowsColumnReorder="False">
+					<GridViewColumn Header="{x:Static properties:Resources.TitleImportCircuit}">
+						<GridViewColumn.CellTemplate>
+							<DataTemplate>
+								<CheckBox IsChecked="{Binding Path=Import}" IsEnabled="{Binding Path=CanImport}"/>
+							</DataTemplate>
+						</GridViewColumn.CellTemplate>
+					</GridViewColumn>
+
+					<GridViewColumn Header="{x:Static properties:Resources.TitleCircuitDescriptor}">
+						<GridViewColumn.CellTemplate>
+							<DataTemplate>
+								<StackPanel Orientation="Horizontal" ToolTip="{Binding Path=Circuit.ToolTip}">
+									<ContentControl Content="{Binding Path=CircuitGlyph.Glyph}" Margin="5" FlowDirection="LeftToRight">
+										<ContentControl.LayoutTransform>
+											<ScaleTransform ScaleX="0.75" ScaleY="0.75"/>
+										</ContentControl.LayoutTransform>
+									</ContentControl>
+									<TextBlock Text="{Binding Path=Circuit.Name}" Margin="5" VerticalAlignment="Center"/>
+								</StackPanel>
+							</DataTemplate>
+						</GridViewColumn.CellTemplate>
+					</GridViewColumn>
+				</GridView>
+			</ListView.View>
+
+			<ListView.Style>
+				<Style TargetType="ListView">
+					<Style.Triggers>
+						<DataTrigger Binding="{Binding Path=List}" Value="{x:Null}">
+							<Setter Property="IsEnabled" Value="False"/>
+						</DataTrigger>
+					</Style.Triggers>
+				</Style>
+			</ListView.Style>
+		</ListView>
+
+		<StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Bottom">
+			<Button Content="{x:Static properties:Resources.TitleCheckAll}" Click="ButtonCheckAllClick"/>
+			<Button Content="{x:Static properties:Resources.TitleUncheckAll}" Click="ButtonUncheckAllClick"/>
+		</StackPanel>
+
+		<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+			<Button Content="{x:Static properties:Resources.TitleOK}" IsDefault="True" Click="ButtonOkClick">
+				<Button.Style>
+					<Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+						<Style.Triggers>
+							<DataTrigger Binding="{Binding Path=List}" Value="{x:Null}">
+								<Setter Property="IsEnabled" Value="False"/>
+							</DataTrigger>
+						</Style.Triggers>
+					</Style>
+				</Button.Style>
+			</Button>
+			<Button Content="{x:Static properties:Resources.TitleCancel}" IsCancel="True"/>
+		</StackPanel>
+	</lc:AutoGrid>
+</Window>
