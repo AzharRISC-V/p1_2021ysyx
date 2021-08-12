@@ -282,3 +282,11 @@
       https://blog.csdn.net/starter_____/article/details/98736854
 
 31. 逻辑运算指令
+
+    * CMP 同 sub，不送出结果仅保留PSW
+
+32. 标记转移指令
+
+    * 
+
+33. 
