@@ -1,6 +1,6 @@
     
     MOV SS, 1
-    MOV SP, 0x10    ; [0, 0x9] 栈空间
+    MOV SP, 0x10    ; [0, 0xF] 栈空间
     MOV D, 10
     
     PUSH D
