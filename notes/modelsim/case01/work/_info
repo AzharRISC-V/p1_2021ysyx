@@ -1,0 +1,52 @@
+m255
+K4
+z2
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+dD:/DevTools/modeltech64_2019.2/examples
+vtest
+Z0 !s110 1625880786
+!i10b 1
+!s100 ^SAJ?aNK;TS7B;55RT6XG0
+IMD]L<08=z_KZ][<R=hi291
+Z1 VDg1SIo80bB@j0V0VzS_@n1
+Z2 dD:/a4_ysyx/code/modelsim/case01
+w1625847568
+8D:\a4_ysyx\code\modelsim\case01\test.v
+FD:\a4_ysyx\code\modelsim\case01\test.v
+L0 1
+Z3 OV;L;10.6d;65
+r1
+!s85 0
+31
+Z4 !s108 1625880786.000000
+!s107 D:\a4_ysyx\code\modelsim\case01\test.v|
+!s90 -reportprogress|300|-work|work|-vlog01compat|-stats=none|D:\a4_ysyx\code\modelsim\case01\test.v|
+!i113 1
+Z5 o-work work -vlog01compat -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact
+Z6 tCvgOpt 0
+vtop
+R0
+!i10b 1
+!s100 blPg4F>_>B?D`0I2OSJK72
+ILCdKgWoK0JM]eAR?Cb1WI3
+R1
+R2
+w1625876661
+8D:/a4_ysyx/code/modelsim/case01/top.v
+FD:/a4_ysyx/code/modelsim/case01/top.v
+L0 1
+R3
+r1
+!s85 0
+31
+R4
+!s107 D:/a4_ysyx/code/modelsim/case01/top.v|
+!s90 -reportprogress|300|-work|work|-vlog01compat|-stats=none|D:/a4_ysyx/code/modelsim/case01/top.v|
+!i113 1
+R5
+R6

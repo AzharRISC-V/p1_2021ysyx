@@ -1,4 +1,27 @@
-## Model的一些故事
+## Modelsim技巧
+
+* ModelSim软件配置
+
+  * tab配置为4
+
+  * 字体配置
+
+  * 更改为默认编辑器
+
+    * 从preference中查找editor即可
+    * 需要在windows中更改为modelsim.exe打开.v文件
+    * 可能还要删除 \HKEY_CURRENT_USER\SOFTWARE\Model Technology Incorporated\ModelSim ，还原到默认值
+
+  * 更改为vscode
+
+    ```
+    在Transcript中输入
+    proc external_editor {filename linenumber} { exec "D:\\DevTools\\Microsoft VS Code\\Code.exe" $filename }
+    再输入
+    set PrefSource(altEditor) external_editor
+    ```
+
+    
 
 * 仿真和调试的对应关系
 

@@ -1,0 +1,15 @@
+D:/a4_ysyx/code/modelsim/case01/test.v {1 {vlog -work work -novopt -vlog01compat -stats=none D:/a4_ysyx/code/modelsim/case01/test.v
+Model Technology ModelSim SE-64 vlog 10.4 Compiler 2014.12 Dec  3 2014
+-- Compiling module test
+
+Top level modules:
+	test
+
+} {} {}} D:/a4_ysyx/code/modelsim/case01/top.v {1 {vlog -work work -novopt -vlog01compat -stats=none D:/a4_ysyx/code/modelsim/case01/top.v
+Model Technology ModelSim SE-64 vlog 10.4 Compiler 2014.12 Dec  3 2014
+-- Compiling module top
+
+Top level modules:
+	top
+
+} {} {}}

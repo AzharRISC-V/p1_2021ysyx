@@ -1,0 +1,6 @@
+modul2e m1(
+	input a,b,c,
+	output y);
+	assign y = ~a & ~b & ~c |
+				a & ~b & ~c;
+endmodule
