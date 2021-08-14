@@ -30,3 +30,6 @@ Use "./build.sh -h" command under Ubunutu terminal to get the build instructions
       * 该插件还需要一些配置，还需要安装 Java 环境，按照说明配置即可。
         具体的，从 $ git clone https://github.com/ericsonj/verilog-format.git 下载后得到 verilog-format 可执行程序。
       * 在 vscode 中，设置 verilog-format path即可
+  - 设置换行
+    - 一个个文件的修改，打开文件在右下角单击 LF / CRLF 等字样，保存即可
+    - 设置默认值，> settings > files.eol，设置为固定值
