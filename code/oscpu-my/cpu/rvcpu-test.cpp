@@ -1,15 +1,15 @@
 // --xuezhen--
 //rvcpu-test.cpp
-#include <verilated.h>          
-#include <verilated_vcd_c.h>    
+#include <verilated.h>
+#include <verilated_vcd_c.h>
 #include <iostream>
 #include <fstream>
 #include "Vrvcpu.h"
 
 using namespace std;
 
-static Vrvcpu* top;
-static VerilatedVcdC* tfp;
+static Vrvcpu *top;
+static VerilatedVcdC *tfp;
 static vluint64_t main_time = 0;
 static const vluint64_t sim_time = 1000;
 
@@ -19,19 +19,24 @@ static const vluint64_t sim_time = 1000;
 // inst 2: 1 + reg1 = reg1 1+2=3
 int inst_rom[65536];
 
-void read_inst( char* filename)
+/*
+	read all instructions from given file,
+	and store to global variable : inst_rom
+*/
+void read_inst(char *filename)
 {
-  FILE *fp = fopen(filename, "rb");
-  if( fp == NULL ) {
-		printf( "Can not open this file!\n" );
+	FILE *fp = fopen(filename, "rb");
+	if (fp == NULL)
+	{
+		printf("Can not open instruction file: %s!\n", filename);
 		exit(1);
-  }
-  
-  fseek(fp, 0, SEEK_END);
-  size_t size = ftell(fp);
-  fseek(fp, 0, SEEK_SET);
-  size = fread(inst_rom, size, 1, fp);
-  fclose(fp);
+	}
+
+	fseek(fp, 0, SEEK_END);
+	size_t size = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
+	size = fread(inst_rom, size, 1, fp);
+	fclose(fp);
 }
 
 int main(int argc, char **argv)
@@ -41,40 +46,43 @@ int main(int argc, char **argv)
 	//cin >> filename;
 	read_inst(filename);
 
-  // initialization
-  Verilated::commandArgs(argc, argv);
-  Verilated::traceEverOn(true);
+	// initialization
+	Verilated::commandArgs(argc, argv);
+	Verilated::traceEverOn(true);
 
 	top = new Vrvcpu;
-  tfp = new VerilatedVcdC;
+	tfp = new VerilatedVcdC;
 
-  top->trace(tfp, 99);
-  tfp->open("top.vcd");
-	
-	while( !Verilated::gotFinish() && main_time < sim_time )
+	top->trace(tfp, 99);
+	tfp->open("top.vcd");
+
+	while (!Verilated::gotFinish() && main_time < sim_time)
 	{
-	  if( main_time % 10 == 0 ) top->clk = 0;
-	  if( main_time % 10 == 5 ) top->clk = 1;
-		  
-	  if( main_time < 10 )
-	  {
-		top->rst = 1;
-	  }
-	  else
-	  {
-	    top->rst = 0;
-		if( main_time % 10 == 5 )
-		  top->inst = (top->inst_ena == 1) ? inst_rom[ (top->inst_addr) >> 2 ] : 0;
-	  }
-	  top->eval();
-	  tfp->dump(main_time);
-	  main_time++;
+		// s
+		if (main_time % 10 == 0)
+			top->clk = 0;
+		if (main_time % 10 == 5)
+			top->clk = 1;
+
+		if (main_time < 10)
+		{
+			top->rst = 1;
+		}
+		else
+		{
+			top->rst = 0;
+			if (main_time % 10 == 5)
+				top->inst = (top->inst_ena == 1) ? inst_rom[(top->inst_addr) >> 2] : 0;
+		}
+		top->eval();
+		tfp->dump(main_time);
+		main_time++;
 	}
-		
-  // clean
-  tfp->close();
-  delete top;
-  delete tfp;
-  exit(0);
-  return 0;
+
+	// clean
+	tfp->close();
+	delete top;
+	delete tfp;
+	exit(0);
+	return 0;
 }

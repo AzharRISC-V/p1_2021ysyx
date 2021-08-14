@@ -16,3 +16,17 @@ Use "./build.sh -h" command under Ubunutu terminal to get the build instructions
   - WaveTrace
   - Verilog-HDL/SystemVerilog/Blue..
     + Setting, verilog linter : verilator
+  - Hex Editor
+  - C/C++
+
+* VSCode skill
+  - format code: Ctrl + Shift + I
+  - close preview window right hand: 
+    - “关闭预览功能方法:点击—文件----首选项----设置-----用户设置-----文本编辑器----小地图----取消对勾。”
+  - 无法输入中文
+    - 因为 snap 方式安装的版本被精简了。首先卸载snap版本： sudo snap remove code，然后从 code.visualstudio.com 中下载 deb 文件，然后安装: sudo dpkg -i xx.deb
+  - verilog formatter
+    - Verilog Format 插件
+      * 该插件还需要一些配置，还需要安装 Java 环境，按照说明配置即可。
+        具体的，从 $ git clone https://github.com/ericsonj/verilog-format.git 下载后得到 verilog-format 可执行程序。
+      * 在 vscode 中，设置 verilog-format path即可
