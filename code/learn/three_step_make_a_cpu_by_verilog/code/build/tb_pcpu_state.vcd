@@ -1,0 +1,276 @@
+$date
+	Sat Aug 14 10:39:24 2021
+$end
+$version
+	Icarus Verilog
+$end
+$timescale
+	1ns
+$end
+$scope module pcpu_tb $end
+$var wire 8 ! i_addr [7:0] $end
+$var wire 1 " d_we $end
+$var wire 16 # d_dataout [15:0] $end
+$var wire 8 $ d_addr [7:0] $end
+$var reg 1 % clk $end
+$var reg 16 & d_datain [15:0] $end
+$var reg 1 ' ena $end
+$var reg 16 ( i_datain [15:0] $end
+$var reg 1 ) rst_n $end
+$var reg 1 * start $end
+$scope module u1 $end
+$var wire 1 + branch_flag $end
+$var wire 1 % clk $end
+$var wire 16 , d_datain [15:0] $end
+$var wire 16 - d_dataout [15:0] $end
+$var wire 1 " d_we $end
+$var wire 1 ' ena $end
+$var wire 8 . i_addr [7:0] $end
+$var wire 16 / i_datain [15:0] $end
+$var wire 1 ) rst_n $end
+$var wire 1 * start $end
+$var wire 8 0 d_addr [7:0] $end
+$var reg 16 1 ALUo [15:0] $end
+$var reg 1 2 cf $end
+$var reg 1 3 cf_buf $end
+$var reg 1 4 dw $end
+$var reg 16 5 ex_ir [15:0] $end
+$var reg 16 6 id_ir [15:0] $end
+$var reg 16 7 mem_ir [15:0] $end
+$var reg 1 8 next_state $end
+$var reg 1 9 nf $end
+$var reg 8 : pc [7:0] $end
+$var reg 16 ; reg_A [15:0] $end
+$var reg 16 < reg_B [15:0] $end
+$var reg 16 = reg_C [15:0] $end
+$var reg 16 > reg_C1 [15:0] $end
+$var reg 16 ? smdr [15:0] $end
+$var reg 16 @ smdr1 [15:0] $end
+$var reg 1 A state $end
+$var reg 16 B wb_ir [15:0] $end
+$var reg 1 C zf $end
+$scope function I_R1_TYPE $end
+$var reg 5 D op [4:0] $end
+$upscope $end
+$scope function I_R2_TYPE $end
+$var reg 5 E op [4:0] $end
+$upscope $end
+$scope function I_R3_TYPE $end
+$var reg 5 F op [4:0] $end
+$upscope $end
+$scope function I_REG_TYPE $end
+$var reg 5 G op [4:0] $end
+$upscope $end
+$scope function I_V2V3ZERO_TYPE $end
+$var reg 5 H op [4:0] $end
+$upscope $end
+$scope function I_V3_TYPE $end
+$var reg 5 I op [4:0] $end
+$upscope $end
+$scope function I_ZEROV2V3_TYPE $end
+$var reg 5 J op [4:0] $end
+$upscope $end
+$upscope $end
+$upscope $end
+$enddefinitions $end
+#0
+$dumpvars
+bx J
+bx I
+bx H
+bx G
+bx F
+bx E
+bx D
+0C
+b0 B
+xA
+b0 @
+b0 ?
+b0 >
+b0 =
+b0 <
+b0 ;
+b0 :
+09
+08
+b0 7
+b0 6
+b0 5
+04
+03
+02
+b0 1
+b0 0
+b0 /
+b0 .
+b0 -
+b0 ,
+0+
+0*
+0)
+b0 (
+0'
+b0 &
+0%
+b0 $
+b0 #
+0"
+b0 !
+$end
+#10
+0A
+1%
+#20
+0%
+1)
+#30
+1%
+#40
+0%
+1'
+#50
+1%
+#60
+18
+0%
+1*
+#70
+1A
+1%
+#80
+08
+0%
+0'
+#90
+b10 !
+b10 .
+b10 :
+0A
+b0 G
+b0 F
+b0 H
+b0 J
+b0 I
+b0 E
+b0 D
+1%
+#100
+18
+0%
+1'
+#110
+1A
+1%
+#120
+0%
+0*
+#130
+b100 !
+b100 .
+b100 :
+1%
+#140
+0%
+#150
+b110 !
+b110 .
+b110 :
+1%
+#160
+b0 !
+b0 .
+b0 :
+0%
+0)
+#170
+08
+0A
+1%
+#180
+0%
+#190
+1%
+#200
+0%
+1)
+#210
+1%
+#220
+0%
+#230
+1%
+#240
+0%
+#250
+1%
+#260
+0%
+#270
+1%
+#280
+0%
+#290
+1%
+#300
+0%
+#310
+1%
+#320
+0%
+#330
+1%
+#340
+0%
+#350
+1%
+#360
+0%
+#370
+1%
+#380
+0%
+#390
+1%
+#400
+0%
+#410
+1%
+#420
+0%
+#430
+1%
+#440
+0%
+#450
+1%
+#460
+0%
+#470
+1%
+#480
+0%
+#490
+1%
+#500
+0%
+#510
+1%
+#520
+0%
+#530
+1%
+#540
+0%
+#550
+1%
+#560
+0%
+#570
+1%
+#580
+0%
+#590
+1%
+#600
+0%

@@ -65,7 +65,7 @@ module pcpu(
             if (branch_flag)
                 pc <= reg_C[7:0];
             else
-                pc <= pc + 1;
+                pc <= pc + 2;
         end
         else
             id_ir <= id_ir;
