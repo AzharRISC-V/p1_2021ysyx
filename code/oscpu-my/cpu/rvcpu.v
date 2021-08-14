@@ -9,34 +9,36 @@
 
 module rvcpu(input wire clk,
              input wire rst,
-             input wire [31 : 0] inst,
-             output wire [63 : 0] inst_addr,
+             input wire [31 : 0] inst,          // 输入指令
+             output wire [63 : 0] inst_addr,    // 输出指令地址
              output wire inst_ena);
-    
-    
-    // id_stage
-    // id_stage -> regfile
+
+    // 源操作数1
     wire rs1_r_ena;
     wire [4 : 0]rs1_r_addr;
+    wire [`REG_BUS] r_data1;
+
+    // 源操作数2
     wire rs2_r_ena;
     wire [4 : 0]rs2_r_addr;
+    wire [`REG_BUS] r_data2;
+
+    // 目的操作数
     wire rd_w_ena;
     wire [4 : 0]rd_w_addr;
-    // id_stage -> exe_stage
+    wire [`REG_BUS]rd_data;
+
+    // 指令类型 5bit，低位再加上 0b11，得到 7bit 的 opcode
     wire [4 : 0]inst_type;
     wire [7 : 0]inst_opcode;
+    
+    // 操作数1，操作数2
     wire [`REG_BUS]op1;
     wire [`REG_BUS]op2;
     
-    // regfile -> id_stage
-    wire [`REG_BUS] r_data1;
-    wire [`REG_BUS] r_data2;
-    
-    // exe_stage
     // exe_stage -> other stage
     wire [4 : 0]inst_type_o;
     // exe_stage -> regfile
-    wire [`REG_BUS]rd_data;
     
     if_stage If_stage(
     .clk(clk),
@@ -63,6 +65,7 @@ module rvcpu(input wire clk,
     .op1(op1),
     .op2(op2)
     );
+    
     
     exe_stage Exe_stage(
     .rst(rst),
@@ -91,3 +94,5 @@ module rvcpu(input wire clk,
     );
     
 endmodule
+
+
