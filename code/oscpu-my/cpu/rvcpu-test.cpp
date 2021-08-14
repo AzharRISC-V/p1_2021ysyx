@@ -36,9 +36,9 @@ void read_inst( char* filename)
 
 int main(int argc, char **argv)
 {
-	char filename[100];
-	printf("Please enter your filename~\n");
-	cin >> filename;
+	char filename[100] = "../inst.bin";
+	//printf("Please enter your filename~\n");
+	//cin >> filename;
 	read_inst(filename);
 
   // initialization
