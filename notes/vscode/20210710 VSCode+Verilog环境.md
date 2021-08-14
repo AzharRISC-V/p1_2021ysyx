@@ -105,6 +105,8 @@ FPGA超级入门教程：https://www.zhihu.com/column/c_1117750063287488512
   * 让括号拥有更清楚的颜色
 
     Rainbow Brackets
+  
+  * wavetrace
 
 ## iverilog的一些事项
 
