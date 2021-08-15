@@ -15,11 +15,11 @@ module wb_stage(clk,
 
     input wire rd_w_ena_i;
     input wire [4 : 0]rd_w_addr_i;
-    input reg [`REG_BUS]rd_data_i;
+    input reg [`REG_BUS ]rd_data_i;
 
     output reg rd_w_ena_o;
     output reg [4 : 0]rd_w_addr_o;
-    output reg [`REG_BUS]rd_data_o;
+    output reg [`REG_BUS ]rd_data_o;
 
     always@(posedge clk)
     begin

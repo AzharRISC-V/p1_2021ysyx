@@ -18,6 +18,8 @@ Use "./build.sh -h" command under Ubunutu terminal to get the build instructions
     + Setting, verilog linter : verilator
   - Hex Editor
   - C/C++
+  - vscode-icons
+  - vscode-pdf
 
 * VSCode skill
   - format code: Ctrl + Shift + I

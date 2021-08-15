@@ -29,22 +29,22 @@ module rvcpu(clk,
     // 源操作数1
     wire rs1_r_ena;
     wire [4 : 0]rs1_r_addr;
-    wire [`REG_BUS] r_data1;
+    wire [`REG_BUS ] r_data1;
     
     // 源操作数2
     wire rs2_r_ena;
     wire [4 : 0]rs2_r_addr;
-    wire [`REG_BUS] r_data2;
+    wire [`REG_BUS ] r_data2;
     
     // 目的操作数
     wire rd_w_ena;
     wire [4 : 0]rd_w_addr;
-    wire [`REG_BUS]rd_data;
+    wire [`REG_BUS ]rd_data;
     
     // 目的操作数（wb_stage）
     wire rd_w_ena0;
     wire [4 : 0]rd_w_addr0;
-    wire [`REG_BUS]rd_data0;
+    wire [`REG_BUS ]rd_data0;
     
     // 指令类型（自定义）（用于CU）
     wire [4 : 0]inst_type;
@@ -52,12 +52,19 @@ module rvcpu(clk,
     wire [7 : 0]inst_opcode;
     
     // 操作数1，操作数2
-    wire [`REG_BUS]op1;
-    wire [`REG_BUS]op2;
+    wire [`REG_BUS ]op1;
+    wire [`REG_BUS ]op2;
     
     // exe_stage -> other stage
     wire [4 : 0]inst_type_o;
     // exe_stage -> regfile
+
+    wire ram_w_en;
+    wire ram_r_en;
+    wire [`RAM_ADDR_BUS ]   ram_w_addr;
+    wire [`RAM_ADDR_BUS ]   ram_r_addr;
+    wire [`RAM_DATA_BUS ]   ram_w_data;
+    wire [`RAM_DATA_BUS ]   ram_r_data;
     
     /* ----- 业务逻辑 ----- */
     
@@ -107,21 +114,6 @@ module rvcpu(clk,
     .rd_w_ena_o(rd_w_ena0),
     .rd_w_addr_o(rd_w_addr0),
     .rd_data_o(rd_data0)
-    );
-    
-    regfile Regfile(
-    .clk(clk),
-    .rst(rst),
-    .w_addr(rd_w_addr0),
-    .w_data(rd_data0),
-    .w_ena(rd_w_ena0),
-    
-    .r_addr1(rs1_r_addr),
-    .r_data1(r_data1),
-    .r_ena1(rs1_r_ena),
-    .r_addr2(rs2_r_addr),
-    .r_data2(r_data2),
-    .r_ena2(rs2_r_ena)
     );
     
 endmodule

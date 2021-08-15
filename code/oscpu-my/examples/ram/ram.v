@@ -20,11 +20,11 @@ module ram(clk,
            w_en,
            w_data);
     input clk,rst,w_en,r_en;
-    input [`RAM_ADDR_BUS]   w_addr, r_addr;
-    input [`RAM_DATA_BUS]   w_data;
-    output [`RAM_DATA_BUS]  r_data;
+    input [`RAM_ADDR_BUS ]   w_addr, r_addr;
+    input [`RAM_DATA_BUS ]   w_data;
+    output [`RAM_DATA_BUS ]  r_data;
     
-    reg [`RAM_DATA_BUS] mem[`RAM_SIZE_BUS];
+    reg [`RAM_DATA_BUS ] mem[`RAM_SIZE_BUS ];
     //integer          i;
     
     // 写入
