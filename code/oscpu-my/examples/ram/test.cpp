@@ -10,7 +10,7 @@ using namespace std;
 static Vram *top;
 static VerilatedVcdC *tfp;
 static vluint64_t main_time = 0;
-static vluint64_t sim_time = 1000;
+static vluint64_t sim_time = 200;
 
 // inst.bin
 // inst 0: 1 + zero = reg1 1+0=1
