@@ -81,7 +81,7 @@ int main(int argc, char **argv)
 				if (main_time % 5 == 1)
 				{
 					top->addr = write_addr;
-					top->data = write_data;
+					top->data_in = write_data;
 					write_addr += 1;
 					write_data + 2;
 				}

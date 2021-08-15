@@ -16,40 +16,40 @@ module ram(clk,
            addr,
            wr_en,
            rd_en,
-           data);
+           data_in,
+           data_out);
     input                   clk;
     input                   rst;
     input                   wr_en;
     input                   rd_en;
     input [`RAM_ADDR_BUS]   addr;
-    inout [`RAM_DATA_BUS]   data;
+    input [`RAM_DATA_BUS]   data_in;
+    output [`RAM_DATA_BUS]   data_out;
     
     reg [`RAM_DATA_BUS] mem[`RAM_SIZE_BUS];
-    reg [`RAM_DATA_BUS] data0;  // 由于三态门，不能直接输出至data，使用data0实现缓存
     //integer          i;
     
-    // 读信号有效时送出数据，否则高阻（相当于这里不处理，不影响输入的信号）
-    assign data = rd_en? data0 : `RAM_DATA_HZ;
-    
+    // 写入
     always @(posedge clk or posedge rst)
     begin
-        // if (rst)
-        // begin
-        //     // 内存清零
-        //     for(i = 0;i<= `RAM_SIZE;i = i+1)
-        //         mem[i] = `RAM_DATA_ZERO;
-        // end
-        // else 
-        if (wr_en) begin
-            mem[addr] <= data;
-        end
-        else if (rd_en) begin
-            data0 = mem[addr];
-        end
-        else begin
-            data0 = `RAM_DATA_HZ;      // 其余情况，为高阻态。
+        if (!rst && wr_en) begin
+            mem[addr] <= data_in;
         end
     end
+    
+    // 读取
+    assign data_out = (!rst && rd_en) ? mem[addr] : `RAM_DATA_HZ;
+    
+    // always @(posedge clk or posedge rst)
+    // begin
+    //     if (rst)
+    //     begin
+    //         // 内存清零
+    //         for(i = 0;i< = `RAM_SIZE;i = i+1)
+    //             mem[i] = `RAM_DATA_ZERO;
+    //     end
+    //     else
+    // end
     
 endmodule
     
