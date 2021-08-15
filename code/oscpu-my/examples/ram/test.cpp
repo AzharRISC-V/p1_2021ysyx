@@ -95,13 +95,14 @@ int main(int argc, char **argv)
 				if (main_time % 10 == 1)
 				{
 					top->r_addr = read_addr;
-					top->r_addr += 1;
+					read_addr += 1;
 				}
 				if (main_time % 10 == 2)
 					top->r_en = 1;
 				if (main_time % 10 == 8)
 					top->r_en = 0;
 			}
+			// 重新装填变量
 			else if (main_time == 300) {
 				write_addr = 100;
 				read_addr = 100;
