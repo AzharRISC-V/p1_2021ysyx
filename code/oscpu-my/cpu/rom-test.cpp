@@ -53,7 +53,7 @@ int main(int argc, char **argv)
 	tfp = new VerilatedVcdC;
 
 	top->trace(tfp, 99);	// 99 hierarchy at most
-	tfp->open("ram-test.vcd");
+	tfp->open("rom-test.vcd");
 
 	vluint32_t write_addr = 0;
 	vluint32_t write_data = 0x10;
