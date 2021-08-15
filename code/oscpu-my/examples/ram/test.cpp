@@ -82,7 +82,7 @@ int main(int argc, char **argv)
 					top->addr = write_addr;
 					top->data_in = write_data;
 					write_addr += 1;
-					write_data += 2;
+					write_data += 1;
 				}
 				if (main_time % 10 == 2)
 					top->wr_en = 1;
