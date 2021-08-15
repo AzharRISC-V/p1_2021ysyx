@@ -4,7 +4,7 @@
 
 `include "defines.v"
 
-module if_stage(clk,
+module wb_stage(clk,
                 rst,
                 inst_addr,
                 inst_ena);
@@ -22,7 +22,7 @@ module if_stage(clk,
     begin
         if (rst == 1'b1)
         begin
-            pc <= `DWORD_ZERO;
+            pc <= `DWORD_ZERO ;
         end
         else
         begin

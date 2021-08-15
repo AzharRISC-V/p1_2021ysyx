@@ -43,38 +43,38 @@ module regfile(clk,
     begin
         if (rst == 1'b1)
         begin
-            regs[0]  <= `ZERO_DWORD;
-            regs[1]  <= `ZERO_DWORD;
-            regs[2]  <= `ZERO_DWORD;
-            regs[3]  <= `ZERO_DWORD;
-            regs[4]  <= `ZERO_DWORD;
-            regs[5]  <= `ZERO_DWORD;
-            regs[6]  <= `ZERO_DWORD;
-            regs[7]  <= `ZERO_DWORD;
-            regs[8]  <= `ZERO_DWORD;
-            regs[9]  <= `ZERO_DWORD;
-            regs[10] <= `ZERO_DWORD;
-            regs[11] <= `ZERO_DWORD;
-            regs[12] <= `ZERO_DWORD;
-            regs[13] <= `ZERO_DWORD;
-            regs[14] <= `ZERO_DWORD;
-            regs[15] <= `ZERO_DWORD;
-            regs[16] <= `ZERO_DWORD;
-            regs[17] <= `ZERO_DWORD;
-            regs[18] <= `ZERO_DWORD;
-            regs[19] <= `ZERO_DWORD;
-            regs[20] <= `ZERO_DWORD;
-            regs[21] <= `ZERO_DWORD;
-            regs[22] <= `ZERO_DWORD;
-            regs[23] <= `ZERO_DWORD;
-            regs[24] <= `ZERO_DWORD;
-            regs[25] <= `ZERO_DWORD;
-            regs[26] <= `ZERO_DWORD;
-            regs[27] <= `ZERO_DWORD;
-            regs[28] <= `ZERO_DWORD;
-            regs[29] <= `ZERO_DWORD;
-            regs[30] <= `ZERO_DWORD;
-            regs[31] <= `ZERO_DWORD;
+            regs[0]  <= `DWORD_ZERO;
+            regs[1]  <= `DWORD_ZERO;
+            regs[2]  <= `DWORD_ZERO;
+            regs[3]  <= `DWORD_ZERO;
+            regs[4]  <= `DWORD_ZERO;
+            regs[5]  <= `DWORD_ZERO;
+            regs[6]  <= `DWORD_ZERO;
+            regs[7]  <= `DWORD_ZERO;
+            regs[8]  <= `DWORD_ZERO;
+            regs[9]  <= `DWORD_ZERO;
+            regs[10] <= `DWORD_ZERO;
+            regs[11] <= `DWORD_ZERO;
+            regs[12] <= `DWORD_ZERO;
+            regs[13] <= `DWORD_ZERO;
+            regs[14] <= `DWORD_ZERO;
+            regs[15] <= `DWORD_ZERO;
+            regs[16] <= `DWORD_ZERO;
+            regs[17] <= `DWORD_ZERO;
+            regs[18] <= `DWORD_ZERO;
+            regs[19] <= `DWORD_ZERO;
+            regs[20] <= `DWORD_ZERO;
+            regs[21] <= `DWORD_ZERO;
+            regs[22] <= `DWORD_ZERO;
+            regs[23] <= `DWORD_ZERO;
+            regs[24] <= `DWORD_ZERO;
+            regs[25] <= `DWORD_ZERO;
+            regs[26] <= `DWORD_ZERO;
+            regs[27] <= `DWORD_ZERO;
+            regs[28] <= `DWORD_ZERO;
+            regs[29] <= `DWORD_ZERO;
+            regs[30] <= `DWORD_ZERO;
+            regs[31] <= `DWORD_ZERO;
         end
         else
         begin
@@ -88,21 +88,21 @@ module regfile(clk,
 	// 寄存器读取通道1
     always @(*) begin
         if (rst == 1'b1)
-            r_data1 = `ZERO_DWORD;
+            r_data1 = `DWORD_ZERO;
         else if (r_ena1 == 1'b1)
             r_data1 = regs[r_addr1];
         else
-            r_data1 = `ZERO_DWORD;
+            r_data1 = `DWORD_ZERO;
     end
     
 	// 寄存器读取通道2
     always @(*) begin
         if (rst == 1'b1)
-            r_data2 = `ZERO_DWORD;
+            r_data2 = `DWORD_ZERO;
         else if (r_ena2 == 1'b1)
             r_data2 = regs[r_addr2];
         else
-            r_data2 = `ZERO_DWORD;
+            r_data2 = `DWORD_ZERO;
     end
     
 endmodule
