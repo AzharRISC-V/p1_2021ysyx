@@ -8,8 +8,8 @@
 `include "defines.v"
 
 module ram(
-    input   wire                        clk,
     input   wire                        rst,
+    input   wire                        clk,
 
     input   wire    [`RAM_ADDR_BUS]     raddr_i,        // 要读取的地址
     output  reg     [`RAM_DATA_BUS]     rdata_o,        // 读取到的数据

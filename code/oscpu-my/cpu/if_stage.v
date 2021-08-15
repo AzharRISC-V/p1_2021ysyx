@@ -8,8 +8,8 @@
 `include "defines.v"
 
 module if_stage(
-    input   wire                        clk,
     input   wire                        rst,
+    input   wire                        clk,
 
     input   wire    [`REG_BUS]          pc_i,               // PC
 

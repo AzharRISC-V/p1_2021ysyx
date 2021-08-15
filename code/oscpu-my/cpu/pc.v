@@ -7,8 +7,8 @@
 `include "defines.v"
 
 module pc(
-    input   wire                        clk,
     input   wire                        rst,
+    input   wire                        clk,
 
     input   wire    [`REG_BUS]          pc_i,       // 输入的pc
     output  reg     [`REG_BUS]          pc_o,       // 输出的pc

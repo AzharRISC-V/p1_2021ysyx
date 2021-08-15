@@ -29,6 +29,7 @@
 `define ROM_ADDR_BITS       12              // ROM地址位数
 `define ROM_ADDR_BUS        11:0            // ROM地址总线
 `define ROM_DATA_ZERO       32'd0           // ROM数据0
+`define ROM_SIZE_BUS        4095:0          // ROM单元数总线
 
 // 给定的指令
 `define INST_ECALL          32'h0000_0073   // ecall 指令

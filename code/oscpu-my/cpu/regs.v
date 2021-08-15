@@ -10,8 +10,8 @@
 `include "defines.v"
 
 module regs(
-    input   wire                        clk,
     input   wire                        rst,
+    input   wire                        clk,
 
     // 写入
     input   wire    [`REG_ADDR_BUS]     widx_i,         // 写寄存器索引
