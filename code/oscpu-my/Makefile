@@ -1,4 +1,6 @@
 
+rom:
+	./build.sh -t rom -b -s	
 ram:
 	./build.sh -t ram -b -s	
 

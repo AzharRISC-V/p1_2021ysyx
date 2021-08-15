@@ -3,11 +3,11 @@
 #include <verilated_vcd_c.h>
 #include <iostream>
 #include <fstream>
-#include "Vram.h"
+#include "Vrom.h"
 
 using namespace std;
 
-static Vram *top;
+static Vrom *top;
 static VerilatedVcdC *tfp;
 static vluint64_t main_time = 0;
 static const vluint64_t sim_time = 1000;
@@ -49,7 +49,7 @@ int main(int argc, char **argv)
 	Verilated::commandArgs(argc, argv);
 	Verilated::traceEverOn(true);
 
-	top = new Vram;
+	top = new Vrom;
 	tfp = new VerilatedVcdC;
 
 	top->trace(tfp, 99);	// 99 hierarchy at most

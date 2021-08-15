@@ -31,8 +31,7 @@ module rom(
     // 写入
     always @(posedge clk or posedge rst)
     begin
-        // we_i
-        if (!rst) begin
+        if (!rst && we_i) begin
             mem[waddr_i] <= wdata_i;
         end
     end
