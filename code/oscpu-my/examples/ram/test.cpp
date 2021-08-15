@@ -7,7 +7,7 @@
 
 using namespace std;
 
-static Vtop *top;
+static Vram *top;
 static VerilatedVcdC *tfp;
 static vluint64_t main_time = 0;
 static vluint64_t sim_time = 1000;
