@@ -24,7 +24,7 @@ module ram(clk,
     input                   rd_en;
     input [`RAM_ADDR_BUS]   addr;
     input [`RAM_DATA_BUS]   data_in;
-    output [`RAM_DATA_BUS]   data_out;
+    output [`RAM_DATA_BUS]  data_out;
     
     reg [`RAM_DATA_BUS] mem[`RAM_SIZE_BUS];
     //integer          i;
