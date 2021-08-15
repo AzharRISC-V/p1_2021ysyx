@@ -22,7 +22,7 @@ module if_stage(clk,
     begin
         if (rst == 1'b1)
         begin
-            pc <= `ZERO_WORD ;
+            pc <= `ZERO_DWORD ;
         end
         else
         begin

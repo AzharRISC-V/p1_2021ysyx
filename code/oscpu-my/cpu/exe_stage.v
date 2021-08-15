@@ -24,13 +24,13 @@ module exe_stage(rst,
     begin
         if (rst == 1'b1)
         begin
-            rd_data = `ZERO_WORD;
+            rd_data = `ZERO_DWORD;
         end
         else
         begin
             case(inst_opcode)
             `INST_ADDI: begin rd_data = op1 + op2;  end
-        default:    begin rd_data = `ZERO_WORD; end
+        default:    begin rd_data = `ZERO_DWORD; end
             endcase
         end
     end
