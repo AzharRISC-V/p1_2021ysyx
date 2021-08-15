@@ -61,6 +61,11 @@ int main(int argc, char **argv)
 
 	while (!Verilated::gotFinish() && main_time < sim_time)
 	{
+		if (main_time % 10 == 0)
+			top->clk = 0;
+		if (main_time % 10 == 5)
+			top->clk = 1;
+
 		if (main_time < 10)
 		{
 			top->rst = 1;
@@ -72,41 +77,29 @@ int main(int argc, char **argv)
 			// 测试写入
 			if (main_time < 100)
 			{
-				/*
-				 	以5为周期
-					1: 给出地址
-					2: wr_en = 1
-					3: wr_en = 0
-				*/
-				if (main_time % 5 == 1)
+				if (main_time % 10 == 1)
 				{
 					top->addr = write_addr;
 					top->data_in = write_data;
 					write_addr += 1;
 					write_data + 2;
 				}
-				if (main_time % 5 == 2)
+				if (main_time % 10 == 2)
 					top->wr_en = 1;
-				if (main_time % 5 == 3)
+				if (main_time % 10 == 3)
 					top->wr_en = 0;
 			}
 			// 测试读取
 			else
 			{
-				/*
-				 	以5为周期
-					1: 给出地址
-					2: wr_en = 1
-					3: wr_en = 0
-				*/
-				if (main_time % 5 == 1)
+				if (main_time % 10 == 1)
 				{
 					top->addr = read_addr;
 					read_addr += 1;
 				}
-				if (main_time % 5 == 2)
+				if (main_time % 10 == 2)
 					top->rd_en = 1;
-				if (main_time % 5 == 3)
+				if (main_time % 10 == 3)
 					top->rd_en = 0;
 			}
 		}
