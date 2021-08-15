@@ -13,18 +13,16 @@
 //ram.v
 module ram(clk,
            rst,
-           addr,
-           wr_en,
-           rd_en,
-           data_in,
-           data_out);
-    input                   clk;
-    input                   rst;
-    input                   wr_en;
-    input                   rd_en;
-    input [`RAM_ADDR_BUS]   addr;
-    input [`RAM_DATA_BUS]   data_in;
-    output [`RAM_DATA_BUS]  data_out;
+           r_addr,
+           r_en,
+           r_data,
+           w_addr,
+           w_en,
+           w_data);
+    input clk,rst,w_en,r_en;
+    input [`RAM_ADDR_BUS]   w_addr, r_addr;
+    input [`RAM_DATA_BUS]   w_data;
+    output [`RAM_DATA_BUS]  r_data;
     
     reg [`RAM_DATA_BUS] mem[`RAM_SIZE_BUS];
     //integer          i;
@@ -32,13 +30,13 @@ module ram(clk,
     // 写入
     always @(posedge clk or posedge rst)
     begin
-        if (!rst && wr_en) begin
-            mem[addr] <= data_in;
+        if (!rst && w_en) begin
+            mem[w_addr] <= w_data;
         end
     end
     
     // 读取
-    assign data_out = (!rst && rd_en) ? mem[addr] : `RAM_DATA_HZ;
+    assign r_data = (!rst && r_en) ? mem[r_addr] : `RAM_DATA_HZ;
     
     // always @(posedge clk or posedge rst)
     // begin

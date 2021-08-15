@@ -79,28 +79,53 @@ int main(int argc, char **argv)
 			{
 				if (main_time % 10 == 1)
 				{
-					top->addr = write_addr;
-					top->data_in = write_data;
+					top->w_addr = write_addr;
+					top->w_data = write_data;
 					write_addr += 1;
 					write_data += 1;
 				}
 				if (main_time % 10 == 2)
-					top->wr_en = 1;
+					top->w_en = 1;
 				if (main_time % 10 == 8)
-					top->wr_en = 0;
+					top->w_en = 0;
 			}
 			// 测试读取
+			else if (main_time < 300)
+			{
+				if (main_time % 10 == 1)
+				{
+					top->r_addr = read_addr;
+					top->r_addr += 1;
+				}
+				if (main_time % 10 == 2)
+					top->r_en = 1;
+				if (main_time % 10 == 8)
+					top->r_en = 0;
+			}
+			else if (main_time == 300) {
+				write_addr = 100;
+				read_addr = 100;
+				write_data = 0x55667700;
+			}
+			// 边写边读
 			else
 			{
 				if (main_time % 10 == 1)
 				{
-					top->addr = read_addr;
-					read_addr += 1;
+					top->r_addr = read_addr;
+					top->w_addr = write_addr;
+					top->w_data = write_data;
+					write_addr += 1;
+					write_data += 1;
 				}
-				if (main_time % 10 == 2)
-					top->rd_en = 1;
-				if (main_time % 10 == 8)
-					top->rd_en = 0;
+				if (main_time % 10 == 2) {
+					top->w_en = 1;
+					top->r_en = 1;
+				}
+				if (main_time % 10 == 8){
+					top->w_en = 0;
+					top->r_en = 0;
+				}
 			}
 		}
 		top->eval();
