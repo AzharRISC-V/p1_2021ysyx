@@ -33,3 +33,12 @@ Use "./build.sh -h" command under Ubunutu terminal to get the build instructions
   - 设置换行
     - 一个个文件的修改，打开文件在右下角单击 LF / CRLF 等字样，保存即可
     - 设置默认值，> settings > files.eol，设置为固定值
+
+* 异常情况
+  - build.sh 报错 %Warning-EOFNEWLINE: regfile.v:1:3: Missing newline at end of file (POSIX 3.206).
+    - 查了半天，可能是 CRLF 换成 LF，还可能是 /* xxx */ 开头的中文注释需要先禁止掉
+## RISC-V 指令分析
+  - 指令类型分析
+    - R-type, x[rd] = f(x[rs1], x[rs2])
+    - I-type, x[rd] = f(x[rs1], sext(imm))
+    - 
