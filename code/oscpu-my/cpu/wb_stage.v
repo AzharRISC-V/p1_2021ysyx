@@ -1,37 +1,40 @@
-
-/* verilator lint_off UNUSED */
-//--xuezhen--
+// Zhengpu Shi
 
 `include "defines.v"
 
 module wb_stage(clk,
                 rst,
-                inst_addr,
-                inst_ena);
+                rd_w_ena_i,
+                rd_w_addr_i,
+                rd_data_i,
+                rd_w_ena_o,
+                rd_w_addr_o,
+                rd_data_o);
     input wire clk;
     input wire rst;
-    // 输出的取值地址、使能信号
-    output wire [63 : 0]inst_addr;
-    output wire inst_ena;
-    
-    // 程序计数器
-    reg [`REG_BUS]pc;
-    
-    // fetch an instruction
+
+    input wire rd_w_ena_i;
+    input wire [4 : 0]rd_w_addr_i;
+    input reg [`REG_BUS]rd_data_i;
+
+    output reg rd_w_ena_o;
+    output reg [4 : 0]rd_w_addr_o;
+    output reg [`REG_BUS]rd_data_o;
+
     always@(posedge clk)
     begin
         if (rst == 1'b1)
         begin
-            pc <= `DWORD_ZERO ;
+            rd_w_ena_o <= 0;
+            rd_w_addr_o <= 0;
+            rd_data_o <= 0;
         end
         else
         begin
-            pc <= pc + 4;
+            rd_w_ena_o <= rd_w_ena_i;
+            rd_w_addr_o <= rd_w_addr_i;
+            rd_data_o <= rd_data_i;
         end
     end
-    
-    assign inst_addr = pc;
-    assign inst_ena  = (rst == 1'b1) ? 0 : 1;
-    
     
 endmodule

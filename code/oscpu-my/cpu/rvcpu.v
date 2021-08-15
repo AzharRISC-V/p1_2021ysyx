@@ -41,6 +41,11 @@ module rvcpu(clk,
     wire [4 : 0]rd_w_addr;
     wire [`REG_BUS]rd_data;
     
+    // 目的操作数（wb_stage）
+    wire rd_w_ena0;
+    wire [4 : 0]rd_w_addr0;
+    wire [`REG_BUS]rd_data0;
+    
     // 指令类型（自定义）（用于CU）
     wire [4 : 0]inst_type;
     // 指令操作（自定义）（用于ALU）
@@ -55,7 +60,7 @@ module rvcpu(clk,
     // exe_stage -> regfile
     
     /* ----- 业务逻辑 ----- */
-
+    
     if_stage If_stage(
     .clk(clk),
     .rst(rst),
@@ -93,12 +98,23 @@ module rvcpu(clk,
     .rd_data(rd_data)
     );
     
+    wb_stage Wb_stage(
+    .clk(clk),
+    .rst(rst),
+    .rd_w_ena_i(rd_w_ena),
+    .rd_w_addr_i(rd_w_addr),
+    .rd_data_i(rd_data),
+    .rd_w_ena_o(rd_w_ena0),
+    .rd_w_addr_o(rd_w_addr0),
+    .rd_data_o(rd_data0)
+    );
+    
     regfile Regfile(
     .clk(clk),
     .rst(rst),
-    .w_addr(rd_w_addr),
-    .w_data(rd_data),
-    .w_ena(rd_w_ena),
+    .w_addr(rd_w_addr0),
+    .w_data(rd_data0),
+    .w_ena(rd_w_ena0),
     
     .r_addr1(rs1_r_addr),
     .r_data1(r_data1),
