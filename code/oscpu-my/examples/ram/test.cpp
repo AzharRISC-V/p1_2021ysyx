@@ -117,7 +117,8 @@ int main(int argc, char **argv)
 					top->w_addr = write_addr;
 					top->w_data = write_data;
 					write_addr += 1;
-					write_data += 1;
+					write_data += 2;
+					read_addr += 1;
 				}
 				if (main_time % 10 == 2) {
 					top->w_en = 1;
