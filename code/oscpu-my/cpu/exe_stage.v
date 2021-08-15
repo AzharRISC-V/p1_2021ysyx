@@ -30,7 +30,7 @@ module exe_stage(rst,
         begin
             case(inst_opcode)
             `INST_ADDI: begin rd_data = op1 + op2;  end
-        default:    begin rd_data = `DWORD_ZERO; end
+            default:    begin rd_data = `DWORD_ZERO; end
             endcase
         end
     end

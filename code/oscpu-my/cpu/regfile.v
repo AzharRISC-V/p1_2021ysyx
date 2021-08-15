@@ -23,7 +23,7 @@ module regfile(clk,
     input wire clk;
     input wire rst;
 	// 寄存器写入通道
-    input wire [4 : 0] w_addr;
+    input wire [4 : 0] w_addr;      // 寄存器索引，0 -> rx0, 1 -> rx1, ...
     input wire [`REG_BUS] w_data;
     input wire 		 w_ena;
 	// 寄存器读取通道1

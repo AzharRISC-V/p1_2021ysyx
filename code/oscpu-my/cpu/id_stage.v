@@ -89,7 +89,7 @@ module id_stage(rst,
     assign rs2_r_ena  = 0;
     assign rs2_r_addr = 0;
     
-    assign rd_w_ena  = (rst == 1'b1) ? 0 : inst_type[4];
+    assign rd_w_ena  = 0;// (rst == 1'b1) ? 0 : inst_type[4];
     assign rd_w_addr = (rst == 1'b1) ? 0 : (inst_type[4] == 1'b1 ? rd  : 0);
     
     assign op1 = (rst == 1'b1) ? 0 : (inst_type[4] == 1'b1 ? rs1_data : 0);
