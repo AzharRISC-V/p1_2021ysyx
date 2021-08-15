@@ -86,7 +86,7 @@ int main(int argc, char **argv)
 				}
 				if (main_time % 10 == 2)
 					top->wr_en = 1;
-				if (main_time % 10 == 3)
+				if (main_time % 10 == 8)
 					top->wr_en = 0;
 			}
 			// 测试读取
@@ -99,7 +99,7 @@ int main(int argc, char **argv)
 				}
 				if (main_time % 10 == 2)
 					top->rd_en = 1;
-				if (main_time % 10 == 3)
+				if (main_time % 10 == 8)
 					top->rd_en = 0;
 			}
 		}
