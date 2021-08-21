@@ -1,6 +1,0 @@
-[submodule "abstract-machine"]
-	path = code/abstract-machine
-	url = https://github.com/NJU-ProjectN/abstract-machine.git
-[submodule "am-kernels"]
-	path = code/am-kernels
-	url = https://github.com/NJU-ProjectN/am-kernels.git
