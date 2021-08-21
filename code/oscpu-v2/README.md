@@ -48,44 +48,6 @@ git config --global user.name "2021000001-Zhang San"
 git config --global user.email "zhangsan@foo.com"
 ```
 
-# 编译NEMU
-
-`香山difftest框架`依赖`NEMU`的支持，本项目已经集成`NEMU`和`香山difftest框架`，编译`香山difftest框架`之前，需要安装编译`NEMU`所需的软件包。
-
-```
-sudo apt-get install libreadline-dev libsdl2-dev bison
-```
-
-如果内存小于8G，编译该工程之前，需要修改`NEMU`和`香山difftest框架`的ram大小。
-
-修改`NEMU`的ram大小：
-
-```
-cd libraries/NEMU
-export NEMU_HOME=`pwd`
-make defconfig riscv64-xs-ref_defconfig
-make menuconfig
-#进入Memory Configuration菜单，将Memory size的值修改为0x10000000，回车，保存，退出
-make
-```
-
-修改`香山difftest框架`的ram大小，文件：`libraries/difftest/src/test/csrc/common/ram.h`。
-
-```
-#define EMU_RAM_SIZE (256 * 1024 * 1024UL)
-//#define EMU_RAM_SIZE (8 * 1024 * 1024 * 1024UL)
-```
-
-对于`NEMU`更新后导致的`香山difftest框架`编译或运行报错，可以在清除`NEMU`编译的文件后运行build.sh来重新编译`NEMU`。
-
-```
-cd libraries/NEMU
-export NEMU_HOME=`pwd`
-make clean
-```
-
-对于`香山difftest框架`更新导致的编译或运行报错，也可通过`build.sh`中的`-c`选项删除`build`目录后重新编译工程。
-
 # 例程
 
 我们提供了脚本`build.sh`用于自动化编译、仿真和查看波形。下面是`build.sh`的参数说明，也可在oscpu目录下使用`./build.sh -h`命令查看帮助。
@@ -98,7 +60,7 @@ make clean
 -a 传入仿真程序的参数，比如：-a "1 2 3 ......"，多个参数需要使用双引号
 -f 传入c++编译器的参数，比如：-f "-DGLOBAL_DEFINE=1 -ggdb3"，多个参数需要使用双引号，该参数在接入difftest时无效
 -l 传入c++链接器的参数，比如：-l "-ldl -lm"，多个参数需要使用双引号，该参数在接入difftest时无效
--g 使用gdb调试仿真程序
+-g 使用gdb调试仿真程序，该参数在接入difftest时无效
 -w 使用gtkwave打开工作目录下修改时间最新的.vcd波形文件
 -c 删除工程目录下编译生成的"build"文件夹
 -d 接入香山difftest框架
@@ -107,7 +69,7 @@ make clean
 
 ## 编译和仿真
 
-`projects`目录下几个例程可用于了解如何基于`Verilator`和`香山difftest框架`来开发仿真CPU。 
+`projects`目录下几个例程可用于了解如何基于`verilator`和`香山difftest框架`来开发仿真CPU。 
 
 ### counter
 
@@ -117,7 +79,7 @@ make clean
 ./build.sh -e counter -b -s
 ```
 
-如果`Verilator `安装正确，你会看到下面的输出
+如果`verilator`安装正确，你会看到下面的输出
 
 ```
 Simulating...
@@ -145,7 +107,7 @@ Enter the test cycle:
 # 编译仿真
 ./build.sh -e cpu_diff -d -b -s -a "-i inst_diff.bin"
 # 编译仿真，并从CPU上报至difftest的时钟周期0开始输出波形
-./build.sh -e cpu_diff -d -b -s -a "-i inst_diff.bin --dump-wave -b 0" -m "EMU_TRACE=1" 
+./build.sh -e cpu_diff -d -b -s -a "-i inst_diff.bin --dump-wave -b 0" -m "EMU_TRACE=1"
 ```
 
 仿真程序运行后，终端将打印绿色的提示内容`HIT GOOD TRAP at pc = 0x8000000c`。说明程序运行到自定义的`0x6b`指令，并且此时存放错误码的`a0`寄存器的值为0，即程序按照预期结果成功退出。关于`0x6b`自定义指令作用，可参考[讲座-AM运行环境介绍](https://oscpu.github.io/ysyx/events/events.html?EID=2021-07-13_AM_Difftest)。如果指定输出波形，将在`projects/cpu_diff/build/`路径下生成`.vcd`波形文件。
@@ -174,7 +136,10 @@ Enter the test cycle:
 在实现了能够运行所有`cpu-tests`和`riscv-tests`测试用例的指令后，可以通过以下命令对CPU进行一键回归测试。该命令会将`bin`目录下的所有`.bin`文件作为参数来调用接入了`香山difftest框架`的仿真程序，其中`xxx`表示例程名。
 
 ```
+# 未接入AXI总线
 ./build.sh -e xxx -b -r
+# 接入AXI总线
+./build.sh -e xxx -b -r -m "WITH_DRAMSIM3=1"
 ```
 
 通过测试的用例，将打印`PASS`。测试失败的用例，打印`FAIL`并生成对应的log文件，可以查看log文件来调试，也可以另外开启波形输出来调试。

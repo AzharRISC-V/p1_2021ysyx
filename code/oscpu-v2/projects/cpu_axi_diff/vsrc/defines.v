@@ -19,3 +19,7 @@
 `define REQ_READ            1'b0
 `define REQ_WRITE           1'b1
 
+`define RISCV_PRIV_MODE_U   0
+`define RISCV_PRIV_MODE_S   1
+`define RISCV_PRIV_MODE_M   3
+

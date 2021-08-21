@@ -82,13 +82,14 @@ module axi_rw # (
     output                              axi_aw_lock_o,
     output [3:0]                        axi_aw_cache_o,
     output [3:0]                        axi_aw_qos_o,
+    output [3:0]                        axi_aw_region_o,
 
     input                               axi_w_ready_i,
     output                              axi_w_valid_o,
     output [AXI_DATA_WIDTH-1:0]         axi_w_data_o,
     output [AXI_DATA_WIDTH/8-1:0]       axi_w_strb_o,
     output                              axi_w_last_o,
-    output [AXI_ID_WIDTH-1:0]           axi_w_id_o,
+    output [AXI_USER_WIDTH-1:0]         axi_w_user_o,
     
     output                              axi_b_ready_o,
     input                               axi_b_valid_i,
@@ -108,6 +109,7 @@ module axi_rw # (
     output                              axi_ar_lock_o,
     output [3:0]                        axi_ar_cache_o,
     output [3:0]                        axi_ar_qos_o,
+    output [3:0]                        axi_ar_region_o,
     
     output                              axi_r_ready_o,
     input                               axi_r_valid_i,
@@ -120,7 +122,7 @@ module axi_rw # (
 
     wire w_trans    = rw_req_i == `REQ_WRITE;
     wire r_trans    = rw_req_i == `REQ_READ;
-    wire w_valid    = rw_valid_i & r_trans;
+    wire w_valid    = rw_valid_i & w_trans;
     wire r_valid    = rw_valid_i & r_trans;
 
     // handshake
@@ -146,7 +148,7 @@ module axi_rw # (
     // Wirte State Machine
     always @(posedge clock) begin
         if (reset) begin
-            w_state <= R_STATE_IDLE;
+            w_state <= W_STATE_IDLE;
         end
         else begin
             if (w_valid) begin
@@ -198,8 +200,9 @@ module axi_rw # (
     parameter AXI_SIZE      = $clog2(AXI_DATA_WIDTH / 8);
     parameter MASK_WIDTH    = AXI_DATA_WIDTH * 2;
     parameter TRANS_LEN     = RW_DATA_WIDTH / AXI_DATA_WIDTH;
+    parameter BLOCK_TRANS   = TRANS_LEN > 1 ? 1'b1 : 0'b0;
 
-    wire aligned            = TRANS_LEN != 1 | rw_addr_i[ALIGNED_WIDTH-1:0] == 0;
+    wire aligned            = BLOCK_TRANS | rw_addr_i[ALIGNED_WIDTH-1:0] == 0;
     wire size_b             = rw_size_i == `SIZE_B;
     wire size_h             = rw_size_i == `SIZE_H;
     wire size_w             = rw_size_i == `SIZE_W;
@@ -215,7 +218,8 @@ module axi_rw # (
 
     wire [7:0] axi_len      = aligned ? TRANS_LEN - 1 : {{7{1'b0}}, overstep};
     wire [2:0] axi_size     = AXI_SIZE[2:0];
-    wire [AXI_ADDR_WIDTH-1:0] axi_addr    = {rw_addr_i[AXI_ADDR_WIDTH-1:ALIGNED_WIDTH], {ALIGNED_WIDTH{1'b0}}};
+    
+    wire [AXI_ADDR_WIDTH-1:0] axi_addr          = {rw_addr_i[AXI_ADDR_WIDTH-1:ALIGNED_WIDTH], {ALIGNED_WIDTH{1'b0}}};
     wire [OFFSET_WIDTH-1:0] aligned_offset_l    = {{OFFSET_WIDTH-ALIGNED_WIDTH{1'b0}}, {rw_addr_i[ALIGNED_WIDTH-1:0]}} << 3;
     wire [OFFSET_WIDTH-1:0] aligned_offset_h    = AXI_DATA_WIDTH - aligned_offset_l;
     wire [MASK_WIDTH-1:0] mask                  = (({MASK_WIDTH{size_b}} & {{MASK_WIDTH-8{1'b0}}, 8'hff})
@@ -223,11 +227,11 @@ module axi_rw # (
                                                     | ({MASK_WIDTH{size_w}} & {{MASK_WIDTH-32{1'b0}}, 32'hffffffff})
                                                     | ({MASK_WIDTH{size_d}} & {{MASK_WIDTH-64{1'b0}}, 64'hffffffff_ffffffff})
                                                     ) << aligned_offset_l;
-    wire [AXI_DATA_WIDTH-1:0] mask_l      = mask[AXI_DATA_WIDTH-1:0];
-    wire [AXI_DATA_WIDTH-1:0] mask_h      = mask[MASK_WIDTH-1:AXI_DATA_WIDTH];
+    wire [AXI_DATA_WIDTH-1:0] mask_l            = mask[AXI_DATA_WIDTH-1:0];
+    wire [AXI_DATA_WIDTH-1:0] mask_h            = mask[MASK_WIDTH-1:AXI_DATA_WIDTH];
 
-    wire [AXI_ID_WIDTH-1:0] axi_id        = {AXI_ID_WIDTH{1'b0}};
-    wire [AXI_USER_WIDTH-1:0] axi_user    = {AXI_USER_WIDTH{1'b0}};
+    wire [AXI_ID_WIDTH-1:0] axi_id              = {AXI_ID_WIDTH{1'b0}};
+    wire [AXI_USER_WIDTH-1:0] axi_user          = {AXI_USER_WIDTH{1'b0}};
 
     reg rw_ready;
     wire rw_ready_nxt = trans_done;

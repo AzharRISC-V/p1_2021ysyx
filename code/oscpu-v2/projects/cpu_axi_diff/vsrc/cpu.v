@@ -213,7 +213,7 @@ DifftestTrapEvent DifftestTrapEvent(
 DifftestCSRState DifftestCSRState(
   .clock              (clock),
   .coreid             (0),
-  .priviledgeMode     (0),
+  .priviledgeMode     (`RISCV_PRIV_MODE_M),
   .mstatus            (0),
   .sstatus            (0),
   .mepc               (0),
