@@ -7,48 +7,52 @@
 # <args> is one of rd, rs1, rs2, rs3, imm20, imm12, imm12lo, imm12hi,
 # shamtw, shamt, rm
 
-beq     bimm12hi rs1 rs2 bimm12lo 14..12=0 6..2=0x18 1..0=3
-bne     bimm12hi rs1 rs2 bimm12lo 14..12=1 6..2=0x18 1..0=3
-blt     bimm12hi rs1 rs2 bimm12lo 14..12=4 6..2=0x18 1..0=3
-bge     bimm12hi rs1 rs2 bimm12lo 14..12=5 6..2=0x18 1..0=3
-bltu    bimm12hi rs1 rs2 bimm12lo 14..12=6 6..2=0x18 1..0=3
-bgeu    bimm12hi rs1 rs2 bimm12lo 14..12=7 6..2=0x18 1..0=3
+ALL RV32I instructions: 1..0=3
 
-jalr    rd rs1 imm12              14..12=0 6..2=0x19 1..0=3
+[R]
+add     rd rs1 rs2 31..25=0  14..12=0 6..2=0x0C
+sub     rd rs1 rs2 31..25=32 14..12=0 6..2=0x0C
+sll     rd rs1 rs2 31..25=0  14..12=1 6..2=0x0C
+slt     rd rs1 rs2 31..25=0  14..12=2 6..2=0x0C
+sltu    rd rs1 rs2 31..25=0  14..12=3 6..2=0x0C
+xor     rd rs1 rs2 31..25=0  14..12=4 6..2=0x0C
+srl     rd rs1 rs2 31..25=0  14..12=5 6..2=0x0C
+sra     rd rs1 rs2 31..25=32 14..12=5 6..2=0x0C
+or      rd rs1 rs2 31..25=0  14..12=6 6..2=0x0C
+and     rd rs1 rs2 31..25=0  14..12=7 6..2=0x0C
 
-jal     rd jimm20                          6..2=0x1b 1..0=3
+[U]
+lui     rd imm20 6..2=0x0D
+auipc   rd imm20 6..2=0x05
 
-lui     rd imm20 6..2=0x0D 1..0=3
-auipc   rd imm20 6..2=0x05 1..0=3
+[J]
+jal     rd jimm20                        6..2=0x1b
 
-addi    rd rs1 imm12           14..12=0 6..2=0x04 1..0=3
-slti    rd rs1 imm12           14..12=2 6..2=0x04 1..0=3
-sltiu   rd rs1 imm12           14..12=3 6..2=0x04 1..0=3
-xori    rd rs1 imm12           14..12=4 6..2=0x04 1..0=3
-ori     rd rs1 imm12           14..12=6 6..2=0x04 1..0=3
-andi    rd rs1 imm12           14..12=7 6..2=0x04 1..0=3
+[I]
+jalr    rd rs1 imm12            14..12=0 6..2=0x19
+lb      rd rs1 imm12            14..12=0 6..2=0x00
+lh      rd rs1 imm12            14..12=1 6..2=0x00
+lw      rd rs1 imm12            14..12=2 6..2=0x00
+lbu     rd rs1 imm12            14..12=4 6..2=0x00
+lhu     rd rs1 imm12            14..12=5 6..2=0x00
+addi    rd rs1 imm12            14..12=0 6..2=0x04
+slti    rd rs1 imm12            14..12=2 6..2=0x04
+sltiu   rd rs1 imm12            14..12=3 6..2=0x04
+xori    rd rs1 imm12            14..12=4 6..2=0x04
+ori     rd rs1 imm12            14..12=6 6..2=0x04
+andi    rd rs1 imm12            14..12=7 6..2=0x04
+fence   rd rs1 fm pred succ     14..12=0 6..2=0x03
+fence.i rd rs1 imm12            14..12=1 6..2=0x03
 
-add     rd rs1 rs2 31..25=0  14..12=0 6..2=0x0C 1..0=3
-sub     rd rs1 rs2 31..25=32 14..12=0 6..2=0x0C 1..0=3
-sll     rd rs1 rs2 31..25=0  14..12=1 6..2=0x0C 1..0=3
-slt     rd rs1 rs2 31..25=0  14..12=2 6..2=0x0C 1..0=3
-sltu    rd rs1 rs2 31..25=0  14..12=3 6..2=0x0C 1..0=3
-xor     rd rs1 rs2 31..25=0  14..12=4 6..2=0x0C 1..0=3
-srl     rd rs1 rs2 31..25=0  14..12=5 6..2=0x0C 1..0=3
-sra     rd rs1 rs2 31..25=32 14..12=5 6..2=0x0C 1..0=3
-or      rd rs1 rs2 31..25=0  14..12=6 6..2=0x0C 1..0=3
-and     rd rs1 rs2 31..25=0  14..12=7 6..2=0x0C 1..0=3
+[B]
+beq     bimm12hi rs1 rs2 bimm12lo 14..12=0 6..2=0x18
+bne     bimm12hi rs1 rs2 bimm12lo 14..12=1 6..2=0x18
+blt     bimm12hi rs1 rs2 bimm12lo 14..12=4 6..2=0x18
+bge     bimm12hi rs1 rs2 bimm12lo 14..12=5 6..2=0x18
+bltu    bimm12hi rs1 rs2 bimm12lo 14..12=6 6..2=0x18
+bgeu    bimm12hi rs1 rs2 bimm12lo 14..12=7 6..2=0x18
 
-lb      rd rs1       imm12 14..12=0 6..2=0x00 1..0=3
-lh      rd rs1       imm12 14..12=1 6..2=0x00 1..0=3
-lw      rd rs1       imm12 14..12=2 6..2=0x00 1..0=3
-lbu     rd rs1       imm12 14..12=4 6..2=0x00 1..0=3
-lhu     rd rs1       imm12 14..12=5 6..2=0x00 1..0=3
-
-sb     imm12hi rs1 rs2 imm12lo 14..12=0 6..2=0x08 1..0=3
-sh     imm12hi rs1 rs2 imm12lo 14..12=1 6..2=0x08 1..0=3
-sw     imm12hi rs1 rs2 imm12lo 14..12=2 6..2=0x08 1..0=3
-
-fence       fm            pred succ     rs1 14..12=0 rd 6..2=0x03 1..0=3
-fence.i     imm12                       rs1 14..12=1 rd 6..2=0x03 1..0=3
-
+[S]
+sb     imm12hi rs1 rs2 imm12lo 14..12=0 6..2=0x08
+sh     imm12hi rs1 rs2 imm12lo 14..12=1 6..2=0x08
+sw     imm12hi rs1 rs2 imm12lo 14..12=2 6..2=0x08
