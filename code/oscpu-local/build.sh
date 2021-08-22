@@ -88,9 +88,9 @@ build_diff_proj() {
     # create soft link ($BUILD_PATH/*.v -> $PROJECT_PATH/$VSRC_FOLDER/*.v)
     create_soft_link $BUILD_PATH $PROJECT_PATH/$VSRC_FOLDER \"*.v\"
     # create soft link ($PROJECT_PATH/difftest -> $LIBRARIES_HOME/difftest)
-    if [[ ! -L $PROJECT_PATH/$DIFFTEST_FOLDER ]]; then
-        eval "ln -s \"`realpath --relative-to="$PROJECT_PATH" "$LIBRARIES_HOME"`/$DIFFTEST_FOLDER\" \"$PROJECT_PATH/$DIFFTEST_FOLDER\" 1>/dev/null 2>&1"
-    fi
+    #if [[ ! -L $PROJECT_PATH/$DIFFTEST_FOLDER ]]; then
+    #    eval "ln -s \"`realpath --relative-to="$PROJECT_PATH" "$LIBRARIES_HOME"`/$DIFFTEST_FOLDER\" \"$PROJECT_PATH/$DIFFTEST_FOLDER\" 1>/dev/null 2>&1"
+    #fi
 
     compile_dramsim3
     compile_nemu
