@@ -1,0 +1,3 @@
+[submodule "code/oscpu"]
+	path = code/oscpu
+	url = https://github.com/OSCPU/oscpu-framework.git
