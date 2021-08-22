@@ -73,7 +73,7 @@ compile_nemu() {
 
 compile_difftest() {
     cd $DIFFTEST_HOME
-    sed -i 's/#define EMU_RAM_SIZE (8 \* 1024 \* 1024 \* 1024UL)/#define EMU_RAM_SIZE (256 \* 1024 \* 1024UL)/' src/test/csrc/common/ram.h
+    #sed -i 's/#define EMU_RAM_SIZE (8 \* 1024 \* 1024 \* 1024UL)/#define EMU_RAM_SIZE (256 \* 1024 \* 1024UL)/' src/test/csrc/common/ram.h
     make DESIGN_DIR=$PROJECT_PATH $DIFFTEST_PARAM
     if [ $? -ne 0 ]; then
         echo "Failed to build difftest!!!"
