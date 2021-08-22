@@ -11,6 +11,7 @@
   oscpu-framework				一生一芯cpu项目的代码框架，包含了verilator,difftest等技术
   nemu						一个支持多ISA的模拟器
   difftest					一种测试技术，利用nemu与verilator产生的真机运行结果进行比对
+  	这个库用于学习原理，原本用于NutShell到。而一生一芯是定制过的版本。
   qemu						difftest当初开发nemu库时使用的REF模拟机
   OpenXiangShan/difftest		独立的difftest框架，依赖特定版本的NEMU（模拟器）
   OpenXiangShan/xs-env		对应版本的其他项目
@@ -88,6 +89,21 @@
   git clone --recursive -b 2021 https://github.com/OSCPU/oscpu-framework.git oscpu
   2. 子仓库如果失败，还需重新克隆子仓库
   git submodule update --init --recursive
+  3. 编译和仿真 counter
+  $ ./build.sh -e counter -b -s
+  3. cpu项目
+  $ ./build.sh -b -t rvcpu -s
+  $ inst.bin
+  
+  4. cpu_diff项目
+  $ ./build.sh -e cpu_diff -d -b -a "-i inst_diff.bin --dump-wave -b 0" -m "EMU_TRACE=1"
+  编译失败。
+  首先编译 NEMU
+  $ cd oscpu-local/
+  $ echo export N_HOME=$(pwd) >> ~/.bashrc
+  $ cd libraries/NEMU
+  $ echo export NEMU_HOME=$(pwd) >> ~/.bashrc
+  $ source ~/.bashrc
   ```
 
 * difftest项目
