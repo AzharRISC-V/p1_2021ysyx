@@ -92,8 +92,8 @@ build_diff_proj() {
     #    eval "ln -s \"`realpath --relative-to="$PROJECT_PATH" "$LIBRARIES_HOME"`/$DIFFTEST_FOLDER\" \"$PROJECT_PATH/$DIFFTEST_FOLDER\" 1>/dev/null 2>&1"
     #fi
 
-    compile_dramsim3
-    compile_nemu
+    #compile_dramsim3
+    #compile_nemu
     compile_difftest
 }
 
