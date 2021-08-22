@@ -18,8 +18,8 @@
 #include <unistd.h>
 #include <dlfcn.h>
 
-uint8_t* goldenMem = NULL;
-const char *difftest_ref_so = NULL;
+uint8_t* goldenMem = NULL;  // 可能是内存比对之类的工作
+const char *difftest_ref_so = NULL;   // REF对象（这里是NEMU模拟器，也可改为QEMU模拟器）
 
 #define check_and_assert(func)                                \
   do {                                                        \
@@ -30,14 +30,17 @@ const char *difftest_ref_so = NULL;
   } while (0);
 
 NemuProxy::NemuProxy(int coreid) {
+  // 计算 ref_so 文件名
   if (difftest_ref_so == NULL) {
     printf("--diff is not given, "
         "try to use $(NEMU_HOME)/build/riscv64-nemu-interpreter-so by default\n");
+    // 环境变量 NEMU_HOME
     const char *nemu_home = getenv("NEMU_HOME");
     if (nemu_home == NULL) {
       printf("FATAL: $(NEMU_HOME) is not defined!\n");
       exit(1);
     }
+    // 计算 ref_so 文件名
     const char *so = "/build/riscv64-nemu-interpreter-so";
     char *buf = (char *)malloc(strlen(nemu_home) + strlen(so) + 1);
     strcpy(buf, nemu_home);
@@ -53,6 +56,7 @@ NemuProxy::NemuProxy(int coreid) {
     assert(0);
   }
 
+  // 取出该库中的一些函数地址
   this->memcpy = (void (*)(paddr_t, void *, size_t, bool))dlsym(handle, "difftest_memcpy");
   check_and_assert(this->memcpy);
 
@@ -80,12 +84,14 @@ NemuProxy::NemuProxy(int coreid) {
   isa_reg_display = (void (*)(void))dlsym(handle, "isa_reg_display");
   check_and_assert(isa_reg_display);
 
+  // 设置多核
   auto nemu_difftest_set_mhartid = (void (*)(int))dlsym(handle, "difftest_set_mhartid");
   if (NUM_CORES > 1) {
     check_and_assert(nemu_difftest_set_mhartid);
     nemu_difftest_set_mhartid(coreid);
   }
 
+  // 设置 goldenMem
   auto nemu_misc_put_gmaddr = (void (*)(void*))dlsym(handle, "difftest_put_gmaddr");
   if (NUM_CORES > 1) {
     check_and_assert(nemu_misc_put_gmaddr);

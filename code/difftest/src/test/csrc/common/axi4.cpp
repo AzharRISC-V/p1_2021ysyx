@@ -22,7 +22,7 @@
 
 // ar channel: (1) read raddr; (2) try to accept the address; (3) check raddr fire
 bool axi_get_raddr(const axi_channel &axi, axi_addr_t &addr) {
-  if (axi.ar.valid) {
+  if (axi.ar.valid) {     // 有效时接受地址
     addr = axi.ar.addr;
     return true;
   }
@@ -30,11 +30,11 @@ bool axi_get_raddr(const axi_channel &axi, axi_addr_t &addr) {
 }
 
 void axi_accept_raddr(axi_channel &axi) {
-  axi.ar.ready = 1;
+  axi.ar.ready = 1;     // 就绪位置位
 }
 
 bool axi_check_raddr_fire(const axi_channel &axi) {
-  if (axi.ar.valid && axi.ar.ready) {
+  if (axi.ar.valid && axi.ar.ready) {     // 有效并且就绪
 #ifdef DEBUG_LOG_AXI4
     printf("axi ar channel fired addr = 0x%lx, id = %d\n", axi.ar.addr, axi.ar.id);
 #endif
@@ -47,13 +47,13 @@ bool axi_check_raddr_fire(const axi_channel &axi) {
 // r channel: (1) put rdata; (2) check rdata fire
 void axi_put_rdata(axi_channel &axi, void *src, size_t n, bool last, uint8_t id) {
   memcpy(axi.r.data, src, n);
-  axi.r.valid = 1;
-  axi.r.last = (last) ? 1 : 0;
+  axi.r.valid = 1;                // 有效位置位
+  axi.r.last = (last) ? 1 : 0;    // 是否最后一个地址
   axi.r.id = id;
 }
 
 bool axi_check_rdata_fire(const axi_channel &axi) {
-  if (axi.r.ready && axi.r.valid) {
+  if (axi.r.ready && axi.r.valid) {   // 就绪并有效
 #ifdef DEBUG_LOG_AXI4
     printf("axi r channel fired data = %lx, id = %d\n", axi.r.data[0], axi.r.id);
 #endif

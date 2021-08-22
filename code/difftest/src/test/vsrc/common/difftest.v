@@ -46,7 +46,7 @@
 `define DPIC_ARG_INT  input int
 `define DPIC_ARG_LONG input longint
 
-// DifftestArchEvent
+// DifftestArchEvent 架构级的事件
 `DIFFTEST_DPIC_FUNC_DECL(ArchEvent) (
   `DPIC_ARG_BYTE coreid,
   `DPIC_ARG_INT  intrNo,
@@ -54,9 +54,9 @@
   `DPIC_ARG_LONG exceptionPC
 );
 `DIFFTEST_MOD_DECL(ArchEvent) (
-  input        clock,
-  input [ 7:0] coreid,
-  input [31:0] intrNO,
+  input        clock,         // 时钟
+  input [ 7:0] coreid,        // 处理器和id
+  input [31:0] intrNO,        // 指令序号
   input [31:0] cause,
   input [63:0] exceptionPC
 );
@@ -65,7 +65,7 @@
   ) `DIFFTEST_MOD_DPIC_CALL_END(ArchEvent)
 endmodule
 
-// DifftestInstrCommit
+// DifftestInstrCommit 指令提交
 `DIFFTEST_DPIC_FUNC_DECL(InstrCommit) (
   `DPIC_ARG_BYTE coreid,
   `DPIC_ARG_BYTE index,
@@ -83,15 +83,15 @@ endmodule
   input        clock,
   input [ 7:0] coreid,
   input [ 7:0] index,
-  input        valid,
-  input [63:0] pc,
-  input [31:0] instr,
-  input        skip,
-  input        isRVC,
+  input        valid,         // 是否提交有效
+  input [63:0] pc,            // pc
+  input [31:0] instr,         // 指令内容
+  input        skip,          // 是否跳过
+  input        isRVC,         // 是否RVC指令
   input        scFailed,
-  input        wen,
-  input [ 7:0] wdest,
-  input [63:0] wdata
+  input        wen,           // 写有效
+  input [ 7:0] wdest,         // 写目的地址
+  input [63:0] wdata          // 写的数据
 );
   `DIFFTEST_MOD_DPIC_CALL_BEGIN_WITH_EN(valid, InstrCommit) (
     coreid, index,
@@ -99,7 +99,7 @@ endmodule
   ) `DIFFTEST_MOD_DPIC_CALL_END_WITH_EN(InstrCommit)
 endmodule
 
-// DifftesTrapEvent
+// DifftesTrapEvent 陷入事件
 `DIFFTEST_DPIC_FUNC_DECL(TrapEvent) (
   `DPIC_ARG_BYTE coreid,
   `DPIC_ARG_BIT  valid,
@@ -122,7 +122,7 @@ endmodule
   ) `DIFFTEST_MOD_DPIC_CALL_END(TrapEvent)
 endmodule
 
-// DifftestCSRState
+// DifftestCSRState 控制状态寄存器
 `DIFFTEST_DPIC_FUNC_DECL(CSRState) (
   `DPIC_ARG_BYTE coreid,
   `DPIC_ARG_BYTE priviledgeMode,
@@ -173,7 +173,7 @@ endmodule
   ) `DIFFTEST_MOD_DPIC_CALL_END(CSRState)
 endmodule
 
-// DifftestArchIntRegState
+// DifftestArchIntRegState 整数寄存器状态
 `DIFFTEST_DPIC_FUNC_DECL(ArchIntRegState) (
   `DPIC_ARG_BYTE coreid,
   `DPIC_ARG_LONG gpr_0,
@@ -254,7 +254,7 @@ endmodule
   ) `DIFFTEST_MOD_DPIC_CALL_END(ArchIntRegState)
 endmodule
 
-// DifftestArchFpRegState
+// DifftestArchFpRegState 浮点数寄存器状态
 `DIFFTEST_DPIC_FUNC_DECL(ArchFpRegState) (
   `DPIC_ARG_BYTE coreid,
   `DPIC_ARG_LONG fpr_0,
@@ -493,14 +493,14 @@ endmodule
   ) `DIFFTEST_MOD_DPIC_CALL_END_WITH_EN(SbufferEvent)
 endmodule
 
-// DifftestStoreEvent
+// DifftestStoreEvent 存储事件
 `DIFFTEST_DPIC_FUNC_DECL(StoreEvent) (
   `DPIC_ARG_BYTE coreid,
   `DPIC_ARG_BYTE index,
   `DPIC_ARG_BIT  valid,
-  `DPIC_ARG_LONG storeAddr,
-  `DPIC_ARG_LONG storeData,
-  `DPIC_ARG_BYTE storeMask
+  `DPIC_ARG_LONG storeAddr,     // 存储地址
+  `DPIC_ARG_LONG storeData,     // 存储数据
+  `DPIC_ARG_BYTE storeMask      // 存储掩码
 );
 `DIFFTEST_MOD_DECL(StoreEvent)(
   input        clock,
@@ -516,13 +516,13 @@ endmodule
   ) `DIFFTEST_MOD_DPIC_CALL_END_WITH_EN(StoreEvent)
 endmodule
 
-// DifftestLoadEvent
+// DifftestLoadEvent 加载事件
 `DIFFTEST_DPIC_FUNC_DECL(LoadEvent) (
   `DPIC_ARG_BYTE coreid,
   `DPIC_ARG_BYTE index,
   `DPIC_ARG_BIT  valid,
-  `DPIC_ARG_LONG paddr,
-  `DPIC_ARG_BYTE opType,
+  `DPIC_ARG_LONG paddr,       // 物理地址
+  `DPIC_ARG_BYTE opType,      // 操作类型
   `DPIC_ARG_BYTE fuType
 );
 `DIFFTEST_MOD_DECL(LoadEvent)(
@@ -539,15 +539,15 @@ endmodule
   ) `DIFFTEST_MOD_DPIC_CALL_END_WITH_EN(LoadEvent)
 endmodule
 
-// DifftestAtomicEvent
+// DifftestAtomicEvent 原子事件
 `DIFFTEST_DPIC_FUNC_DECL(AtomicEvent) (
   `DPIC_ARG_BYTE coreid,
-  `DPIC_ARG_BIT  atomicResp,
-  `DPIC_ARG_LONG atomicAddr,
-  `DPIC_ARG_LONG atomicData,
-  `DPIC_ARG_BYTE atomicMask,
-  `DPIC_ARG_BYTE atomicFuop,
-  `DPIC_ARG_LONG atomicOut
+  `DPIC_ARG_BIT  atomicResp,      // 
+  `DPIC_ARG_LONG atomicAddr,      // 地址
+  `DPIC_ARG_LONG atomicData,      // 数据
+  `DPIC_ARG_BYTE atomicMask,      // 掩码
+  `DPIC_ARG_BYTE atomicFuop,      // 操作
+  `DPIC_ARG_LONG atomicOut        // 输出
 );
 `DIFFTEST_MOD_DECL(AtomicEvent)(
   input        clock,
@@ -564,7 +564,7 @@ endmodule
   ) `DIFFTEST_MOD_DPIC_CALL_END_WITH_EN(AtomicEvent)
 endmodule
 
-// DifftestPtwEvent
+// DifftestPtwEvent ？
 `DIFFTEST_DPIC_FUNC_DECL(PtwEvent) (
   `DPIC_ARG_BYTE coreid,
   `DPIC_ARG_BIT  ptwResp,

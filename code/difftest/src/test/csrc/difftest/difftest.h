@@ -23,28 +23,35 @@
 #define DIFF_PROXY NemuProxy
 
 #define DIFFTEST_CORE_NUMBER  NUM_CORES
+
+// 提交宽度
 #define DIFFTEST_COMMIT_WIDTH 6
+// 储存宽度
 #define DIFFTEST_STORE_WIDTH  2
+// 加载宽度，与提交宽度相等
 #define DIFFTEST_LOAD_WIDTH   DIFFTEST_COMMIT_WIDTH
 
 #define DIFFTEST_STORE_COMMIT
 
+// 几个方向
 enum { DIFFTEST_TO_DUT, DIFFTEST_TO_REF };
 enum { REF_TO_DUT, DUT_TO_REF };
 enum { REF_TO_DIFFTEST, DUT_TO_DIFFTEST };
 // DIFFTEST_TO_DUT ~ REF_TO_DUT ~ REF_TO_DIFFTEST
 // DIFFTEST_TO_REF ~ DUT_TO_REF ~ DUT_TO_DIFFTEST
+
+// 打印文件和行号
 #define CP printf("%s: %d\n", __FILE__, __LINE__);fflush( stdout );
 
 
 // Difftest structures
 // trap events: self-defined traps
 typedef struct {
-  uint8_t  valid = 0;
-  uint8_t  code;
-  uint64_t pc;
-  uint64_t cycleCnt = 0;
-  uint64_t instrCnt = 0;
+  uint8_t  valid = 0;     // 是否有效，非0有效。
+  uint8_t  code;          // 自陷的到代码（代号）
+  uint64_t pc;            // 当前的pc
+  uint64_t cycleCnt = 0;  // 周期数
+  uint64_t instrCnt = 0;  // 指令数
 } trap_event_t;
 
 // architectural events: interrupts and exceptions
@@ -52,11 +59,12 @@ typedef struct {
 typedef struct {
   uint32_t interrupt = 0;
   uint32_t exception = 0;
-  uint64_t exceptionPC = 0;
+  uint64_t exceptionPC = 0;   // 异常时的pc
 } arch_event_t;
 
+// 指令提交
 typedef struct {
-  uint8_t  valid = 0;
+  uint8_t  valid = 0;     // 是否有效，非0有效。
   uint64_t pc;
   uint32_t inst;
   uint8_t  skip;
@@ -67,11 +75,13 @@ typedef struct {
   uint64_t wdata;
 } instr_commit_t;
 
+// 寄存器状态
 typedef struct {
   uint64_t gpr[32];
   uint64_t fpr[32];
 } arch_reg_state_t;
 
+// CSR状态
 typedef struct __attribute__((packed)) {
   uint64_t this_pc;
   uint64_t mstatus;
@@ -91,34 +101,40 @@ typedef struct __attribute__((packed)) {
   uint64_t stval;
   uint64_t mtvec;
   uint64_t stvec;
-  uint64_t priviledgeMode;
+  uint64_t priviledgeMode;  // 特权类型
 } arch_csr_state_t;
 
-const int DIFFTEST_NR_REG = (sizeof(arch_reg_state_t) + sizeof(arch_csr_state_t)) / sizeof(uint64_t);
+// 所有寄存器的数量：reg + csr
+const int DIFFTEST_NR_REG = 
+  (sizeof(arch_reg_state_t) + sizeof(arch_csr_state_t)) / sizeof(uint64_t);
 
+// sbuffer状态
 typedef struct {
-  uint8_t  resp = 0;
+  uint8_t  resp = 0;     // 是否有效，非0有效。
   uint64_t addr;
   uint8_t  data[64];
   uint64_t mask;
 } sbuffer_state_t;
 
+// store 事件
 typedef struct {
-  uint8_t  valid = 0;
+  uint8_t  valid = 0;     // 是否有效，非0有效。
   uint64_t addr;
   uint64_t data;
   uint8_t  mask;
 } store_event_t;
 
+// load 事件
 typedef struct {
-  uint8_t  valid = 0;
+  uint8_t  valid = 0;     // 是否有效，非0有效。
   uint64_t paddr;
   uint8_t  fuType;
   uint8_t  opType;
 } load_event_t;
 
+// atom 事件
 typedef struct {
-  uint8_t  resp = 0;
+  uint8_t  resp = 0;     // 是否有效，非0有效。
   uint64_t addr;
   uint64_t data;
   uint8_t  mask;
@@ -126,12 +142,14 @@ typedef struct {
   uint64_t out;
 } atomic_event_t;
 
+// pwd 事件
 typedef struct {
-  uint8_t  resp = 0;
+  uint8_t  resp = 0;     // 是否有效，非0有效。
   uint64_t addr;
   uint64_t data[4];
 } ptw_event_t;
 
+// difftest核心状态，包含了寄存器、事件等
 typedef struct {
   trap_event_t     trap;
   arch_event_t     event;
@@ -154,11 +172,16 @@ enum retire_inst_type {
 class DiffState {
 public:
   DiffState(int history_length = 32);
+
+  // 记录 group(一个group包含了1到n条指令)
   void record_group(uint64_t pc, uint64_t count) {
     retire_group_pc_queue [retire_group_pointer] = pc;
     retire_group_cnt_queue[retire_group_pointer] = count;
+    // 循环数组下标处理
     retire_group_pointer = (retire_group_pointer + 1) % DEBUG_GROUP_TRACE_SIZE;
   };
+
+  // 记录指令
   void record_inst(uint64_t pc, uint32_t inst, uint8_t en, uint8_t dest, uint64_t data) {
     retire_inst_pc_queue   [retire_inst_pointer] = pc;
     retire_inst_inst_queue [retire_inst_pointer] = inst;
@@ -166,13 +189,17 @@ public:
     retire_inst_wdst_queue [retire_inst_pointer] = dest;
     retire_inst_wdata_queue[retire_inst_pointer] = data;
     retire_inst_type_queue[retire_inst_pointer] = RET_NORMAL;
+    // 循环数组下标处理
     retire_inst_pointer = (retire_inst_pointer + 1) % DEBUG_INST_TRACE_SIZE;
   };
+
+  // 记录异常指令
   void record_abnormal_inst(uint64_t pc, uint32_t inst, uint32_t abnormal_type, uint64_t cause) {
     retire_inst_pc_queue   [retire_inst_pointer] = pc;
     retire_inst_inst_queue [retire_inst_pointer] = inst;
     retire_inst_wdata_queue[retire_inst_pointer] = cause; // write cause to data queue to save space
     retire_inst_type_queue[retire_inst_pointer] = abnormal_type;
+    // 循环数组下标处理
     retire_inst_pointer = (retire_inst_pointer + 1) % DEBUG_INST_TRACE_SIZE;
   };
   void display(int coreid);
@@ -202,15 +229,18 @@ public:
   Difftest(int coreid);
   DIFF_PROXY *proxy = NULL;
   uint32_t num_commit = 0; // # of commits if made progress
+
   // Trigger a difftest checking procdure
   int step();
   void update_nemuproxy(int);
+  
   inline bool get_trap_valid() {
     return dut.trap.valid;
   }
   inline int get_trap_code() {
     return dut.trap.code;
   }
+  
   void display();
 
   // Difftest public APIs for dut: called from DPI-C functions (or testbench)
@@ -258,7 +288,7 @@ private:
 
   bool progress = false;
   bool has_commit = false;
-  uint64_t ticks = 0;
+  uint64_t ticks = 0;           // 逝去的周期数
   uint64_t last_commit = 0;
 
   uint64_t nemu_this_pc;
@@ -275,13 +305,23 @@ private:
   // inline uint64_t *dut_regs_ptr() { return (uint64_t*)&dut.regs; }
 
   void raise_trap(int trapCode);
+
+  // 清除相关标志位
   void clear_step();
 };
 
 extern Difftest **difftest;
+
+// difftest初始化
 int difftest_init();
+
+// difftest执行一个指令，成功返回0，失败返回非0。
 int difftest_step();
+
+// difftest获取状态，自陷时返回正数，否则返回-1。
 int difftest_state();
+
+// difftest
 int init_nemuproxy();
 
 #endif

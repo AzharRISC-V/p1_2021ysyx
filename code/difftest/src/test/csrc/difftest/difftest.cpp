@@ -28,11 +28,13 @@ static const char *reg_name[DIFFTEST_NR_REG+1] = {
   "fa6", "fa7", "fs2",  "fs3",  "fs4", "fs5", "fs6",  "fs7",
   "fs8", "fs9", "fs10", "fs11", "ft8", "ft9", "ft10", "ft11",
   "this_pc",
-  "mstatus", "mcause", "mepc",
-  "sstatus", "scause", "sepc",
+  "mstatus", "mcause", "mepc",  // machine mode
+  "sstatus", "scause", "sepc",  // supervisor mode
   "satp",
   "mip", "mie", "mscratch", "sscratch", "mideleg", "medeleg",
-  "mtval", "stval", "mtvec", "stvec", "mode",
+  "mtval", "stval",     // 毫秒，秒
+  "mtvec", "stvec", 
+  "mode",
 };
 
 Difftest **difftest = NULL;

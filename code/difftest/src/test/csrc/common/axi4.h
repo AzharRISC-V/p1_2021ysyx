@@ -29,6 +29,7 @@ typedef uint64_t axi_data_t[AXI_DATA_WIDTH_64];
 #define axi_copy_data(dest, src) \
   memcpy(dest, src, sizeof(uint64_t)*AXI_DATA_WIDTH_64);
 
+// address write
 struct axi_aw_channel {
   uint8_t       ready;
   uint8_t       valid;
@@ -44,6 +45,7 @@ struct axi_aw_channel {
   uint8_t       qos;
 };
 
+// data write
 struct axi_w_channel {
   uint8_t       ready;
   uint8_t       valid;
@@ -52,6 +54,7 @@ struct axi_w_channel {
   uint8_t       last;
 };
 
+// response
 struct axi_b_channel {
   uint8_t       ready;
   uint8_t       valid;
@@ -60,6 +63,7 @@ struct axi_b_channel {
   uint8_t       user;
 };
 
+// address read
 struct axi_ar_channel {
   uint8_t       ready;
   uint8_t       valid;
@@ -75,6 +79,7 @@ struct axi_ar_channel {
   uint8_t       qos;
 };
 
+// data read
 struct axi_r_channel {
   uint8_t       ready;
   uint8_t       valid;
@@ -98,6 +103,7 @@ struct axi_channel {
 // NOTE: change this when migrating between different hardware designs
 #define DUT_AXI(name) io_memAXI_0_##name
 
+// aw通道：从DUT取数据
 #define axi_aw_copy_from_dut_ptr(dut_ptr, aw)             \
   do {                                                    \
     aw.ready = dut_ptr->DUT_AXI(aw_ready);                \
@@ -113,6 +119,7 @@ struct axi_channel {
     aw.qos = dut_ptr->DUT_AXI(aw_bits_qos);               \
   } while (0);
 
+// aw通道：向DUT写数据
 #define axi_aw_set_dut_ptr(dut_ptr, aw)                   \
   do {                                                    \
     dut_ptr->DUT_AXI(aw_ready) = aw.ready;                \

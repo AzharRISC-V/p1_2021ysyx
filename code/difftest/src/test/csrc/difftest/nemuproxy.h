@@ -25,14 +25,25 @@
 class NemuProxy {
 public:
   // public callable functions
+  // 内存拷贝
   void (*memcpy)(paddr_t nemu_addr, void *dut_buf, size_t n, bool direction);
+  // 寄存器拷贝
   void (*regcpy)(void *dut, bool direction);
+  // CSR拷贝
   void (*csrcpy)(void *dut, bool direction);
+  // UarchStatus
   void (*uarchstatus_cpy)(void *dut, bool direction);
+  
+  
   int (*store_commit)(uint64_t *saddr, uint64_t *sdata, uint8_t *smask);
+  
+  // 执行n条指令
   void (*exec)(uint64_t n);
+  
   vaddr_t (*guided_exec)(void *disambiguate_para);
+  
   void (*raise_intr)(uint64_t no);
+  // 显示寄存器
   void (*isa_reg_display)();
 
   NemuProxy(int coreid);
@@ -46,8 +57,8 @@ struct SyncState {
 
 struct ExecutionGuide {
   uint64_t exceptionNo;
-  uint64_t mtval;
-  uint64_t stval;
+  uint64_t mtval;   // 微妙
+  uint64_t stval;   // 毫秒
 };
 
 void ref_misc_put_gmaddr(uint8_t* ptr);

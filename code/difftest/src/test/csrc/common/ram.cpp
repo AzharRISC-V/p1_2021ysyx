@@ -27,6 +27,7 @@
 CoDRAMsim3 *dram = NULL;
 #endif
 
+// 按64bit格式的内存区域
 static uint64_t *ram;
 static long img_size = 0;
 static pthread_mutex_t ram_mutex;
@@ -188,10 +189,12 @@ void ram_finish() {
   pthread_mutex_destroy(&ram_mutex);
 }
 
-
+// 内存读取辅助函数，将输入的1字节地址转换为内部的8字节地址
 extern "C" uint64_t ram_read_helper(uint8_t en, uint64_t rIdx) {
   if (!ram)
     return 0;
+  
+  // TODO: 地址处理方式需要注意，是否另有他用？
   if (en && rIdx >= EMU_RAM_SIZE / sizeof(uint64_t)) {
     rIdx %= EMU_RAM_SIZE / sizeof(uint64_t);
   }
@@ -201,22 +204,29 @@ extern "C" uint64_t ram_read_helper(uint8_t en, uint64_t rIdx) {
   return rdata;
 }
 
+// 内存写入辅助函数，将输入的1字节地址转换为内部的8字节地址
+// wmask  用于保护写入位置，例如 wmask=0xF0，则只写入[7:4]位
 extern "C" void ram_write_helper(uint64_t wIdx, uint64_t wdata, uint64_t wmask, uint8_t wen) {
   if (wen && ram) {
+    
+    // 写入时禁止地址越界，而读取时未保护
     if (wIdx >= EMU_RAM_SIZE / sizeof(uint64_t)) {
       printf("ERROR: ram wIdx = 0x%lx out of bound!\n", wIdx);
       assert(wIdx < EMU_RAM_SIZE / sizeof(uint64_t));
     }
+
     pthread_mutex_lock(&ram_mutex);
     ram[wIdx] = (ram[wIdx] & ~wmask) | (wdata & wmask);
     pthread_mutex_unlock(&ram_mutex);
   }
 }
 
+
 uint64_t pmem_read(uint64_t raddr) {
   if (raddr % sizeof(uint64_t)) {
     printf("Warning: pmem_read only supports 64-bit aligned memory access\n");
   }
+  // TODO: 这里应该用宏定义
   raddr -= 0x80000000;
   return ram_read_helper(1, raddr / sizeof(uint64_t));
 }
@@ -225,6 +235,7 @@ void pmem_write(uint64_t waddr, uint64_t wdata) {
   if (waddr % sizeof(uint64_t)) {
     printf("Warning: pmem_write only supports 64-bit aligned memory access\n");
   }
+  // TODO: 这里应该用宏定义
   waddr -= 0x80000000;
   return ram_write_helper(waddr / sizeof(uint64_t), wdata, -1UL, 1);
 }

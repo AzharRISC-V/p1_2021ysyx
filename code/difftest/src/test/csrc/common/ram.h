@@ -22,15 +22,24 @@
 // #define EMU_RAM_SIZE (256 * 1024 * 1024UL)
 #define EMU_RAM_SIZE (8 * 1024 * 1024 * 1024UL)
 
+// 初始化ram：申请空间，并将img文件内容读入这块区域
 void init_ram(const char *img);
+// 使用完毕清理资源
 void ram_finish();
+
+// 返回内存起始位置
 void* get_ram_start();
+// 返回内存大小
 long get_ram_size();
 
+// 返回img数据起始位置，默认加载到内存起始位置
 void* get_img_start();
+// 返回img数据大小
 long get_img_size();
 
+// 内存读取，地址单位是字节
 uint64_t pmem_read(uint64_t raddr);
+// 内存写入，地址单位是字节
 void pmem_write(uint64_t waddr, uint64_t wdata);
 
 #ifdef WITH_DRAMSIM3
