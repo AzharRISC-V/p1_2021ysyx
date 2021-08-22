@@ -84,16 +84,16 @@ compile_difftest() {
 
 build_diff_proj() {
     # Refresh the modification time of the top file, otherwise some changes to the RTL source code will not take effect in next compilation.
-    # touch -m `find $BUILD_PATH -name $DIFFTEST_TOP_FILE` 1>/dev/null 2>&1
+    touch -m `find $BUILD_PATH -name $DIFFTEST_TOP_FILE` 1>/dev/null 2>&1
     # create soft link ($BUILD_PATH/*.v -> $PROJECT_PATH/$VSRC_FOLDER/*.v)
     create_soft_link $BUILD_PATH $PROJECT_PATH/$VSRC_FOLDER \"*.v\"
     # create soft link ($PROJECT_PATH/difftest -> $LIBRARIES_HOME/difftest)
-    #if [[ ! -L $PROJECT_PATH/$DIFFTEST_FOLDER ]]; then
-    #    eval "ln -s \"`realpath --relative-to="$PROJECT_PATH" "$LIBRARIES_HOME"`/$DIFFTEST_FOLDER\" \"$PROJECT_PATH/$DIFFTEST_FOLDER\" 1>/dev/null 2>&1"
-    #fi
+    if [[ ! -L $PROJECT_PATH/$DIFFTEST_FOLDER ]]; then
+        eval "ln -s \"`realpath --relative-to="$PROJECT_PATH" "$LIBRARIES_HOME"`/$DIFFTEST_FOLDER\" \"$PROJECT_PATH/$DIFFTEST_FOLDER\" 1>/dev/null 2>&1"
+    fi
 
-    #compile_dramsim3
-    #compile_nemu
+    compile_dramsim3
+    compile_nemu
     compile_difftest
 }
 
@@ -218,9 +218,9 @@ if [[ "$BUILD" == "true" ]]; then
     [[ "$DIFFTEST" == "true" ]] && build_diff_proj || build_proj
 
     #git commit
-    git add . -A --ignore-errors
-    (echo $NAME && echo $ID && hostnamectl && uptime) | git commit -F - -q --author='tracer-oscpu2021 <tracer@oscpu.org>' --no-verify --allow-empty 1>/dev/null 2>&1
-    sync
+    #git add . -A --ignore-errors
+    #(echo $NAME && echo $ID && hostnamectl && uptime) | git commit -F - -q --author='tracer-oscpu2021 <tracer@oscpu.org>' --no-verify --allow-empty 1>/dev/null 2>&1
+    #sync
 fi
 
 # Simulate
