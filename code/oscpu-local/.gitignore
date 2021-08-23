@@ -11,6 +11,7 @@
 !*.py
 !*.mk
 !*.bin
+!bin/*.*
 !Makefile
 !README
 !README.md
