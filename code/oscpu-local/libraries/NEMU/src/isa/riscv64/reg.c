@@ -26,12 +26,12 @@ void isa_reg_display() {
       printf("\n");
     }
   }
-  for (i = 0; i < 32; i ++) {
-    printf("%4s: " FMT_WORD " ", fpregsl[i], cpu.fpr[i]._64);
-    if (i % 4 == 3) {
-      printf("\n");
-    }
-  }
+  // for (i = 0; i < 32; i ++) {
+  //   printf("%4s: " FMT_WORD " ", fpregsl[i], cpu.fpr[i]._64);
+  //   if (i % 4 == 3) {
+  //     printf("\n");
+  //   }
+  // }
   printf("pc: " FMT_WORD " mstatus: " FMT_WORD " mcause: " FMT_WORD " mepc: " FMT_WORD "\n",
       cpu.pc, mstatus->val, mcause->val, mepc->val);
   printf("%22s sstatus: " FMT_WORD " scause: " FMT_WORD " sepc: " FMT_WORD "\n",
