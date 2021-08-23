@@ -43,6 +43,14 @@ wire [6 : 0]inst_funct7;
 wire [`BUS_64]op1;
 wire [`BUS_64]op2;
 wire [`BUS_64]t1;   // temp1
+// id_stage -> mem_stage
+wire mem_ren;
+wire [`BUS_64] mem_rddr;
+wire [`BUS_64] mem_rdata;
+wire mem_wen;
+wire [`BUS_64] mem_waddr;
+wire [`BUS_64] mem_wdata;
+wire [`BUS_64] mem_wmask;
 
 // regfile -> id_stage
 wire [`BUS_64] r_data1;
@@ -61,89 +69,91 @@ wire [`BUS_64]rd_data;
 // mem_stage
 wire mem_ren;
 wire [`BUS_64] mem_raddr;
-wire [`BUS_64] mem_waddr;
-wire mem_wen;
-wire [`BUS_64] mem_wdata;
-wire [`BUS_64] mem_wdatamask;
 reg  [`BUS_64] mem_rdata;
+wire mem_wen;
+wire [`BUS_64] mem_waddr;
+wire [`BUS_64] mem_wdata;
+wire [`BUS_64] mem_wmask;     // 数据掩码，比如0x00F0，则仅写入[7:4]位
 
 
 if_stage If_stage(
-  .clk                (clock),
-  .rst                (reset),
-  .pc_jmp             (pc_jmp_o),
-  .pc_jmpaddr         (pc_jmpaddr_o),
-  
-  .pc_cur             (pc_cur),
-  .pc                 (pc),
-  .inst               (inst)
+  .clk                (clock        ),
+  .rst                (reset        ),
+  .pc_jmp             (pc_jmp_o     ),
+  .pc_jmpaddr         (pc_jmpaddr_o ),
+  .pc_cur             (pc_cur       ),
+  .pc                 (pc           ),
+  .inst               (inst         )
 );
 
 id_stage Id_stage(
-  .rst                (reset),
-  .inst               (inst),
-  .rs1_data           (r_data1),
-  .rs2_data           (r_data2),
-  .pc_cur             (pc_cur),
-  .pc                 (pc),
-  
-  .rs1_r_ena          (rs1_r_ena),
-  .rs1_r_addr         (rs1_r_addr),
-  .rs2_r_ena          (rs2_r_ena),
-  .rs2_r_addr         (rs2_r_addr),
-  .rd_w_ena           (rd_w_ena),
-  .rd_w_addr          (rd_w_addr),
-  .inst_type          (inst_type),
-  .inst_opcode        (inst_opcode),
-  .inst_funct3        (inst_funct3),
-  .inst_funct7        (inst_funct7),
-  .op1                (op1),
-  .op2                (op2),
-  .t1                 (t1)
+  .rst                (reset        ),
+  .inst               (inst         ),
+  .rs1_data           (r_data1      ),
+  .rs2_data           (r_data2      ),
+  .pc_cur             (pc_cur       ),
+  .pc                 (pc           ),
+  .rs1_r_ena          (rs1_r_ena    ),
+  .rs1_r_addr         (rs1_r_addr   ),
+  .rs2_r_ena          (rs2_r_ena    ),
+  .rs2_r_addr         (rs2_r_addr   ),
+  .rd_w_ena           (rd_w_ena     ),
+  .rd_w_addr          (rd_w_addr    ),
+  .mem_ren            (mem_ren      ),
+  .mem_raddr          (mem_raddr    ),
+  .mem_rdata          (mem_rdata    ),
+  .mem_wen            (mem_wen      ),
+  .mem_waddr          (mem_waddr    ),
+  .mem_wdata          (mem_wdata    ),
+  .mem_wmask          (mem_wmask    ),
+  .inst_type          (inst_type    ),
+  .inst_opcode        (inst_opcode  ),
+  .inst_funct3        (inst_funct3  ),
+  .inst_funct7        (inst_funct7  ),
+  .op1                (op1          ),
+  .op2                (op2          ),
+  .t1                 (t1           )
 );
 
 exe_stage Exe_stage(
-  .rst                (reset),
-  .inst_opcode_i      (inst_opcode),
-  .inst_funct3        (inst_funct3),
-  .inst_funct7        (inst_funct7),
-  .op1                (op1),
-  .op2                (op2),
-  .t1                 (t1),
-  
+  .rst                (reset        ),
+  .inst_opcode_i      (inst_opcode  ),
+  .inst_funct3        (inst_funct3  ),
+  .inst_funct7        (inst_funct7  ),
+  .op1                (op1          ),
+  .op2                (op2          ),
+  .t1                 (t1           ),
   .inst_opcode_o      (inst_opcode_o),
-  .rd_data            (rd_data),
-  .pc_jmp             (pc_jmp_o),
-  .pc_jmpaddr         (pc_jmpaddr_o)
+  .rd_data            (rd_data      ),
+  .pc_jmp             (pc_jmp_o     ),
+  .pc_jmpaddr         (pc_jmpaddr_o )
 );
 
 mem_stage Mem_stage(
-  .clk                (clock),
-  .rst                (reset),
-  .ren                (mem_ren),
-  .raddr              (mem_raddr),
-  .wen                (mem_wen),
-  .waddr              (mem_waddr),
-  .wdata              (mem_wdata),
-  .wdatamask          (mem_wdatamask),     // 数据掩码，比如0x00F0，则仅写入[7:4]位
-  .rdata              (mem_rdata)
+  .clk                (clock        ),
+  .rst                (reset        ),
+  .ren                (mem_ren      ),
+  .raddr              (mem_raddr    ),
+  .rdata              (mem_rdata    ),
+  .wen                (mem_wen      ),
+  .waddr              (mem_waddr    ),
+  .wdata              (mem_wdata    ),
+  .wmask              (mem_wmask    )
 );
 
 regfile Regfile(
-  .clk                (clock),
-  .rst                (reset),
-  .w_addr             (rd_w_addr),
-  .w_data             (rd_data),
-  .w_ena              (rd_w_ena),
-  
-  .r_addr1            (rs1_r_addr),
-  .r_data1            (r_data1),
-  .r_ena1             (rs1_r_ena),
-  .r_addr2            (rs2_r_addr),
-  .r_data2            (r_data2),
-  .r_ena2             (rs2_r_ena),
-
-  .regs_o             (regs)
+  .clk                (clock        ),
+  .rst                (reset        ),
+  .w_addr             (rd_w_addr    ),
+  .w_data             (rd_data      ),
+  .w_ena              (rd_w_ena     ),
+  .r_addr1            (rs1_r_addr   ),
+  .r_data1            (r_data1      ),
+  .r_ena1             (rs1_r_ena    ),
+  .r_addr2            (rs2_r_addr   ),
+  .r_data2            (r_data2      ),
+  .r_ena2             (rs2_r_ena    ),
+  .regs_o             (regs         )
 );
 
 

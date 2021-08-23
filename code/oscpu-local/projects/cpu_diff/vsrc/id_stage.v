@@ -18,6 +18,14 @@ module id_stage(
   output wire rd_w_ena,
   output wire [4 : 0]rd_w_addr,
   
+  output wire mem_ren,
+  output wire [`BUS_64] mem_raddr,
+  input  wire [`BUS_64] mem_rdata,
+  output wire mem_wen,
+  output wire [`BUS_64] mem_waddr,
+  output wire [`BUS_64] mem_wdata,
+  output wire [`BUS_64] mem_wmask,
+  
   output wire [2 : 0]inst_type,
   output wire [4 : 0]inst_opcode,
   output wire [2 : 0]inst_funct3,
@@ -48,7 +56,7 @@ assign inst_funct7  = inst[31 : 25];
 
 assign R_imm = 0;
 assign I_imm  = { {20{inst[31]}}, inst[31 : 20] };
-// assign S_imm  = { inst[31 : 25], inst[11 : 7] };
+assign S_imm  = { {20{inst[31]}}, inst[31 : 25], inst[11 : 7] };
 // assign B_imm  = { inst[31], inst[7], inst[30 : 25], inst[11 : 8], 1'b0 };
 assign U_imm  = { inst[31 : 12], 12'b0 };
 assign J_imm  = { {12{inst[31]}}, inst[19 : 12], inst[20], inst[30 : 21], 1'b0 };
@@ -117,10 +125,16 @@ assign rs1_r_addr = rs1;
 
 // rs2读使能
 reg rs2_r_ena0;
-always@(*)
-begin
-  if      (rst == 1'b1)           rs2_r_ena0 = 0;
-  else                            rs2_r_ena0 = 0;
+always@(*) begin
+  if (rst == 1'b1) rs2_r_ena0 = 0;
+  else begin
+    case (inst_type)
+      `INST_R_TYPE  : rs2_r_ena0 = 1;
+      `INST_S_TYPE  : rs2_r_ena0 = 1;
+      `INST_B_TYPE  : rs2_r_ena0 = 1;
+      default       : rs2_r_ena0 = 0;
+    endcase
+  end
 end
 assign rs2_r_ena = rs2_r_ena0;
 
@@ -137,6 +151,7 @@ always@(*) begin
       `OPCODE_ADDI      : begin rd_w_ena0 = 1;  end
       `OPCODE_JAL       : begin rd_w_ena0 = 1;  end
       `OPCODE_JALR      : begin rd_w_ena0 = 1;  end
+      `OPCODE_LB        : begin rd_w_ena0 = 1;  end
       default           : begin rd_w_ena0 = 0;  end
     endcase
 end
@@ -144,6 +159,51 @@ assign rd_w_ena = rd_w_ena0;
 
 // rd写地址
 assign rd_w_addr = rd;
+
+// mem_ren
+reg mem_ren0;
+always@(*) begin
+  if (rst == 1'b1) mem_ren0 = 0;
+  else
+    mem_ren0 = (inst_opcode == `OPCODE_LB) ? 1 : 0;
+end
+assign mem_ren = mem_ren0;
+
+// mem_raddr
+assign mem_raddr = (rs1_data + imm);
+
+// mem_wen
+reg mem_wen0;
+always@(*) begin
+  if (rst == 1'b1) mem_wen0 = 0;
+  else
+    mem_wen0 = (inst_type == `INST_S_TYPE) ? 1 : 0;
+end
+assign mem_wen = mem_wen0;
+
+// mem_waddr
+assign mem_waddr = (rs1_data + S_imm) >> 3;
+
+// mem_wdata
+assign mem_wdata = (rs2_data);
+
+// mem_wmask
+reg [`BUS_64] mem_wmask0;
+always@(*) begin
+  if (rst == 1'b1) mem_wmask0 = 0;
+  else
+    if (inst_type == `INST_S_TYPE)
+      case (inst_funct3)
+        `FUNCT3_SB    : mem_wmask0 = 'hFF;
+        `FUNCT3_SH    : mem_wmask0 = 'hFFFF;
+        `FUNCT3_SW    : mem_wmask0 = 64'h00000000_FFFFFFFF;
+        `FUNCT3_SD    : mem_wmask0 = 64'hFFFFFFFF_FFFFFFFF;
+        default       : mem_wmask0 = 0;
+      endcase
+    else
+      mem_wmask0 = 0;
+end
+assign mem_wmask = mem_wmask0;
 
 // op1
 reg [`BUS_64] op1_0;

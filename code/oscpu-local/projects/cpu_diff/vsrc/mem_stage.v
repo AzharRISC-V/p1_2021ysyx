@@ -11,7 +11,7 @@ module mem_stage(
   input wire wen,
   input wire [`BUS_64]  waddr,
   input wire [`BUS_64]  wdata,
-  input wire [`BUS_64]  wdatamask,    // 数据掩码，比如0x00F0，则仅写入[7:4]位
+  input wire [`BUS_64]  wmask,    // 数据掩码，比如0x00F0，则仅写入[7:4]位
 
   output reg [`BUS_64]  rdata
 );
@@ -24,7 +24,7 @@ RAMHelper RAMHelper(
   .rdata            (rdata),
   .wIdx             (waddr >> 3),
   .wdata            (wdata),
-  .wmask            (wdatamask),
+  .wmask            (wmask),
   .wen              (wen)
 );
 
