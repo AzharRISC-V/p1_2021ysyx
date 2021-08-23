@@ -25,15 +25,17 @@ always@( * ) begin
   if( rst == 1'b1 )  rd_data = `ZERO_WORD; 
   else begin
     case( inst_opcode_i )
-      `OPCODE_AUIPC:      begin rd_data = op1 + op2;  end
-      `OPCODE_ADDI: begin
+      `OPCODE_AUIPC       : begin rd_data = op1 + op2;  end
+      `OPCODE_ADDI        : begin
         case( inst_funct3 )
-          `FUNCT3_ADDI:   begin rd_data = op1 + op2;  end
-          default:;
+          `FUNCT3_ADDI    : begin rd_data = op1 + op2;  end
+          `FUNCT3_SLTI    : begin rd_data = ($signed(op1) < $signed(op2)) ? 1 : 0;  end
+          `FUNCT3_SLTIU   : begin rd_data = op1 < op2 ? 1 : 0;  end
+          default         :;
         endcase
       end
-      `OPCODE_JAL:        begin rd_data = op1;        end
-      `OPCODE_JALR:       begin rd_data = t1;         end
+      `OPCODE_JAL         : begin rd_data = op1;        end
+      `OPCODE_JALR        : begin rd_data = t1;         end
       default:            begin rd_data = `ZERO_WORD; end
     endcase
   end
@@ -44,9 +46,20 @@ always @(*) begin
   if (rst == 1'b1) pc_jmp = 0;
   else begin
     case (inst_opcode_i)
-      `OPCODE_JAL:    pc_jmp = 1;
-      `OPCODE_JALR:   pc_jmp = 1;
-      default:        pc_jmp = 0;
+      `OPCODE_JAL         : pc_jmp = 1;
+      `OPCODE_JALR        : pc_jmp = 1;
+      `OPCODE_BEQ         : begin
+        case (inst_funct3)
+          `FUNCT3_BEQ     : pc_jmp = (op1 == op2) ? 1 : 0;
+          `FUNCT3_BNE     : pc_jmp = (op1 != op2) ? 1 : 0;
+          `FUNCT3_BLT     : pc_jmp = ($signed(op1) < $signed(op2)) ? 1 : 0;
+          `FUNCT3_BGE     : pc_jmp = ($signed(op1) > $signed(op2)) ? 1 : 0;
+          `FUNCT3_BLTU    : pc_jmp = (op1 < op2) ? 1 : 0;
+          `FUNCT3_BGEU    : pc_jmp = ($signed(op1) >= $signed(op2)) ? 1 : 0;
+          default         : pc_jmp = 0;
+        endcase
+      end
+      default             : pc_jmp = 0;
     endcase
   end
 end
@@ -56,9 +69,10 @@ always @(*) begin
   if (rst == 1'b1) pc_jmpaddr = `ZERO_WORD;
   else begin
     case (inst_opcode_i)
-      `OPCODE_JAL:    pc_jmpaddr = op2;
-      `OPCODE_JALR:   pc_jmpaddr = (op1 + op2) & ~1;
-      default:        pc_jmpaddr = 0;
+      `OPCODE_JAL         : pc_jmpaddr = op2;
+      `OPCODE_JALR        : pc_jmpaddr = (op1 + op2) & ~1;
+      `OPCODE_BEQ         : pc_jmpaddr = t1;
+      default             : pc_jmpaddr = 0;
     endcase
   end
 end

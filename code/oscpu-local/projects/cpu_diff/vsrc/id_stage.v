@@ -57,11 +57,9 @@ assign inst_funct7  = inst[31 : 25];
 assign R_imm = 0;
 assign I_imm  = { {20{inst[31]}}, inst[31 : 20] };
 assign S_imm  = { {20{inst[31]}}, inst[31 : 25], inst[11 : 7] };
-// assign B_imm  = { inst[31], inst[7], inst[30 : 25], inst[11 : 8], 1'b0 };
+assign B_imm  = { {20{inst[31]}}, inst[7], inst[30 : 25], inst[11 : 8], 1'b0 };
 assign U_imm  = { inst[31 : 12], 12'b0 };
 assign J_imm  = { {12{inst[31]}}, inst[19 : 12], inst[20], inst[30 : 21], 1'b0 };
-// assign imm    = {{52{I_imm[11]}}, I_imm};
-
 
 // inst-type
 reg [2 : 0]inst_type0;
@@ -212,6 +210,7 @@ always@(*) begin
   else begin
     case (inst_type)
       `INST_R_TYPE  : op1_0 = rs1_data;
+      `INST_B_TYPE  : op1_0 = rs1_data;
       `INST_I_TYPE  : op1_0 = rs1_data;
       `INST_J_TYPE  : op1_0 = pc + 4;
       `INST_U_TYPE  : begin
@@ -233,6 +232,7 @@ always@(*) begin
   else begin
     case (inst_type)
       `INST_R_TYPE  : op2_0 = rs2_data;
+      `INST_B_TYPE  : op2_0 = rs2_data;
       `INST_I_TYPE  : op2_0 = imm;
       `INST_J_TYPE  : op2_0 = pc + imm;
       `INST_U_TYPE  : begin
@@ -252,6 +252,7 @@ always@(*) begin
   else begin
     case (inst_opcode)
       `OPCODE_JALR  : t1_0 = pc + 4;
+      `OPCODE_BEQ   : t1_0 = pc + imm;
       default       : t1_0 = 0;
     endcase
   end
