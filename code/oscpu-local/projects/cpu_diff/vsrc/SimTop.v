@@ -105,6 +105,19 @@ regfile Regfile(
 );
 
 
+    
+// wb_stage Wb_stage(
+// .clk(clk),
+// .rst(rst),
+// .rd_w_ena_i(rd_w_ena),
+// .rd_w_addr_i(rd_w_addr),
+// .rd_data_i(rd_data),
+// .rd_w_ena_o(rd_w_ena0),
+// .rd_w_addr_o(rd_w_addr0),
+// .rd_data_o(rd_data0)
+// );
+
+
 // Difftest
 reg cmt_wen;
 reg [7:0] cmt_wdest;
