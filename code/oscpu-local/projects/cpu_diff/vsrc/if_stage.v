@@ -7,28 +7,40 @@
 module if_stage(
   input wire clk,
   input wire rst,
-  
-  output reg [63 : 0] pc,
-  output reg [31 : 0] inst
+  // input wire inst_ok,
+  input wire pc_jmp,
+  input wire [`BUS_64] pc_jmpaddr,
+
+  output reg [`BUS_64] pc_cur,
+  output reg [`BUS_64] pc,
+  output reg [`BUS_32] inst
 );
 
 parameter PC_START_RESET = `PC_START - 4;
 
 // fetch an instruction
-always@( posedge clk )
-begin
-  if( rst == 1'b1 )
-  begin
+always@( posedge clk ) begin
+  if( rst == 1'b1 ) begin
+    pc_cur <= PC_START_RESET;
     pc <= PC_START_RESET;
   end
-  else
-  begin
-    pc <= pc + 4;
+  else begin
+    // if (inst_ok == 1'b1) begin
+      pc_cur <= pc;
+      if (pc_jmp == 1'b1)
+        pc <= pc_jmpaddr;
+      else
+        pc <= pc + 4;
+    // end
+    // else begin
+    //   pc_cur <= pc_cur;
+    //   pc <= pc;
+    // end 
   end
 end
 
 // Access memory
-reg [63:0] rdata;
+reg [`BUS_64] rdata;
 RAMHelper RAMHelper(
   .clk              (clk),
   .en               (1),

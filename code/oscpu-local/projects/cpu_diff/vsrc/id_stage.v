@@ -5,10 +5,11 @@
 
 module id_stage(
   input wire rst,
-  input wire [31 : 0]inst,
+  input wire [`BUS_32]inst,
   input wire [`BUS_64]rs1_data,
   input wire [`BUS_64]rs2_data,
-  
+  input wire [`BUS_64]pc_cur,
+  input wire [`BUS_64]pc,
   
   output wire rs1_r_ena,
   output wire [4 : 0]rs1_r_addr,
@@ -22,7 +23,8 @@ module id_stage(
   output wire [2 : 0]inst_funct3,
   output wire [6 : 0]inst_funct7,
   output wire [`BUS_64]op1,            // 两个操作数
-  output wire [`BUS_64]op2
+  output wire [`BUS_64]op2,
+  output wire [`BUS_64]t1
 );
 
 // decode
@@ -45,11 +47,11 @@ assign rs1          = inst[19 : 15];
 assign inst_funct7  = inst[31 : 25];
 
 assign R_imm = 0;
-assign I_imm  = { {20{inst[11]}}, inst[31 : 20] };
+assign I_imm  = { {20{inst[31]}}, inst[31 : 20] };
 // assign S_imm  = { inst[31 : 25], inst[11 : 7] };
 // assign B_imm  = { inst[31], inst[7], inst[30 : 25], inst[11 : 8], 1'b0 };
 assign U_imm  = { inst[31 : 12], 12'b0 };
-// assign J_imm  = { inst[31], inst[19 : 12], inst[20], inst[30 : 21], 1'b0 };
+assign J_imm  = { {12{inst[31]}}, inst[19 : 12], inst[20], inst[30 : 21], 1'b0 };
 // assign imm    = {{52{I_imm[11]}}, I_imm};
 
 
@@ -78,8 +80,7 @@ assign inst_type = inst_type0;
 
 // 立即数的值
 reg [`BUS_32]imm0;
-always@(*)
-begin
+always@(*) begin
   if (rst == 1'b1) imm0 = 0;
   else begin
     case (inst_type)
@@ -97,8 +98,7 @@ assign imm = {{32{imm0[31]}}, imm0};
 
 // rs1读使能
 reg rs1_r_ena0;
-always@(*)
-begin
+always@(*) begin
   if (rst == 1'b1) rs1_r_ena0 = 0;
   else begin
     case (inst_type)
@@ -106,7 +106,7 @@ begin
       `INST_I_TYPE  : rs1_r_ena0 = 1;
       `INST_S_TYPE  : rs1_r_ena0 = 1;
       `INST_B_TYPE  : rs1_r_ena0 = 1;
-      default       : rs1_r_ena0 = 1;
+      default       : rs1_r_ena0 = 0;
     endcase
   end
 end
@@ -129,11 +129,16 @@ assign rs2_r_addr = rs2;
 
 // rd写使能
 reg rd_w_ena0;
-always@(*)
-begin
-  if      (rst == 1'b1)                   rd_w_ena0 = 0;
-  else if (inst_type == `INST_I_TYPE)     rd_w_ena0 = 1;
-  else                                    rd_w_ena0 = 0;
+always@(*) begin
+  if (rst == 1'b1) rd_w_ena0 = 0;
+  else
+    case (inst_opcode)
+      `OPCODE_AUIPC     : begin rd_w_ena0 = 1;  end
+      `OPCODE_ADDI      : begin rd_w_ena0 = 1;  end
+      `OPCODE_JAL       : begin rd_w_ena0 = 1;  end
+      `OPCODE_JALR      : begin rd_w_ena0 = 1;  end
+      default           : begin rd_w_ena0 = 0;  end
+    endcase
 end
 assign rd_w_ena = rd_w_ena0;
 
@@ -148,6 +153,13 @@ always@(*) begin
     case (inst_type)
       `INST_R_TYPE  : op1_0 = rs1_data;
       `INST_I_TYPE  : op1_0 = rs1_data;
+      `INST_J_TYPE  : op1_0 = pc + 4;
+      `INST_U_TYPE  : begin
+        if (inst_opcode == `OPCODE_AUIPC)
+          op1_0 = pc;
+        else
+          op1_0 = 0;
+      end
       default       : op1_0 = 0;
     endcase
   end
@@ -155,7 +167,6 @@ end
 assign op1 = op1_0;
 
 // op2
-// op1
 reg [`BUS_64] op2_0;
 always@(*) begin
   if (rst == 1'b1) op2_0 = 0;
@@ -163,24 +174,28 @@ always@(*) begin
     case (inst_type)
       `INST_R_TYPE  : op2_0 = rs2_data;
       `INST_I_TYPE  : op2_0 = imm;
+      `INST_J_TYPE  : op2_0 = pc + imm;
+      `INST_U_TYPE  : begin
+        if (inst_opcode == `OPCODE_AUIPC)   op2_0 = imm;
+        else                                op2_0 = 0;
+      end
       default       : op2_0 = 0;
     endcase
   end
 end
 assign op2 = op2_0;
 
-// 执行操作码（自定义的）
-// 8b0000_0001      addi
-// 8b0000_0010      auipc
-// 8b....           其余指令
-// 由于 RV32I 由 47条， 。。。， 2^8=256条，足够保存了。
-// assign inst_opcode[0] = (  rst == 1'b1 ) ? 0 : inst_addi;
-// assign inst_opcode[1] = (  rst == 1'b1 ) ? 0 : inst_auipc;
-// assign inst_opcode[2] = (  rst == 1'b1 ) ? 0 : 0;
-// assign inst_opcode[3] = (  rst == 1'b1 ) ? 0 : 0;
-// assign inst_opcode[4] = (  rst == 1'b1 ) ? 0 : 0;
-// assign inst_opcode[5] = (  rst == 1'b1 ) ? 0 : 0;
-// assign inst_opcode[6] = (  rst == 1'b1 ) ? 0 : 0;
-// assign inst_opcode[7] = (  rst == 1'b1 ) ? 0 : 0;
+// t1
+reg [`BUS_64] t1_0;
+always@(*) begin
+  if (rst == 1'b1) t1_0 = 0;
+  else begin
+    case (inst_opcode)
+      `OPCODE_JALR  : t1_0 = pc + 4;
+      default       : t1_0 = 0;
+    endcase
+  end
+end
+assign t1 = t1_0;
 
 endmodule

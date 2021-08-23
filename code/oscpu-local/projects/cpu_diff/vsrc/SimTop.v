@@ -7,9 +7,9 @@ module SimTop(
     input         clock,
     input         reset,
 
-    input  [63:0] io_logCtrl_log_begin,
-    input  [63:0] io_logCtrl_log_end,
-    input  [63:0] io_logCtrl_log_level,
+    input  [`BUS_64] io_logCtrl_log_begin,
+    input  [`BUS_64] io_logCtrl_log_end,
+    input  [`BUS_64] io_logCtrl_log_level,
     input         io_perfInfo_clean,
     input         io_perfInfo_dump,
 
@@ -20,8 +20,12 @@ module SimTop(
 );
 
 // if_stage
-wire [63 : 0] pc;
-wire [31 : 0] inst;
+// reg            inst_ok;   // 指令是否执行完毕，执行完毕才可以继续取指
+wire pc_jmp;
+wire [`BUS_64] pc_jmpaddr;
+wire [`BUS_64] pc_cur;
+wire [`BUS_64] pc;
+wire [`BUS_32] inst;
 
 // id_stage
 // id_stage -> regfile
@@ -36,26 +40,41 @@ wire [2 : 0]inst_type;
 wire [4 : 0]inst_opcode;
 wire [2 : 0]inst_funct3;
 wire [6 : 0]inst_funct7;
-wire [`REG_BUS]op1;
-wire [`REG_BUS]op2;
+wire [`BUS_64]op1;
+wire [`BUS_64]op2;
+wire [`BUS_64]t1;   // temp1
 
 // regfile -> id_stage
-wire [`REG_BUS] r_data1;
-wire [`REG_BUS] r_data2;
+wire [`BUS_64] r_data1;
+wire [`BUS_64] r_data2;
 // regfile -> difftest
-wire [`REG_BUS] regs[0 : 31];
+wire [`BUS_64] regs[0 : 31];
 
 // exe_stage
 // exe_stage -> other stage
 wire [4 : 0]inst_opcode_o;
+wire pc_jmp_o;
+wire [`BUS_64] pc_jmpaddr_o;
 // exe_stage -> regfile
-wire [`REG_BUS]rd_data;
+wire [`BUS_64]rd_data;
+
+// mem_stage
+wire mem_ren;
+wire [`BUS_64] mem_raddr;
+wire [`BUS_64] mem_waddr;
+wire mem_wen;
+wire [`BUS_64] mem_wdata;
+wire [`BUS_64] mem_wdatamask;
+reg  [`BUS_64] mem_rdata;
 
 
 if_stage If_stage(
   .clk                (clock),
   .rst                (reset),
+  .pc_jmp             (pc_jmp_o),
+  .pc_jmpaddr         (pc_jmpaddr_o),
   
+  .pc_cur             (pc_cur),
   .pc                 (pc),
   .inst               (inst)
 );
@@ -65,6 +84,8 @@ id_stage Id_stage(
   .inst               (inst),
   .rs1_data           (r_data1),
   .rs2_data           (r_data2),
+  .pc_cur             (pc_cur),
+  .pc                 (pc),
   
   .rs1_r_ena          (rs1_r_ena),
   .rs1_r_addr         (rs1_r_addr),
@@ -77,20 +98,35 @@ id_stage Id_stage(
   .inst_funct3        (inst_funct3),
   .inst_funct7        (inst_funct7),
   .op1                (op1),
-  .op2                (op2)
+  .op2                (op2),
+  .t1                 (t1)
 );
 
 exe_stage Exe_stage(
   .rst                (reset),
-  .inst_type_i        (inst_type),
   .inst_opcode_i      (inst_opcode),
   .inst_funct3        (inst_funct3),
   .inst_funct7        (inst_funct7),
   .op1                (op1),
   .op2                (op2),
+  .t1                 (t1),
   
   .inst_opcode_o      (inst_opcode_o),
-  .rd_data            (rd_data)
+  .rd_data            (rd_data),
+  .pc_jmp             (pc_jmp_o),
+  .pc_jmpaddr         (pc_jmpaddr_o)
+);
+
+mem_stage Mem_stage(
+  .clk                (clock),
+  .rst                (reset),
+  .ren                (mem_ren),
+  .raddr              (mem_raddr),
+  .wen                (mem_wen),
+  .waddr              (mem_waddr),
+  .wdata              (mem_wdata),
+  .wdatamask          (mem_wdatamask),     // 数据掩码，比如0x00F0，则仅写入[7:4]位
+  .rdata              (mem_rdata)
 );
 
 regfile Regfile(
