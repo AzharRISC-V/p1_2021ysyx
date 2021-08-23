@@ -425,7 +425,7 @@ inline char* Emulator::timestamp_filename(time_t t, char *buf) {
   strftime(buf_time, sizeof(buf_time), "%F@%T", localtime(&t));
   char *noop_home = getenv("NOOP_HOME");
   assert(noop_home != NULL);
-  int len = snprintf(buf, 1024, "%s/build/%s", noop_home, buf_time);
+  int len = snprintf(buf, 1024, "%s/build_vcd/%s", noop_home, buf_time);
   return buf + len;
 }
 
