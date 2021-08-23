@@ -98,6 +98,11 @@
   3. cpu项目
   $ ./build.sh -b -t rvcpu -s
   $ inst.bin
+  这里是三条addi指令和一条nemutrap自定义指令
+  00100093	li ra,1			等价于 addi ra,zero,1
+  00200093	li ra,2			等价于 addi ra,zero,2
+  00108093	addi ra,ra,1
+  0000006B	0x6b
   
   4. cpu_diff项目
   $ ./build.sh -e cpu_diff -d -b -a "-i inst_diff.bin --dump-wave -b 0" -m "EMU_TRACE=1"

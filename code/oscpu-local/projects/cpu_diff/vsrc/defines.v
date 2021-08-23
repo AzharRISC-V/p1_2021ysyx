@@ -8,6 +8,9 @@
 `define RISCV_PRIV_MODE_S   1
 `define RISCV_PRIV_MODE_M   3
 
+`define BUS_32              31:0
+`define BUS_64              63:0
+
 // 寄存器配置
 `define REG_BITS            64              // 寄存器位数
 `define REG_BUS             63:0            // 寄存器总线
@@ -43,57 +46,65 @@
 // 自定义的指令码
 `define INST_ADD            8'h11
 
+// inst-type
+`define INST_R_TYPE         3'b000
+`define INST_I_TYPE         3'b001
+`define INST_S_TYPE         3'b010
+`define INST_B_TYPE         3'b011
+`define INST_U_TYPE         3'b100
+`define INST_J_TYPE         3'b101
+
+
 // opcode，用于指令译码
 `define OPCODE_LUI          5'b01101
 `define OPCODE_AUIPC        5'b00101
 `define OPCODE_JAL          5'b11011
 `define OPCODE_JALR         5'b11001
-`define OPCODE_B            5'b11000
-`define OPCODE_L            5'b00000
-`define OPCODE_S            5'b01000
-`define OPCODE_I            5'b00100
-`define OPCODE_R            5'b01100
+`define OPCODE_BEQ          5'b11000
+`define OPCODE_LB           5'b00000
+`define OPCODE_SB           5'b01000
+`define OPCODE_ADDI         5'b00100
+`define OPCODE_ADD          5'b01100
 `define OPCODE_FENCE        5'b00011      // 同步
 `define OPCODE_ENV          5'b11100      // 环境
-`define OPCODE_CSR          5'b11100
 
 // 某个opcode对应的 funct3，用于指令译码
 // 若还不能区分，手动判断 funct7
-`define FUNCT3_B_BEQ        3'b000
-`define FUNCT3_B_BNE        3'b001
-`define FUNCT3_B_BLT        3'b100
-`define FUNCT3_B_BGE        3'b101
-`define FUNCT3_B_BLTU       3'b110
-`define FUNCT3_B_BGEU       3'b111
-`define FUNCT3_L_LB         3'b000
-`define FUNCT3_L_LH         3'b001
-`define FUNCT3_L_LW         3'b010
-`define FUNCT3_L_LBU        3'b100
-`define FUNCT3_L_LHU        3'b101
-`define FUNCT3_I_ADDI       3'b000
-`define FUNCT3_I_SLTI       3'b010
-`define FUNCT3_I_SLTIU      3'b011
-`define FUNCT3_I_XORI       3'b100
-`define FUNCT3_I_ORI        3'b110
-`define FUNCT3_I_ANDI       3'b111
-`define FUNCT3_I_SLLI       3'b001
-`define FUNCT3_I_SRLI       3'b101
-`define FUNCT3_I_SRAI       3'b101
-`define FUNCT3_R_ADD        3'b000
-`define FUNCT3_R_SUB        3'b000
-`define FUNCT3_R_SLL        3'b001
-`define FUNCT3_R_SLT        3'b010
-`define FUNCT3_R_SLTU       3'b011
-`define FUNCT3_R_XOR        3'b100
-`define FUNCT3_R_SRL        3'b101
-`define FUNCT3_R_SRA        3'b101
-`define FUNCT3_R_OR         3'b110
-`define FUNCT3_R_AND        3'b111
-`define FUNCT3_FENCE_FENCE  3'b000
-`define FUNCT3_FENCE_FENCEI 3'b001
-`define FUNCT3_CSR_RW       3'b001
-`define FUNCT3_CSR_RS       3'b010
-`define FUNCT3_CSR_RC       3'b011
-`define FUNCT3_CSR_RWI      3'b101
-`define FUNCT3_CSR_RSI      3'b110
-`define FUNCT3_CSR_RCI      3'b111
+`define FUNCT3_BEQ          3'b000
+`define FUNCT3_BNE          3'b001
+`define FUNCT3_BLT          3'b100
+`define FUNCT3_BGE          3'b101
+`define FUNCT3_BLTU         3'b110
+`define FUNCT3_BGEU         3'b111
+`define FUNCT3_LB           3'b000
+`define FUNCT3_LH           3'b001
+`define FUNCT3_LW           3'b010
+`define FUNCT3_LBU          3'b100
+`define FUNCT3_LHU          3'b101
+`define FUNCT3_ADDI         3'b000
+`define FUNCT3_SLTI         3'b010
+`define FUNCT3_SLTIU        3'b011
+`define FUNCT3_XORI         3'b100
+`define FUNCT3_ORI          3'b110
+`define FUNCT3_ANDI         3'b111
+`define FUNCT3_SLLI         3'b001
+`define FUNCT3_SRLI         3'b101
+`define FUNCT3_SRAI         3'b101
+`define FUNCT3_ADD          3'b000
+`define FUNCT3_SUB          3'b000
+`define FUNCT3_SLL          3'b001
+`define FUNCT3_SLT          3'b010
+`define FUNCT3_SLTU         3'b011
+`define FUNCT3_XOR          3'b100
+`define FUNCT3_SRL          3'b101
+`define FUNCT3_SRA          3'b101
+`define FUNCT3_OR           3'b110
+`define FUNCT3_AND          3'b111
+`define FUNCT3_FENCE        3'b000
+`define FUNCT3_FENCEI       3'b001
+`define FUNCT3_CSRRW        3'b001
+`define FUNCT3_CSRRS        3'b010
+`define FUNCT3_CSRRC        3'b011
+`define FUNCT3_CSRRWI       3'b101
+`define FUNCT3_CSRRSI       3'b110
+`define FUNCT3_CSRRCI       3'b111

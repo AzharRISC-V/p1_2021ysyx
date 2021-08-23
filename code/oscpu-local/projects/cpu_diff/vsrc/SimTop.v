@@ -32,8 +32,10 @@ wire [4 : 0]rs2_r_addr;
 wire rd_w_ena;
 wire [4 : 0]rd_w_addr;
 // id_stage -> exe_stage
-wire [4 : 0]inst_type;
-wire [7 : 0]inst_opcode;
+wire [2 : 0]inst_type;
+wire [4 : 0]inst_opcode;
+wire [2 : 0]inst_funct3;
+wire [6 : 0]inst_funct7;
 wire [`REG_BUS]op1;
 wire [`REG_BUS]op2;
 
@@ -45,7 +47,7 @@ wire [`REG_BUS] regs[0 : 31];
 
 // exe_stage
 // exe_stage -> other stage
-wire [4 : 0]inst_type_o;
+wire [4 : 0]inst_opcode_o;
 // exe_stage -> regfile
 wire [`REG_BUS]rd_data;
 
@@ -72,6 +74,8 @@ id_stage Id_stage(
   .rd_w_addr          (rd_w_addr),
   .inst_type          (inst_type),
   .inst_opcode        (inst_opcode),
+  .inst_funct3        (inst_funct3),
+  .inst_funct7        (inst_funct7),
   .op1                (op1),
   .op2                (op2)
 );
@@ -79,11 +83,13 @@ id_stage Id_stage(
 exe_stage Exe_stage(
   .rst                (reset),
   .inst_type_i        (inst_type),
-  .inst_opcode        (inst_opcode),
+  .inst_opcode_i      (inst_opcode),
+  .inst_funct3        (inst_funct3),
+  .inst_funct7        (inst_funct7),
   .op1                (op1),
   .op2                (op2),
   
-  .inst_type_o        (inst_type_o),
+  .inst_opcode_o      (inst_opcode_o),
   .rd_data            (rd_data)
 );
 
