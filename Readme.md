@@ -56,7 +56,8 @@
   	作用：编译add.o, 以及am和klib目录，并打包为 am.a, klib.a，然后用ld链接生成elf，再用objcopy得到add程序的指令和数据，二进制保存在.bin文件，反汇编保存在.txt文件。
   	注意，mycpu平台仅仅是为了生成二进制文件，并不需要用nemu测试
   	make ARCH=risv64-nemu ALL=add
-  	作用：使用NEMU模拟器，需要NEMU项目。$NEMU_HOME环境变量作为桥梁
+  	作用：使用NEMU模拟器，需要NEMU项目。$NEMU_HOME环境变量作为桥梁。
+  	另外，mycpy和nemu中的一些地址设定也不同，注意区分。
   5. AM/mycpu提供了什么？
   a. 初始化函数
   在ld中使用 -e _start 指定了程序入口，该函数位于 start.S中，它设置指针，跳转至 _trm_init()。
@@ -87,23 +88,40 @@
   ```
   1. 主仓库
   git clone --recursive -b 2021 https://github.com/OSCPU/oscpu-framework.git oscpu
+  
   2. 子仓库如果失败，还需重新克隆子仓库
   git submodule update --init --recursive
+  
   3. 编译和仿真 counter
   $ ./build.sh -e counter -b -s
+  
   3. cpu项目
   $ ./build.sh -b -t rvcpu -s
   $ inst.bin
   
   4. cpu_diff项目
   $ ./build.sh -e cpu_diff -d -b -a "-i inst_diff.bin --dump-wave -b 0" -m "EMU_TRACE=1"
-  编译失败。
-  首先编译 NEMU
-  $ cd oscpu-local/
-  $ echo export N_HOME=$(pwd) >> ~/.bashrc
+  编译失败，虚拟机内存给8G解决。
+  ------------------
+  设置环境变量。使用 build.sh时可不设置，但emu直接运行时需要设置
+  $ cd oscpu
+  $ echo export NOOP_HOME=$(pwd) >> ~/.bashrc
   $ cd libraries/NEMU
   $ echo export NEMU_HOME=$(pwd) >> ~/.bashrc
   $ source ~/.bashrc
+  ------------------
+  使用 am-kernels 中的测试用例
+  a. 编译cpu-tests所有项目
+  $ cd ../am-kernels/tests/cpu-tests/
+  $ make run
+  b. 拷贝需要的bin文件
+  $ cd build
+  $ cp *.* ../../../../oscpu-local/bin/
+  c. 测试
+  $ make				# 使用默认的 inst_bin 编译
+  $ make run			# 使用默认的 inst_bin 编译，并运行
+  $ make ALL=add		# 使用自定义的bin编译
+  $ make ALL=add run	# 使用自定义的bin编译，并运行
   ```
 
 * difftest项目
