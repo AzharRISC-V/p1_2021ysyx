@@ -39,6 +39,15 @@
   自己的一个仓库
   ```
   
+* verilator项目
+
+  ```
+  use special version
+  install gtkwave
+  ```
+  
+  
+  
 * abstract-machine, am-kernels 项目
 
   ```
