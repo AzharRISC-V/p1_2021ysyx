@@ -2,39 +2,30 @@
 
 `include "defines.v"
 
-module wb_stage(clk,
-                rst,
-                rd_w_ena_i,
-                rd_w_addr_i,
-                rd_data_i,
-                rd_w_ena_o,
-                rd_w_addr_o,
-                rd_data_o);
-    input wire clk;
-    input wire rst;
+module wb_stage(
+  input   wire              clk,
+  input   wire              rst,
 
-    input wire rd_w_ena_i;
-    input wire [4 : 0]rd_w_addr_i;
-    input reg [`REG_BUS ]rd_data_i;
+  input   wire              rd_wen_i,
+  input   wire  [4 : 0]     rd_waddr_i,
+  input   reg   [`BUS_64]   rd_data_i,
 
-    output reg rd_w_ena_o;
-    output reg [4 : 0]rd_w_addr_o;
-    output reg [`REG_BUS ]rd_data_o;
+  output  reg               rd_wen_o,
+  output  reg   [4 : 0]     rd_waddr_o,
+  output  reg   [`REG_BUS ] rd_data_o
+);
 
-    always@(posedge clk)
-    begin
-        if (rst == 1'b1)
-        begin
-            rd_w_ena_o <= 0;
-            rd_w_addr_o <= 0;
-            rd_data_o <= 0;
-        end
-        else
-        begin
-            rd_w_ena_o <= rd_w_ena_i;
-            rd_w_addr_o <= rd_w_addr_i;
-            rd_data_o <= rd_data_i;
-        end
-    end
+always@(posedge clk) begin
+  if (rst == 1'b1) begin
+    rd_wen_o    = 0;
+    rd_waddr_o  = 0;
+    rd_data_o   = 0;
+  end
+  else begin
+    rd_wen_o    = rd_wen_i;
+    rd_waddr_o  = rd_waddr_i;
+    rd_data_o   = rd_data_i;
+  end
+end
     
 endmodule

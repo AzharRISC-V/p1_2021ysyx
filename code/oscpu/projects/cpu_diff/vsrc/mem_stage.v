@@ -1,6 +1,7 @@
 // Zhengpu Shi
 
 `include "defines.v";
+`include "mem_access.v"
 
 module mem_stage(
   input   wire              clk,
@@ -16,16 +17,16 @@ module mem_stage(
   output  reg   [`BUS_64]   rdata
 );
 
-// Access memory
-RAMHelper RAMHelper(
-  .clk              (clk),
-  .en               (ren),
-  .rIdx             (raddr >> 3),  // 按照64位(8字节)来访问
-  .rdata            (rdata),
-  .wIdx             (waddr >> 3),
-  .wdata            (wdata),
-  .wmask            (wmask),
-  .wen              (wen)
+// 访问内存，将1字节访问转换为8字节对齐的一次或两次访问
+mem_access u1_mem_access(
+  .clk      (clk    ),
+  .ren      (ren    ),
+  .addr     (raddr  ),
+  .rdata    (rdata  ),
+  .wdata    (wdata  ),
+  .wmask    (wmask  ),
+  .wen      (wen    )
 );
+
 
 endmodule

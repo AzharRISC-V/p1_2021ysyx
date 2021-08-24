@@ -67,13 +67,13 @@ wire [`BUS_64] pc_jmpaddr_o;
 wire [`BUS_64]rd_data;
 
 // mem_stage
-wire mem_ren;
-wire [`BUS_64] mem_raddr;
-reg  [`BUS_64] mem_rdata;
-wire mem_wen;
-wire [`BUS_64] mem_waddr;
-wire [`BUS_64] mem_wdata;
-wire [`BUS_64] mem_wmask;     // 数据掩码，比如0x00F0，则仅写入[7:4]位
+wire            mem_ren;
+wire [`BUS_64]  mem_raddr;
+reg  [`BUS_64]  mem_rdata;
+wire            mem_wen;
+wire [`BUS_64]  mem_waddr;
+wire [`BUS_64]  mem_wdata;
+wire [`BUS_64]  mem_wmask;     // 数据掩码，比如0x00F0，则仅写入[7:4]位
 
 
 if_stage If_stage(
@@ -140,6 +140,17 @@ mem_stage Mem_stage(
   .wdata              (mem_wdata    ),
   .wmask              (mem_wmask    )
 );
+    
+wb_stage Wb_stage(
+  .clk                (clock        ),
+  .rst                (reset        ),
+  .rd_wen_i           (rd_w_ena     ),
+  .rd_waddr_i         (rd_w_addr    ),
+  .rd_data_i          (rd_data      ),
+  .rd_wen_o           (1'x),//(rd_w_ena0    ),
+  .rd_waddr_o         (1'x),//rd_w_addr0   ),
+  .rd_data_o          (1'x)//rd_data0     )
+);
 
 regfile Regfile(
   .clk                (clock        ),
@@ -155,19 +166,6 @@ regfile Regfile(
   .r_ena2             (rs2_r_ena    ),
   .regs_o             (regs         )
 );
-
-
-    
-// wb_stage Wb_stage(
-// .clk(clk),
-// .rst(rst),
-// .rd_w_ena_i(rd_w_ena),
-// .rd_w_addr_i(rd_w_addr),
-// .rd_data_i(rd_data),
-// .rd_w_ena_o(rd_w_ena0),
-// .rd_w_addr_o(rd_w_addr0),
-// .rd_data_o(rd_data0)
-// );
 
 
 // Difftest

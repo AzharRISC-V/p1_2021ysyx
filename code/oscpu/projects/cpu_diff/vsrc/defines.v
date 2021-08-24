@@ -8,6 +8,8 @@
 `define RISCV_PRIV_MODE_S   1
 `define RISCV_PRIV_MODE_M   3
 
+`define BUS_8               7:0
+`define BUS_16              15:0
 `define BUS_32              31:0
 `define BUS_64              63:0
 
