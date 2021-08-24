@@ -4,35 +4,35 @@
 `include "defines.v"
 
 module id_stage(
-  input wire rst,
-  input wire [`BUS_32]inst,
-  input wire [`BUS_64]rs1_data,
-  input wire [`BUS_64]rs2_data,
-  input wire [`BUS_64]pc_cur,
-  input wire [`BUS_64]pc,
+  input   wire              rst,
+  input   wire  [`BUS_32]   inst,
+  input   wire  [`BUS_64]   rs1_data,
+  input   wire  [`BUS_64]   rs2_data,
+  input   wire  [`BUS_64]   pc_cur,
+  input   wire  [`BUS_64]   pc,
+
+  output  wire              rs1_r_ena,
+  output  wire  [4 : 0]     rs1_r_addr,
+  output  wire              rs2_r_ena,
+  output  wire  [4 : 0]     rs2_r_addr,
+  output  wire              rd_w_ena,
+  output  wire  [4 : 0]     rd_w_addr,
+
+  output  wire              mem_ren,
+  output  wire  [`BUS_64]   mem_raddr,
+  input   wire  [`BUS_64]   mem_rdata,
+  output  wire              mem_wen,
+  output  wire  [`BUS_64]   mem_waddr,
+  output  wire  [`BUS_64]   mem_wdata,
+  output  wire  [`BUS_64]   mem_wmask,
   
-  output wire rs1_r_ena,
-  output wire [4 : 0]rs1_r_addr,
-  output wire rs2_r_ena,
-  output wire [4 : 0]rs2_r_addr,
-  output wire rd_w_ena,
-  output wire [4 : 0]rd_w_addr,
-  
-  output wire mem_ren,
-  output wire [`BUS_64] mem_raddr,
-  input  wire [`BUS_64] mem_rdata,
-  output wire mem_wen,
-  output wire [`BUS_64] mem_waddr,
-  output wire [`BUS_64] mem_wdata,
-  output wire [`BUS_64] mem_wmask,
-  
-  output wire [2 : 0]inst_type,
-  output wire [4 : 0]inst_opcode,
-  output wire [2 : 0]inst_funct3,
-  output wire [6 : 0]inst_funct7,
-  output wire [`BUS_64]op1,            // 两个操作数
-  output wire [`BUS_64]op2,
-  output wire [`BUS_64]t1
+  output  wire  [2 : 0]     inst_type,
+  output  wire  [4 : 0]     inst_opcode,
+  output  wire  [2 : 0]     inst_funct3,
+  output  wire  [6 : 0]     inst_funct7,
+  output  wire  [`BUS_64]   op1,            // 两个操作数
+  output  wire  [`BUS_64]   op2,
+  output  wire  [`BUS_64]   t1
 );
 
 // decode

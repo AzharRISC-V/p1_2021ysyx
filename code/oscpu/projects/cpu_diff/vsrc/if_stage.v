@@ -3,17 +3,17 @@
 
 `include "defines.v"
 
-
 module if_stage(
-  input wire clk,
-  input wire rst,
-  // input wire inst_ok,
-  input wire pc_jmp,
-  input wire [`BUS_64] pc_jmpaddr,
+  input   wire              clk,
+  input   wire              rst,
 
-  output reg [`BUS_64] pc_cur,
-  output reg [`BUS_64] pc,
-  output reg [`BUS_32] inst
+  // input wire inst_ok,
+  input   wire              pc_jmp,
+  input   wire  [`BUS_64]   pc_jmpaddr ,
+
+  output  reg   [`BUS_64]   pc_cur,
+  output  reg   [`BUS_64]   pc,
+  output  reg   [`BUS_32]   inst
 );
 
 parameter PC_START_RESET = `PC_START - 4;

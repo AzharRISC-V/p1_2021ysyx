@@ -4,18 +4,17 @@
 `include "defines.v"
 
 module exe_stage(
-  input wire rst,
-  input wire [4 : 0]inst_opcode_i,
-  input wire [2 : 0]inst_funct3,
-  input wire [6 : 0]inst_funct7,
-  input wire [`REG_BUS]op1,
-  input wire [`REG_BUS]op2,
-  input wire [`REG_BUS]t1,
-  
-  output wire [4 : 0]inst_opcode_o,
-  output reg  [`REG_BUS]rd_data,
-  output wire pc_jmp,
-  output wire [`BUS_64] pc_jmpaddr
+  input   wire              rst,
+  input   wire  [4 : 0]     inst_opcode_i,
+  input   wire  [2 : 0]     inst_funct3,
+  input   wire  [6 : 0]     inst_funct7,
+  input   wire  [`REG_BUS]  op1,
+  input   wire  [`REG_BUS]  op2,
+  input   wire  [`REG_BUS]  t1,
+  output  wire  [4 : 0]     inst_opcode_o,
+  output  reg   [`REG_BUS]  rd_data,
+  output  wire              pc_jmp,
+  output  wire  [`BUS_64]   pc_jmpaddr
 );
 
 assign inst_opcode_o = inst_opcode_i;

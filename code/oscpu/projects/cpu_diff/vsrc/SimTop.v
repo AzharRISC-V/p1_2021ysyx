@@ -4,19 +4,19 @@
 `include "defines.v"
 
 module SimTop(
-    input         clock,
-    input         reset,
+    input               clock,
+    input               reset,
 
-    input  [`BUS_64] io_logCtrl_log_begin,
-    input  [`BUS_64] io_logCtrl_log_end,
-    input  [`BUS_64] io_logCtrl_log_level,
-    input         io_perfInfo_clean,
-    input         io_perfInfo_dump,
+    input   [`BUS_64]   io_logCtrl_log_begin,
+    input   [`BUS_64]   io_logCtrl_log_end,
+    input   [`BUS_64]   io_logCtrl_log_level,
+    input               io_perfInfo_clean,
+    input               io_perfInfo_dump,
 
-    output        io_uart_out_valid,
-    output [7:0]  io_uart_out_ch,
-    output        io_uart_in_valid,
-    input  [7:0]  io_uart_in_ch
+    output              io_uart_out_valid,
+    output  [7:0]       io_uart_out_ch,
+    output              io_uart_in_valid,
+    input   [7:0]       io_uart_in_ch
 );
 
 // if_stage
@@ -53,8 +53,8 @@ wire [`BUS_64] mem_wdata;
 wire [`BUS_64] mem_wmask;
 
 // regfile -> id_stage
-wire [`BUS_64] r_data1;
-wire [`BUS_64] r_data2;
+wire [`BUS_64] rs1_data;
+wire [`BUS_64] rs2_data;
 // regfile -> difftest
 wire [`BUS_64] regs[0 : 31];
 
@@ -89,8 +89,8 @@ if_stage If_stage(
 id_stage Id_stage(
   .rst                (reset        ),
   .inst               (inst         ),
-  .rs1_data           (r_data1      ),
-  .rs2_data           (r_data2      ),
+  .rs1_data           (rs1_data      ),
+  .rs2_data           (rs2_data      ),
   .pc_cur             (pc_cur       ),
   .pc                 (pc           ),
   .rs1_r_ena          (rs1_r_ena    ),
@@ -148,10 +148,10 @@ regfile Regfile(
   .w_data             (rd_data      ),
   .w_ena              (rd_w_ena     ),
   .r_addr1            (rs1_r_addr   ),
-  .r_data1            (r_data1      ),
+  .r_data1            (rs1_data     ),
   .r_ena1             (rs1_r_ena    ),
   .r_addr2            (rs2_r_addr   ),
-  .r_data2            (r_data2      ),
+  .r_data2            (rs2_data     ),
   .r_ena2             (rs2_r_ena    ),
   .regs_o             (regs         )
 );
@@ -171,17 +171,17 @@ regfile Regfile(
 
 
 // Difftest
-reg cmt_wen;
-reg [7:0] cmt_wdest;
-reg [`REG_BUS] cmt_wdata;
-reg [`REG_BUS] cmt_pc;
-reg [31:0] cmt_inst;
-reg cmt_valid;
-reg trap;
-reg [7:0] trap_code;
-reg [63:0] cycleCnt;
-reg [63:0] instrCnt;
-reg [`REG_BUS] regs_diff [0 : 31];
+reg                   cmt_wen;        // commit write enable
+reg   [7:0]           cmt_wdest;
+reg   [`REG_BUS]      cmt_wdata;
+reg   [`REG_BUS]      cmt_pc;
+reg   [`BUS_32]       cmt_inst;
+reg                   cmt_valid;
+reg                   trap;
+reg   [7:0]           trap_code;
+reg   [`BUS_64]       cycleCnt;
+reg   [`BUS_64]       instrCnt;
+reg   [`BUS_64]       regs_diff [0 : 31];
 
 wire inst_valid = (pc != `PC_START) | (inst != 0);
 
