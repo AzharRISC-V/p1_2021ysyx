@@ -146,6 +146,12 @@
   $ make run			# 使用默认的 inst_bin 编译，并运行
   $ make ALL=add		# 使用自定义的bin编译
   $ make ALL=add run	# 使用自定义的bin编译，并运行
+  
+  5. 再次总结编译注意事项
+  a. 设置 AM_HOME, NEMU_HOME, NOOP_HOME
+  b. 清理 libraries/NEMU/build, libraries/DRAMsim3/build, projects/cpu_diff/build/
+  c. 虚拟机内存至少7GB
+  d. make or make run or make run ALL=add
   ```
 
 * difftest项目
