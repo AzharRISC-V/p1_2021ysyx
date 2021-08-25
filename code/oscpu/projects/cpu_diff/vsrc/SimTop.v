@@ -43,14 +43,6 @@ wire [6 : 0]inst_funct7;
 wire [`BUS_64]op1;
 wire [`BUS_64]op2;
 wire [`BUS_64]t1;   // temp1
-// id_stage -> mem_stage
-wire mem_ren;
-wire [`BUS_64] mem_rddr;
-wire [`BUS_64] mem_rdata;
-wire mem_wen;
-wire [`BUS_64] mem_waddr;
-wire [`BUS_64] mem_wdata;
-wire [`BUS_64] mem_wmask;
 
 // regfile -> id_stage
 wire [`BUS_64] rs1_data;

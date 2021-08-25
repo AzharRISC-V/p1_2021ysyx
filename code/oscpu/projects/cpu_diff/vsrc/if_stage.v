@@ -35,7 +35,7 @@ always@( posedge clk ) begin
     // else begin
     //   pc_cur <= pc_cur;
     //   pc <= pc;
-    // end 
+    // end
   end
 end
 
@@ -62,5 +62,10 @@ RAMHelper RAMHelper(
 // pc[2]是1，则是1/3/5/... 第奇数条指令
 // 而radata中是一次取出8字节，包含两条指令
 assign inst = pc[2] ? rdata[63 : 32] : rdata[31 : 0];
+
+always@(*) begin
+  $display("-------------------");
+  $displayh("  IF: pc=", pc, " inst=", inst);
+end
 
 endmodule

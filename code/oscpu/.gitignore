@@ -20,6 +20,7 @@
 **/build/
 **/build_test/
 **/difftest
+!projects/cpu_diff/build_vcd/*.*
 !libraries/difftest
 !libraries/NEMU
 !libraries/DRAMsim3

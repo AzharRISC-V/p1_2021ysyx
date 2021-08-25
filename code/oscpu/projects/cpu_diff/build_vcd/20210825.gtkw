@@ -1,0 +1,79 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Wed Aug 25 09:23:04 2021
+[*]
+[dumpfile] "/home/steven/p1_2021ysyx/code/oscpu/projects/cpu_diff/build_vcd/20210825.vcd"
+[dumpfile_mtime] "Wed Aug 25 09:22:18 2021"
+[dumpfile_size] 93999
+[savefile] "/home/steven/p1_2021ysyx/code/oscpu/projects/cpu_diff/build_vcd/20210825.gtkw"
+[timestart] 15
+[size] 1920 1016
+[pos] -101 -101
+*-1.516865 22 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] TOP.
+[treeopen] TOP.SimTop.
+[treeopen] TOP.SimTop.Mem_stage.
+[sst_width] 233
+[signals_width] 315
+[sst_expanded] 1
+[sst_vpaned_height] 571
+@800200
+-IF
+@28
+TOP.SimTop.Mem_stage.rst
+TOP.SimTop.Mem_stage.clk
+@22
+TOP.SimTop.If_stage.pc[63:0]
+TOP.SimTop.If_stage.inst[31:0]
+@1000200
+-IF
+@800200
+-MEM
+@28
+[color] 1
+TOP.SimTop.Mem_stage.ren
+@23
+TOP.SimTop.Mem_stage.raddr[63:0]
+@22
+TOP.SimTop.Mem_stage.rdata[63:0]
+@28
+TOP.SimTop.Mem_stage.wen
+@22
+TOP.SimTop.Mem_stage.waddr[63:0]
+TOP.SimTop.Mem_stage.wdata[63:0]
+TOP.SimTop.Mem_stage.wmask[63:0]
+@1000200
+-MEM
+@800200
+-MEMAccess
+@22
+TOP.SimTop.Mem_stage.u1_mem_access.addr1[63:0]
+TOP.SimTop.Mem_stage.u1_mem_access.addr2[63:0]
+TOP.SimTop.Mem_stage.u1_mem_access.addr[63:0]
+TOP.SimTop.Mem_stage.u1_mem_access.addr_rel[63:0]
+@28
+TOP.SimTop.Mem_stage.u1_mem_access.byte_offset[2:0]
+TOP.SimTop.Mem_stage.u1_mem_access.ena2
+TOP.SimTop.Mem_stage.u1_mem_access.ren
+@22
+TOP.SimTop.Mem_stage.u1_mem_access.rdata1[63:0]
+TOP.SimTop.Mem_stage.u1_mem_access.rdata2[63:0]
+TOP.SimTop.Mem_stage.u1_mem_access.rdata[63:0]
+TOP.SimTop.Mem_stage.u1_mem_access.rdata_0[63:0]
+@28
+TOP.SimTop.Mem_stage.u1_mem_access.wen
+@22
+TOP.SimTop.Mem_stage.u1_mem_access.wdata[63:0]
+TOP.SimTop.Mem_stage.u1_mem_access.wmask1[63:0]
+TOP.SimTop.Mem_stage.u1_mem_access.wmask2[63:0]
+TOP.SimTop.Mem_stage.u1_mem_access.wmask[63:0]
+@1000200
+-MEMAccess
+@800200
+-Regs
+@22
+TOP.SimTop.Regfile.regs(2)[63:0]
+@1000200
+-Regs
+[pattern_trace] 1
+[pattern_trace] 0

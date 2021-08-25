@@ -180,7 +180,7 @@ end
 assign mem_wen = mem_wen0;
 
 // mem_waddr
-assign mem_waddr = (rs1_data + S_imm) >> 3;
+assign mem_waddr = ($signed(rs1_data) + $signed(imm));
 
 // mem_wdata
 assign mem_wdata = (rs2_data);

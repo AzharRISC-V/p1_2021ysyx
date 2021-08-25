@@ -18,16 +18,14 @@ module mem_access (
 
 
 // 是否需要访问第二个64bit单元
-wire ena2 = (addr[2:0] == 3'b000) ? 1 : 0;
+wire ena2 = (addr[2:0] == 3'b000) ? 0 : 1;
 
 // 除去基地址后的相对地址
 wire [`BUS_64] addr_rel = addr - 64'h00000000_80000000;
 
 // 第1/2次访存地址
-wire [`BUS_64] addr1_dbg = addr_rel >> 3;
-wire [`BUS_64] addr2_dbg = addr1_dbg | 64'b1; 
-wire [`BUS_64] addr1 = 0;//addr_rel >> 3;
-wire [`BUS_64] addr2 = 0;// addr1 | 64'b1;
+wire [`BUS_64] addr1 = addr_rel >> 3;
+wire [`BUS_64] addr2 = addr1 | 64'b1;
 
 // 8字节编址的内部偏移量（字节数）
 wire [2:0] byte_offset = addr[2:0];         
@@ -35,6 +33,13 @@ wire [2:0] byte_offset = addr[2:0];
 // 读取数据
 wire [`BUS_64] rdata1 = ram_read_helper(ren, addr1);
 wire [`BUS_64] rdata2 = ram_read_helper(ren & ena2, addr2);
+
+always @(*) begin
+  if (ren)
+    $displayh("  MEMACC: raddr1=", addr1, " rdata1=", rdata1, " ren=", ren);
+  if (ren & ena2) 
+    $displayh("  MEMACC: raddr2=", addr2, " rdata2=", rdata2, " ren=", ren, " ena2=", ena2); 
+end
 
 // 合成读取数据
 reg [`BUS_64] rdata_0;
@@ -74,6 +79,11 @@ end
 always @(posedge clk) begin
     ram_write_helper(addr1, wdata, wmask1, wen);
     ram_write_helper(addr2, wdata, wmask2, wen & ena2);
+
+    if (wen)
+      $displayh("  MEMACC: waddr1=", addr1, " wdata1=", wdata, " wmask1=", wmask1, " wen=", wen); 
+    if (wen & ena2)
+      $displayh("  MEMACC: waddr2=", addr2, " wdata2=", wdata, " wmask2=", wmask2, " wen=", wen, " ena2=", ena2);
 end
 
 

@@ -17,6 +17,13 @@ module mem_stage(
   output  reg   [`BUS_64]   rdata
 );
 
+always@(*) begin
+  if (ren)
+    $displayh("  MEM: raddr=", raddr);
+  if (wen)
+    $displayh("  MEM: waddr=", waddr, " wdata=", wdata, " wmask=", wmask);
+end
+
 // 访问内存，将1字节访问转换为8字节对齐的一次或两次访问
 mem_access u1_mem_access(
   .clk      (clk    ),
