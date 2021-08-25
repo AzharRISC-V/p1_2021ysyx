@@ -15,8 +15,7 @@ module id_stage(
   output  wire  [4 : 0]     rs1_r_addr,
   output  wire              rs2_r_ena,
   output  wire  [4 : 0]     rs2_r_addr,
-  output  wire              rd_w_ena,
-  output  wire  [4 : 0]     rd_w_addr,
+  output  wire  [4 : 0]     rd_waddr,
 
   output  wire              mem_ren,
   output  wire  [`BUS_64]   mem_raddr,
@@ -139,24 +138,8 @@ assign rs2_r_ena = rs2_r_ena0;
 // rs2读地址
 assign rs2_r_addr = rs2;
 
-// rd写使能
-reg rd_w_ena0;
-always@(*) begin
-  if (rst == 1'b1) rd_w_ena0 = 0;
-  else
-    case (inst_opcode)
-      `OPCODE_AUIPC     : begin rd_w_ena0 = 1;  end
-      `OPCODE_ADDI      : begin rd_w_ena0 = 1;  end
-      `OPCODE_JAL       : begin rd_w_ena0 = 1;  end
-      `OPCODE_JALR      : begin rd_w_ena0 = 1;  end
-      `OPCODE_LB        : begin rd_w_ena0 = 1;  end
-      default           : begin rd_w_ena0 = 0;  end
-    endcase
-end
-assign rd_w_ena = rd_w_ena0;
-
 // rd写地址
-assign rd_w_addr = rd;
+assign rd_waddr = rd;
 
 // mem_ren
 reg mem_ren0;

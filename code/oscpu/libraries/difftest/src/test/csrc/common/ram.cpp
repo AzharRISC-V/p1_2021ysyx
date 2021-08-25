@@ -193,10 +193,13 @@ extern "C" uint64_t ram_read_helper(uint8_t en, uint64_t rIdx) {
   if (ram && en) {
     if (rIdx >= EMU_RAM_SIZE / sizeof(uint64_t)) {
       printf("ERROR: ram rIdx = 0x%lx out of bound!\n", rIdx);
-      assert(rIdx < EMU_RAM_SIZE / sizeof(uint64_t));
+      rIdx = rIdx % (EMU_RAM_SIZE / sizeof(uint64_t));
+      //assert(rIdx < EMU_RAM_SIZE / sizeof(uint64_t));
     }
     pthread_mutex_lock(&ram_mutex);
     uint64_t rdata = (en) ? ram[rIdx] : 0;
+    printf("    ram_read_helper : addr=" FMT_64_HEX " rIdx=" FMT_64_HEX " rdata=" FMT_64_HEX "\n", 
+      (0x80000000 + rIdx * 8), rIdx, rdata);
     pthread_mutex_unlock(&ram_mutex);
     return rdata;
   } else {
@@ -208,10 +211,17 @@ extern "C" void ram_write_helper(uint64_t wIdx, uint64_t wdata, uint64_t wmask, 
   if (wen && ram) {
     if (wIdx >= EMU_RAM_SIZE / sizeof(uint64_t)) {
       printf("ERROR: ram wIdx = 0x%lx out of bound!\n", wIdx);
-      assert(wIdx < EMU_RAM_SIZE / sizeof(uint64_t));
+      wIdx = wIdx % (EMU_RAM_SIZE / sizeof(uint64_t));
+      //assert(wIdx < EMU_RAM_SIZE / sizeof(uint64_t));
     }
     pthread_mutex_lock(&ram_mutex);
+    printf("    ram_write_helper: addr=" FMT_64_HEX " rIdx=" FMT_64_HEX " wdata=" FMT_64_HEX " wmask=" FMT_64_HEX "\n", 
+      (0x80000000 + wIdx * 8), wIdx, wdata, wmask);
+    
+    printf("      before=" FMT_64_HEX "\n", ram[wIdx]);
     ram[wIdx] = (ram[wIdx] & ~wmask) | (wdata & wmask);
+    printf("      after =" FMT_64_HEX "\n", ram[wIdx]);
+    
     pthread_mutex_unlock(&ram_mutex);
   }
 }

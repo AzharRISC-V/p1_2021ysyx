@@ -7,25 +7,16 @@ module wb_stage(
   input   wire              rst,
 
   input   wire              rd_wen_i,
-  input   wire  [4 : 0]     rd_waddr_i,
-  input   reg   [`BUS_64]   rd_data_i,
+  input   wire  [4 : 0]     rd_waddr_i,     // 寄存器编号
+  input   wire  [`BUS_64]   rd_wdata_i,
 
-  output  reg               rd_wen_o,
-  output  reg   [4 : 0]     rd_waddr_o,
-  output  reg   [`REG_BUS ] rd_data_o
+  output  wire              rd_wen_o,
+  output  wire  [4 : 0]     rd_waddr_o,
+  output  wire  [`BUS_64]   rd_wdata_o
 );
 
-always@(posedge clk) begin
-  if (rst == 1'b1) begin
-    rd_wen_o    = 0;
-    rd_waddr_o  = 0;
-    rd_data_o   = 0;
-  end
-  else begin
-    rd_wen_o    = rd_wen_i;
-    rd_waddr_o  = rd_waddr_i;
-    rd_data_o   = rd_data_i;
-  end
-end
+assign rd_wen_o = (rst == 1'b1) ? 0 : rd_wen_i;
+assign rd_waddr_o = (rst == 1'b1) ? 0 : rd_waddr_i;
+assign rd_wdata_o = (rst == 1'b1) ? 0 : rd_wdata_i;
     
 endmodule

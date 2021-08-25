@@ -40,5 +40,6 @@ store
     IF -> ID -> MEM write
 
 other
-    IF -> ID -> EXEC
+    IF -> ID -> EX
+
 

@@ -33,8 +33,7 @@ wire rs1_r_ena;
 wire [4 : 0]rs1_r_addr;
 wire rs2_r_ena;
 wire [4 : 0]rs2_r_addr;
-wire rd_w_ena;
-wire [4 : 0]rd_w_addr;
+wire [4 : 0]rd_waddr;
 // id_stage -> exe_stage
 wire [2 : 0]inst_type;
 wire [4 : 0]inst_opcode;
@@ -54,9 +53,12 @@ wire [`BUS_64] regs[0 : 31];
 // exe_stage -> other stage
 wire [4 : 0]inst_opcode_o;
 wire pc_jmp_o;
-wire [`BUS_64] pc_jmpaddr_o;
-// exe_stage -> regfile
-wire [`BUS_64]rd_data;
+wire [`BUS_64]  pc_jmpaddr_o;
+// exe_stage -> wb_stage
+wire [4 : 0]    ex_rd_waddr_i;
+wire            ex_rd_wen_o;
+wire [4 : 0]    ex_rd_waddr_o;
+wire [`BUS_64]  ex_rd_wdata_o;
 
 // mem_stage
 wire            mem_ren;
@@ -67,96 +69,120 @@ wire [`BUS_64]  mem_waddr;
 wire [`BUS_64]  mem_wdata;
 wire [`BUS_64]  mem_wmask;     // 数据掩码，比如0x00F0，则仅写入[7:4]位
 
+// wb_stage
+wire            wb_rd_wen_i;
+wire [4 : 0]    wb_rd_waddr_i;
+wire [`BUS_64]  wb_rd_wdata_i;
+wire            wb_rd_wen_o;
+wire [4 : 0]    wb_rd_waddr_o;
+wire [`BUS_64]  wb_rd_wdata_o;
+
+// rd_write -> regfile
+wire            rd_wen;
+wire [`BUS_64]  rd_wdata;
 
 if_stage If_stage(
-  .clk                (clock        ),
-  .rst                (reset        ),
-  .pc_jmp             (pc_jmp_o     ),
-  .pc_jmpaddr         (pc_jmpaddr_o ),
-  .pc_cur             (pc_cur       ),
-  .pc                 (pc           ),
-  .inst               (inst         )
+  .clk                (clock            ),
+  .rst                (reset            ),
+  .pc_jmp             (pc_jmp_o         ),
+  .pc_jmpaddr         (pc_jmpaddr_o     ),
+  .pc_cur             (pc_cur           ),
+  .pc                 (pc               ),
+  .inst               (inst             )
 );
 
 id_stage Id_stage(
-  .rst                (reset        ),
-  .inst               (inst         ),
-  .rs1_data           (rs1_data      ),
-  .rs2_data           (rs2_data      ),
-  .pc_cur             (pc_cur       ),
-  .pc                 (pc           ),
-  .rs1_r_ena          (rs1_r_ena    ),
-  .rs1_r_addr         (rs1_r_addr   ),
-  .rs2_r_ena          (rs2_r_ena    ),
-  .rs2_r_addr         (rs2_r_addr   ),
-  .rd_w_ena           (rd_w_ena     ),
-  .rd_w_addr          (rd_w_addr    ),
-  .mem_ren            (mem_ren      ),
-  .mem_raddr          (mem_raddr    ),
-  .mem_rdata          (mem_rdata    ),
-  .mem_wen            (mem_wen      ),
-  .mem_waddr          (mem_waddr    ),
-  .mem_wdata          (mem_wdata    ),
-  .mem_wmask          (mem_wmask    ),
-  .inst_type          (inst_type    ),
-  .inst_opcode        (inst_opcode  ),
-  .inst_funct3        (inst_funct3  ),
-  .inst_funct7        (inst_funct7  ),
-  .op1                (op1          ),
-  .op2                (op2          ),
-  .t1                 (t1           )
+  .rst                (reset            ),
+  .inst               (inst             ),
+  .rs1_data           (rs1_data         ),
+  .rs2_data           (rs2_data         ),
+  .pc_cur             (pc_cur           ),
+  .pc                 (pc               ),
+  .rs1_r_ena          (rs1_r_ena        ),
+  .rs1_r_addr         (rs1_r_addr       ),
+  .rs2_r_ena          (rs2_r_ena        ),
+  .rs2_r_addr         (rs2_r_addr       ),
+  .rd_waddr           (rd_waddr         ),
+  .mem_ren            (mem_ren          ),
+  .mem_raddr          (mem_raddr        ),
+  .mem_rdata          (mem_rdata        ),
+  .mem_wen            (mem_wen          ),
+  .mem_waddr          (mem_waddr        ),
+  .mem_wdata          (mem_wdata        ),
+  .mem_wmask          (mem_wmask        ),
+  .inst_type          (inst_type        ),
+  .inst_opcode        (inst_opcode      ),
+  .inst_funct3        (inst_funct3      ),
+  .inst_funct7        (inst_funct7      ),
+  .op1                (op1              ),
+  .op2                (op2              ),
+  .t1                 (t1               )
 );
 
 exe_stage Exe_stage(
-  .rst                (reset        ),
-  .inst_opcode_i      (inst_opcode  ),
-  .inst_funct3        (inst_funct3  ),
-  .inst_funct7        (inst_funct7  ),
-  .op1                (op1          ),
-  .op2                (op2          ),
-  .t1                 (t1           ),
-  .inst_opcode_o      (inst_opcode_o),
-  .rd_data            (rd_data      ),
-  .pc_jmp             (pc_jmp_o     ),
-  .pc_jmpaddr         (pc_jmpaddr_o )
+  .rst                (reset            ),
+  .inst_opcode_i      (inst_opcode      ),
+  .inst_funct3        (inst_funct3      ),
+  .inst_funct7        (inst_funct7      ),
+  .op1                (op1              ),
+  .op2                (op2              ),
+  .t1                 (t1               ),
+  .rd_waddr_i         (ex_rd_waddr_i    ),
+  .inst_opcode_o      (inst_opcode_o    ),
+  .pc_jmp             (pc_jmp_o         ),
+  .pc_jmpaddr         (pc_jmpaddr_o     ),
+  .rd_wen_o           (ex_rd_wen_o      ),
+  .rd_waddr_o         (ex_rd_waddr_o    ),
+  .rd_wdata_o         (ex_rd_wdata_o    )
 );
 
 mem_stage Mem_stage(
-  .clk                (clock        ),
-  .rst                (reset        ),
-  .ren                (mem_ren      ),
-  .raddr              (mem_raddr    ),
-  .rdata              (mem_rdata    ),
-  .wen                (mem_wen      ),
-  .waddr              (mem_waddr    ),
-  .wdata              (mem_wdata    ),
-  .wmask              (mem_wmask    )
+  .clk                (clock            ),
+  .rst                (reset            ),
+  .ren                (mem_ren          ),
+  .raddr              (mem_raddr        ),
+  .rdata              (mem_rdata        ),
+  .wen                (mem_wen          ),
+  .waddr              (mem_waddr        ),
+  .wdata              (mem_wdata        ),
+  .wmask              (mem_wmask        )
 );
     
-wb_stage Wb_stage(
-  .clk                (clock        ),
-  .rst                (reset        ),
-  .rd_wen_i           (rd_w_ena     ),
-  .rd_waddr_i         (rd_w_addr    ),
-  .rd_data_i          (rd_data      ),
-  .rd_wen_o           (1'x),//(rd_w_ena0    ),
-  .rd_waddr_o         (1'x),//rd_w_addr0   ),
-  .rd_data_o          (1'x)//rd_data0     )
+wb_stage u1_wb_stage(
+  .clk                (clock            ),
+  .rst                (reset            ),
+  .rd_wen_i           (wb_rd_wen_i      ),
+  .rd_waddr_i         (wb_rd_waddr_i    ),
+  .rd_wdata_i         (wb_rd_wdata_i    ),
+  .rd_wen_o           (wb_rd_wen_o      ),
+  .rd_waddr_o         (wb_rd_waddr_o    ),
+  .rd_wdata_o         (wb_rd_wdata_o    )
+);
+    
+rd_write u1_rd_write(
+  .clk                (clock            ),
+  .rst                (reset            ),
+  .ex_rd_wen_i        (ex_rd_wen_o      ),
+  .ex_rd_wdata_i      (ex_rd_wdata_o    ),
+  .wb_rd_wen_i        (wb_rd_wen_o      ),
+  .wb_rd_wdata_i      (wb_rd_wdata_o    ),
+  .rd_wen_o           (rd_wen           ),
+  .rd_wdata_o         (rd_wdata         )
 );
 
 regfile Regfile(
-  .clk                (clock        ),
-  .rst                (reset        ),
-  .w_addr             (rd_w_addr    ),
-  .w_data             (rd_data      ),
-  .w_ena              (rd_w_ena     ),
-  .r_addr1            (rs1_r_addr   ),
-  .r_data1            (rs1_data     ),
-  .r_ena1             (rs1_r_ena    ),
-  .r_addr2            (rs2_r_addr   ),
-  .r_data2            (rs2_data     ),
-  .r_ena2             (rs2_r_ena    ),
-  .regs_o             (regs         )
+  .clk                (clock            ),
+  .rst                (reset            ),
+  .w_addr             (rd_waddr         ),
+  .w_data             (rd_wdata         ),
+  .w_ena              (rd_wen           ),
+  .r_addr1            (rs1_r_addr       ),
+  .r_data1            (rs1_data         ),
+  .r_ena1             (rs1_r_ena        ),
+  .r_addr2            (rs2_r_addr       ),
+  .r_data2            (rs2_data         ),
+  .r_ena2             (rs2_r_ena        ),
+  .regs_o             (regs             )
 );
 
 
@@ -180,9 +206,9 @@ always @(negedge clock) begin
     {cmt_wen, cmt_wdest, cmt_wdata, cmt_pc, cmt_inst, cmt_valid, trap, trap_code, cycleCnt, instrCnt} <= 0;
   end
   else if (~trap) begin
-    cmt_wen <= rd_w_ena;
-    cmt_wdest <= {3'd0, rd_w_addr};
-    cmt_wdata <= rd_data;
+    cmt_wen <= rd_wen;
+    cmt_wdest <= {3'd0, rd_waddr};
+    cmt_wdata <= rd_wdata;
     cmt_pc <= pc;
     cmt_inst <= inst;
     cmt_valid <= inst_valid;
