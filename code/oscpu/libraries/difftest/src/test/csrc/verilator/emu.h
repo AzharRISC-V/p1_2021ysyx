@@ -114,6 +114,18 @@ private:
   int trapCode;
 
   inline void reset_ncycles(size_t cycles);
+
+  /*
+    主时间控制，采样clk的上升沿和下降沿都要递增
+  */
+  uint64_t main_ticks;
+
+  /*
+    根据时间、使能等标志，判断是否需要dump波形
+    cycle_ptr 输出计算后的cycle
+  */
+  inline bool need_dump(uint64_t * cycle_ptr);
+
   inline void single_cycle();
   void trigger_stat_dump();
   void display_trapinfo();

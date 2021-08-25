@@ -26,6 +26,9 @@ Makefile.%: tests/%.c latest
 install:
 	cp build/$(ALL)-* ../../../../bin/
 
+install-all:
+	@cp build/* ../../../../bin/ 2>/dev/null
+
 run: all
 	@cat $(RESULT)
 	@rm $(RESULT)

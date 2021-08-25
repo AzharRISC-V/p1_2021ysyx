@@ -113,7 +113,7 @@ inline EmuArgs parse_args(int argc, const char *argv[]) {
 
 Emulator::Emulator(int argc, const char *argv[]):
   dut_ptr(new VSimTop),
-  cycles(0), trapCode(STATE_RUNNING)
+  cycles(0), trapCode(STATE_RUNNING), main_ticks(0)
 {
   args = parse_args(argc, argv);
 
@@ -184,14 +184,27 @@ Emulator::~Emulator() {
 }
 
 inline void Emulator::reset_ncycles(size_t cycles) {
+  dut_ptr->reset = 1;
   for(int i = 0; i < cycles; i++) {
-    dut_ptr->reset = 1;
     dut_ptr->clock = 0;
     dut_ptr->eval();
     dut_ptr->clock = 1;
     dut_ptr->eval();
+  }
     dut_ptr->reset = 0;
   }
+
+inline bool Emulator::need_dump(uint64_t * cycle_ptr) {
+  if (enable_waveform) {
+    auto trap = difftest[0]->get_trap_event();
+    uint64_t cycle = trap->cycleCnt;
+    uint64_t begin = dut_ptr->io_logCtrl_log_begin;
+    uint64_t end   = dut_ptr->io_logCtrl_log_end;
+    bool in_range  = (begin <= cycle) && (cycle <= end);
+    *cycle_ptr = cycle;
+    return in_range;
+  }
+  return false;
 }
 
 inline void Emulator::single_cycle() {
@@ -206,6 +219,10 @@ inline void Emulator::single_cycle() {
   dramsim3_helper_rising(axi);
 #endif
 
+#if VM_TRACE == 1
+  tfp->dump(main_ticks++);
+#endif
+
   dut_ptr->clock = 1;
   dut_ptr->eval();
 
@@ -218,14 +235,7 @@ inline void Emulator::single_cycle() {
 #endif
 
 #if VM_TRACE == 1
-  if (enable_waveform) {
-    auto trap = difftest[0]->get_trap_event();
-    uint64_t cycle = trap->cycleCnt;
-    uint64_t begin = dut_ptr->io_logCtrl_log_begin;
-    uint64_t end   = dut_ptr->io_logCtrl_log_end;
-    bool in_range  = (begin <= cycle) && (cycle <= end);
-    if (in_range) { tfp->dump(cycle); }
-  }
+  tfp->dump(main_ticks++);
 #endif
 
   if (dut_ptr->io_uart_out_valid) {

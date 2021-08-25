@@ -7,9 +7,14 @@ else
 	ALLBIN := $(ALL)-riscv64-mycpu
 endif
 
+# build and run
 app:
-	./build.sh -e cpu_diff -d -b -m "EMU_TRACE=1"
+	./build.sh -e cpu_diff -d -b -m "EMU_TRACE=1" -s -a "-i $(ALLBIN).bin --dump-wave -b 0"
+
+# only run
 run:
-	$(info $(ALL))
-	$(info $(ALLBIN))
 	./build.sh -e cpu_diff -d -s -a "-i $(ALLBIN).bin --dump-wave -b 0"
+
+# Clean nemu/build
+clean:
+	@./build.sh -c

@@ -23,9 +23,11 @@ wire ena2 = (addr[2:0] == 3'b000) ? 1 : 0;
 // 除去基地址后的相对地址
 wire [`BUS_64] addr_rel = addr - 64'h00000000_80000000;
 
-// 第1/2次访存地址 
-wire [`BUS_64] addr1 = addr >> 3;
-wire [`BUS_64] addr2 = addr1 | 64'b1;
+// 第1/2次访存地址
+wire [`BUS_64] addr1_dbg = addr_rel >> 3;
+wire [`BUS_64] addr2_dbg = addr1_dbg | 64'b1; 
+wire [`BUS_64] addr1 = 0;//addr_rel >> 3;
+wire [`BUS_64] addr2 = 0;// addr1 | 64'b1;
 
 // 8字节编址的内部偏移量（字节数）
 wire [2:0] byte_offset = addr[2:0];         
@@ -71,7 +73,7 @@ end
 // 写入数据
 always @(posedge clk) begin
     ram_write_helper(addr1, wdata, wmask1, wen);
-    ram_write_helper(addr1, wdata, wmask2, wen & ena2);
+    ram_write_helper(addr2, wdata, wmask2, wen & ena2);
 end
 
 
