@@ -5,31 +5,26 @@
 
 module exe_stage(
   input   wire              rst,
-  input   wire  [4 : 0]     inst_opcode_i,
+  input   wire  [4 : 0]     inst_opcode,
   input   wire  [2 : 0]     inst_funct3,
   input   wire  [6 : 0]     inst_funct7,
   input   wire  [`REG_BUS]  op1,
   input   wire  [`REG_BUS]  op2,
   input   wire  [`REG_BUS]  t1,
-  input   wire  [4 : 0]     rd_waddr_i,
-  output  wire  [4 : 0]     inst_opcode_o,
+
   output  wire              pc_jmp,
   output  wire  [`BUS_64]   pc_jmpaddr,
+
   output  wire              rd_wen_o,
-  output  wire  [4 : 0]     rd_waddr_o,
   output  wire  [`BUS_64]   rd_wdata_o
 );
-
-assign rd_waddr_o = rd_waddr_i;
-
-assign inst_opcode_o = inst_opcode_i;
 
 // rd写使能
 reg rd_wen;
 always@(*) begin
   if (rst == 1'b1) rd_wen = 0;
   else
-    case (inst_opcode_i)
+    case (inst_opcode)
       `OPCODE_AUIPC     : begin rd_wen = 1;  end
       `OPCODE_ADDI      : begin rd_wen = 1;  end
       `OPCODE_JAL       : begin rd_wen = 1;  end
@@ -45,7 +40,7 @@ reg [`REG_BUS] rd_data;
 always@( * ) begin
   if( rst == 1'b1 )  rd_data = `ZERO_WORD; 
   else begin
-    case( inst_opcode_i )
+    case( inst_opcode )
       `OPCODE_AUIPC       : begin rd_data = op1 + op2;  end
       `OPCODE_ADDI        : begin
         case( inst_funct3 )
@@ -69,7 +64,7 @@ reg pc_jmp_0;
 always @(*) begin
   if (rst == 1'b1) pc_jmp_0 = 0;
   else begin
-    case (inst_opcode_i)
+    case (inst_opcode)
       `OPCODE_JAL         : pc_jmp_0 = 1;
       `OPCODE_JALR        : pc_jmp_0 = 1;
       `OPCODE_BEQ         : begin
@@ -94,7 +89,7 @@ reg [`BUS_64] pc_jmpaddr_0;
 always @(*) begin
   if (rst == 1'b1) pc_jmpaddr_0 = `ZERO_WORD;
   else begin
-    case (inst_opcode_i)
+    case (inst_opcode)
       `OPCODE_JAL         : pc_jmpaddr_0 = op2;
       `OPCODE_JALR        : pc_jmpaddr_0 = (op1 + op2) & ~1;
       `OPCODE_BEQ         : pc_jmpaddr_0 = t1;

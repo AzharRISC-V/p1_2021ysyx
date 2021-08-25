@@ -1,22 +1,22 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Wed Aug 25 09:49:03 2021
+[*] Wed Aug 25 11:21:52 2021
 [*]
 [dumpfile] "/home/steven/p1_2021ysyx/code/oscpu/projects/cpu_diff/build_vcd/20210825.vcd"
-[dumpfile_mtime] "Wed Aug 25 09:44:16 2021"
-[dumpfile_size] 93861
+[dumpfile_mtime] "Wed Aug 25 11:21:51 2021"
+[dumpfile_size] 94995
 [savefile] "/home/steven/p1_2021ysyx/code/oscpu/projects/cpu_diff/build_vcd/20210825.gtkw"
 [timestart] 59
 [size] 1920 1016
 [pos] -1 -1
-*-1.494109 69 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-1.494109 62 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.SimTop.
 [treeopen] TOP.SimTop.Mem_stage.
 [sst_width] 233
 [signals_width] 315
 [sst_expanded] 1
-[sst_vpaned_height] 611
+[sst_vpaned_height] 350
 @800200
 -IF
 @28
@@ -46,20 +46,19 @@ TOP.SimTop.Mem_stage.wmask[63:0]
 @800200
 -MEMAccess
 @22
-TOP.SimTop.Mem_stage.u1_mem_access.addr1[63:0]
-TOP.SimTop.Mem_stage.u1_mem_access.addr2[63:0]
 TOP.SimTop.Mem_stage.u1_mem_access.addr[63:0]
 TOP.SimTop.Mem_stage.u1_mem_access.addr_rel[63:0]
+TOP.SimTop.Mem_stage.u1_mem_access.addr1[63:0]
+@23
+TOP.SimTop.Mem_stage.u1_mem_access.addr2[63:0]
 @28
 TOP.SimTop.Mem_stage.u1_mem_access.byte_offset[2:0]
 TOP.SimTop.Mem_stage.u1_mem_access.ena2
 TOP.SimTop.Mem_stage.u1_mem_access.ren
-@23
-TOP.SimTop.Mem_stage.u1_mem_access.rdata1[63:0]
 @22
+TOP.SimTop.Mem_stage.u1_mem_access.rdata1[63:0]
 TOP.SimTop.Mem_stage.u1_mem_access.rdata2[63:0]
 TOP.SimTop.Mem_stage.u1_mem_access.rdata[63:0]
-TOP.SimTop.Mem_stage.u1_mem_access.rdata_0[63:0]
 @28
 TOP.SimTop.Mem_stage.u1_mem_access.wen
 @22
@@ -156,5 +155,87 @@ TOP.SimTop.Regfile.regs(8)[63:0]
 -s0
 @1000200
 -Regs
+@c00200
+-rd_write
+@28
+TOP.SimTop.u1_rd_write.ch
+TOP.SimTop.u1_rd_write.clk
+@22
+TOP.SimTop.u1_rd_write.ex_rd_wdata_i[63:0]
+@28
+TOP.SimTop.u1_rd_write.ex_rd_wen_i
+@22
+TOP.SimTop.u1_rd_write.wb_rd_wdata_i[63:0]
+@28
+TOP.SimTop.u1_rd_write.wb_rd_wen_i
+@22
+TOP.SimTop.u1_rd_write.rd_wdata_o[63:0]
+@28
+TOP.SimTop.u1_rd_write.rd_wen_o
+TOP.SimTop.u1_rd_write.rst
+@1401200
+-rd_write
+@c00200
+-ID
+@22
+TOP.SimTop.Id_stage.B_imm[31:0]
+TOP.SimTop.Id_stage.I_imm[31:0]
+TOP.SimTop.Id_stage.J_imm[31:0]
+TOP.SimTop.Id_stage.R_imm[31:0]
+TOP.SimTop.Id_stage.S_imm[31:0]
+TOP.SimTop.Id_stage.U_imm[31:0]
+TOP.SimTop.Id_stage.imm0[31:0]
+TOP.SimTop.Id_stage.imm[63:0]
+TOP.SimTop.Id_stage.inst[31:0]
+@28
+TOP.SimTop.Id_stage.inst_funct3[2:0]
+@22
+TOP.SimTop.Id_stage.inst_funct7[6:0]
+TOP.SimTop.Id_stage.inst_opcode[4:0]
+@28
+TOP.SimTop.Id_stage.inst_type0[2:0]
+TOP.SimTop.Id_stage.inst_type[2:0]
+@22
+TOP.SimTop.Id_stage.mem_raddr[63:0]
+TOP.SimTop.Id_stage.mem_rdata[63:0]
+@28
+TOP.SimTop.Id_stage.mem_ren
+TOP.SimTop.Id_stage.mem_ren0
+@22
+TOP.SimTop.Id_stage.mem_waddr[63:0]
+TOP.SimTop.Id_stage.mem_wdata[63:0]
+@28
+TOP.SimTop.Id_stage.mem_wen
+TOP.SimTop.Id_stage.mem_wen0
+@22
+TOP.SimTop.Id_stage.mem_wmask0[63:0]
+TOP.SimTop.Id_stage.mem_wmask[63:0]
+TOP.SimTop.Id_stage.op1[63:0]
+TOP.SimTop.Id_stage.op1_0[63:0]
+TOP.SimTop.Id_stage.op2[63:0]
+TOP.SimTop.Id_stage.op2_0[63:0]
+TOP.SimTop.Id_stage.pc[63:0]
+TOP.SimTop.Id_stage.pc_cur[63:0]
+TOP.SimTop.Id_stage.rd[4:0]
+TOP.SimTop.Id_stage.rd_waddr[4:0]
+TOP.SimTop.Id_stage.rs1[4:0]
+TOP.SimTop.Id_stage.rs1_data[63:0]
+TOP.SimTop.Id_stage.rs1_r_addr[4:0]
+@28
+TOP.SimTop.Id_stage.rs1_r_ena
+TOP.SimTop.Id_stage.rs1_r_ena0
+@22
+TOP.SimTop.Id_stage.rs2[4:0]
+TOP.SimTop.Id_stage.rs2_data[63:0]
+TOP.SimTop.Id_stage.rs2_r_addr[4:0]
+@28
+TOP.SimTop.Id_stage.rs2_r_ena
+TOP.SimTop.Id_stage.rs2_r_ena0
+TOP.SimTop.Id_stage.rst
+@22
+TOP.SimTop.Id_stage.t1[63:0]
+TOP.SimTop.Id_stage.t1_0[63:0]
+@1401200
+-ID
 [pattern_trace] 1
 [pattern_trace] 0

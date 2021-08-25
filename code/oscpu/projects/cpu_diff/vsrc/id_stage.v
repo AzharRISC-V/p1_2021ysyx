@@ -6,16 +6,21 @@
 module id_stage(
   input   wire              rst,
   input   wire  [`BUS_32]   inst,
+
+  output  wire              sig_memread,
+  output  wire              sig_memwrite,
+
   input   wire  [`BUS_64]   rs1_data,
   input   wire  [`BUS_64]   rs2_data,
   input   wire  [`BUS_64]   pc_cur,
   input   wire  [`BUS_64]   pc,
 
-  output  wire              rs1_r_ena,
-  output  wire  [4 : 0]     rs1_r_addr,
-  output  wire              rs2_r_ena,
-  output  wire  [4 : 0]     rs2_r_addr,
+  output  wire              rs1_ren,
+  output  wire  [4 : 0]     rs1_raddr,
+  output  wire              rs2_ren,
+  output  wire  [4 : 0]     rs2_raddr,
   output  wire  [4 : 0]     rd_waddr,
+  output  reg               rd_wen,
 
   output  wire              mem_ren,
   output  wire  [`BUS_64]   mem_raddr,
@@ -25,7 +30,7 @@ module id_stage(
   output  wire  [`BUS_64]   mem_wdata,
   output  wire  [`BUS_64]   mem_wmask,
   
-  output  wire  [2 : 0]     inst_type,
+  output  reg   [2 : 0]     inst_type,
   output  wire  [4 : 0]     inst_opcode,
   output  wire  [2 : 0]     inst_funct3,
   output  wire  [6 : 0]     inst_funct7,
@@ -60,28 +65,30 @@ assign B_imm  = { {20{inst[31]}}, inst[7], inst[30 : 25], inst[11 : 8], 1'b0 };
 assign U_imm  = { inst[31 : 12], 12'b0 };
 assign J_imm  = { {12{inst[31]}}, inst[19 : 12], inst[20], inst[30 : 21], 1'b0 };
 
+// sig_memread, sig_memwrite
+assign sig_memread = inst_opcode == `OPCODE_LB;
+assign sig_memwrite = inst_opcode == `OPCODE_SB;
+
 // inst-type
-reg [2 : 0]inst_type0;
 always@(*) begin
-  if (rst == 1'b1) inst_type0 = 0;
+  if (rst == 1'b1) inst_type = 0;
   else begin
     case (inst_opcode)
-      `OPCODE_LUI   : inst_type0 = `INST_U_TYPE;
-      `OPCODE_AUIPC : inst_type0 = `INST_U_TYPE;
-      `OPCODE_JAL   : inst_type0 = `INST_J_TYPE;
-      `OPCODE_JALR  : inst_type0 = `INST_I_TYPE;
-      `OPCODE_BEQ   : inst_type0 = `INST_B_TYPE;
-      `OPCODE_LB    : inst_type0 = `INST_I_TYPE;
-      `OPCODE_SB    : inst_type0 = `INST_S_TYPE;
-      `OPCODE_ADDI  : inst_type0 = `INST_I_TYPE;
-      `OPCODE_ADD   : inst_type0 = `INST_R_TYPE;
-      `OPCODE_FENCE : inst_type0 = `INST_I_TYPE;
-      `OPCODE_ENV   : inst_type0 = `INST_I_TYPE;
-      default       : inst_type0 = 0;
+      `OPCODE_LUI   : inst_type = `INST_U_TYPE;
+      `OPCODE_AUIPC : inst_type = `INST_U_TYPE;
+      `OPCODE_JAL   : inst_type = `INST_J_TYPE;
+      `OPCODE_JALR  : inst_type = `INST_I_TYPE;
+      `OPCODE_BEQ   : inst_type = `INST_B_TYPE;
+      `OPCODE_LB    : inst_type = `INST_I_TYPE;
+      `OPCODE_SB    : inst_type = `INST_S_TYPE;
+      `OPCODE_ADDI  : inst_type = `INST_I_TYPE;
+      `OPCODE_ADD   : inst_type = `INST_R_TYPE;
+      `OPCODE_FENCE : inst_type = `INST_I_TYPE;
+      `OPCODE_ENV   : inst_type = `INST_I_TYPE;
+      default       : inst_type = 0;
     endcase
   end
 end
-assign inst_type = inst_type0;
 
 // 立即数的值
 reg [`BUS_32]imm0;
@@ -102,44 +109,47 @@ end
 assign imm = {{32{imm0[31]}}, imm0};
 
 // rs1读使能
-reg rs1_r_ena0;
+reg rs1_ren0;
 always@(*) begin
-  if (rst == 1'b1) rs1_r_ena0 = 0;
+  if (rst == 1'b1) rs1_ren0 = 0;
   else begin
     case (inst_type)
-      `INST_R_TYPE  : rs1_r_ena0 = 1;
-      `INST_I_TYPE  : rs1_r_ena0 = 1;
-      `INST_S_TYPE  : rs1_r_ena0 = 1;
-      `INST_B_TYPE  : rs1_r_ena0 = 1;
-      default       : rs1_r_ena0 = 0;
+      `INST_R_TYPE  : rs1_ren0 = 1;
+      `INST_I_TYPE  : rs1_ren0 = 1;
+      `INST_S_TYPE  : rs1_ren0 = 1;
+      `INST_B_TYPE  : rs1_ren0 = 1;
+      default       : rs1_ren0 = 0;
     endcase
   end
 end
-assign rs1_r_ena = rs1_r_ena0;
+assign rs1_ren = rs1_ren0;
 
 // rs1读地址
-assign rs1_r_addr = rs1;
+assign rs1_raddr = rs1;
 
 // rs2读使能
-reg rs2_r_ena0;
+reg rs2_ren0;
 always@(*) begin
-  if (rst == 1'b1) rs2_r_ena0 = 0;
+  if (rst == 1'b1) rs2_ren0 = 0;
   else begin
     case (inst_type)
-      `INST_R_TYPE  : rs2_r_ena0 = 1;
-      `INST_S_TYPE  : rs2_r_ena0 = 1;
-      `INST_B_TYPE  : rs2_r_ena0 = 1;
-      default       : rs2_r_ena0 = 0;
+      `INST_R_TYPE  : rs2_ren0 = 1;
+      `INST_S_TYPE  : rs2_ren0 = 1;
+      `INST_B_TYPE  : rs2_ren0 = 1;
+      default       : rs2_ren0 = 0;
     endcase
   end
 end
-assign rs2_r_ena = rs2_r_ena0;
+assign rs2_ren = rs2_ren0;
 
 // rs2读地址
-assign rs2_r_addr = rs2;
+assign rs2_raddr = rs2;
 
 // rd写地址
 assign rd_waddr = rd;
+
+// rd写使能
+assign rd_wen = rst ? 0 : ((inst_opcode == `OPCODE_LB) ? 1 : 0);
 
 // mem_ren
 reg mem_ren0;

@@ -4,16 +4,17 @@
 `include "defines.v"
 
 module if_stage(
-  input   wire              clk,
-  input   wire              rst,
+  input   wire                  clk,
+  input   wire                  rst,
 
-  // input wire inst_ok,
-  input   wire              pc_jmp,
-  input   wire  [`BUS_64]   pc_jmpaddr ,
+  input   wire  [`BUS_STATE]    state,   // 当前指令状态机
 
-  output  reg   [`BUS_64]   pc_cur,
-  output  reg   [`BUS_64]   pc,
-  output  reg   [`BUS_32]   inst
+  input   wire                  pc_jmp,
+  input   wire  [`BUS_64]       pc_jmpaddr ,
+
+  output  reg   [`BUS_64]       pc_cur,
+  output  reg   [`BUS_64]       pc,
+  output  reg   [`BUS_32]       inst
 );
 
 parameter PC_START_RESET = `PC_START - 4;
@@ -25,17 +26,13 @@ always@( posedge clk ) begin
     pc <= PC_START_RESET;
   end
   else begin
-    // if (inst_ok == 1'b1) begin
+    if (state == `STATE_IDLE) begin
       pc_cur <= pc;
       if (pc_jmp == 1'b1)
         pc <= pc_jmpaddr;
       else
         pc <= pc + 4;
-    // end
-    // else begin
-    //   pc_cur <= pc_cur;
-    //   pc <= pc;
-    // end
+    end
   end
 end
 

@@ -19,71 +19,94 @@ module SimTop(
     input   [7:0]       io_uart_in_ch
 );
 
+// State
+wire                    sig_memread;
+wire                    sig_memwrite;
+wire                    sig_memread_ok;
+wire                    sig_memwrite_ok;
+wire                    sig_wb;
+wire                    sig_wb_ok;
+wire [`BUS_STATE]       state;
+
 // if_stage
-// reg            inst_ok;   // 指令是否执行完毕，执行完毕才可以继续取指
-wire pc_jmp;
-wire [`BUS_64] pc_jmpaddr;
-wire [`BUS_64] pc_cur;
-wire [`BUS_64] pc;
-wire [`BUS_32] inst;
+wire [2 : 0]            inst_state;   // 指令状态
+wire                    pc_jmp;
+wire [`BUS_64]          pc_jmpaddr;
+wire [`BUS_64]          pc_cur;
+wire [`BUS_64]          pc;
+wire [`BUS_32]          inst;
 
 // id_stage
 // id_stage -> regfile
-wire rs1_r_ena;
-wire [4 : 0]rs1_r_addr;
-wire rs2_r_ena;
-wire [4 : 0]rs2_r_addr;
-wire [4 : 0]rd_waddr;
+wire [2 : 0]            id_inst_state_o;   // 指令状态
+wire                    rs1_ren;
+wire [4 : 0]            rs1_raddr;
+wire                    rs2_ren;
+wire [4 : 0]            rs2_raddr;
+wire [4 : 0]            rd_waddr;
 // id_stage -> exe_stage
-wire [2 : 0]inst_type;
-wire [4 : 0]inst_opcode;
-wire [2 : 0]inst_funct3;
-wire [6 : 0]inst_funct7;
-wire [`BUS_64]op1;
-wire [`BUS_64]op2;
-wire [`BUS_64]t1;   // temp1
+wire [2 : 0]            inst_type;
+wire [4 : 0]            inst_opcode;
+wire [2 : 0]            inst_funct3;
+wire [6 : 0]            inst_funct7;
+wire [`BUS_64]          op1;
+wire [`BUS_64]          op2;
+wire [`BUS_64]          t1;   // temp1
+// id_stage -> wb_stage
+wire                    id_rd_wen;
 
 // regfile -> id_stage
-wire [`BUS_64] rs1_data;
-wire [`BUS_64] rs2_data;
+wire [`BUS_64]          rs1_data;
+wire [`BUS_64]          rs2_data;
 // regfile -> difftest
-wire [`BUS_64] regs[0 : 31];
+wire [`BUS_64]          regs[0 : 31];
 
 // exe_stage
 // exe_stage -> other stage
-wire [4 : 0]inst_opcode_o;
-wire pc_jmp_o;
-wire [`BUS_64]  pc_jmpaddr_o;
+wire [4 : 0]            inst_opcode_o;
+wire                    pc_jmp_o;
+wire [`BUS_64]          pc_jmpaddr_o;
 // exe_stage -> wb_stage
-wire [4 : 0]    ex_rd_waddr_i;
-wire            ex_rd_wen_o;
-wire [4 : 0]    ex_rd_waddr_o;
-wire [`BUS_64]  ex_rd_wdata_o;
+wire                    ex_rd_wen_o;
+wire [`BUS_64]          ex_rd_wdata_o;
+wire [4 : 0]            ex_rd_waddr_i;
 
 // mem_stage
-wire            mem_ren;
-wire [`BUS_64]  mem_raddr;
-reg  [`BUS_64]  mem_rdata;
-wire            mem_wen;
-wire [`BUS_64]  mem_waddr;
-wire [`BUS_64]  mem_wdata;
-wire [`BUS_64]  mem_wmask;     // 数据掩码，比如0x00F0，则仅写入[7:4]位
+wire                    mem_ren;
+wire [`BUS_64]          mem_raddr;
+reg  [`BUS_64]          mem_rdata;
+wire                    mem_wen;
+wire [`BUS_64]          mem_waddr;
+wire [`BUS_64]          mem_wdata;
+wire [`BUS_64]          mem_wmask;      // 数据掩码，比如0x00F0，则仅写入[7:4]位
+wire                    mem_rd_wen_o;   // rd写入使能，需要等 mem_rdata有效时置位
 
 // wb_stage
-wire            wb_rd_wen_i;
-wire [4 : 0]    wb_rd_waddr_i;
-wire [`BUS_64]  wb_rd_wdata_i;
-wire            wb_rd_wen_o;
-wire [4 : 0]    wb_rd_waddr_o;
-wire [`BUS_64]  wb_rd_wdata_o;
+wire                    wb_rd_wen_i;
+wire [`BUS_64]          wb_rd_wdata_i;
+wire                    wb_rd_wen_o;
+wire [`BUS_64]          wb_rd_wdata_o;
 
 // rd_write -> regfile
-wire            rd_wen;
-wire [`BUS_64]  rd_wdata;
+wire                    rd_wen;
+wire [`BUS_64]          rd_wdata;
+
+State u1_state(
+  .clk                (clock            ),              
+  .rst                (reset            ),
+  .memread            (sig_memread      ),     
+  .memwrite           (sig_memwrite     ),    
+  .memread_ok         (sig_memread_ok   ),  
+  .memwrite_ok        (sig_memwrite_ok  ), 
+  .wb                 (sig_wb           ),          
+  .wb_ok              (sig_wb_ok        ),       
+  .state              (state            ) 
+);
 
 if_stage If_stage(
   .clk                (clock            ),
   .rst                (reset            ),
+  .state              (state            ),
   .pc_jmp             (pc_jmp_o         ),
   .pc_jmpaddr         (pc_jmpaddr_o     ),
   .pc_cur             (pc_cur           ),
@@ -94,15 +117,18 @@ if_stage If_stage(
 id_stage Id_stage(
   .rst                (reset            ),
   .inst               (inst             ),
+  .sig_memread        (sig_memread      ),     
+  .sig_memwrite       (sig_memwrite     ),  
   .rs1_data           (rs1_data         ),
   .rs2_data           (rs2_data         ),
   .pc_cur             (pc_cur           ),
   .pc                 (pc               ),
-  .rs1_r_ena          (rs1_r_ena        ),
-  .rs1_r_addr         (rs1_r_addr       ),
-  .rs2_r_ena          (rs2_r_ena        ),
-  .rs2_r_addr         (rs2_r_addr       ),
+  .rs1_ren            (rs1_ren          ),
+  .rs1_raddr          (rs1_raddr        ),
+  .rs2_ren            (rs2_ren          ),
+  .rs2_raddr          (rs2_raddr        ),
   .rd_waddr           (rd_waddr         ),
+  .rd_wen             (id_rd_wen        ),
   .mem_ren            (mem_ren          ),
   .mem_raddr          (mem_raddr        ),
   .mem_rdata          (mem_rdata        ),
@@ -121,53 +147,43 @@ id_stage Id_stage(
 
 exe_stage Exe_stage(
   .rst                (reset            ),
-  .inst_opcode_i      (inst_opcode      ),
+  .inst_opcode        (inst_opcode      ),
   .inst_funct3        (inst_funct3      ),
   .inst_funct7        (inst_funct7      ),
   .op1                (op1              ),
   .op2                (op2              ),
   .t1                 (t1               ),
-  .rd_waddr_i         (ex_rd_waddr_i    ),
-  .inst_opcode_o      (inst_opcode_o    ),
   .pc_jmp             (pc_jmp_o         ),
   .pc_jmpaddr         (pc_jmpaddr_o     ),
   .rd_wen_o           (ex_rd_wen_o      ),
-  .rd_waddr_o         (ex_rd_waddr_o    ),
   .rd_wdata_o         (ex_rd_wdata_o    )
 );
 
 mem_stage Mem_stage(
   .clk                (clock            ),
   .rst                (reset            ),
+  .sig_memread_ok     (sig_memread_ok   ),     
+  .sig_memwrite_ok    (sig_memwrite_ok  ), 
   .ren                (mem_ren          ),
   .raddr              (mem_raddr        ),
   .rdata              (mem_rdata        ),
   .wen                (mem_wen          ),
   .waddr              (mem_waddr        ),
   .wdata              (mem_wdata        ),
-  .wmask              (mem_wmask        )
+  .wmask              (mem_wmask        ),
+  .rd_wen_i           (id_rd_wen        ),
+  .rd_wen_o           (mem_rd_wen_o     )
 );
     
 wb_stage u1_wb_stage(
   .clk                (clock            ),
   .rst                (reset            ),
-  .rd_wen_i           (wb_rd_wen_i      ),
-  .rd_waddr_i         (wb_rd_waddr_i    ),
-  .rd_wdata_i         (wb_rd_wdata_i    ),
-  .rd_wen_o           (wb_rd_wen_o      ),
-  .rd_waddr_o         (wb_rd_waddr_o    ),
-  .rd_wdata_o         (wb_rd_wdata_o    )
-);
-    
-rd_write u1_rd_write(
-  .clk                (clock            ),
-  .rst                (reset            ),
-  .ex_rd_wen_i        (ex_rd_wen_o      ),
-  .ex_rd_wdata_i      (ex_rd_wdata_o    ),
-  .wb_rd_wen_i        (wb_rd_wen_o      ),
-  .wb_rd_wdata_i      (wb_rd_wdata_o    ),
-  .rd_wen_o           (rd_wen           ),
-  .rd_wdata_o         (rd_wdata         )
+  .ex_wen_i           (ex_rd_wen_o      ),
+  .ex_wdata_i         (ex_rd_wdata_o    ),
+  .mem_wen_i          (mem_rd_wen_o     ),
+  .mem_wdata_i        (mem_rdata        ),
+  .wen_o              (rd_wen           ),
+  .wdata_o            (rd_wdata         )
 );
 
 regfile Regfile(
@@ -176,12 +192,12 @@ regfile Regfile(
   .w_addr             (rd_waddr         ),
   .w_data             (rd_wdata         ),
   .w_ena              (rd_wen           ),
-  .r_addr1            (rs1_r_addr       ),
+  .r_addr1            (rs1_raddr        ),
   .r_data1            (rs1_data         ),
-  .r_ena1             (rs1_r_ena        ),
-  .r_addr2            (rs2_r_addr       ),
+  .r_ena1             (rs1_ren          ),
+  .r_addr2            (rs2_raddr        ),
   .r_data2            (rs2_data         ),
-  .r_ena2             (rs2_r_ena        ),
+  .r_ena2             (rs2_ren          ),
   .regs_o             (regs             )
 );
 

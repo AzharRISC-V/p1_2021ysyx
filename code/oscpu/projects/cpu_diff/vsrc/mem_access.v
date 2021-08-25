@@ -8,6 +8,9 @@ module mem_access (
   input   wire              clk,
   input   wire  [`BUS_64]   addr,     // 以字节为单位的访存地址
 
+  output  reg               sig_memread_ok,
+  output  reg               sig_memwrite_ok,
+
   input   wire              ren,      // 读使能
   output  wire  [`BUS_64]   rdata,    // 读到的数据
 
@@ -25,7 +28,7 @@ wire [`BUS_64] addr_rel = addr - 64'h00000000_80000000;
 
 // 第1/2次访存地址
 wire [`BUS_64] addr1 = addr_rel >> 3;
-wire [`BUS_64] addr2 = addr1 | 64'b1;
+wire [`BUS_64] addr2 = addr1 + 64'b1;
 
 // 8字节编址的内部偏移量（字节数）
 wire [2:0] byte_offset = addr[2:0];         
@@ -44,17 +47,24 @@ end
 // 合成读取数据
 reg [`BUS_64] rdata_0;
 always @(*) begin
-  case (byte_offset)
-    0'b000  : begin rdata_0 = {rdata1}; end
-    0'b001  : begin rdata_0 = {rdata2[ 7:0], rdata1[63: 8]}; end
-    0'b010  : begin rdata_0 = {rdata2[15:0], rdata1[63:16]}; end
-    0'b011  : begin rdata_0 = {rdata2[31:0], rdata1[63:32]}; end
-    0'b100  : begin rdata_0 = {rdata2[39:0], rdata1[63:40]}; end
-    0'b101  : begin rdata_0 = {rdata2[47:0], rdata1[63:48]}; end
-    0'b110  : begin rdata_0 = {rdata2[55:0], rdata1[63:56]}; end
-    0'b111  : begin rdata_0 = {rdata2}; end
-    default : begin rdata_0 = 64'd0; end
-  endcase
+  if (ren) begin
+    case (byte_offset)
+      0'b000  : begin rdata_0 = {rdata1}; end
+      0'b001  : begin rdata_0 = {rdata2[ 7:0], rdata1[63: 8]}; end
+      0'b010  : begin rdata_0 = {rdata2[15:0], rdata1[63:16]}; end
+      0'b011  : begin rdata_0 = {rdata2[31:0], rdata1[63:32]}; end
+      0'b100  : begin rdata_0 = {rdata2[39:0], rdata1[63:40]}; end
+      0'b101  : begin rdata_0 = {rdata2[47:0], rdata1[63:48]}; end
+      0'b110  : begin rdata_0 = {rdata2[55:0], rdata1[63:56]}; end
+      0'b111  : begin rdata_0 = {rdata2}; end
+      default : begin rdata_0 = 64'd0; end
+    endcase
+    sig_memread_ok = 1; 
+  end
+  else begin
+    rdata_0 = 0;
+    sig_memread_ok = 0;
+  end
 end
 assign rdata = rdata_0;
 
@@ -79,6 +89,9 @@ end
 always @(posedge clk) begin
     ram_write_helper(addr1, wdata, wmask1, wen);
     ram_write_helper(addr2, wdata, wmask2, wen & ena2);
+
+    if (wen)
+      sig_memwrite_ok = 1;
 
     if (wen)
       $displayh("  MEMACC: waddr1=", addr1, " wdata1=", wdata, " wmask1=", wmask1, " wen=", wen); 

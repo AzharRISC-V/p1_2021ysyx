@@ -13,6 +13,14 @@
 `define BUS_32              31:0
 `define BUS_64              63:0
 
+// 当前指令的状态机
+`define BUS_STATE           2:0             // 指令状态的总线
+`define STATE_IDLE          3'b000          // 空闲状态，可以开始取指
+`define STATE_MEMREAD       3'b001          // Load指令，等待内存读取完成
+`define STATE_MEMWRITE      3'b010          // Store指令，等待内存写入完成
+`define STATE_WB            3'b011          // 所有指令，等待WB完成
+
+
 // 寄存器配置
 `define REG_BITS            64              // 寄存器位数
 `define REG_BUS             63:0            // 寄存器总线
