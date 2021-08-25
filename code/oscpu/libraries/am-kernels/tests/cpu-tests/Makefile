@@ -23,11 +23,16 @@ Makefile.%: tests/%.c latest
 	fi
 	-@rm -f Makefile.$*
 
+install:
+	cp build/$(ALL)-* ../../../../bin/
+
 run: all
 	@cat $(RESULT)
 	@rm $(RESULT)
 
+
 clean:
 	rm -rf Makefile.* build/
+
 
 latest:
