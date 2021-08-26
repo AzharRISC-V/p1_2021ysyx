@@ -17,13 +17,11 @@ module if_stage(
   output  reg   [`BUS_32]       inst
 );
 
-parameter PC_START_RESET = `PC_START - 4;
-
 // fetch an instruction
 always@( posedge clk ) begin
   if( rst == 1'b1 ) begin
-    pc_cur <= PC_START_RESET;
-    pc <= PC_START_RESET;
+    pc_cur <= `PC_START_RESET;
+    pc <= `PC_START_RESET;
   end
   else begin
     if (state == `STATE_IDLE) begin

@@ -24,7 +24,7 @@ wire                    sig_memread;
 wire                    sig_memwrite;
 wire                    sig_memread_ok;
 wire                    sig_memwrite_ok;
-wire                    sig_wb;
+reg                     sig_wb;
 wire                    sig_wb_ok;
 wire [`BUS_STATE]       state;
 
@@ -91,17 +91,35 @@ wire [`BUS_64]          wb_rd_wdata_o;
 wire                    rd_wen;
 wire [`BUS_64]          rd_wdata;
 
+// cmt_stage
+reg                     sig_cmt_ok;
+
 State u1_state(
   .clk                (clock            ),              
   .rst                (reset            ),
+  .pc                 (pc               ),
   .memread            (sig_memread      ),     
   .memwrite           (sig_memwrite     ),    
   .memread_ok         (sig_memread_ok   ),  
   .memwrite_ok        (sig_memwrite_ok  ), 
   .wb                 (sig_wb           ),          
-  .wb_ok              (sig_wb_ok        ),       
+  .wb_ok              (sig_wb_ok        ),
+  .cmt_ok             (sig_cmt_ok       ),       
   .state              (state            ) 
 );
+
+always @(posedge clock) begin
+  if (reset)
+    sig_wb = 0;
+  else
+    sig_wb = ex_rd_wen_o;
+end
+
+always @(negedge clock) begin
+  sig_wb = 0;
+end
+
+//assign sig_wb = ex_rd_wen_o;
 
 if_stage If_stage(
   .clk                (clock            ),
@@ -198,6 +216,7 @@ regfile Regfile(
   .r_addr2            (rs2_raddr        ),
   .r_data2            (rs2_data         ),
   .r_ena2             (rs2_ren          ),
+  .sig_wb_ok          (sig_wb_ok        ),
   .regs_o             (regs             )
 );
 
@@ -208,15 +227,26 @@ reg   [7:0]           cmt_wdest;
 reg   [`REG_BUS]      cmt_wdata;
 reg   [`REG_BUS]      cmt_pc;
 reg   [`BUS_32]       cmt_inst;
-reg                   cmt_valid;
+reg                   cmt_valid;      // control commit valid
 reg                   trap;
 reg   [7:0]           trap_code;
 reg   [`BUS_64]       cycleCnt;
 reg   [`BUS_64]       instrCnt;
 reg   [`BUS_64]       regs_diff [0 : 31];
 
-wire inst_valid = (pc != `PC_START) | (inst != 0);
 
+//wire inst_valid = (pc != `PC_START) | (inst != 0);
+wire inst_valid = ((pc != `PC_START) | & (state == `STATE_CMT));
+
+// always @(posedge clock) begin
+//   if (reset) begin
+//     sig_cmt_ok <= 0;
+//   end
+//   else
+//     sig_cmt_ok <= 0;
+// end
+
+// 时钟下降沿，提交指令到 difftest
 always @(negedge clock) begin
   if (reset) begin
     {cmt_wen, cmt_wdest, cmt_wdata, cmt_pc, cmt_inst, cmt_valid, trap, trap_code, cycleCnt, instrCnt} <= 0;
@@ -228,6 +258,9 @@ always @(negedge clock) begin
     cmt_pc <= pc;
     cmt_inst <= inst;
     cmt_valid <= inst_valid;
+
+    // commit ok signal, generated at negedge of clock, and only valid wehn inst_valid
+    sig_cmt_ok <= inst_valid;
 
 		regs_diff <= regs;
 

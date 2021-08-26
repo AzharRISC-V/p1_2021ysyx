@@ -4,6 +4,7 @@
 // 常用的常数
 `define ZERO_WORD           64'h00000000_00000000       // 值位0的值
 `define PC_START            64'h00000000_80000000  
+`define PC_START_RESET      64'h00000000_7FFFFFFC
 `define RISCV_PRIV_MODE_U   0
 `define RISCV_PRIV_MODE_S   1
 `define RISCV_PRIV_MODE_M   3
@@ -19,6 +20,7 @@
 `define STATE_MEMREAD       3'b001          // Load指令，等待内存读取完成
 `define STATE_MEMWRITE      3'b010          // Store指令，等待内存写入完成
 `define STATE_WB            3'b011          // 所有指令，等待WB完成
+`define STATE_CMT           3'b100          // 提交状态
 
 
 // 寄存器配置

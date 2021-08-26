@@ -22,7 +22,7 @@ module id_stage(
   output  wire  [4 : 0]     rd_waddr,
   output  reg               rd_wen,
 
-  output  wire              mem_ren,
+  output  reg               mem_ren,
   output  wire  [`BUS_64]   mem_raddr,
   input   wire  [`BUS_64]   mem_rdata,
   output  wire              mem_wen,
@@ -30,7 +30,7 @@ module id_stage(
   output  wire  [`BUS_64]   mem_wdata,
   output  wire  [`BUS_64]   mem_wmask,
   
-  output  reg   [2 : 0]     inst_type,
+  output  wire  [2 : 0]     inst_type,
   output  wire  [4 : 0]     inst_opcode,
   output  wire  [2 : 0]     inst_funct3,
   output  wire  [6 : 0]     inst_funct7,
@@ -66,8 +66,8 @@ assign U_imm  = { inst[31 : 12], 12'b0 };
 assign J_imm  = { {12{inst[31]}}, inst[19 : 12], inst[20], inst[30 : 21], 1'b0 };
 
 // sig_memread, sig_memwrite
-assign sig_memread = inst_opcode == `OPCODE_LB;
-assign sig_memwrite = inst_opcode == `OPCODE_SB;
+assign sig_memread  = rst ? 0 : (inst_opcode == `OPCODE_LB);
+assign sig_memwrite = rst ? 0 : (inst_opcode == `OPCODE_SB);
 
 // inst-type
 always@(*) begin
@@ -152,25 +152,21 @@ assign rd_waddr = rd;
 assign rd_wen = rst ? 0 : ((inst_opcode == `OPCODE_LB) ? 1 : 0);
 
 // mem_ren
-reg mem_ren0;
 always@(*) begin
-  if (rst == 1'b1) mem_ren0 = 0;
+  if (rst == 1'b1) mem_ren = 0;
   else
-    mem_ren0 = (inst_opcode == `OPCODE_LB) ? 1 : 0;
+    mem_ren = (inst_opcode == `OPCODE_LB) ? 1 : 0;
 end
-assign mem_ren = mem_ren0;
 
 // mem_raddr
 assign mem_raddr = (rs1_data + imm);
 
 // mem_wen
-reg mem_wen0;
 always@(*) begin
-  if (rst == 1'b1) mem_wen0 = 0;
+  if (rst == 1'b1) mem_wen = 0;
   else
-    mem_wen0 = (inst_type == `INST_S_TYPE) ? 1 : 0;
+    mem_wen = (inst_type == `INST_S_TYPE) ? 1 : 0;
 end
-assign mem_wen = mem_wen0;
 
 // mem_waddr
 assign mem_waddr = ($signed(rs1_data) + $signed(imm));
@@ -179,77 +175,69 @@ assign mem_waddr = ($signed(rs1_data) + $signed(imm));
 assign mem_wdata = (rs2_data);
 
 // mem_wmask
-reg [`BUS_64] mem_wmask0;
 always@(*) begin
-  if (rst == 1'b1) mem_wmask0 = 0;
+  if (rst == 1'b1) mem_wmask = 0;
   else
     if (inst_type == `INST_S_TYPE)
       case (inst_funct3)
-        `FUNCT3_SB    : mem_wmask0 = 'hFF;
-        `FUNCT3_SH    : mem_wmask0 = 'hFFFF;
-        `FUNCT3_SW    : mem_wmask0 = 64'h00000000_FFFFFFFF;
-        `FUNCT3_SD    : mem_wmask0 = 64'hFFFFFFFF_FFFFFFFF;
-        default       : mem_wmask0 = 0;
+        `FUNCT3_SB    : mem_wmask = 'hFF;
+        `FUNCT3_SH    : mem_wmask = 'hFFFF;
+        `FUNCT3_SW    : mem_wmask = 64'h00000000_FFFFFFFF;
+        `FUNCT3_SD    : mem_wmask = 64'hFFFFFFFF_FFFFFFFF;
+        default       : mem_wmask = 0;
       endcase
     else
-      mem_wmask0 = 0;
+      mem_wmask = 0;
 end
-assign mem_wmask = mem_wmask0;
 
 // op1
-reg [`BUS_64] op1_0;
 always@(*) begin
-  if (rst == 1'b1) op1_0 = 0;
+  if (rst == 1'b1) op1 = 0;
   else begin
     case (inst_type)
-      `INST_R_TYPE  : op1_0 = rs1_data;
-      `INST_B_TYPE  : op1_0 = rs1_data;
-      `INST_I_TYPE  : op1_0 = rs1_data;
-      `INST_J_TYPE  : op1_0 = pc + 4;
+      `INST_R_TYPE  : op1 = rs1_data;
+      `INST_B_TYPE  : op1 = rs1_data;
+      `INST_I_TYPE  : op1 = rs1_data;
+      `INST_J_TYPE  : op1 = pc + 4;
       `INST_U_TYPE  : begin
         if (inst_opcode == `OPCODE_AUIPC)
-          op1_0 = pc;
+          op1 = pc;
         else
-          op1_0 = 0;
+          op1 = 0;
       end
-      default       : op1_0 = 0;
+      default       : op1 = 0;
     endcase
   end
 end
-assign op1 = op1_0;
 
 // op2
-reg [`BUS_64] op2_0;
 always@(*) begin
-  if (rst == 1'b1) op2_0 = 0;
+  if (rst == 1'b1) op2 = 0;
   else begin
     case (inst_type)
-      `INST_R_TYPE  : op2_0 = rs2_data;
-      `INST_B_TYPE  : op2_0 = rs2_data;
-      `INST_I_TYPE  : op2_0 = imm;
-      `INST_J_TYPE  : op2_0 = pc + imm;
+      `INST_R_TYPE  : op2 = rs2_data;
+      `INST_B_TYPE  : op2 = rs2_data;
+      `INST_I_TYPE  : op2 = imm;
+      `INST_J_TYPE  : op2 = pc + imm;
       `INST_U_TYPE  : begin
-        if (inst_opcode == `OPCODE_AUIPC)   op2_0 = imm;
-        else                                op2_0 = 0;
+        if (inst_opcode == `OPCODE_AUIPC)   op2 = imm;
+        else                                op2 = 0;
       end
-      default       : op2_0 = 0;
+      default       : op2 = 0;
     endcase
   end
 end
-assign op2 = op2_0;
 
 // t1
-reg [`BUS_64] t1_0;
 always@(*) begin
-  if (rst == 1'b1) t1_0 = 0;
+  if (rst == 1'b1) t1 = 0;
   else begin
     case (inst_opcode)
-      `OPCODE_JALR  : t1_0 = pc + 4;
-      `OPCODE_BEQ   : t1_0 = pc + imm;
-      default       : t1_0 = 0;
+      `OPCODE_JALR  : t1 = pc + 4;
+      `OPCODE_BEQ   : t1 = pc + imm;
+      default       : t1 = 0;
     endcase
   end
 end
-assign t1 = t1_0;
 
 endmodule

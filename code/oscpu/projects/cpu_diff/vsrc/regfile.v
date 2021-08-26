@@ -15,7 +15,9 @@ module regfile(
 
   output  reg   [`BUS_64]   r_data1,
   output  reg   [`BUS_64]   r_data2,
-  output  wire  [`BUS_64]   regs_o[0 : 31]        // difftest
+  output  wire  [`BUS_64]   regs_o[0 : 31],        // difftest
+
+  output  wire              sig_wb_ok
 );
 
 // 32 registers
@@ -60,10 +62,12 @@ begin
   end
   else 
   begin
-    if ((w_ena == 1'b1) && (w_addr != 5'h00))  
+    if ((w_ena == 1'b1) && (w_addr != 5'h00))
       regs[w_addr] <= w_data;
   end
 end
+
+assign sig_wb_ok = (!rst) & (w_ena) & (w_addr != 5'h00);
 
 always @(*) begin
   if (rst == 1'b1)
