@@ -1,50 +1,69 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Thu Aug 26 02:01:03 2021
+[*] Thu Aug 26 05:36:18 2021
 [*]
 [dumpfile] "/home/steven/p1_2021ysyx/code/oscpu/projects/cpu_diff/build_vcd/20210826.vcd"
-[dumpfile_mtime] "Thu Aug 26 01:58:56 2021"
-[dumpfile_size] 68520
+[dumpfile_mtime] "Thu Aug 26 05:35:42 2021"
+[dumpfile_size] 36301
 [savefile] "/home/steven/p1_2021ysyx/code/oscpu/projects/cpu_diff/build_vcd/20210826.gtkw"
-[timestart] 20
+[timestart] 0
 [size] 1920 1016
 [pos] -1 -1
-*-2.909147 42 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-1.909147 1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.SimTop.
+[treeopen] TOP.SimTop.If_stage.
 [treeopen] TOP.SimTop.Mem_stage.
 [sst_width] 233
 [signals_width] 315
 [sst_expanded] 1
 [sst_vpaned_height] 414
 @800200
--IF
-@22
-TOP.SimTop.If_stage.pc_cur[63:0]
-TOP.SimTop.If_stage.pc[63:0]
-TOP.SimTop.If_stage.inst[31:0]
+-Top
+@28
+TOP.SimTop.clock
+TOP.SimTop.reset
+@29
+TOP.SimTop.cpu_started
+@28
+TOP.SimTop.sig_wb
 @1000200
--IF
+-Top
+@28
+TOP.SimTop.u1_state.cpu_started
+@22
+TOP.SimTop.If_stage.pc[63:0]
+@28
+TOP.SimTop.state[2:0]
+TOP.SimTop.stage
 @800200
 -State
 @28
-TOP.SimTop.u1_state.clk
 TOP.SimTop.u1_state.memread
 TOP.SimTop.u1_state.memread_ok
 TOP.SimTop.u1_state.memwrite
 TOP.SimTop.u1_state.memwrite_ok
 TOP.SimTop.u1_state.cmt_ok
 TOP.SimTop.u1_state.rst
-TOP.SimTop.u1_state.state[2:0]
-TOP.SimTop.u1_state.state_cur[2:0]
-TOP.SimTop.u1_state.state_next[2:0]
-@29
 TOP.SimTop.u1_state.wb
-@28
 TOP.SimTop.u1_state.wb_ok
+TOP.SimTop.u1_state.ifreq
+TOP.SimTop.u1_state.state_stable
+TOP.SimTop.u1_state.stage[2:0]
 @1000200
 -State
-@c00200
+@800200
+-IF
+@22
+TOP.SimTop.If_stage.pc_cur[63:0]
+TOP.SimTop.If_stage.inst[31:0]
+@28
+TOP.SimTop.If_stage.inst_start
+TOP.SimTop.If_stage.stage_i[2:0]
+TOP.SimTop.If_stage.stage_o[2:0]
+@1000200
+-IF
+@800200
 -ID
 @22
 TOP.SimTop.Id_stage.inst[31:0]
@@ -77,7 +96,7 @@ TOP.SimTop.Id_stage.op1[63:0]
 TOP.SimTop.Id_stage.op2[63:0]
 TOP.SimTop.Id_stage.rd_waddr[4:0]
 TOP.SimTop.Id_stage.t1[63:0]
-@1401200
+@1000200
 -ID
 @c00200
 -MEM
@@ -266,9 +285,29 @@ TOP.SimTop.Mem_stage.u1_mem_access.wmask[63:0]
 +{x08 - s0} TOP.SimTop.Regfile.regs(8)[63:0]
 @1000200
 -Regs
+@800200
+-rd_write
+@1000200
+-rd_write
 @c00200
--rd_write
+-WB
+@22
+TOP.SimTop.u1_wb_stage.ex_wdata_i[63:0]
+@28
+TOP.SimTop.u1_wb_stage.ex_wen_i
+@22
+TOP.SimTop.u1_wb_stage.mem_wdata_i[63:0]
+@28
+TOP.SimTop.u1_wb_stage.mem_wen_i
+TOP.SimTop.u1_wb_stage.rst
+@22
+TOP.SimTop.u1_wb_stage.wdata_o[63:0]
+@28
+TOP.SimTop.u1_wb_stage.wen_o
 @1401200
--rd_write
+-WB
+@28
+TOP.SimTop.cmt_valid
+TOP.SimTop.inst_valid
 [pattern_trace] 1
 [pattern_trace] 0

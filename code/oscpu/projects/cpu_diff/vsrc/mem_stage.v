@@ -17,11 +17,7 @@ module mem_stage(
   input   wire              wen,
   input   wire  [`BUS_64]   waddr,
   input   wire  [`BUS_64]   wdata,
-  input   wire  [`BUS_64]   wmask,     // 数据掩码，比如0x00F0，则仅写入[7:4]位
-
-  // rd写回
-  input   wire              rd_wen_i,
-  output  wire              rd_wen_o
+  input   wire  [`BUS_64]   wmask     // 数据掩码，比如0x00F0，则仅写入[7:4]位
 );
 
 always@(*) begin
@@ -43,15 +39,5 @@ mem_access u1_mem_access(
   .wmask    (wmask  ),
   .wen      (wen    )
 );
-
-// rd写使能信号。需要确保 mem访问结束后才能置位，这里简化了。
-reg rd_wen_o_0;
-always @(*) begin
-  if (rd_wen_i & ren)
-    rd_wen_o_0 = 1;
-  else
-    rd_wen_o_0 = 0;
-end
-assign rd_wen_o = rd_wen_o_0;
 
 endmodule

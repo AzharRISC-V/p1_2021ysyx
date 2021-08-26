@@ -6,16 +6,57 @@
 module if_stage(
   input   wire                  clk,
   input   wire                  rst,
+  input   wire  [`BUS_STAGE]    stage_i,
+  output  reg   [`BUS_STAGE]    stage_o,
 
-  input   wire  [`BUS_STATE]    state,   // 当前指令状态机
+  input   wire  [`BUS_STATE]    state,          // 状态机
+  input   wire                  state_stable,   // 状态机是否稳定，稳定后才会取指
 
   input   wire                  pc_jmp,
   input   wire  [`BUS_64]       pc_jmpaddr ,
 
   output  reg   [`BUS_64]       pc_cur,
   output  reg   [`BUS_64]       pc,
-  output  reg   [`BUS_32]       inst
+  output  reg   [`BUS_32]       inst,
+  output  wire                  inst_start,      // 一个新指令到来，该信号保持一个时钟周期
+  output  reg                   ifreq            // 请求if
+
 );
+
+// ifreq
+always @(posedge clk) begin
+  if (rst)
+    ifreq = 0;
+  else begin
+    if (state == `STATE_EMPTY)
+      ifreq = 1;
+    else
+      ifreq = 0;
+  end
+end
+
+// stage
+always @(posedge clk) begin
+  if (rst)
+    stage_o = `STAGE_EMPTY;
+  else
+    if ((stage_i == `STAGE_EMPTY) && (pc == `PC_START))
+      stage_o = `STAGE_IF;
+end
+
+reg stage_if;
+always @(posedge clk) begin
+  if (rst)
+    stage_if = 0;
+  else begin
+    if (!stage_if) begin
+      if ((pc == `PC_START_RESET) || (stage_i == `STAGE_EMPTY && stage_o == `STAGE_IF))
+        stage_if = 1;
+    end
+    else
+      stage_if = 0;
+  end
+end
 
 // fetch an instruction
 always@( posedge clk ) begin
@@ -24,7 +65,8 @@ always@( posedge clk ) begin
     pc <= `PC_START_RESET;
   end
   else begin
-    if (state == `STATE_IDLE) begin
+    if (stage_if)
+    begin
       pc_cur <= pc;
       if (pc_jmp == 1'b1)
         pc <= pc_jmpaddr;
@@ -33,6 +75,9 @@ always@( posedge clk ) begin
     end
   end
 end
+
+// inst_start 信号
+assign inst_start = (pc_cur != pc);
 
 // Access memory
 reg [`BUS_64] rdata;

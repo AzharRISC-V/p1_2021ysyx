@@ -4,39 +4,60 @@
 `include "defines.v"
 
 module id_stage(
-  input   wire              rst,
-  input   wire  [`BUS_32]   inst,
+  input   wire                  clk,
+  input   wire                  rst,
+  input   wire  [`BUS_STAGE]    stage_i,
+  output  reg   [`BUS_STAGE]    stage_o,
+  input   wire  [`BUS_32]       inst,
+  input   wire                  cpu_started,
+  input   wire  [`BUS_STATE]    state,
 
-  output  wire              sig_memread,
-  output  wire              sig_memwrite,
+  output  reg                   sig_memread,
+  output  reg                   sig_memwrite,
 
-  input   wire  [`BUS_64]   rs1_data,
-  input   wire  [`BUS_64]   rs2_data,
-  input   wire  [`BUS_64]   pc_cur,
-  input   wire  [`BUS_64]   pc,
+  input   wire  [`BUS_64]       rs1_data,
+  input   wire  [`BUS_64]       rs2_data,
+  input   wire  [`BUS_64]       pc_cur,
+  input   wire  [`BUS_64]       pc,
 
-  output  wire              rs1_ren,
-  output  wire  [4 : 0]     rs1_raddr,
-  output  wire              rs2_ren,
-  output  wire  [4 : 0]     rs2_raddr,
-  output  wire  [4 : 0]     rd_waddr,
-  output  reg               rd_wen,
+  output  wire                  rs1_ren,
+  output  wire  [4 : 0]         rs1_raddr,
+  output  wire                  rs2_ren,
+  output  wire  [4 : 0]         rs2_raddr,
+  output  wire  [4 : 0]         rd_waddr,
 
-  output  reg               mem_ren,
-  output  wire  [`BUS_64]   mem_raddr,
-  input   wire  [`BUS_64]   mem_rdata,
-  output  wire              mem_wen,
-  output  wire  [`BUS_64]   mem_waddr,
-  output  wire  [`BUS_64]   mem_wdata,
-  output  wire  [`BUS_64]   mem_wmask,
+  output  reg                   mem_ren,
+  output  wire  [`BUS_64]       mem_raddr,
+  input   wire  [`BUS_64]       mem_rdata,
+  output  wire                  mem_wen,
+  output  wire  [`BUS_64]       mem_waddr,
+  output  wire  [`BUS_64]       mem_wdata,
+  output  wire  [`BUS_64]       mem_wmask,
   
-  output  wire  [2 : 0]     inst_type,
-  output  wire  [4 : 0]     inst_opcode,
-  output  wire  [2 : 0]     inst_funct3,
-  output  wire  [6 : 0]     inst_funct7,
-  output  wire  [`BUS_64]   op1,            // 两个操作数
-  output  wire  [`BUS_64]   op2,
-  output  wire  [`BUS_64]   t1
+  output  wire  [2 : 0]         inst_type,
+  output  wire  [4 : 0]         inst_opcode,
+  output  wire  [2 : 0]         inst_funct3,
+  output  wire  [6 : 0]         inst_funct7,
+  output  wire  [`BUS_64]       op1,            // 两个操作数
+  output  wire  [`BUS_64]       op2,
+  output  wire  [`BUS_64]       t1
+);
+
+// stage
+always @(posedge clk) begin
+  if (rst)
+    stage_o = `STAGE_EMPTY;
+  else
+    if (stage_i == `STAGE_IF)
+      stage_o = `STAGE_ID;
+end
+
+wire stage_id;
+single_pulse u1 (
+  .clk(clk), 
+  .rst(rst), 
+  .signal_in((stage_o == `STAGE_ID)), 
+  .pluse_out(stage_id)
 );
 
 // decode
@@ -66,12 +87,12 @@ assign U_imm  = { inst[31 : 12], 12'b0 };
 assign J_imm  = { {12{inst[31]}}, inst[19 : 12], inst[20], inst[30 : 21], 1'b0 };
 
 // sig_memread, sig_memwrite
-assign sig_memread  = rst ? 0 : (inst_opcode == `OPCODE_LB);
-assign sig_memwrite = rst ? 0 : (inst_opcode == `OPCODE_SB);
+assign sig_memread  = (!cpu_started) ? 0 : (inst_opcode == `OPCODE_LB);
+assign sig_memwrite = (!cpu_started) ? 0 : (inst_opcode == `OPCODE_SB);
 
 // inst-type
 always@(*) begin
-  if (rst == 1'b1) inst_type = 0;
+  if (!stage_id) inst_type = 0;
   else begin
     case (inst_opcode)
       `OPCODE_LUI   : inst_type = `INST_U_TYPE;
@@ -93,7 +114,7 @@ end
 // 立即数的值
 reg [`BUS_32]imm0;
 always@(*) begin
-  if (rst == 1'b1) imm0 = 0;
+  if (!stage_id) imm0 = 0;
   else begin
     case (inst_type)
       `INST_R_TYPE  : imm0 = R_imm;
@@ -130,7 +151,7 @@ assign rs1_raddr = rs1;
 // rs2读使能
 reg rs2_ren0;
 always@(*) begin
-  if (rst == 1'b1) rs2_ren0 = 0;
+  if (!stage_id) rs2_ren0 = 0;
   else begin
     case (inst_type)
       `INST_R_TYPE  : rs2_ren0 = 1;
@@ -148,12 +169,9 @@ assign rs2_raddr = rs2;
 // rd写地址
 assign rd_waddr = rd;
 
-// rd写使能
-assign rd_wen = rst ? 0 : ((inst_opcode == `OPCODE_LB) ? 1 : 0);
-
 // mem_ren
 always@(*) begin
-  if (rst == 1'b1) mem_ren = 0;
+  if (!stage_id) mem_ren = 0;
   else
     mem_ren = (inst_opcode == `OPCODE_LB) ? 1 : 0;
 end
@@ -163,7 +181,7 @@ assign mem_raddr = (rs1_data + imm);
 
 // mem_wen
 always@(*) begin
-  if (rst == 1'b1) mem_wen = 0;
+  if (!stage_id) mem_wen = 0;
   else
     mem_wen = (inst_type == `INST_S_TYPE) ? 1 : 0;
 end
@@ -176,7 +194,7 @@ assign mem_wdata = (rs2_data);
 
 // mem_wmask
 always@(*) begin
-  if (rst == 1'b1) mem_wmask = 0;
+  if (!stage_id) mem_wmask = 0;
   else
     if (inst_type == `INST_S_TYPE)
       case (inst_funct3)
@@ -192,7 +210,7 @@ end
 
 // op1
 always@(*) begin
-  if (rst == 1'b1) op1 = 0;
+  if (!stage_id) op1 = 0;
   else begin
     case (inst_type)
       `INST_R_TYPE  : op1 = rs1_data;
@@ -212,7 +230,7 @@ end
 
 // op2
 always@(*) begin
-  if (rst == 1'b1) op2 = 0;
+  if (!stage_id) op2 = 0;
   else begin
     case (inst_type)
       `INST_R_TYPE  : op2 = rs2_data;
@@ -230,7 +248,7 @@ end
 
 // t1
 always@(*) begin
-  if (rst == 1'b1) t1 = 0;
+  if (!stage_id) t1 = 0;
   else begin
     case (inst_opcode)
       `OPCODE_JALR  : t1 = pc + 4;
