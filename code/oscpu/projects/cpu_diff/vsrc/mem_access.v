@@ -59,11 +59,11 @@ always @(*) begin
       0'b000  : begin rdata_0 = {rdata1}; end
       0'b001  : begin rdata_0 = {rdata2[ 7:0], rdata1[63: 8]}; end
       0'b010  : begin rdata_0 = {rdata2[15:0], rdata1[63:16]}; end
-      0'b011  : begin rdata_0 = {rdata2[31:0], rdata1[63:32]}; end
-      0'b100  : begin rdata_0 = {rdata2[39:0], rdata1[63:40]}; end
-      0'b101  : begin rdata_0 = {rdata2[47:0], rdata1[63:48]}; end
-      0'b110  : begin rdata_0 = {rdata2[55:0], rdata1[63:56]}; end
-      0'b111  : begin rdata_0 = {rdata2}; end
+      0'b011  : begin rdata_0 = {rdata2[23:0], rdata1[63:24]}; end
+      0'b100  : begin rdata_0 = {rdata2[31:0], rdata1[63:32]}; end
+      0'b101  : begin rdata_0 = {rdata2[39:0], rdata1[63:40]}; end
+      0'b110  : begin rdata_0 = {rdata2[47:0], rdata1[63:48]}; end
+      0'b111  : begin rdata_0 = {rdata2[55:0], rdata1[63:56]}; end
       default : begin rdata_0 = 64'd0; end
     endcase
     sig_memread_ok = 1; 
