@@ -28,7 +28,7 @@ always@(*) begin
     $displayh("  MEM: raddr=", raddr);
 end
 always@(*) begin
-  if (wen)
+  if (wen && (clk_cnt >= `CLK_CNT_VAL))
     $displayh("  MEM: waddr=", waddr, " wdata=", wdata, " wmask=", wmask);
 end
 

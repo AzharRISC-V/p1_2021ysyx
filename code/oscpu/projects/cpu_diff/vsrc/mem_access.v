@@ -34,16 +34,19 @@ wire [`BUS_64] addr2 = addr1 + 64'b1;
 // 8字节编址的内部偏移量（字节数）
 wire [2:0] byte_offset = addr[2:0];         
 
+// 是否打印调试信息？
+wire show_dbg = (clk_cnt >= `CLK_CNT_VAL);
+
 // 读取数据
-wire [`BUS_64] rdata1 = ram_read_helper(ren, 0, addr1);
-wire [`BUS_64] rdata2 = ram_read_helper(ren & ena2, 0, addr2);
+wire [`BUS_64] rdata1 = ram_read_helper(show_dbg, ren, addr1);
+wire [`BUS_64] rdata2 = ram_read_helper(show_dbg, ren & ena2, addr2);
 
 always @(*) begin
-  if (ren && (clk_cnt >= `CLK_CNT_VAL))
+  if (ren && show_dbg)
     $displayh("  MEMACC: raddr1=", addr1, " rdata1=", rdata1, " ren=", ren);
 end
 always @(*) begin
-  if ((ren & ena2) && (clk_cnt >= `CLK_CNT_VAL)) 
+  if ((ren & ena2) && show_dbg) 
     $displayh("  MEMACC: raddr2=", addr2, " rdata2=", rdata2, " ren=", ren, " ena2=", ena2); 
 end
 
@@ -90,8 +93,8 @@ end
 
 // 写入数据
 always @(posedge clk) begin
-    ram_write_helper(addr1, wdata, wmask1, wen);
-    ram_write_helper(addr2, wdata, wmask2, wen & ena2);
+    ram_write_helper(show_dbg, addr1, wdata, wmask1, wen);
+    ram_write_helper(show_dbg, addr2, wdata, wmask2, wen & ena2);
 
     if (wen)
       sig_memwrite_ok = 1;

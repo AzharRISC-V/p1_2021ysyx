@@ -39,9 +39,9 @@ end
 // Access memory
 reg [`BUS_64] two_inst_data;
 RAMHelper RAMHelper(
+  .show_dbg         (0),
   .clk              (clk),
   .en               (1),
-  .isIF             (1),
   .rIdx             ((pc - `PC_START) >> 3),  // 按照64位(8字节)来访问
   .rdata            (two_inst_data),
   .wIdx             (0),
@@ -61,9 +61,12 @@ RAMHelper RAMHelper(
 // 而radata中是一次取出8字节，包含两条指令
 assign inst = pc[2] ? two_inst_data[63 : 32] : two_inst_data[31 : 0];
 
+// 是否打印调试信息？
+wire show_dbg = (clk_cnt >= `CLK_CNT_VAL);
+
 always@(*) begin
   //$display("--- ");
-  if (clk_cnt >= `CLK_CNT_VAL)
+  if (show_dbg)
     $displayh("  clk_cnt:", clk_cnt, " IF: pc=", pc, " two_inst_data=", two_inst_data, " pc[2]=", pc[2], " inst=", inst);
 end
 
