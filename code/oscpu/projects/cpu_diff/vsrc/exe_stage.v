@@ -59,6 +59,7 @@ always@(*) begin
       `OPCODE_JAL       : begin rd_wen0 = 1; end
       `OPCODE_JALR      : begin rd_wen0 = 1; end
       `OPCODE_LB        : begin rd_wen0 = 1; end
+      `OPCODE_ADD       : begin rd_wen0 = 1; end
       default           : begin rd_wen0 = 0; end
     endcase
 end
@@ -83,6 +84,27 @@ always@(*) begin
         end
         `OPCODE_JAL         : begin rd_data = op1; end
         `OPCODE_JALR        : begin rd_data = t1; end
+        `OPCODE_ADD         : begin
+          case (funct3)
+            `FUNCT3_ADD     : begin rd_data = (funct7[5]) ? op1 - op2 : op1 + op2; end
+            `FUNCT3_SLL     : begin rd_data = op1 << op2; end
+            `FUNCT3_SLT     : begin rd_data = ($signed(op1) < $signed(op2)) ? 1 : 0; end
+            `FUNCT3_SLTU    : begin rd_data = (op1 < op2) ? 1 : 0; end
+            `FUNCT3_XOR     : begin rd_data = op1 ^ op2; end
+            `FUNCT3_SRL     : begin
+              // TODO: Check manual book 
+              if (funct7[5]) begin
+                rd_data = $signed(op1) >> $signed(op2);
+              end
+              else begin
+                rd_data = op1 >> op2;
+              end
+            end
+            `FUNCT3_OR      : begin rd_data = op1 | op2; end
+            `FUNCT3_AND     : begin rd_data = op1 & op2; end
+            default         :;
+          endcase
+        end
         default             : begin rd_data = `ZERO_WORD; end
       endcase
     //end
