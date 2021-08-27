@@ -54,6 +54,9 @@ wire [`BUS_32]B_imm;
 wire [`BUS_32]U_imm;
 wire [`BUS_32]J_imm;
 
+wire  [5 : 0]   shamt;
+wire  [`BUS_64] shamt_64;   // 扩展为64位后的值
+
 assign opcode = id_inactive ? 0 : inst[6  :  2];
 assign rd     = id_inactive ? 0 : inst[11 :  7];
 assign funct3 = id_inactive ? 0 : inst[14 : 12];
@@ -67,6 +70,9 @@ assign S_imm  = id_inactive ? 0 : { {20{inst[31]}}, inst[31 : 25], inst[11 : 7] 
 assign B_imm  = id_inactive ? 0 : { {20{inst[31]}}, inst[7], inst[30 : 25], inst[11 : 8], 1'b0 };
 assign U_imm  = id_inactive ? 0 : { inst[31 : 12], 12'b0 };
 assign J_imm  = id_inactive ? 0 : { {12{inst[31]}}, inst[19 : 12], inst[20], inst[30 : 21], 1'b0 };
+
+assign shamt  = id_inactive ? 0 : inst[25 : 20];
+assign shamt_64 = {58'd0, shamt};
 
 // sig_memread, sig_memwrite
 assign sig_memread  = id_inactive ? 0 : (opcode == `OPCODE_LB);
@@ -241,7 +247,13 @@ always@(*) begin
     case (itype)
       `INST_R_TYPE  : op2 = rs2_data;
       `INST_B_TYPE  : op2 = rs2_data;
-      `INST_I_TYPE  : op2 = imm;
+      `INST_I_TYPE  : begin
+        case (funct3)
+          `FUNCT3_SLLI  : op2 = shamt_64;
+          `FUNCT3_SRLI  : op2 = shamt_64;
+          default       : op2 = imm;
+        endcase
+      end
       `INST_J_TYPE  : op2 = pc + imm;
       `INST_U_TYPE  : begin
         if (opcode == `OPCODE_AUIPC)   op2 = imm;

@@ -107,10 +107,9 @@ always的敏感列表使用*号就可以等效综合为组合电路。如果使�
 已通过：
 add add-longlong fact goldbach ifelse leap-year load-store
 matrix-mul mul-longlong prime shuixianhua sub-longlong
-switch to-lower-case wanshu
+switch to-lower-case wanshu bit
 
 未通过：
-bit
 bubble-sort
 div
 fib

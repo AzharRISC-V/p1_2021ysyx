@@ -97,31 +97,39 @@ assign rdata = rdata_0;
 reg [`BUS_64] wmask1;
 reg [`BUS_64] wmask2;
 always @(*) begin
-  case (byte_offset)
-    0'b000  : begin wmask1 = 64'hFFFFFFFF_FFFFFFFF; wmask2 = 64'h00000000_00000000; end
-    0'b001  : begin wmask1 = 64'hFFFFFFFF_FFFFFF00; wmask2 = 64'h00000000_000000FF; end
-    0'b010  : begin wmask1 = 64'hFFFFFFFF_FFFF0000; wmask2 = 64'h00000000_0000FFFF; end
-    0'b011  : begin wmask1 = 64'hFFFFFFFF_FF000000; wmask2 = 64'h00000000_00FFFFFF; end
-    0'b100  : begin wmask1 = 64'hFFFFFFFF_00000000; wmask2 = 64'h00000000_FFFFFFFF; end
-    0'b101  : begin wmask1 = 64'hFFFFFF00_00000000; wmask2 = 64'h000000FF_FFFFFFFF; end
-    0'b110  : begin wmask1 = 64'hFFFF0000_00000000; wmask2 = 64'h0000FFFF_FFFFFFFF; end
-    0'b111  : begin wmask1 = 64'hFF000000_00000000; wmask2 = 64'h00FFFFFF_FFFFFFFF; end
-    default : begin wmask1 = 64'h00000000_00000000; wmask2 = 64'h00000000_00000000; end
-  endcase
+  if (wen) begin
+    case (byte_offset)
+      0'b000  : begin wmask1 = 64'hFFFFFFFF_FFFFFFFF; wmask2 = 64'h00000000_00000000; end
+      0'b001  : begin wmask1 = 64'hFFFFFFFF_FFFFFF00; wmask2 = 64'h00000000_000000FF; end
+      0'b010  : begin wmask1 = 64'hFFFFFFFF_FFFF0000; wmask2 = 64'h00000000_0000FFFF; end
+      0'b011  : begin wmask1 = 64'hFFFFFFFF_FF000000; wmask2 = 64'h00000000_00FFFFFF; end
+      0'b100  : begin wmask1 = 64'hFFFFFFFF_00000000; wmask2 = 64'h00000000_FFFFFFFF; end
+      0'b101  : begin wmask1 = 64'hFFFFFF00_00000000; wmask2 = 64'h000000FF_FFFFFFFF; end
+      0'b110  : begin wmask1 = 64'hFFFF0000_00000000; wmask2 = 64'h0000FFFF_FFFFFFFF; end
+      0'b111  : begin wmask1 = 64'hFF000000_00000000; wmask2 = 64'h00FFFFFF_FFFFFFFF; end
+      default : begin wmask1 = 64'h00000000_00000000; wmask2 = 64'h00000000_00000000; end
+    endcase
+  end
+  else begin
+    wmask1 = 0; wmask2 = 0;
+  end
 end
 
 // 写入数据
+wire [7 : 0] bit_offset = byte_offset << 3;
+wire [`BUS_64] wdata1 = wdata << bit_offset;
+wire [`BUS_64] wdata2 = wdata >> bit_offset;
 always @(posedge clk) begin
-    ram_write_helper(show_dbg, addr1, wdata, wmask1, wen);
-    ram_write_helper(show_dbg, addr2, wdata, wmask2, wen & ena2);
+    ram_write_helper(show_dbg, addr1, wdata1, wmask1, wen);
+    ram_write_helper(show_dbg, addr2, wdata2, wmask2, wen & ena2);
 
     if (wen)
       sig_memwrite_ok = 1;
 
     if (wen && (clk_cnt >= `CLK_CNT_VAL))
-      $displayh("  MEMACC: waddr1=", addr1, " wdata1=", wdata, " wmask1=", wmask1, " wen=", wen); 
+      $displayh("  MEMACC: waddr1=", addr1, " wdata1=", wdata1, " wmask1=", wmask1, " wen=", wen); 
     if ((wen & ena2) && (clk_cnt >= `CLK_CNT_VAL))
-      $displayh("  MEMACC: waddr2=", addr2, " wdata2=", wdata, " wmask2=", wmask2, " wen=", wen, " ena2=", ena2);
+      $displayh("  MEMACC: waddr2=", addr2, " wdata2=", wdata2, " wmask2=", wmask2, " wen=", wen, " ena2=", ena2);
 end
 
 
