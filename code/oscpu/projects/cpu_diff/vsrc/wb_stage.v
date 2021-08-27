@@ -19,35 +19,69 @@ module wb_stage(
   input   wire                  mem_wen_i     ,   // MEM后的写回
   input   wire  [`BUS_64]       mem_wdata_i   ,
 
-  output  wire                  wen_o,
+  output  reg                   wen_o,
   output  wire  [`BUS_64]       wdata_o
 );
 
-// stage
-// always @(posedge clk) begin
-//   if (rst)
-//     stage_o = `STAGE_EMPTY;
-//   else
-//     if (stage_i == `STAGE_EX)
-//       stage_o = `STAGE_WB;
-// end
+// 保存ex的操作数
+reg               ex_wen;
+reg   [`REG_BUS]  ex_wdata;
+always @(posedge clk) begin
+  if (rst) begin
+    ex_wen <= 0;
+    ex_wdata <= 0;
+  end
+  else begin
+    if (instcycle_cnt_val == 6) begin
+      ex_wen <= ex_wen_i;
+      ex_wdata <= ex_wdata_i;
+    end
+    else if (instcycle_cnt_val == 0) begin
+      ex_wen <= 0;
+      ex_wdata <= 0;
+    end
+  end
+end
 
-wire stage_wb = 0;
-// single_pulse u1 (
-//   .clk(clk), 
-//   .rst(rst), 
-//   .signal_in((stage_o == `STAGE_WB)), 
-//   .pluse_out(stage_wb)
-// );
+// 保存mem的操作数
+reg               mem_wen;
+reg   [`REG_BUS]  mem_wdata;
+always @(posedge clk) begin
+  if (rst) begin
+    mem_wen <= 0;
+    mem_wdata <= 0;
+  end
+  else begin
+    if (instcycle_cnt_val == 6) begin
+      mem_wen <= mem_wen_i;
+      mem_wdata <= mem_wdata_i;
+    end
+    else if (instcycle_cnt_val == 2) begin
+      mem_wen <= 0;
+      mem_wdata <= 0;
+    end
+  end
+end
 
 // 写使能
-assign wen_o = (instcycle_cnt_val == 6) ? (ex_wen_i | mem_wen_i) : 0;
+always @(posedge clk) begin
+  if (rst) begin
+    wen_o = 0;
+  end
+  else begin
+    if (instcycle_cnt_val == 6) begin
+      wen_o = ex_wen_i | mem_wen_i;
+    end
+    else if (instcycle_cnt_val == 2) begin
+      wen_o = 0;
+    end
+  end
+end
 
 // 写入数据的来源，0：EX, 1:MEM
 wire ch = ex_wen_i ? 0 : 1;
 
-
 // 写数据
-assign wdata_o = wen_o ? (ch ? mem_wdata_i : ex_wdata_i) : 0;
+assign wdata_o = wen_o ? (ch ? mem_wdata : ex_wdata) : 0;
 
 endmodule

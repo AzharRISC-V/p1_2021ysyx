@@ -20,6 +20,7 @@ module regfile(
   output  wire              sig_wb_ok
 );
 
+
 // 32 registers
 reg [`BUS_64]   regs[0 : 31];
 

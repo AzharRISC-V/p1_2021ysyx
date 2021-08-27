@@ -7,11 +7,7 @@ module id_stage(
   input   wire                  clk,
   input   wire                  rst,
   input   wire [`BUS_8]         instcycle_cnt_val,
-  // input   wire  [`BUS_STAGE]    stage_i,
-  // output  reg   [`BUS_STAGE]    stage_o,
   input   wire  [`BUS_32]       inst,
-  input   wire                  cpu_started,
-  // input   wire  [`BUS_STATE]    state,
 
   output  reg                   sig_memread,
   output  reg                   sig_memwrite,
@@ -21,9 +17,9 @@ module id_stage(
   input   wire  [`BUS_64]       pc_cur,
   input   wire  [`BUS_64]       pc,
 
-  output  reg                   rs1_ren,
+  output  wire                  rs1_ren,
   output  wire  [4 : 0]         rs1,
-  output  reg                   rs2_ren,
+  output  wire                  rs2_ren,
   output  wire  [4 : 0]         rs2,
   output  wire  [4 : 0]         rd,
 
@@ -68,8 +64,8 @@ assign U_imm  = { inst[31 : 12], 12'b0 };
 assign J_imm  = { {12{inst[31]}}, inst[19 : 12], inst[20], inst[30 : 21], 1'b0 };
 
 // sig_memread, sig_memwrite
-assign sig_memread  = (!cpu_started) ? 0 : (inst_opcode == `OPCODE_LB);
-assign sig_memwrite = (!cpu_started) ? 0 : (inst_opcode == `OPCODE_SB);
+assign sig_memread  = (!rst) ? 0 : (inst_opcode == `OPCODE_LB);
+assign sig_memwrite = (!rst) ? 0 : (inst_opcode == `OPCODE_SB);
 
 // inst-type
 always@(*) begin
@@ -113,31 +109,35 @@ end
 assign imm = {{32{imm0[31]}}, imm0};
 
 // rs1读使能
+reg rs1_ren0;
 always@(*) begin
   if (rst) 
-    rs1_ren = 0;
+    rs1_ren0 = 0;
   else begin
     case (inst_type)
-      `INST_R_TYPE  : rs1_ren = 1;
-      `INST_I_TYPE  : rs1_ren = 1;
-      `INST_S_TYPE  : rs1_ren = 1;
-      `INST_B_TYPE  : rs1_ren = 1;
-      default       : rs1_ren = 0;
+      `INST_R_TYPE  : rs1_ren0 = 1;
+      `INST_I_TYPE  : rs1_ren0 = 1;
+      `INST_S_TYPE  : rs1_ren0 = 1;
+      `INST_B_TYPE  : rs1_ren0 = 1;
+      default       : rs1_ren0 = 0;
     endcase
   end
 end
+assign rs1_ren = (instcycle_cnt_val == 3) ? rs1_ren0 : 0;
 
 // rs2读使能
+reg rs2_ren0;
 always@(*) begin
   if (rst)
-    rs2_ren = 0;
+    rs2_ren0 = 0;
   case (inst_type)
-    `INST_R_TYPE  : rs2_ren = 1;
-    `INST_S_TYPE  : rs2_ren = 1;
-    `INST_B_TYPE  : rs2_ren = 1;
-    default       : rs2_ren = 0;
+    `INST_R_TYPE  : rs2_ren0 = 1;
+    `INST_S_TYPE  : rs2_ren0 = 1;
+    `INST_B_TYPE  : rs2_ren0 = 1;
+    default       : rs2_ren0 = 0;
   endcase
 end
+assign rs2_ren = (instcycle_cnt_val == 3) ? rs2_ren0 : 0;
 
 // mem_ren
 always@(*) begin

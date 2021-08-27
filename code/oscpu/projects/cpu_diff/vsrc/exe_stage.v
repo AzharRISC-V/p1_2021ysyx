@@ -7,16 +7,13 @@ module exe_stage(
   input   wire                  clk,
   input   wire                  rst,
   input   wire [`BUS_8]         instcycle_cnt_val,
-  // input   wire  [`BUS_STAGE]    stage_i,
-  // output  reg   [`BUS_STAGE]    stage_o,
-  // input   wire  [`BUS_STATE]    state,
 
-  input   wire  [4 : 0]         inst_opcode,
-  input   wire  [2 : 0]         inst_funct3,
-  input   wire  [6 : 0]         inst_funct7,
-  input   wire  [`REG_BUS]      op1,
-  input   wire  [`REG_BUS]      op2,
-  input   wire  [`REG_BUS]      t1,
+  input   wire  [4 : 0]         inst_opcode_i,
+  input   wire  [2 : 0]         inst_funct3_i,
+  input   wire  [6 : 0]         inst_funct7_i,
+  input   wire  [`REG_BUS]      op1_i,
+  input   wire  [`REG_BUS]      op2_i,
+  input   wire  [`REG_BUS]      t1_i,
 
   output  reg                   pc_jmp,
   output  reg   [`BUS_64]       pc_jmpaddr,
@@ -24,7 +21,34 @@ module exe_stage(
   output  reg   [`BUS_64]       rd_data
 );
 
-// rd写使能
+// 保存解码信息
+reg   [4 : 0]     inst_opcode;
+reg   [2 : 0]     inst_funct3;
+reg   [6 : 0]     inst_funct7;
+reg   [`REG_BUS]  op1;
+reg   [`REG_BUS]  op2;
+reg   [`REG_BUS]  t1;
+always @(posedge clk) begin
+  if (rst) begin
+    inst_opcode = 0;
+    inst_funct3 = 0;
+    inst_funct7 = 0;
+    op1 = 0;
+    op2 = 0;
+    t1 = 0;
+  end
+  else begin
+    if (instcycle_cnt_val == 3) begin
+      inst_opcode = inst_opcode_i; 
+      inst_funct3 = inst_funct3_i;
+      inst_funct7 = inst_funct7_i;
+      op1 = op1_i;
+      op2 = op2_i;
+      t1 = t1_i;
+    end
+  end
+end
+
 reg rd_wen0;
 always@(*) begin
   if (rst) rd_wen0 = 0;
@@ -38,27 +62,29 @@ always@(*) begin
       default           : begin rd_wen0 = 0; end
     endcase
 end
-//assign rd_wen = (rst | (state != `STATE_IDLE)) ? 0 : rd_wen;
-assign rd_wen = ((instcycle_cnt_val == 4) | (instcycle_cnt_val == 6)) ? rd_wen0 : 0;
+
+assign rd_wen = ((instcycle_cnt_val == 6) || (instcycle_cnt_val == 7)) ? rd_wen0 : 0;
 
 // rd_wdata_o
-always@( * ) begin
+always@( posedge clk ) begin
   if(rst)  rd_data = `ZERO_WORD; 
   else begin
-    case( inst_opcode )
-      `OPCODE_AUIPC       : begin rd_data = op1 + op2; end
-      `OPCODE_ADDI        : begin
-        case( inst_funct3 )
-          `FUNCT3_ADDI    : begin rd_data = op1 + op2; end
-          `FUNCT3_SLTI    : begin rd_data = ($signed(op1) < $signed(op2)) ? 1 : 0; end
-          `FUNCT3_SLTIU   : begin rd_data = op1 < op2 ? 1 : 0; end
-          default         :;
-        endcase
-      end
-      `OPCODE_JAL         : begin rd_data = op1; end
-      `OPCODE_JALR        : begin rd_data = t1; end
-      default             : begin rd_data = `ZERO_WORD; end
-    endcase
+    if (instcycle_cnt_val == 4) begin
+      case( inst_opcode )
+        `OPCODE_AUIPC       : begin rd_data = op1 + op2; end
+        `OPCODE_ADDI        : begin
+          case( inst_funct3 )
+            `FUNCT3_ADDI    : begin rd_data = op1 + op2; end
+            `FUNCT3_SLTI    : begin rd_data = ($signed(op1) < $signed(op2)) ? 1 : 0; end
+            `FUNCT3_SLTIU   : begin rd_data = op1 < op2 ? 1 : 0; end
+            default         :;
+          endcase
+        end
+        `OPCODE_JAL         : begin rd_data = op1; end
+        `OPCODE_JALR        : begin rd_data = t1; end
+        default             : begin rd_data = `ZERO_WORD; end
+      endcase
+    end
   end
 end
 
