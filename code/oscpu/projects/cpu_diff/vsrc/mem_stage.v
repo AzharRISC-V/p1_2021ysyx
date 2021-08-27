@@ -4,10 +4,12 @@
 `include "mem_access.v"
 
 module mem_stage(
+  input   wire  [`BUS_64]       clk_cnt,
   input   wire                  clk,
   input   wire                  rst,
   input   wire [`BUS_8]         instcycle_cnt_val,
 
+  // input   wire  []
   output  wire                  sig_memread_ok,
   output  wire                  sig_memwrite_ok,
 
@@ -22,14 +24,17 @@ module mem_stage(
 );
 
 always@(*) begin
-  if (ren)
+  if (ren && (clk_cnt >= `CLK_CNT_VAL))
     $displayh("  MEM: raddr=", raddr);
+end
+always@(*) begin
   if (wen)
     $displayh("  MEM: waddr=", waddr, " wdata=", wdata, " wmask=", wmask);
 end
 
 // 访问内存，将1字节访问转换为8字节对齐的一次或两次访问
 mem_access Mem_access(
+  .clk_cnt            (clk_cnt          ),
   .clk      (clk    ),
   .ren      (ren    ),
   .sig_memread_ok   (sig_memread_ok),

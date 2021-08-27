@@ -4,6 +4,7 @@
 `include "defines.v"
 
 module if_stage(
+  input   wire  [`BUS_64]       clk_cnt,
   input   wire                  clk,
   input   wire                  rst,
   input   wire [`BUS_8]         instcycle_cnt_val,
@@ -61,8 +62,9 @@ RAMHelper RAMHelper(
 assign inst = pc[2] ? two_inst_data[63 : 32] : two_inst_data[31 : 0];
 
 always@(*) begin
-  $display("\n-------------------");
-  $displayh("  IF: pc=", pc, " two_inst_data=", two_inst_data, " pc[2]=", pc[2], " inst=", inst);
+  //$display("--- ");
+  if (clk_cnt >= `CLK_CNT_VAL)
+    $displayh("  clk_cnt:", clk_cnt, " IF: pc=", pc, " two_inst_data=", two_inst_data, " pc[2]=", pc[2], " inst=", inst);
 end
 
 endmodule

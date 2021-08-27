@@ -5,18 +5,19 @@
 
 // 内存读取控制器，将1字节访问转换为8字节对齐的一次或两次访问
 module mem_access (
-  input   wire              clk,
-  input   wire  [`BUS_64]   addr,     // 以字节为单位的访存地址
+  input   wire  [`BUS_64]       clk_cnt,
+  input   wire                  clk,
+  input   wire  [`BUS_64]       addr,     // 以字节为单位的访存地址
 
-  output  reg               sig_memread_ok,
-  output  reg               sig_memwrite_ok,
+  output  reg                   sig_memread_ok,
+  output  reg                   sig_memwrite_ok,
 
-  input   wire              ren,      // 读使能
-  output  wire  [`BUS_64]   rdata,    // 读到的数据
+  input   wire                  ren,      // 读使能
+  output  wire  [`BUS_64]       rdata,    // 读到的数据
 
-  input   wire  [`BUS_64]   wdata,    // 写入数据
-  input   wire  [`BUS_64]   wmask,    // 写入数据的掩码
-  input   wire              wen       // 写使能
+  input   wire  [`BUS_64]       wdata,    // 写入数据
+  input   wire  [`BUS_64]       wmask,    // 写入数据的掩码
+  input   wire                  wen       // 写使能
 );
 
 
@@ -38,9 +39,11 @@ wire [`BUS_64] rdata1 = ram_read_helper(ren, 0, addr1);
 wire [`BUS_64] rdata2 = ram_read_helper(ren & ena2, 0, addr2);
 
 always @(*) begin
-  if (ren)
+  if (ren && (clk_cnt >= `CLK_CNT_VAL))
     $displayh("  MEMACC: raddr1=", addr1, " rdata1=", rdata1, " ren=", ren);
-  if (ren & ena2) 
+end
+always @(*) begin
+  if ((ren & ena2) && (clk_cnt >= `CLK_CNT_VAL)) 
     $displayh("  MEMACC: raddr2=", addr2, " rdata2=", rdata2, " ren=", ren, " ena2=", ena2); 
 end
 
@@ -93,9 +96,9 @@ always @(posedge clk) begin
     if (wen)
       sig_memwrite_ok = 1;
 
-    if (wen)
+    if (wen && (clk_cnt >= `CLK_CNT_VAL))
       $displayh("  MEMACC: waddr1=", addr1, " wdata1=", wdata, " wmask1=", wmask1, " wen=", wen); 
-    if (wen & ena2)
+    if ((wen & ena2) && (clk_cnt >= `CLK_CNT_VAL))
       $displayh("  MEMACC: waddr2=", addr2, " wdata2=", wdata, " wmask2=", wmask2, " wen=", wen, " ena2=", ena2);
 end
 

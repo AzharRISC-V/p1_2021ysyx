@@ -1,21 +1,21 @@
 [*]
 [*] GTKWave Analyzer v3.3.110 (w)1999-2020 BSI
-[*] Fri Aug 27 09:12:04 2021
+[*] Fri Aug 27 10:03:36 2021
 [*]
 [dumpfile] "/home/steven/p1_2021ysyx/code/oscpu/projects/cpu_diff/build_vcd/20210827.vcd"
-[dumpfile_mtime] "Fri Aug 27 09:11:17 2021"
-[dumpfile_size] 66730
+[dumpfile_mtime] "Fri Aug 27 10:03:23 2021"
+[dumpfile_size] 136171
 [savefile] "/home/steven/p1_2021ysyx/code/oscpu/projects/cpu_diff/build_vcd/20210827.gtkw"
-[timestart] 7
+[timestart] 30
 [size] 1920 1016
 [pos] -1 -1
-*-2.131539 19 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-2.126798 33 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.SimTop.
 [treeopen] TOP.SimTop.If_stage.
 [treeopen] TOP.SimTop.Mem_stage.
 [sst_width] 233
-[signals_width] 353
+[signals_width] 309
 [sst_expanded] 1
 [sst_vpaned_height] 475
 @800200
@@ -112,31 +112,46 @@ TOP.SimTop.If_stage.pc_jmp
 TOP.SimTop.If_stage.pc_jmpaddr[63:0]
 TOP.SimTop.If_stage.pc[63:0]
 TOP.SimTop.If_stage.inst[31:0]
-@1401200
--IF
 @c00200
+-IFRom
+@28
+TOP.SimTop.If_stage.RAMHelper.clk
+TOP.SimTop.If_stage.RAMHelper.en
+@22
+TOP.SimTop.If_stage.RAMHelper.rIdx[63:0]
+TOP.SimTop.If_stage.RAMHelper.rdata[63:0]
+TOP.SimTop.If_stage.RAMHelper.wIdx[63:0]
+TOP.SimTop.If_stage.RAMHelper.wdata[63:0]
+@28
+TOP.SimTop.If_stage.RAMHelper.wen
+@22
+TOP.SimTop.If_stage.RAMHelper.wmask[63:0]
+@1401200
+-IFRom
+-IF
+@800200
 -ID
 @28
 TOP.SimTop.Id_stage.id_active
-@c00200
+@800200
 -decoded
 @28
 TOP.SimTop.Id_stage.rs1_ren
 @24
 TOP.SimTop.Id_stage.rs1[4:0]
-@420
+@22
 TOP.SimTop.Id_stage.rs1_data[63:0]
 @28
 TOP.SimTop.Id_stage.rs2_ren
 @24
 TOP.SimTop.Id_stage.rs2[4:0]
-@420
+@22
 TOP.SimTop.Id_stage.rs2_data[63:0]
 @24
 TOP.SimTop.Id_stage.rd[4:0]
-@420
+@421
 TOP.SimTop.Id_stage.imm[63:0]
-@1401200
+@1000200
 -decoded
 @c00200
 -mem_read
@@ -161,9 +176,9 @@ TOP.SimTop.Id_stage.mem_wmask[63:0]
 TOP.SimTop.Id_stage.op1[63:0]
 TOP.SimTop.Id_stage.op2[63:0]
 TOP.SimTop.Id_stage.t1[63:0]
-@1401200
+@1000200
 -ID
-@800200
+@c00200
 -EX
 @22
 TOP.SimTop.Exe_stage.opcode[4:0]
@@ -183,9 +198,9 @@ TOP.SimTop.Exe_stage.rd_data[63:0]
 TOP.SimTop.Exe_stage.pc_jmp
 @22
 TOP.SimTop.Exe_stage.pc_jmpaddr[63:0]
-@1000200
+@1401200
 -EX
-@800200
+@c00200
 -WB
 @28
 TOP.SimTop.Wb_stage.ex_wen_i
@@ -200,11 +215,12 @@ TOP.SimTop.Wb_stage.ch
 TOP.SimTop.Wb_stage.wen_o
 @22
 TOP.SimTop.Wb_stage.wdata_o[63:0]
-@1000200
+@1401200
 -WB
 @800200
 -Regs
 @22
+[color] 7
 +{x01 - ra} TOP.SimTop.Regfile.regs(1)[63:0]
 @c00022
 +{x02 - sp} TOP.SimTop.Regfile.regs(2)[63:0]
@@ -277,6 +293,7 @@ TOP.SimTop.Wb_stage.wdata_o[63:0]
 -group_end
 @22
 +{x08 - s0} TOP.SimTop.Regfile.regs(8)[63:0]
+[color] 7
 +{x10 - a0} TOP.SimTop.Regfile.regs(10)[63:0]
 @c00022
 +{x19 - s3} TOP.SimTop.Regfile.regs(19)[63:0]
@@ -351,7 +368,7 @@ TOP.SimTop.Wb_stage.wdata_o[63:0]
 TOP.SimTop.Regfile.rs1_ren
 @22
 TOP.SimTop.Regfile.rs1[4:0]
-@c00023
+@c00022
 TOP.SimTop.Regfile.rs1_data[63:0]
 @28
 (0)TOP.SimTop.Regfile.rs1_data[63:0]
@@ -418,7 +435,7 @@ TOP.SimTop.Regfile.rs1_data[63:0]
 (61)TOP.SimTop.Regfile.rs1_data[63:0]
 (62)TOP.SimTop.Regfile.rs1_data[63:0]
 (63)TOP.SimTop.Regfile.rs1_data[63:0]
-@1401203
+@1401200
 -group_end
 @28
 TOP.SimTop.Regfile.rs2_ren
@@ -434,7 +451,7 @@ TOP.SimTop.Regfile.rd[4:0]
 TOP.SimTop.Regfile.rd_data[63:0]
 @1000200
 -Regs
-@c00200
+@800200
 -MEM
 @28
 [color] 1
@@ -448,9 +465,9 @@ TOP.SimTop.Mem_stage.wen
 TOP.SimTop.Mem_stage.waddr[63:0]
 TOP.SimTop.Mem_stage.wdata[63:0]
 TOP.SimTop.Mem_stage.wmask[63:0]
-@1401200
+@1000200
 -MEM
-@c00200
+@800200
 -MEMAccess
 @28
 TOP.SimTop.Mem_stage.Mem_access.ren
@@ -479,7 +496,7 @@ TOP.SimTop.Mem_stage.Mem_access.wen
 TOP.SimTop.Mem_stage.Mem_access.wmask1[63:0]
 TOP.SimTop.Mem_stage.Mem_access.wmask2[63:0]
 TOP.SimTop.Mem_stage.Mem_access.wmask[63:0]
-@1401200
+@1000200
 -MEMAccess
 @800200
 -rd_write

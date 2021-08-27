@@ -58,6 +58,7 @@ assign opcode = id_inactive ? 0 : inst[6  :  2];
 assign rd     = id_inactive ? 0 : inst[11 :  7];
 assign funct3 = id_inactive ? 0 : inst[14 : 12];
 assign rs1    = id_inactive ? 0 : inst[19 : 15];
+assign rs2    = id_inactive ? 0 : inst[24 : 20];
 assign funct7 = id_inactive ? 0 : inst[31 : 25];
 
 assign R_imm  = id_inactive ? 0 : 0;
@@ -150,7 +151,7 @@ assign rs1_ren = rs1_ren0;
 
 // rs2读使能
 reg rs2_ren0;
-always@(posedge clk) begin
+always@(*) begin
   if (id_inactive)
     rs2_ren0 = 0;
   else begin
@@ -176,7 +177,7 @@ end
 assign mem_raddr = (rs1_data + imm);
 
 // mem_wen
-always@(posedge clk) begin
+always@(*) begin
   if (id_inactive) 
     mem_wen = 0;
   else

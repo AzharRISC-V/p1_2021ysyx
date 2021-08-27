@@ -32,6 +32,12 @@ counter InstCycleCunter (
   .val                  (instcycle_cnt_val      )
 );
 
+// Global counter
+reg [`BUS_64]           clk_cnt;
+always @(posedge clock) begin
+  clk_cnt += 1;
+end
+
 // State
 reg                     sig_memread;
 wire                    sig_memwrite;
@@ -101,6 +107,7 @@ wire [`BUS_64]          rd_wdata;
 
 
 if_stage If_stage(
+  .clk_cnt            (clk_cnt          ),
   .clk                (clock              ),
   .rst                (reset              ),
   .instcycle_cnt_val  (instcycle_cnt_val  ),
@@ -160,6 +167,7 @@ exe_stage Exe_stage(
 );
 
 mem_stage Mem_stage(
+  .clk_cnt            (clk_cnt          ),
   .clk                (clock            ),
   .rst                (reset            ),
   .instcycle_cnt_val  (instcycle_cnt_val  ),
@@ -219,7 +227,6 @@ reg   [`BUS_64]       regs_diff [0 : 31];
 
 wire inst_valid = ((pc != `PC_START) | (inst != 0)) & (instcycle_cnt_val == 4);
 
-// 时钟下降沿，提交指令到 difftest
 always @(posedge clock) begin
   if (reset) begin
     {cmt_wen, cmt_wdest, cmt_wdata, cmt_pc, cmt_inst, cmt_valid, trap, trap_code, cycleCnt, instrCnt} <= 0;
