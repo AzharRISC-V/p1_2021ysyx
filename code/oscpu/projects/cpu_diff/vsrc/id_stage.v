@@ -109,6 +109,7 @@ always@(*) begin
       `OPCODE_FENCE : itype = `INST_I_TYPE;
       `OPCODE_ENV   : itype = `INST_I_TYPE;
       `OPCODE_ADDIW : itype = `INST_I_TYPE;
+      `OPCODE_ADDW  : itype = `INST_R_TYPE;
       default       : itype = 0;
     endcase
   end

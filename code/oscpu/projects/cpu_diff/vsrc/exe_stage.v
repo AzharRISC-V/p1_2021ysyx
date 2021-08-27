@@ -61,6 +61,7 @@ always@(*) begin
       `OPCODE_LB        : begin rd_wen0 = 1; end
       `OPCODE_ADD       : begin rd_wen0 = 1; end
       `OPCODE_ADDIW     : begin rd_wen0 = 1; end
+      `OPCODE_ADDW      : begin rd_wen0 = 1; end
       default           : begin rd_wen0 = 0; end
     endcase
 end
@@ -102,16 +103,39 @@ always_latch begin
             `FUNCT3_SLTU    : begin rd_data = (op1 < op2) ? 1 : 0; end
             `FUNCT3_XOR     : begin rd_data = op1 ^ op2; end
             `FUNCT3_SRL     : begin
-              // TODO: Check manual book 
-              if (funct7[5]) begin rd_data = $signed(op1) >> $signed(op2); end    // SRA
-              else begin rd_data = op1 >> op2; end    // SRL
+              if (funct7[5])  begin rd_data = $signed(op1) >> $signed(op2); end    // SRA
+              else            begin rd_data = op1 >> op2; end    // SRL
             end
             `FUNCT3_OR      : begin rd_data = op1 | op2; end
             `FUNCT3_AND     : begin rd_data = op1 & op2; end
-            default         :;
+            default         : begin rd_data = 0; end
           endcase
         end
-        `OPCODE_ADDIW       : begin temp1 = op1 + $signed(op2); rd_data = {{33{temp1[31]}}, temp1[30:0]}; end
+        `OPCODE_ADDIW       : begin
+          case (funct3)
+            `FUNCT3_ADDIW   : begin temp1 = op1 + $signed(op2); rd_data = {{33{temp1[31]}}, temp1[30:0]}; end
+            `FUNCT3_SLLIW   : begin temp1 = op1 << op2; rd_data = {{33{temp1[31]}}, temp1[30:0]}; end
+            `FUNCT3_SRLIW   : begin
+              if (funct7[5])  begin temp1 = op1 >> op2; rd_data = {{33{temp1[31]}}, temp1[30:0]}; end
+              else            begin temp1 = op1 >> op2; rd_data = temp1; end
+            end
+            default         : begin rd_data = 0; end
+          endcase
+        end
+        `OPCODE_ADDW        : begin
+          case (funct3)
+            `FUNCT3_ADDW    : begin
+              if (funct7[5])  begin temp1 = op1 - $signed(op2); rd_data = {{33{temp1[31]}}, temp1[30:0]}; end
+              else            begin temp1 = op1 + $signed(op2); rd_data = {{33{temp1[31]}}, temp1[30:0]}; end
+            end
+            `FUNCT3_SLLW    : begin temp1 = op1 << op2; rd_data = {{33{temp1[31]}}, temp1[30:0]}; end
+            `FUNCT3_SRLIW   : begin
+              if (funct7[5])  begin temp1 = op1 >> op2; rd_data = {{33{temp1[31]}}, temp1[30:0]}; end
+              else            begin temp1 = op1 >> op2; rd_data = temp1; end
+            end
+            default         : begin rd_data = 0; end
+          endcase
+        end
         default             : begin rd_data = `ZERO_WORD; end
       endcase
     //end
