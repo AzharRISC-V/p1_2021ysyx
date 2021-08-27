@@ -87,8 +87,8 @@ always_latch begin
             `FUNCT3_ANDI    : begin rd_data = op1 & op2; end
             `FUNCT3_SLLI    : begin rd_data = op1 << op2; end
             `FUNCT3_SRLI    : begin
-              if (funct7[5])  begin temp1 = op1 << op2; rd_data = { {33{t1[31]}}, temp1[30:0]}; end   // SRAI
-              else            begin rd_data = op1 << op2; end   // SRLI
+              if (funct7[5])  begin temp1 = op1 >> op2; rd_data = { {33{t1[31]}}, temp1[30:0]}; end   // SRAI
+              else            begin rd_data = op1 >> op2; end   // SRLI
             end
             default         :;
           endcase
@@ -129,7 +129,7 @@ always_latch begin
               else            begin temp1 = op1 + $signed(op2); rd_data = {{33{temp1[31]}}, temp1[30:0]}; end
             end
             `FUNCT3_SLLW    : begin temp1 = op1 << op2; rd_data = {{33{temp1[31]}}, temp1[30:0]}; end
-            `FUNCT3_SRLIW   : begin
+            `FUNCT3_SRLW    : begin
               if (funct7[5])  begin temp1 = op1 >> op2; rd_data = {{33{temp1[31]}}, temp1[30:0]}; end
               else            begin temp1 = op1 >> op2; rd_data = temp1; end
             end
