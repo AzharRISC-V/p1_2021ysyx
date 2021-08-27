@@ -19,18 +19,18 @@ module if_stage(
 
 
 // fetch an instruction
-always@( posedge clk ) begin
+always@(posedge clk) begin
   if( rst == 1'b1 ) begin
-    pc_cur <= `PC_START_RESET;
-    pc <= `PC_START_RESET;
+    pc_cur = `PC_START_RESET;
+    pc = `PC_START_RESET;
   end
   else begin
-    if (instcycle_cnt_val == 2) begin
-      pc_cur <= pc;
+    if (instcycle_cnt_val == 1) begin
+      pc_cur = pc;
       if (pc_jmp == 1'b1)
-        pc <= pc_jmpaddr;
+        pc = pc_jmpaddr;
       else
-        pc <= pc + 4;
+        pc = pc + 4;
     end
   end
 end

@@ -21,6 +21,10 @@ module exe_stage(
   output  reg   [`BUS_64]       rd_data
 );
 
+// Indicate that if EX is working
+wire ex_active = (instcycle_cnt_val == 2);
+wire ex_inactive = !ex_active;
+
 // 保存解码信息
 reg   [4 : 0]     opcode;
 reg   [2 : 0]     funct3;
@@ -28,30 +32,26 @@ reg   [6 : 0]     funct7;
 reg   [`REG_BUS]  op1;
 reg   [`REG_BUS]  op2;
 reg   [`REG_BUS]  t1;
-always @(posedge clk) begin
-  if (rst) begin
-    opcode = 0;
-    funct3 = 0;
-    funct7 = 0;
-    op1 = 0;
-    op2 = 0;
-    t1 = 0;
+always @(*) begin
+  if (ex_inactive) begin
+    {opcode, funct3, funct7, op1, op2, t1} = 0;
   end
   else begin
-    if (instcycle_cnt_val == 3) begin
-      opcode = opcode_i; 
-      funct3 = funct3_i;
-      funct7 = funct7_i;
-      op1 = op1_i;
-      op2 = op2_i;
-      t1 = t1_i;
-    end
+    opcode = opcode_i; 
+    funct3 = funct3_i;
+    funct7 = funct7_i;
+    op1 = op1_i;
+    op2 = op2_i;
+    t1 = t1_i;
   end
 end
 
+// rd_wen
 reg rd_wen0;
 always@(*) begin
-  if (rst) rd_wen0 = 0;
+  if (ex_inactive) begin
+    rd_wen0 = 0;
+  end
   else
     case (opcode)
       `OPCODE_AUIPC     : begin rd_wen0 = 1; end
@@ -62,14 +62,15 @@ always@(*) begin
       default           : begin rd_wen0 = 0; end
     endcase
 end
-
-assign rd_wen = ((instcycle_cnt_val == 6) || (instcycle_cnt_val == 7)) ? rd_wen0 : 0;
+assign rd_wen = rd_wen0;
 
 // rd_wdata_o
-always@( posedge clk ) begin
-  if(rst)  rd_data = `ZERO_WORD; 
+always@(*) begin
+  if(ex_inactive) begin
+    rd_data = `ZERO_WORD; 
+  end
   else begin
-    if (instcycle_cnt_val == 4) begin
+    //if (instcycle_cnt_val == 4) begin
       case( opcode )
         `OPCODE_AUIPC       : begin rd_data = op1 + op2; end
         `OPCODE_ADDI        : begin
@@ -84,13 +85,13 @@ always@( posedge clk ) begin
         `OPCODE_JALR        : begin rd_data = t1; end
         default             : begin rd_data = `ZERO_WORD; end
       endcase
-    end
+    //end
   end
 end
 
 // pc_jmp, pc_jmpaddr
 always @(posedge clk) begin
-  if (rst) begin
+  if (ex_inactive) begin
     pc_jmp <= 0;
     pc_jmpaddr <= `ZERO_WORD;
   end

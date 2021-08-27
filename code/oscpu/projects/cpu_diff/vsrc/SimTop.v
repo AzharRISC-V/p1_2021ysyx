@@ -54,7 +54,7 @@ wire                    rs2_ren;
 wire [4 : 0]            rs2;
 wire [4 : 0]            rd;
 // id_stage -> exe_stage
-wire [2 : 0]            inst_type;
+wire [2 : 0]            itype;    // instruction type : R,I,S,B,U,J
 wire [4 : 0]            opcode;
 wire [2 : 0]            funct3;
 wire [6 : 0]            funct7;
@@ -133,7 +133,7 @@ id_stage Id_stage(
   .mem_waddr          (mem_waddr        ),
   .mem_wdata          (mem_wdata        ),
   .mem_wmask          (mem_wmask        ),
-  .inst_type          (inst_type        ),
+  .itype          (itype        ),
   .opcode             (opcode           ),
   .funct3             (funct3           ),
   .funct7             (funct7           ),
@@ -219,7 +219,7 @@ reg   [`BUS_64]       regs_diff [0 : 31];
 wire inst_valid = ((pc != `PC_START) | (inst != 0)) & (instcycle_cnt_val  == 7);
 
 // 时钟下降沿，提交指令到 difftest
-always @(negedge clock) begin
+always @(posedge clock) begin
   if (reset) begin
     {cmt_wen, cmt_wdest, cmt_wdata, cmt_pc, cmt_inst, cmt_valid, trap, trap_code, cycleCnt, instrCnt} <= 0;
   end
