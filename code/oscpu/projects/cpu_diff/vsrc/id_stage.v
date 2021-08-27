@@ -167,14 +167,17 @@ assign rs2_ren = rs2_ren0;
 
 // mem_ren
 always@(*) begin
-  if (id_inactive) 
+  if (id_inactive) begin
     mem_ren = 0;
-  else
+  end
+  else begin
     mem_ren = (opcode == `OPCODE_LB) ? 1 : 0;
+  end
 end
 
 // mem_raddr
-assign mem_raddr = (rs1_data + imm);
+//assign mem_raddr = (rs1_data + imm);
+assign mem_raddr = ($signed(rs1_data) + $signed(imm));
 
 // mem_wen
 always@(*) begin

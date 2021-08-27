@@ -8,6 +8,7 @@ module mem_access (
   input   wire  [`BUS_64]       clk_cnt,
   input   wire                  clk,
   input   wire  [`BUS_64]       addr,     // 以字节为单位的访存地址
+  input   wire  [2 : 0]         funct3,
 
   output  reg                   sig_memread_ok,
   output  reg                   sig_memwrite_ok,
@@ -43,11 +44,11 @@ wire [`BUS_64] rdata2 = ram_read_helper(show_dbg, ren & ena2, addr2);
 
 always @(*) begin
   if (ren && show_dbg)
-    $displayh("  MEMACC: raddr1=", addr1, " rdata1=", rdata1, " ren=", ren);
+    $displayh("  MEMACC: raddr1=", addr1, " rdata1=", rdata1, " rdata=", rdata, " ren=", ren);
 end
 always @(*) begin
   if ((ren & ena2) && show_dbg) 
-    $displayh("  MEMACC: raddr2=", addr2, " rdata2=", rdata2, " ren=", ren, " ena2=", ena2); 
+    $displayh("  MEMACC: raddr2=", addr2, " rdata2=", rdata2, " rdata=", rdata, " ren=", ren, " ena2=", ena2); 
 end
 
 // 合成读取数据
@@ -70,6 +71,24 @@ always @(*) begin
   else begin
     rdata_0 = 0;
     sig_memread_ok = 0;
+  end
+end
+
+// 从8字节中摘出需要读取的数据
+always @(*) begin
+  if (ren) begin
+    case (funct3)
+    `FUNCT3_LB    : rdata = $signed(rdata_0[7:0]);
+    `FUNCT3_LH    : rdata = $signed(rdata_0[15:0]);
+    `FUNCT3_LW    : rdata = $signed(rdata_0[31:0]);
+    `FUNCT3_LD    : rdata = $signed(rdata_0[63:0]);
+    `FUNCT3_LBU   : rdata = rdata_0[7:0];
+    `FUNCT3_LHU   : rdata = rdata_0[15:0];
+    default       : rdata = 0;
+    endcase
+  end
+  else begin
+    rdata = 0;
   end
 end
 assign rdata = rdata_0;

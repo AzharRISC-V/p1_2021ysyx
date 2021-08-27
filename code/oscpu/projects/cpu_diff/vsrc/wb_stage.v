@@ -82,8 +82,9 @@ always @(*) begin
   end
 end
 
-// 写入数据的来源，0：EX, 1:MEM
-wire ch = ex_wen_i ? 0 : 1;
+// 写入数据的来源，0：EX, 1:MEM。
+// 两个信号同时到达时，MEM优先
+wire ch = mem_wen_i ? 1 : 0;
 
 // 写数据
 assign wdata_o = wen_o ? (ch ? mem_wdata_i : ex_wdata_i) : 0;

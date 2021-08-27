@@ -93,7 +93,6 @@ wire                    mem_wen;
 wire [`BUS_64]          mem_waddr;
 wire [`BUS_64]          mem_wdata;
 wire [`BUS_64]          mem_wmask;      // 数据掩码，比如0x00F0，则仅写入[7:4]位
-wire                    mem_rd_wen_o;   // rd写入使能，需要等 mem_rdata有效时置位
 
 // wb_stage
 wire                    wb_rd_wen_i;
@@ -175,6 +174,7 @@ mem_stage Mem_stage(
   .sig_memwrite_ok    (sig_memwrite_ok  ), 
   .ren                (mem_ren          ),
   .raddr              (mem_raddr        ),
+  .funct3             (funct3           ),
   .rdata              (mem_rdata        ),
   .wen                (mem_wen          ),
   .waddr              (mem_waddr        ),
@@ -188,7 +188,7 @@ wb_stage Wb_stage(
   .instcycle_cnt_val  (instcycle_cnt_val  ),
   .ex_wen_i           (ex_rd_wen_o      ),
   .ex_wdata_i         (ex_rd_wdata_o    ),
-  .mem_wen_i          (mem_rd_wen_o     ),
+  .mem_wen_i          (sig_memread_ok   ),
   .mem_wdata_i        (mem_rdata        ),
   .wen_o              (rd_wen           ),
   .wdata_o            (rd_wdata         )
