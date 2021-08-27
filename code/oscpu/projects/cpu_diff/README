@@ -102,3 +102,28 @@ always的敏感列表使用*号就可以等效综合为组合电路。如果使�
 如果需要时序逻辑电路， always @(posedge clk)
 如果是异步复位，则将clk、ena/clr信号都放入敏感列表；
 如果是同步复位，则不加入敏感列表，而是放在第一个if语句中。
+
+3. am-kernels/test/cpu-tests 测试记录
+已通过：
+add add-longlong fact goldbach ifelse leap-year load-store
+matrix-mul mul-longlong prime shuixianhua sub-longlong
+switch to-lower-case wanshu
+
+未通过：
+bit
+bubble-sort
+div
+fib
+hello-str
+max
+min3
+mov
+movsx
+pacal
+quick-sort
+recursion
+select-sort
+shift
+string
+sum
+unalign
