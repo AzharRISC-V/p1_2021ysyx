@@ -22,7 +22,7 @@ module wb_stage(
 );
 
 // Indicate that if WB is working
-wire wb_active = (instcycle_cnt_val == 2);
+wire wb_active = (instcycle_cnt_val == 4);
 wire wb_inactive = !wb_active;
 
 // // 保存ex的操作数
@@ -66,7 +66,7 @@ wire wb_inactive = !wb_active;
 // end
 
 // 写使能
-always @(negedge clk) begin
+always @(*) begin
   if (wb_inactive) begin
     wen_o = 0;
   end

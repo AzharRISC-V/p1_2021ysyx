@@ -25,7 +25,7 @@ always@(posedge clk) begin
     pc = `PC_START_RESET;
   end
   else begin
-    if (instcycle_cnt_val == 1) begin
+    if (instcycle_cnt_val == 3) begin
       pc_cur = pc;
       if (pc_jmp == 1'b1)
         pc = pc_jmpaddr;

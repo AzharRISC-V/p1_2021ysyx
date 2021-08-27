@@ -41,7 +41,7 @@ module id_stage(
 );
 
 // Indicate that if ID is working
-wire id_active = (instcycle_cnt_val == 2);
+wire id_active = (instcycle_cnt_val == 4);
 wire id_inactive = !id_active;
 
 // decode

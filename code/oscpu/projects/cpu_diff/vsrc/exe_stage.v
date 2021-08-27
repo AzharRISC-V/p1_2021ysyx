@@ -22,7 +22,7 @@ module exe_stage(
 );
 
 // Indicate that if EX is working
-wire ex_active = (instcycle_cnt_val == 2);
+wire ex_active = (instcycle_cnt_val == 4);
 wire ex_inactive = !ex_active;
 
 // 保存解码信息

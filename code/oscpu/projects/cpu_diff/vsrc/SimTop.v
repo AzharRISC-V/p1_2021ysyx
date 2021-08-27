@@ -27,7 +27,8 @@ counter InstCycleCunter (
   .clk                  (clock                  ),
   .rst                  (reset                  ),
   .clear                (instcycle_cnt_clear    ),
-  .max                  (7                      ),
+  .min                  (3                      ),
+  .max                  (4                      ),
   .val                  (instcycle_cnt_val      )
 );
 
@@ -216,7 +217,7 @@ reg   [`BUS_64]       instrCnt;
 reg   [`BUS_64]       regs_diff [0 : 31];
 
 
-wire inst_valid = ((pc != `PC_START) | (inst != 0)) & (instcycle_cnt_val  == 7);
+wire inst_valid = ((pc != `PC_START) | (inst != 0)) & (instcycle_cnt_val == 4);
 
 // 时钟下降沿，提交指令到 difftest
 always @(posedge clock) begin
