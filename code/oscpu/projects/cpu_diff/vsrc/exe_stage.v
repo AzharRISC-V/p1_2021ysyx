@@ -65,10 +65,11 @@ always@(*) begin
 end
 assign rd_wen = rd_wen0;
 
+wire [`BUS_64] temp1 = op1 << op2;
 // rd_wdata_o
 always@(*) begin
   if(ex_inactive) begin
-    rd_data = `ZERO_WORD; 
+    rd_data = `ZERO_WORD;
   end
   else begin
     //if (instcycle_cnt_val == 4) begin
@@ -79,6 +80,14 @@ always@(*) begin
             `FUNCT3_ADDI    : begin rd_data = op1 + op2; end
             `FUNCT3_SLTI    : begin rd_data = ($signed(op1) < $signed(op2)) ? 1 : 0; end
             `FUNCT3_SLTIU   : begin rd_data = op1 < op2 ? 1 : 0; end
+            `FUNCT3_XORI    : begin rd_data = op1 ^ op2; end
+            `FUNCT3_ORI     : begin rd_data = op1 | op2; end
+            `FUNCT3_ANDI    : begin rd_data = op1 & op2; end
+            `FUNCT3_SLLI    : begin rd_data = op1 << op2; end
+            `FUNCT3_SRLI    : begin
+              if (funct7[5])  begin rd_data = { {33{temp1[31]}}, temp1[30:0]}; end
+              else            begin rd_data = { {33{temp1[31]}}, temp1[30:0]}; end
+            end
             default         :;
           endcase
         end
