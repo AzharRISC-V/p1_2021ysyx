@@ -55,9 +55,9 @@ wire [4 : 0]            rs2;
 wire [4 : 0]            rd;
 // id_stage -> exe_stage
 wire [2 : 0]            inst_type;
-wire [4 : 0]            inst_opcode;
-wire [2 : 0]            inst_funct3;
-wire [6 : 0]            inst_funct7;
+wire [4 : 0]            opcode;
+wire [2 : 0]            funct3;
+wire [6 : 0]            funct7;
 wire [`BUS_64]          op1;
 wire [`BUS_64]          op2;
 wire [`BUS_64]          t1;   // temp1
@@ -70,7 +70,7 @@ wire [`BUS_64]          regs[0 : 31];
 
 // exe_stage
 // exe_stage -> other stage
-wire [4 : 0]            inst_opcode_o;
+wire [4 : 0]            opcode_o;
 wire                    pc_jmp_o;
 wire [`BUS_64]          pc_jmpaddr_o;
 // exe_stage -> wb_stage
@@ -134,9 +134,9 @@ id_stage Id_stage(
   .mem_wdata          (mem_wdata        ),
   .mem_wmask          (mem_wmask        ),
   .inst_type          (inst_type        ),
-  .inst_opcode        (inst_opcode      ),
-  .inst_funct3        (inst_funct3      ),
-  .inst_funct7        (inst_funct7      ),
+  .opcode             (opcode           ),
+  .funct3             (funct3           ),
+  .funct7             (funct7           ),
   .op1                (op1              ),
   .op2                (op2              ),
   .t1                 (t1               )
@@ -146,9 +146,9 @@ exe_stage Exe_stage(
   .clk                (clock            ),
   .rst                (reset            ),
   .instcycle_cnt_val  (instcycle_cnt_val  ),
-  .inst_opcode_i      (inst_opcode      ),
-  .inst_funct3_i      (inst_funct3      ),
-  .inst_funct7_i      (inst_funct7      ),
+  .opcode_i           (opcode           ),
+  .funct3_i           (funct3           ),
+  .funct7_i           (funct7           ),
   .op1_i              (op1              ),
   .op2_i              (op2              ),
   .t1_i               (t1               ),

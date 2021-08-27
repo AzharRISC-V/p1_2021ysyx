@@ -23,7 +23,7 @@ module id_stage(
   output  wire  [4 : 0]         rs2,
   output  wire  [4 : 0]         rd,
 
-  output  reg                   mem_ren,
+  output  wire                  mem_ren,
   output  wire  [`BUS_64]       mem_raddr,
   input   wire  [`BUS_64]       mem_rdata,
   output  wire                  mem_wen,
@@ -32,13 +32,17 @@ module id_stage(
   output  wire  [`BUS_64]       mem_wmask,
   
   output  wire  [2 : 0]         inst_type,
-  output  wire  [4 : 0]         inst_opcode,
-  output  wire  [2 : 0]         inst_funct3,
-  output  wire  [6 : 0]         inst_funct7,
+  output  wire  [4 : 0]         opcode,
+  output  wire  [2 : 0]         funct3,
+  output  wire  [6 : 0]         funct7,
   output  wire  [`BUS_64]       op1,            // 两个操作数
   output  wire  [`BUS_64]       op2,
   output  wire  [`BUS_64]       t1
 );
+
+// Indicate that if ID is working
+wire id_active = (instcycle_cnt_val == 3) || (instcycle_cnt_val == 4);
+wire id_inactive = !id_active;
 
 // decode
 wire [`BUS_64]imm;           // 带符号扩展的imm
@@ -50,29 +54,48 @@ wire [`BUS_32]B_imm;
 wire [`BUS_32]U_imm;
 wire [`BUS_32]J_imm;
 
-assign inst_opcode  = inst[6  :  2];
-assign rd           = inst[11 :  7];
-assign inst_funct3  = inst[14 : 12];
-assign rs1          = inst[19 : 15];
-assign inst_funct7  = inst[31 : 25];
+assign opcode = id_inactive ? 0 : inst[6  :  2];
+assign rd     = id_inactive ? 0 : inst[11 :  7];
+assign funct3 = id_inactive ? 0 : inst[14 : 12];
+assign rs1    = id_inactive ? 0 : inst[19 : 15];
+assign funct7 = id_inactive ? 0 : inst[31 : 25];
 
-assign R_imm = 0;
-assign I_imm  = { {20{inst[31]}}, inst[31 : 20] };
-assign S_imm  = { {20{inst[31]}}, inst[31 : 25], inst[11 : 7] };
-assign B_imm  = { {20{inst[31]}}, inst[7], inst[30 : 25], inst[11 : 8], 1'b0 };
-assign U_imm  = { inst[31 : 12], 12'b0 };
-assign J_imm  = { {12{inst[31]}}, inst[19 : 12], inst[20], inst[30 : 21], 1'b0 };
+assign R_imm  = id_inactive ? 0 : 0;
+assign I_imm  = id_inactive ? 0 : { {20{inst[31]}}, inst[31 : 20] };
+assign S_imm  = id_inactive ? 0 : { {20{inst[31]}}, inst[31 : 25], inst[11 : 7] };
+assign B_imm  = id_inactive ? 0 : { {20{inst[31]}}, inst[7], inst[30 : 25], inst[11 : 8], 1'b0 };
+assign U_imm  = id_inactive ? 0 : { inst[31 : 12], 12'b0 };
+assign J_imm  = id_inactive ? 0 : { {12{inst[31]}}, inst[19 : 12], inst[20], inst[30 : 21], 1'b0 };
 
 // sig_memread, sig_memwrite
-assign sig_memread  = (!rst) ? 0 : (inst_opcode == `OPCODE_LB);
-assign sig_memwrite = (!rst) ? 0 : (inst_opcode == `OPCODE_SB);
+assign sig_memread  = id_inactive ? 0 : (opcode == `OPCODE_LB);
+assign sig_memwrite = id_inactive ? 0 : (opcode == `OPCODE_SB);
 
 // inst-type
+
+// // 以后有机会再优化这部分组合逻辑
+// // (区分6种类型)
+// wire inst_type_R = id_inactive ? 0 : (opcode == `OPCODE_ADD );
+// wire inst_type_I = id_inactive ? 0 : (opcode == `OPCODE_JALR) || (opcode == `OPCODE_LB   ) || (opcode == `OPCODE_ADDI ) || (opcode == `OPCODE_FENCE) || (opcode == `OPCODE_ENV);
+// wire inst_type_U = id_inactive ? 0 : (opcode == `OPCODE_LUI ) || (opcode == `OPCODE_AUIPC);
+// wire inst_type_S = id_inactive ? 0 : (opcode == `OPCODE_SB  );
+// wire inst_type_B = id_inactive ? 0 : (opcode == `OPCODE_BEQ );
+// wire inst_type_J = id_inactive ? 0 : (opcode == `OPCODE_JAL );
+// // (转换为0~5的数字)
+// wire [2:0] inst_type_R_val = 0;
+// wire [2:0] inst_type_I_val = inst_type_I ? 1 : 0;
+// wire [2:0] inst_type_U_val = inst_type_U ? 2 : 0;
+// wire [2:0] inst_type_S_val = inst_type_S ? 3 : 0;
+// wire [2:0] inst_type_B_val = inst_type_B ? 4 : 0;
+// wire [2:0] inst_type_J_val = inst_type_J ? 5 : 0;
+// // wire [5:0] inst_type_sum = inst_type_R_val + inst_type_I_val + inst_type_U_val + inst_type_S_val + inst_type_B_val + inst_type_J_val;
+// // assign inst_type = inst_type_sum[2:0];
+
 always@(*) begin
   if (rst)
     inst_type = 0;
   else begin
-    case (inst_opcode)
+    case (opcode)
       `OPCODE_LUI   : inst_type = `INST_U_TYPE;
       `OPCODE_AUIPC : inst_type = `INST_U_TYPE;
       `OPCODE_JAL   : inst_type = `INST_J_TYPE;
@@ -91,8 +114,8 @@ end
 
 // 立即数的值
 reg [`BUS_32]imm0;
-always@(*) begin
-  if (rst)
+always@(posedge clk) begin
+  if (id_inactive)
     imm0 = 0;
   else begin
     case (inst_type)
@@ -110,8 +133,8 @@ assign imm = {{32{imm0[31]}}, imm0};
 
 // rs1读使能
 reg rs1_ren0;
-always@(*) begin
-  if (rst) 
+always@(posedge clk) begin
+  if (id_inactive) 
     rs1_ren0 = 0;
   else begin
     case (inst_type)
@@ -123,36 +146,38 @@ always@(*) begin
     endcase
   end
 end
-assign rs1_ren = (instcycle_cnt_val == 3) ? rs1_ren0 : 0;
+assign rs1_ren = rs1_ren0;
 
 // rs2读使能
 reg rs2_ren0;
-always@(*) begin
-  if (rst)
+always@(posedge clk) begin
+  if (id_inactive)
     rs2_ren0 = 0;
-  case (inst_type)
-    `INST_R_TYPE  : rs2_ren0 = 1;
-    `INST_S_TYPE  : rs2_ren0 = 1;
-    `INST_B_TYPE  : rs2_ren0 = 1;
-    default       : rs2_ren0 = 0;
-  endcase
+  else begin
+    case (inst_type)
+      `INST_R_TYPE  : rs2_ren0 = 1;
+      `INST_S_TYPE  : rs2_ren0 = 1;
+      `INST_B_TYPE  : rs2_ren0 = 1;
+      default       : rs2_ren0 = 0;
+    endcase
+  end
 end
-assign rs2_ren = (instcycle_cnt_val == 3) ? rs2_ren0 : 0;
+assign rs2_ren = rs2_ren0;
 
 // mem_ren
-always@(*) begin
-  if (rst) 
+always@(posedge clk) begin
+  if (id_inactive) 
     mem_ren = 0;
   else
-    mem_ren = (inst_opcode == `OPCODE_LB) ? 1 : 0;
+    mem_ren = (opcode == `OPCODE_LB) ? 1 : 0;
 end
 
 // mem_raddr
 assign mem_raddr = (rs1_data + imm);
 
 // mem_wen
-always@(*) begin
-  if (rst) 
+always@(posedge clk) begin
+  if (id_inactive) 
     mem_wen = 0;
   else
     mem_wen = (inst_type == `INST_S_TYPE) ? 1 : 0;
@@ -165,12 +190,12 @@ assign mem_waddr = ($signed(rs1_data) + $signed(imm));
 assign mem_wdata = (rs2_data);
 
 // mem_wmask
-always@(*) begin
-  if (rst)
+always@(posedge clk) begin
+  if (id_inactive)
     mem_wmask = 0;
   else
     if (inst_type == `INST_S_TYPE)
-      case (inst_funct3)
+      case (funct3)
         `FUNCT3_SB    : mem_wmask = 'hFF;
         `FUNCT3_SH    : mem_wmask = 'hFFFF;
         `FUNCT3_SW    : mem_wmask = 64'h00000000_FFFFFFFF;
@@ -182,8 +207,8 @@ always@(*) begin
 end
 
 // op1
-always@(*) begin
-  if (rst) 
+always@(posedge clk) begin
+  if (id_inactive) 
     op1 = 0;
   else begin
     case (inst_type)
@@ -192,7 +217,7 @@ always@(*) begin
       `INST_I_TYPE  : op1 = rs1_data;
       `INST_J_TYPE  : op1 = pc + 4;
       `INST_U_TYPE  : begin
-        if (inst_opcode == `OPCODE_AUIPC)
+        if (opcode == `OPCODE_AUIPC)
           op1 = pc;
         else
           op1 = 0;
@@ -203,8 +228,8 @@ always@(*) begin
 end
 
 // op2
-always@(*) begin
-  if (rst) 
+always@(posedge clk) begin
+  if (id_inactive) 
     op2 = 0;
   else begin
     case (inst_type)
@@ -213,7 +238,7 @@ always@(*) begin
       `INST_I_TYPE  : op2 = imm;
       `INST_J_TYPE  : op2 = pc + imm;
       `INST_U_TYPE  : begin
-        if (inst_opcode == `OPCODE_AUIPC)   op2 = imm;
+        if (opcode == `OPCODE_AUIPC)   op2 = imm;
         else                                op2 = 0;
       end
       default       : op2 = 0;
@@ -222,11 +247,11 @@ always@(*) begin
 end
 
 // t1
-always@(*) begin
-  if (!rst) 
+always@(posedge clk) begin
+  if (id_inactive) 
     t1 = 0;
   else begin
-    case (inst_opcode)
+    case (opcode)
       `OPCODE_JALR  : t1 = pc + 4;
       `OPCODE_BEQ   : t1 = pc + imm;
       default       : t1 = 0;
