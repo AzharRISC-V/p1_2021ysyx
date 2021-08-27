@@ -60,14 +60,15 @@ always@(*) begin
       `OPCODE_JALR      : begin rd_wen0 = 1; end
       `OPCODE_LB        : begin rd_wen0 = 1; end
       `OPCODE_ADD       : begin rd_wen0 = 1; end
+      `OPCODE_ADDIW     : begin rd_wen0 = 1; end
       default           : begin rd_wen0 = 0; end
     endcase
 end
 assign rd_wen = rd_wen0;
 
-wire [`BUS_64] temp1 = op1 << op2;
 // rd_wdata_o
-always@(*) begin
+reg [`BUS_64] temp1;
+always_latch begin
   if(ex_inactive) begin
     rd_data = `ZERO_WORD;
   end
@@ -85,8 +86,8 @@ always@(*) begin
             `FUNCT3_ANDI    : begin rd_data = op1 & op2; end
             `FUNCT3_SLLI    : begin rd_data = op1 << op2; end
             `FUNCT3_SRLI    : begin
-              if (funct7[5])  begin rd_data = { {33{temp1[31]}}, temp1[30:0]}; end
-              else            begin rd_data = { {33{temp1[31]}}, temp1[30:0]}; end
+              if (funct7[5])  begin temp1 = op1 << op2; rd_data = { {33{t1[31]}}, temp1[30:0]}; end   // SRAI
+              else            begin rd_data = op1 << op2; end   // SRLI
             end
             default         :;
           endcase
@@ -102,18 +103,15 @@ always@(*) begin
             `FUNCT3_XOR     : begin rd_data = op1 ^ op2; end
             `FUNCT3_SRL     : begin
               // TODO: Check manual book 
-              if (funct7[5]) begin
-                rd_data = $signed(op1) >> $signed(op2);
-              end
-              else begin
-                rd_data = op1 >> op2;
-              end
+              if (funct7[5]) begin rd_data = $signed(op1) >> $signed(op2); end    // SRA
+              else begin rd_data = op1 >> op2; end    // SRL
             end
             `FUNCT3_OR      : begin rd_data = op1 | op2; end
             `FUNCT3_AND     : begin rd_data = op1 & op2; end
             default         :;
           endcase
         end
+        `OPCODE_ADDIW       : begin temp1 = op1 + $signed(op2); rd_data = {{33{temp1[31]}}, temp1[30:0]}; end
         default             : begin rd_data = `ZERO_WORD; end
       endcase
     //end

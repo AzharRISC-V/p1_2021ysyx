@@ -73,6 +73,7 @@
 `define OPCODE_ADD          5'b01100
 `define OPCODE_FENCE        5'b00011      // 同步
 `define OPCODE_ENV          5'b11100      // 环境
+`define OPCODE_ADDIW        5'b00110
 
 // 某个opcode对应的 funct3，用于指令译码
 // 若还不能区分，手动判断 funct7
