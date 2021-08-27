@@ -43,4 +43,11 @@ store
 other
     IF -> ID -> EX -> WB
 
+三、控制时序
+
+        2     3     4     5     6     7
+add     IF    ID    EX          WB    CMT
+store   IF    ID          MEM         CMT
+load    IF    ID          MEM   WB    CMT
+
 

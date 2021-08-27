@@ -11,7 +11,7 @@ module counter(
   output  reg   [`BUS_8]    val
 );
 
-always @(posedge clk or negedge rst) begin
+always @(negedge clk or negedge rst) begin
   if (rst) begin
     val <= 0;
   end
@@ -23,7 +23,7 @@ always @(posedge clk or negedge rst) begin
       if (val < max)
         val <= val + 1;
       else
-        val <= 0;
+        val <= 2;
     end
   end
 end

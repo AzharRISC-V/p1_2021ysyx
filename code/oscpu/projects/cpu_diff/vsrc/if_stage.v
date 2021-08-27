@@ -6,6 +6,7 @@
 module if_stage(
   input   wire                  clk,
   input   wire                  rst,
+  input   wire [`BUS_8]         instcycle_cnt_val,
   // input   wire  [`BUS_STAGE]    stage_i,
   // output  reg   [`BUS_STAGE]    stage_o,
 
@@ -24,17 +25,7 @@ module if_stage(
 );
 
 
-// A counter for controlling IF actions
-reg               cnt_clear;
-wire  [`BUS_8]    cnt_val;
 
-counter u_counter (
-  .clk          (clk        ),
-  .rst          (rst        ),
-  .clear        (cnt_clear  ),
-  .max          (5          ),
-  .val          (cnt_val    )
-);
 
 // ifreq
 // always @(posedge clk) begin
@@ -78,7 +69,7 @@ always@( posedge clk ) begin
     pc <= `PC_START_RESET;
   end
   else begin
-    if (cnt_val == 0)
+    if (instcycle_cnt_val == 2)
     begin
       pc_cur <= pc;
       if (pc_jmp == 1'b1)
@@ -93,12 +84,12 @@ end
 assign inst_start = (pc_cur != pc);
 
 // Access memory
-reg [`BUS_64] rdata;
+reg [`BUS_64] two_inst_data;
 RAMHelper RAMHelper(
   .clk              (clk),
   .en               (1),
   .rIdx             ((pc - `PC_START) >> 3),  // 按照64位(8字节)来访问
-  .rdata            (rdata),
+  .rdata            (two_inst_data),
   .wIdx             (0),
   .wdata            (0),
   .wmask            (0),
@@ -114,7 +105,7 @@ RAMHelper RAMHelper(
 // pc[2]是0，则是0/2/4/... 第偶数条指令
 // pc[2]是1，则是1/3/5/... 第奇数条指令
 // 而radata中是一次取出8字节，包含两条指令
-assign inst = pc[2] ? rdata[63 : 32] : rdata[31 : 0];
+assign inst = pc[2] ? two_inst_data[63 : 32] : two_inst_data[31 : 0];
 
 always@(*) begin
   $display("-------------------");

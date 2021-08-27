@@ -6,6 +6,7 @@
 module id_stage(
   input   wire                  clk,
   input   wire                  rst,
+  input   wire [`BUS_8]         instcycle_cnt_val,
   // input   wire  [`BUS_STAGE]    stage_i,
   // output  reg   [`BUS_STAGE]    stage_o,
   input   wire  [`BUS_32]       inst,
@@ -20,11 +21,11 @@ module id_stage(
   input   wire  [`BUS_64]       pc_cur,
   input   wire  [`BUS_64]       pc,
 
-  output  wire                  rs1_ren,
-  output  wire  [4 : 0]         rs1_raddr,
-  output  wire                  rs2_ren,
-  output  wire  [4 : 0]         rs2_raddr,
-  output  wire  [4 : 0]         rd_waddr,
+  output  reg                   rs1_ren,
+  output  wire  [4 : 0]         rs1,
+  output  reg                   rs2_ren,
+  output  wire  [4 : 0]         rs2,
+  output  wire  [4 : 0]         rd,
 
   output  reg                   mem_ren,
   output  wire  [`BUS_64]       mem_raddr,
@@ -43,27 +44,7 @@ module id_stage(
   output  wire  [`BUS_64]       t1
 );
 
-// stage
-// always @(posedge clk) begin
-//   if (rst)
-//     stage_o = `STAGE_EMPTY;
-//   else
-//     if (stage_i == `STAGE_IF)
-//       stage_o = `STAGE_ID;
-// end
-
-wire stage_id = 0;
-// single_pulse u1 (
-//   .clk(clk), 
-//   .rst(rst), 
-//   .signal_in((stage_o == `STAGE_ID)), 
-//   .pluse_out(stage_id)
-// );
-
 // decode
-wire [4  : 0]rd;
-wire [4  : 0]rs1;
-wire [4  : 0]rs2;
 wire [`BUS_64]imm;           // 带符号扩展的imm
 
 wire [`BUS_32]R_imm;
@@ -92,7 +73,8 @@ assign sig_memwrite = (!cpu_started) ? 0 : (inst_opcode == `OPCODE_SB);
 
 // inst-type
 always@(*) begin
-  if (!stage_id) inst_type = 0;
+  if (rst)
+    inst_type = 0;
   else begin
     case (inst_opcode)
       `OPCODE_LUI   : inst_type = `INST_U_TYPE;
@@ -114,7 +96,8 @@ end
 // 立即数的值
 reg [`BUS_32]imm0;
 always@(*) begin
-  if (!stage_id) imm0 = 0;
+  if (rst)
+    imm0 = 0;
   else begin
     case (inst_type)
       `INST_R_TYPE  : imm0 = R_imm;
@@ -130,48 +113,36 @@ end
 assign imm = {{32{imm0[31]}}, imm0};
 
 // rs1读使能
-reg rs1_ren0;
 always@(*) begin
-  if (rst == 1'b1) rs1_ren0 = 0;
+  if (rst) 
+    rs1_ren = 0;
   else begin
     case (inst_type)
-      `INST_R_TYPE  : rs1_ren0 = 1;
-      `INST_I_TYPE  : rs1_ren0 = 1;
-      `INST_S_TYPE  : rs1_ren0 = 1;
-      `INST_B_TYPE  : rs1_ren0 = 1;
-      default       : rs1_ren0 = 0;
+      `INST_R_TYPE  : rs1_ren = 1;
+      `INST_I_TYPE  : rs1_ren = 1;
+      `INST_S_TYPE  : rs1_ren = 1;
+      `INST_B_TYPE  : rs1_ren = 1;
+      default       : rs1_ren = 0;
     endcase
   end
 end
-assign rs1_ren = rs1_ren0;
-
-// rs1读地址
-assign rs1_raddr = rs1;
 
 // rs2读使能
-reg rs2_ren0;
 always@(*) begin
-  if (!stage_id) rs2_ren0 = 0;
-  else begin
-    case (inst_type)
-      `INST_R_TYPE  : rs2_ren0 = 1;
-      `INST_S_TYPE  : rs2_ren0 = 1;
-      `INST_B_TYPE  : rs2_ren0 = 1;
-      default       : rs2_ren0 = 0;
-    endcase
-  end
+  if (rst)
+    rs2_ren = 0;
+  case (inst_type)
+    `INST_R_TYPE  : rs2_ren = 1;
+    `INST_S_TYPE  : rs2_ren = 1;
+    `INST_B_TYPE  : rs2_ren = 1;
+    default       : rs2_ren = 0;
+  endcase
 end
-assign rs2_ren = rs2_ren0;
-
-// rs2读地址
-assign rs2_raddr = rs2;
-
-// rd写地址
-assign rd_waddr = rd;
 
 // mem_ren
 always@(*) begin
-  if (!stage_id) mem_ren = 0;
+  if (rst) 
+    mem_ren = 0;
   else
     mem_ren = (inst_opcode == `OPCODE_LB) ? 1 : 0;
 end
@@ -181,7 +152,8 @@ assign mem_raddr = (rs1_data + imm);
 
 // mem_wen
 always@(*) begin
-  if (!stage_id) mem_wen = 0;
+  if (rst) 
+    mem_wen = 0;
   else
     mem_wen = (inst_type == `INST_S_TYPE) ? 1 : 0;
 end
@@ -194,7 +166,8 @@ assign mem_wdata = (rs2_data);
 
 // mem_wmask
 always@(*) begin
-  if (!stage_id) mem_wmask = 0;
+  if (rst)
+    mem_wmask = 0;
   else
     if (inst_type == `INST_S_TYPE)
       case (inst_funct3)
@@ -210,7 +183,8 @@ end
 
 // op1
 always@(*) begin
-  if (!stage_id) op1 = 0;
+  if (rst) 
+    op1 = 0;
   else begin
     case (inst_type)
       `INST_R_TYPE  : op1 = rs1_data;
@@ -230,7 +204,8 @@ end
 
 // op2
 always@(*) begin
-  if (!stage_id) op2 = 0;
+  if (rst) 
+    op2 = 0;
   else begin
     case (inst_type)
       `INST_R_TYPE  : op2 = rs2_data;
@@ -248,7 +223,8 @@ end
 
 // t1
 always@(*) begin
-  if (!stage_id) t1 = 0;
+  if (!rst) 
+    t1 = 0;
   else begin
     case (inst_opcode)
       `OPCODE_JALR  : t1 = pc + 4;

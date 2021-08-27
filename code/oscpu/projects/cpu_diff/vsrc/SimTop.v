@@ -19,6 +19,18 @@ module SimTop(
     input   [7:0]       io_uart_in_ch
 );
 
+// A counter for controlling IF actions
+reg                     instcycle_cnt_clear;
+wire  [`BUS_8]          instcycle_cnt_val;
+
+counter InstCycleCunter (
+  .clk                  (clock                  ),
+  .rst                  (reset                  ),
+  .clear                (instcycle_cnt_clear    ),
+  .max                  (7                      ),
+  .val                  (instcycle_cnt_val      )
+);
+
 // Top
 wire                    cpu_started;      // CPU是否已启动，当读取到第一条指令时置位
 
@@ -63,10 +75,10 @@ wire                    inst_start;
 // id_stage -> regfile
 wire [2 : 0]            id_inst_state_o;   // 指令状态
 wire                    rs1_ren;
-wire [4 : 0]            rs1_raddr;
+wire [4 : 0]            rs1;
 wire                    rs2_ren;
-wire [4 : 0]            rs2_raddr;
-wire [4 : 0]            rd_waddr;
+wire [4 : 0]            rs2;
+wire [4 : 0]            rd;
 // id_stage -> exe_stage
 wire [2 : 0]            inst_type;
 wire [4 : 0]            inst_opcode;
@@ -98,7 +110,7 @@ wire [`BUS_64]          pc_jmpaddr_o;
 // exe_stage -> wb_stage
 wire                    ex_rd_wen_o;
 wire [`BUS_64]          ex_rd_wdata_o;
-wire [4 : 0]            ex_rd_waddr_i;
+wire [4 : 0]            ex_rd_i;
 
 // mem_stage
 wire                    mem_ren;
@@ -165,8 +177,9 @@ reg                     sig_cmt_ok;
 assign sig_wb = 1;// (reset | (state != `STATE_IDLE)) ? 0 : ex_rd_wen_o;
 
 if_stage If_stage(
-  .clk                (clock            ),
-  .rst                (reset            ),
+  .clk                (clock              ),
+  .rst                (reset              ),
+  .instcycle_cnt_val  (instcycle_cnt_val  ),
   // .stage_i            (if_stage_i       ),
   // .stage_o            (if_stage_o       ),
   // .state              (state            ),
@@ -183,6 +196,7 @@ if_stage If_stage(
 id_stage Id_stage(
   .clk                (clock            ),
   .rst                (reset            ),
+  .instcycle_cnt_val  (instcycle_cnt_val  ),
   .inst               (inst             ),
   // .stage_i            (id_stage_i       ),
   // .stage_o            (id_stage_o       ),
@@ -195,10 +209,10 @@ id_stage Id_stage(
   .pc_cur             (pc_cur           ),
   .pc                 (pc               ),
   .rs1_ren            (rs1_ren          ),
-  .rs1_raddr          (rs1_raddr        ),
+  .rs1                (rs1              ),
   .rs2_ren            (rs2_ren          ),
-  .rs2_raddr          (rs2_raddr        ),
-  .rd_waddr           (rd_waddr         ),
+  .rs2                (rs2              ),
+  .rd                 (rd               ),
   .mem_ren            (mem_ren          ),
   .mem_raddr          (mem_raddr        ),
   .mem_rdata          (mem_rdata        ),
@@ -218,6 +232,7 @@ id_stage Id_stage(
 exe_stage Exe_stage(
   .clk                (clock            ),
   .rst                (reset            ),
+  .instcycle_cnt_val  (instcycle_cnt_val  ),
   // .stage_i            (ex_stage_i       ),
   // .stage_o            (ex_stage_o       ),
   // .state              (state            ),
@@ -229,13 +244,14 @@ exe_stage Exe_stage(
   .t1                 (t1               ),
   .pc_jmp             (pc_jmp_o         ),
   .pc_jmpaddr         (pc_jmpaddr_o     ),
-  .rd_wen_o           (ex_rd_wen_o      ),
-  .rd_wdata_o         (ex_rd_wdata_o    )
+  .rd_wen             (ex_rd_wen_o      ),
+  .rd_data            (ex_rd_wdata_o    )
 );
 
 mem_stage Mem_stage(
   .clk                (clock            ),
   .rst                (reset            ),
+  .instcycle_cnt_val  (instcycle_cnt_val  ),
   .sig_memread_ok     (sig_memread_ok   ),     
   .sig_memwrite_ok    (sig_memwrite_ok  ), 
   .ren                (mem_ren          ),
@@ -247,9 +263,10 @@ mem_stage Mem_stage(
   .wmask              (mem_wmask        )
 );
     
-wb_stage u1_wb_stage(
+wb_stage Wb_stage(
   .clk                (clock            ),
   .rst                (reset            ),
+  .instcycle_cnt_val  (instcycle_cnt_val  ),
   // .stage_i            (wb_stage_i       ),
   // .stage_o            (wb_stage_o       ),
   .ex_wen_i           (ex_rd_wen_o      ),
@@ -263,15 +280,15 @@ wb_stage u1_wb_stage(
 regfile Regfile(
   .clk                (clock            ),
   .rst                (reset            ),
-  .w_addr             (rd_waddr         ),
-  .w_data             (rd_wdata         ),
-  .w_ena              (rd_wen           ),
-  .r_addr1            (rs1_raddr        ),
-  .r_data1            (rs1_data         ),
-  .r_ena1             (rs1_ren          ),
-  .r_addr2            (rs2_raddr        ),
-  .r_data2            (rs2_data         ),
-  .r_ena2             (rs2_ren          ),
+  .rs1                (rs1              ),
+  .rs1_ren            (rs1_ren          ),
+  .rs1_data           (rs1_data         ),
+  .rs2                (rs2              ),
+  .rs2_ren            (rs2_ren          ),
+  .rs2_data           (rs2_data         ),
+  .rd                 (rd               ),
+  .rd_data            (rd_wdata         ),
+  .rd_wen             (rd_wen           ),
   .sig_wb_ok          (sig_wb_ok        ),
   .regs_o             (regs             )
 );
@@ -291,7 +308,9 @@ reg   [`BUS_64]       instrCnt;
 reg   [`BUS_64]       regs_diff [0 : 31];
 
 
-wire inst_valid = (pc != `PC_START) | (inst != 0);
+//wire inst_valid = (pc != `PC_START) | (inst != 0);
+wire inst_valid = ((pc != `PC_START) | (inst != 0)) & (instcycle_cnt_val  == 7);
+
 //wire inst_valid = 1;// ((pc != `PC_START) & (state == `STATE_CMT));
 
 // always @(posedge clock) begin
@@ -309,7 +328,7 @@ always @(negedge clock) begin
   end
   else if (~trap) begin
     cmt_wen <= rd_wen;
-    cmt_wdest <= {3'd0, rd_waddr};
+    cmt_wdest <= {3'd0, rd};
     cmt_wdata <= rd_wdata;
     cmt_pc <= pc;
     cmt_inst <= inst;

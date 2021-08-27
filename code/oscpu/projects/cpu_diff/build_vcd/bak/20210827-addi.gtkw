@@ -2,10 +2,10 @@
 [*] GTKWave Analyzer v3.3.110 (w)1999-2020 BSI
 [*] Fri Aug 27 01:52:13 2021
 [*]
-[dumpfile] "/home/steven/p1_2021ysyx/code/oscpu/projects/cpu_diff/build_vcd/20210827.vcd"
+[dumpfile] "/home/steven/p1_2021ysyx/code/oscpu/projects/cpu_diff/build_vcd/bak/20210827-addi.vcd"
 [dumpfile_mtime] "Fri Aug 27 01:51:10 2021"
 [dumpfile_size] 35944
-[savefile] "/home/steven/p1_2021ysyx/code/oscpu/projects/cpu_diff/build_vcd/20210827.gtkw"
+[savefile] "/home/steven/p1_2021ysyx/code/oscpu/projects/cpu_diff/build_vcd/bak/20210827-addi.gtkw"
 [timestart] 0
 [size] 1920 1016
 [pos] -1 -1

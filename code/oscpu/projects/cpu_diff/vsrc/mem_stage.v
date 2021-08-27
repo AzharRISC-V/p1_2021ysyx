@@ -4,20 +4,21 @@
 `include "mem_access.v"
 
 module mem_stage(
-  input   wire              clk,
-  input   wire              rst,
+  input   wire                  clk,
+  input   wire                  rst,
+  input   wire [`BUS_8]         instcycle_cnt_val,
 
-  output  wire              sig_memread_ok,
-  output  wire              sig_memwrite_ok,
+  output  wire                  sig_memread_ok,
+  output  wire                  sig_memwrite_ok,
 
-  input   wire              ren,
-  input   wire  [`BUS_64]   raddr,
-  output  wire  [`BUS_64]   rdata,
+  input   wire                  ren,
+  input   wire  [`BUS_64]       raddr,
+  output  wire  [`BUS_64]       rdata,
 
-  input   wire              wen,
-  input   wire  [`BUS_64]   waddr,
-  input   wire  [`BUS_64]   wdata,
-  input   wire  [`BUS_64]   wmask     // 数据掩码，比如0x00F0，则仅写入[7:4]位
+  input   wire                  wen,
+  input   wire  [`BUS_64]       waddr,
+  input   wire  [`BUS_64]       wdata,
+  input   wire  [`BUS_64]       wmask     // 数据掩码，比如0x00F0，则仅写入[7:4]位
 );
 
 always@(*) begin
@@ -28,7 +29,7 @@ always@(*) begin
 end
 
 // 访问内存，将1字节访问转换为8字节对齐的一次或两次访问
-mem_access u1_mem_access(
+mem_access Mem_access(
   .clk      (clk    ),
   .ren      (ren    ),
   .sig_memread_ok   (sig_memread_ok),
