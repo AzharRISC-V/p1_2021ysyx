@@ -34,8 +34,8 @@ wire [`BUS_64] addr2 = addr1 + 64'b1;
 wire [2:0] byte_offset = addr[2:0];         
 
 // 读取数据
-wire [`BUS_64] rdata1 = ram_read_helper(ren, addr1);
-wire [`BUS_64] rdata2 = ram_read_helper(ren & ena2, addr2);
+wire [`BUS_64] rdata1 = ram_read_helper(ren, 0, addr1);
+wire [`BUS_64] rdata2 = ram_read_helper(ren & ena2, 0, addr2);
 
 always @(*) begin
   if (ren)

@@ -189,19 +189,23 @@ void ram_finish() {
 }
 
 
-extern "C" uint64_t ram_read_helper(uint8_t en, uint64_t rIdx) {
+extern "C" uint64_t ram_read_helper(uint8_t en, uint8_t isIF, uint64_t rIdx) {
   if (ram && en) {
     if (rIdx >= EMU_RAM_SIZE / sizeof(uint64_t)) {
       printf("ERROR: ram rIdx = 0x%lx out of bound!\n", rIdx);
-      rIdx = rIdx % (EMU_RAM_SIZE / sizeof(uint64_t));
+      // rIdx = rIdx % (EMU_RAM_SIZE / sizeof(uint64_t));
       //assert(rIdx < EMU_RAM_SIZE / sizeof(uint64_t));
+      return 0;
+    } else {
+      pthread_mutex_lock(&ram_mutex);
+      uint64_t rdata = (en) ? ram[rIdx] : 0;
+      if (!isIF) {
+        printf("    ram_read_helper : addr=" FMT_64_HEX " rIdx=" FMT_64_HEX " rdata=" FMT_64_HEX "\n", 
+          (0x80000000 + rIdx * 8), rIdx, rdata);
+      }
+      pthread_mutex_unlock(&ram_mutex);
+      return rdata;
     }
-    pthread_mutex_lock(&ram_mutex);
-    uint64_t rdata = (en) ? ram[rIdx] : 0;
-    printf("    ram_read_helper : addr=" FMT_64_HEX " rIdx=" FMT_64_HEX " rdata=" FMT_64_HEX "\n", 
-      (0x80000000 + rIdx * 8), rIdx, rdata);
-    pthread_mutex_unlock(&ram_mutex);
-    return rdata;
   } else {
     return 0;
   }
@@ -231,7 +235,7 @@ uint64_t pmem_read(uint64_t raddr) {
     printf("Warning: pmem_read only supports 64-bit aligned memory access\n");
   }
   raddr -= 0x80000000;
-  return ram_read_helper(1, raddr / sizeof(uint64_t));
+  return ram_read_helper(1, 0, raddr / sizeof(uint64_t));
 }
 
 void pmem_write(uint64_t waddr, uint64_t wdata) {

@@ -40,6 +40,7 @@ reg [`BUS_64] two_inst_data;
 RAMHelper RAMHelper(
   .clk              (clk),
   .en               (1),
+  .isIF             (1),
   .rIdx             ((pc - `PC_START) >> 3),  // 按照64位(8字节)来访问
   .rdata            (two_inst_data),
   .wIdx             (0),
@@ -60,8 +61,8 @@ RAMHelper RAMHelper(
 assign inst = pc[2] ? two_inst_data[63 : 32] : two_inst_data[31 : 0];
 
 always@(*) begin
-  $display("-------------------");
-  $displayh("  IF: pc=", pc, " inst=", inst);
+  $display("\n-------------------");
+  $displayh("  IF: pc=", pc, " two_inst_data=", two_inst_data, " pc[2]=", pc[2], " inst=", inst);
 end
 
 endmodule
