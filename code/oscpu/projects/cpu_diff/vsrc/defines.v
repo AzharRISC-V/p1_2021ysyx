@@ -14,14 +14,14 @@
 `define BUS_32              31:0
 `define BUS_64              63:0
 
-// 状态机
-`define BUS_STATE           2:0             // 指令状态的总线
-`define STATE_EMPTY         3'b000          // 空状态
-`define STATE_IF            3'b001          // 空闲状态，开始取指并译码
-`define STATE_MEMREAD       3'b010          // Load指令，等待内存读取完成
-`define STATE_MEMWRITE      3'b011          // Store指令，等待内存写入完成
-`define STATE_WB            3'b100          // 所有指令，等待WB完成
-`define STATE_CMT           3'b101          // 提交状态
+// // 状态机
+// `define BUS_STATE           2:0             // 指令状态的总线
+// `define STATE_EMPTY         3'b000          // 空状态
+// `define STATE_IF            3'b001          // 空闲状态，开始取指并译码
+// `define STATE_MEMREAD       3'b010          // Load指令，等待内存读取完成
+// `define STATE_MEMWRITE      3'b011          // Store指令，等待内存写入完成
+// `define STATE_WB            3'b100          // 所有指令，等待WB完成
+// `define STATE_CMT           3'b101          // 提交状态
 
 
 // 寄存器配置

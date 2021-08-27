@@ -6,11 +6,11 @@
 module if_stage(
   input   wire                  clk,
   input   wire                  rst,
-  input   wire  [`BUS_STAGE]    stage_i,
-  output  reg   [`BUS_STAGE]    stage_o,
+  // input   wire  [`BUS_STAGE]    stage_i,
+  // output  reg   [`BUS_STAGE]    stage_o,
 
-  input   wire  [`BUS_STATE]    state,          // 状态机
-  input   wire                  state_stable,   // 状态机是否稳定，稳定后才会取指
+  // input   wire  [`BUS_STATE]    state,          // 状态机
+  // input   wire                  state_stable,   // 状态机是否稳定，稳定后才会取指
 
   input   wire                  pc_jmp,
   input   wire  [`BUS_64]       pc_jmpaddr ,
@@ -23,40 +23,53 @@ module if_stage(
 
 );
 
+
+// A counter for controlling IF actions
+reg               cnt_clear;
+wire  [`BUS_8]    cnt_val;
+
+counter u_counter (
+  .clk          (clk        ),
+  .rst          (rst        ),
+  .clear        (cnt_clear  ),
+  .max          (5          ),
+  .val          (cnt_val    )
+);
+
 // ifreq
-always @(posedge clk) begin
-  if (rst)
-    ifreq = 0;
-  else begin
-    if (state == `STATE_EMPTY)
-      ifreq = 1;
-    else
-      ifreq = 0;
-  end
-end
+// always @(posedge clk) begin
+//   if (rst)
+//     ifreq = 0;
+//   else begin
+//     if (state == `STATE_EMPTY)
+//       ifreq = 1;
+//     else
+//       ifreq = 0;
+//   end
+// end
 
-// stage
-always @(posedge clk) begin
-  if (rst)
-    stage_o = `STAGE_EMPTY;
-  else
-    if ((stage_i == `STAGE_EMPTY) && (pc == `PC_START))
-      stage_o = `STAGE_IF;
-end
+// // stage
+// always @(posedge clk) begin
+//   if (rst)
+//     stage_o = `STAGE_EMPTY;
+//   else
+//     if ((stage_i == `STAGE_EMPTY) && (pc == `PC_START))
+//       stage_o = `STAGE_IF;
+// end
 
-reg stage_if;
-always @(posedge clk) begin
-  if (rst)
-    stage_if = 0;
-  else begin
-    if (!stage_if) begin
-      if ((pc == `PC_START_RESET) || (stage_i == `STAGE_EMPTY && stage_o == `STAGE_IF))
-        stage_if = 1;
-    end
-    else
-      stage_if = 0;
-  end
-end
+// reg stage_if;
+// always @(posedge clk) begin
+//   if (rst)
+//     stage_if = 0;
+//   else begin
+//     if (!stage_if) begin
+//       if ((pc == `PC_START_RESET) || (stage_i == `STAGE_EMPTY && stage_o == `STAGE_IF))
+//         stage_if = 1;
+//     end
+//     else
+//       stage_if = 0;
+//   end
+// end
 
 // fetch an instruction
 always@( posedge clk ) begin
@@ -65,7 +78,7 @@ always@( posedge clk ) begin
     pc <= `PC_START_RESET;
   end
   else begin
-    if (stage_if)
+    if (cnt_val == 0)
     begin
       pc_cur <= pc;
       if (pc_jmp == 1'b1)

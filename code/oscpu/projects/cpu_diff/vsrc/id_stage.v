@@ -6,11 +6,11 @@
 module id_stage(
   input   wire                  clk,
   input   wire                  rst,
-  input   wire  [`BUS_STAGE]    stage_i,
-  output  reg   [`BUS_STAGE]    stage_o,
+  // input   wire  [`BUS_STAGE]    stage_i,
+  // output  reg   [`BUS_STAGE]    stage_o,
   input   wire  [`BUS_32]       inst,
   input   wire                  cpu_started,
-  input   wire  [`BUS_STATE]    state,
+  // input   wire  [`BUS_STATE]    state,
 
   output  reg                   sig_memread,
   output  reg                   sig_memwrite,
@@ -44,21 +44,21 @@ module id_stage(
 );
 
 // stage
-always @(posedge clk) begin
-  if (rst)
-    stage_o = `STAGE_EMPTY;
-  else
-    if (stage_i == `STAGE_IF)
-      stage_o = `STAGE_ID;
-end
+// always @(posedge clk) begin
+//   if (rst)
+//     stage_o = `STAGE_EMPTY;
+//   else
+//     if (stage_i == `STAGE_IF)
+//       stage_o = `STAGE_ID;
+// end
 
-wire stage_id;
-single_pulse u1 (
-  .clk(clk), 
-  .rst(rst), 
-  .signal_in((stage_o == `STAGE_ID)), 
-  .pluse_out(stage_id)
-);
+wire stage_id = 0;
+// single_pulse u1 (
+//   .clk(clk), 
+//   .rst(rst), 
+//   .signal_in((stage_o == `STAGE_ID)), 
+//   .pluse_out(stage_id)
+// );
 
 // decode
 wire [4  : 0]rd;

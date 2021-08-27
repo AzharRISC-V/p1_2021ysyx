@@ -6,9 +6,9 @@
 module exe_stage(
   input   wire                  clk,
   input   wire                  rst,
-  input   wire  [`BUS_STAGE]    stage_i,
-  output  reg   [`BUS_STAGE]    stage_o,
-  input   wire  [`BUS_STATE]    state,
+  // input   wire  [`BUS_STAGE]    stage_i,
+  // output  reg   [`BUS_STAGE]    stage_o,
+  // input   wire  [`BUS_STATE]    state,
 
   input   wire  [4 : 0]         inst_opcode,
   input   wire  [2 : 0]         inst_funct3,
@@ -24,21 +24,21 @@ module exe_stage(
 );
 
 // stage
-always @(posedge clk) begin
-  if (rst)
-    stage_o = `STAGE_EMPTY;
-  else
-    if (stage_i == `STAGE_ID)
-      stage_o = `STAGE_EX;
-end
+// always @(posedge clk) begin
+//   if (rst)
+//     stage_o = `STAGE_EMPTY;
+//   else
+//     if (stage_i == `STAGE_ID)
+//       stage_o = `STAGE_EX;
+// end
 
-wire stage_ex;
-single_pulse u1 (
-  .clk(clk), 
-  .rst(rst), 
-  .signal_in((stage_o == `STAGE_EX)), 
-  .pluse_out(stage_ex)
-);
+wire stage_ex = 0;
+// single_pulse u1 (
+//   .clk(clk), 
+//   .rst(rst), 
+//   .signal_in((stage_o == `STAGE_EX)), 
+//   .pluse_out(stage_ex)
+// );
 
 
 // rd写使能
@@ -55,7 +55,8 @@ always@(*) begin
       default           : begin rd_wen = 0;  end
     endcase
 end
-assign rd_wen_o = (rst | (state != `STATE_IDLE)) ? 0 : rd_wen;
+//assign rd_wen_o = (rst | (state != `STATE_IDLE)) ? 0 : rd_wen;
+assign rd_wen_o = (rst) ? 0 : rd_wen;
 
 // rd_wdata_o
 reg [`REG_BUS] rd_data;

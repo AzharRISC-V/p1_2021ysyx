@@ -30,7 +30,7 @@ wire                    sig_memread_ok;
 wire                    sig_memwrite_ok;
 reg                     sig_wb;
 wire                    sig_wb_ok;
-wire [`BUS_STATE]       state;
+// wire [`BUS_STATE]       state;
 // State -> if_stage
 wire                    if_valid;       // if是否能够取指？
 wire                    state_stable;    // 状态机是否稳定（前后两次值一致）
@@ -44,21 +44,21 @@ wire [`BUS_64]          pc;
 wire [`BUS_32]          inst;
 wire                    inst_start;
 
-reg   [`BUS_STAGE]      if_stage_i;
-reg   [`BUS_STAGE]      if_stage_o;
+// reg   [`BUS_STAGE]      if_stage_i;
+// reg   [`BUS_STAGE]      if_stage_o;
 
-always @(posedge clock) begin
-  if_stage_i = wb_stage_o;
-end
+// always @(posedge clock) begin
+//   if_stage_i = wb_stage_o;
+// end
 
 
 // id_stage
-reg   [`BUS_STAGE]      id_stage_i;
-reg   [`BUS_STAGE]      id_stage_o;
+// reg   [`BUS_STAGE]      id_stage_i;
+// reg   [`BUS_STAGE]      id_stage_o;
 
-always @(posedge clock) begin
-  id_stage_i = if_stage_o;
-end
+// always @(posedge clock) begin
+//   id_stage_i = if_stage_o;
+// end
 
 // id_stage -> regfile
 wire [2 : 0]            id_inst_state_o;   // 指令状态
@@ -84,12 +84,12 @@ wire [`BUS_64]          regs[0 : 31];
 
 // exe_stage
 
-reg   [`BUS_STAGE]      ex_stage_i;
-reg   [`BUS_STAGE]      ex_stage_o;
+// reg   [`BUS_STAGE]      ex_stage_i;
+// reg   [`BUS_STAGE]      ex_stage_o;
 
-always @(posedge clock) begin
-  ex_stage_i = id_stage_o;
-end
+// always @(posedge clock) begin
+//   ex_stage_i = id_stage_o;
+// end
 
 // exe_stage -> other stage
 wire [4 : 0]            inst_opcode_o;
@@ -112,12 +112,12 @@ wire                    mem_rd_wen_o;   // rd写入使能，需要等 mem_rdata�
 
 // wb_stage
 
-reg   [`BUS_STAGE]      wb_stage_i;
-reg   [`BUS_STAGE]      wb_stage_o;
+// reg   [`BUS_STAGE]      wb_stage_i;
+// reg   [`BUS_STAGE]      wb_stage_o;
 
-always @(posedge clock) begin
-  wb_stage_i = ex_stage_o;
-end
+// always @(posedge clock) begin
+//   wb_stage_i = ex_stage_o;
+// end
 
 wire                    wb_rd_wen_i;
 wire [`BUS_64]          wb_rd_wdata_i;
@@ -131,24 +131,24 @@ wire [`BUS_64]          rd_wdata;
 // cmt_stage
 reg                     sig_cmt_ok;
 
-State u1_state(
-  .clk                (clock            ),              
-  .rst                (reset            ),
-  .cpu_started        (cpu_started      ),
-  .pc                 (pc               ),
-  .ifreq              (sig_ifreq        ),     
-  .memread            (sig_memread      ),     
-  .memwrite           (sig_memwrite     ),    
-  .memread_ok         (sig_memread_ok   ),  
-  .memwrite_ok        (sig_memwrite_ok  ), 
-  .wb                 (sig_wb           ),          
-  .wb_ok              (sig_wb_ok        ),
-  .cmt_ok             (sig_cmt_ok       ),       
-  .state              (state            ),
-  .state_stable       (state_stable     )
-  // ,
-  // .stage              (stage            )
-);
+// State u1_state(
+//   .clk                (clock            ),              
+//   .rst                (reset            ),
+//   .cpu_started        (cpu_started      ),
+//   .pc                 (pc               ),
+//   .ifreq              (sig_ifreq        ),     
+//   .memread            (sig_memread      ),     
+//   .memwrite           (sig_memwrite     ),    
+//   .memread_ok         (sig_memread_ok   ),  
+//   .memwrite_ok        (sig_memwrite_ok  ), 
+//   .wb                 (sig_wb           ),          
+//   .wb_ok              (sig_wb_ok        ),
+//   .cmt_ok             (sig_cmt_ok       ),       
+//   .state              (state            ),
+//   .state_stable       (state_stable     )
+//   // ,
+//   // .stage              (stage            )
+// );
 
 // always @(posedge clock) begin
 //   if (reset)
@@ -162,15 +162,15 @@ State u1_state(
 // end
 
 // sig_wb，控制其只产生一个通知信号
-assign sig_wb = (reset | (state != `STATE_IDLE)) ? 0 : ex_rd_wen_o;
+assign sig_wb = 1;// (reset | (state != `STATE_IDLE)) ? 0 : ex_rd_wen_o;
 
 if_stage If_stage(
   .clk                (clock            ),
   .rst                (reset            ),
-  .stage_i            (if_stage_i       ),
-  .stage_o            (if_stage_o       ),
-  .state              (state            ),
-  .state_stable       (state_stable     ),
+  // .stage_i            (if_stage_i       ),
+  // .stage_o            (if_stage_o       ),
+  // .state              (state            ),
+  // .state_stable       (state_stable     ),
   .pc_jmp             (pc_jmp_o         ),
   .pc_jmpaddr         (pc_jmpaddr_o     ),
   .pc_cur             (pc_cur           ),
@@ -184,10 +184,10 @@ id_stage Id_stage(
   .clk                (clock            ),
   .rst                (reset            ),
   .inst               (inst             ),
-  .stage_i            (id_stage_i       ),
-  .stage_o            (id_stage_o       ),
+  // .stage_i            (id_stage_i       ),
+  // .stage_o            (id_stage_o       ),
   .cpu_started        (cpu_started      ),
-  .state              (state            ),
+  // .state              (state            ),
   .sig_memread        (sig_memread      ),     
   .sig_memwrite       (sig_memwrite     ),  
   .rs1_data           (rs1_data         ),
@@ -218,9 +218,9 @@ id_stage Id_stage(
 exe_stage Exe_stage(
   .clk                (clock            ),
   .rst                (reset            ),
-  .stage_i            (ex_stage_i       ),
-  .stage_o            (ex_stage_o       ),
-  .state              (state            ),
+  // .stage_i            (ex_stage_i       ),
+  // .stage_o            (ex_stage_o       ),
+  // .state              (state            ),
   .inst_opcode        (inst_opcode      ),
   .inst_funct3        (inst_funct3      ),
   .inst_funct7        (inst_funct7      ),
@@ -250,8 +250,8 @@ mem_stage Mem_stage(
 wb_stage u1_wb_stage(
   .clk                (clock            ),
   .rst                (reset            ),
-  .stage_i            (wb_stage_i       ),
-  .stage_o            (wb_stage_o       ),
+  // .stage_i            (wb_stage_i       ),
+  // .stage_o            (wb_stage_o       ),
   .ex_wen_i           (ex_rd_wen_o      ),
   .ex_wdata_i         (ex_rd_wdata_o    ),
   .mem_wen_i          (mem_rd_wen_o     ),
@@ -291,8 +291,8 @@ reg   [`BUS_64]       instrCnt;
 reg   [`BUS_64]       regs_diff [0 : 31];
 
 
-//wire inst_valid = (pc != `PC_START) | (inst != 0);
-wire inst_valid = ((pc != `PC_START) & (state == `STATE_CMT));
+wire inst_valid = (pc != `PC_START) | (inst != 0);
+//wire inst_valid = 1;// ((pc != `PC_START) & (state == `STATE_CMT));
 
 // always @(posedge clock) begin
 //   if (reset) begin
