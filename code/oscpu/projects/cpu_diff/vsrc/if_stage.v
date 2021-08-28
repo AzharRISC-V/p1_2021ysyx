@@ -66,7 +66,7 @@ wire show_dbg = (clk_cnt >= `CLK_CNT_VAL);
 
 always@(*) begin
   //$display("--- ");
-  if (show_dbg)
+  if (0)//show_dbg)
     $displayh("  clk_cnt:", clk_cnt, " IF: pc=", pc, " two_inst_data=", two_inst_data, " pc[2]=", pc[2], " inst=", inst);
 end
 

@@ -50,6 +50,10 @@ add     IF    ID    EX          WB    CMT
 store   IF    ID          MEM         CMT
 load    IF    ID          MEM   WB    CMT
 
+四、自定义指令
+
+0x6B (opcode[4:0]=11010)    // nemu_trap a0
+0x07 (opcode[4:0]=00001)    // putch a0
 
 附录：
 1. verilog中的一些常用语法现象
@@ -103,26 +107,16 @@ always的敏感列表使用*号就可以等效综合为组合电路。如果使�
 如果是异步复位，则将clk、ena/clr信号都放入敏感列表；
 如果是同步复位，则不加入敏感列表，而是放在第一个if语句中。
 
-3. am-kernels/test/cpu-tests 测试记录
-已通过：
-add add-longlong fact goldbach ifelse leap-year load-store
-matrix-mul mul-longlong prime shuixianhua sub-longlong
-switch to-lower-case wanshu bit
+3. SystemVerilog扩充的always块
+  always_latch    允许Latch，忽略电平信号列表
+  always_ff
 
-未通过：
-bubble-sort
-div
-fib
-hello-str
-max
-min3
-mov
-movsx
-pacal
-quick-sort
-recursion
-select-sort
-shift
-string
-sum
-unalign
+4. am-kernels/test/cpu-tests 测试记录
+已通过：
+add add-longlong fact goldbach if-else leap-year load-store
+matrix-mul mul-longlong prime shuixianhua sub-longlong
+switch to-lower-case wanshu bit bubble-sort div fib
+movsx pacal select-sort max min3 mov-3 quick-sort
+recursion shift sum unalign
+hello-str string
+

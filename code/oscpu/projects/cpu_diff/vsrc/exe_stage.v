@@ -54,6 +54,7 @@ always@(*) begin
   end
   else
     case (opcode)
+      `OPCODE_LUI       : begin rd_wen0 = 1; end
       `OPCODE_AUIPC     : begin rd_wen0 = 1; end
       `OPCODE_ADDI      : begin rd_wen0 = 1; end
       `OPCODE_JAL       : begin rd_wen0 = 1; end
@@ -76,6 +77,7 @@ always_latch begin
   else begin
     //if (instcycle_cnt_val == 4) begin
       case( opcode )
+        `OPCODE_LUI         : begin rd_data = op1; end
         `OPCODE_AUIPC       : begin rd_data = op1 + op2; end
         `OPCODE_ADDI        : begin
           case( funct3 )
@@ -117,7 +119,7 @@ always_latch begin
             `FUNCT3_SLLIW   : begin temp1 = op1 << op2; rd_data = {{33{temp1[31]}}, temp1[30:0]}; end
             `FUNCT3_SRLIW   : begin
               if (funct7[5])  begin temp1 = op1 >> op2; rd_data = {{33{temp1[31]}}, temp1[30:0]}; end
-              else            begin temp1 = op1 >> op2; rd_data = temp1; end
+              else            begin temp1 = {32'd0, op1[31:0]} >> op2; rd_data = temp1; end
             end
             default         : begin rd_data = 0; end
           endcase
@@ -131,7 +133,7 @@ always_latch begin
             `FUNCT3_SLLW    : begin temp1 = op1 << op2; rd_data = {{33{temp1[31]}}, temp1[30:0]}; end
             `FUNCT3_SRLW    : begin
               if (funct7[5])  begin temp1 = op1 >> op2; rd_data = {{33{temp1[31]}}, temp1[30:0]}; end
-              else            begin temp1 = op1 >> op2; rd_data = temp1; end
+              else            begin temp1 = {32'd0, op1[31:0]} >> op2; rd_data = temp1; end
             end
             default         : begin rd_data = 0; end
           endcase
@@ -157,7 +159,7 @@ always @(posedge clk) begin
           `FUNCT3_BEQ     : begin pc_jmp <= (op1 == op2) ? 1 : 0; end
           `FUNCT3_BNE     : begin pc_jmp <= (op1 != op2) ? 1 : 0; end
           `FUNCT3_BLT     : begin pc_jmp <= ($signed(op1) < $signed(op2)) ? 1 : 0; end
-          `FUNCT3_BGE     : begin pc_jmp <= ($signed(op1) > $signed(op2)) ? 1 : 0; end
+          `FUNCT3_BGE     : begin pc_jmp <= ($signed(op1) >= $signed(op2)) ? 1 : 0; end
           `FUNCT3_BLTU    : begin pc_jmp <= (op1 < op2) ? 1 : 0; end
           `FUNCT3_BGEU    : begin pc_jmp <= ($signed(op1) >= $signed(op2)) ? 1 : 0; end
           default         : begin pc_jmp <= 0; end
@@ -168,6 +170,5 @@ always @(posedge clk) begin
     endcase
   end
 end
-
 
 endmodule

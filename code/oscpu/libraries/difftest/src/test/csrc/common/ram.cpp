@@ -201,8 +201,8 @@ extern "C" uint64_t ram_read_helper(uint8_t show_dbg, uint8_t en, uint64_t rIdx)
       pthread_mutex_lock(&ram_mutex);
       uint64_t rdata = (en) ? ram[rIdx] : 0;
       if (show_dbg) {
-        printf("    ram_read_helper : addr=" FMT_64_HEX " rIdx=" FMT_64_HEX " rdata=" FMT_64_HEX "\n", 
-          (0x80000000 + rIdx * 8), rIdx, rdata);
+        printf("    ram_read_helper : addr=" FMT_64_HEX " rdata=" FMT_64_HEX "\n", 
+          (0x80000000 + rIdx * 8), rdata);
       }
       pthread_mutex_unlock(&ram_mutex);
       return rdata;
@@ -222,16 +222,16 @@ extern "C" void ram_write_helper(uint8_t show_dbg, uint64_t wIdx, uint64_t wdata
     }
     pthread_mutex_lock(&ram_mutex);
     if (show_dbg) {
-      printf("    ram_write_helper: addr=" FMT_64_HEX " rIdx=" FMT_64_HEX " wdata=" FMT_64_HEX " wmask=" FMT_64_HEX "\n", 
-        (0x80000000 + wIdx * 8), wIdx, wdata, wmask);
+      printf("    ram_write_helper: addr=" FMT_64_HEX " wdata=" FMT_64_HEX " wmask=" FMT_64_HEX "\n", 
+        (0x80000000 + wIdx * 8), wdata, wmask);
     }
 
-    if (show_dbg) {
-      printf("      before=" FMT_64_HEX "\n", ram[wIdx]);
-    }
+    volatile uint64_t data_old = ram[wIdx];
     ram[wIdx] = (ram[wIdx] & ~wmask) | (wdata & wmask);
+    volatile uint64_t data_new = ram[wIdx];
+
     if (show_dbg) {
-      printf("      after =" FMT_64_HEX "\n", ram[wIdx]);
+      printf("      before=" FMT_64_HEX " after =" FMT_64_HEX "\n", data_old, data_new);
     }
 
     pthread_mutex_unlock(&ram_mutex);

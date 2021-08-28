@@ -11,6 +11,9 @@ extern "C" {
 
 //#define __NATIVE_USE_KLIB__
 
+// Halt Code (只能是5/6/7，因设计为3位数，且difftest/src/test/csrc/verilator/emu中已使用了0~4 )
+#define HALT_CODE_UNIMPLEMENTED    5
+
 // string.h
 void  *memset    (void *s, int c, size_t n);
 void  *memcpy    (void *dst, const void *src, size_t n);
@@ -30,6 +33,7 @@ void  *malloc    (size_t size);
 void   free      (void *ptr);
 int    abs       (int x);
 int    atoi      (const char *nptr);
+void   itoa      (int value, char * str);
 
 // stdio.h
 int    printf    (const char *format, ...);

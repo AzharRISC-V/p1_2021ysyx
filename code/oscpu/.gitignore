@@ -20,7 +20,6 @@
 **/build/
 **/build_test/
 **/difftest
-!projects/cpu_diff/build_vcd/*.*
 !projects/cpu_diff/build_vcd/bak/*.*
 !libraries/difftest
 !libraries/NEMU

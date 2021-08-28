@@ -38,6 +38,13 @@ always @(posedge clock) begin
   clk_cnt += 1;
 end
 
+// Special Instruction: putch a0
+always @(posedge clock) begin
+  if ((inst == 7) && (instcycle_cnt_val == 4)) begin
+    $write("%c", regs[10][7:0]);
+  end
+end
+
 // State
 reg                     sig_memread;
 wire                    sig_memwrite;
@@ -92,7 +99,6 @@ reg  [`BUS_64]          mem_rdata;
 wire                    mem_wen;
 wire [`BUS_64]          mem_waddr;
 wire [`BUS_64]          mem_wdata;
-wire [`BUS_64]          mem_wmask;      // 数据掩码，比如0x00F0，则仅写入[7:4]位
 
 // wb_stage
 wire                    wb_rd_wen_i;
@@ -139,8 +145,7 @@ id_stage Id_stage(
   .mem_wen            (mem_wen          ),
   .mem_waddr          (mem_waddr        ),
   .mem_wdata          (mem_wdata        ),
-  .mem_wmask          (mem_wmask        ),
-  .itype          (itype        ),
+  .itype              (itype            ),
   .opcode             (opcode           ),
   .funct3             (funct3           ),
   .funct7             (funct7           ),
@@ -178,8 +183,7 @@ mem_stage Mem_stage(
   .rdata              (mem_rdata        ),
   .wen                (mem_wen          ),
   .waddr              (mem_waddr        ),
-  .wdata              (mem_wdata        ),
-  .wmask              (mem_wmask        )
+  .wdata              (mem_wdata        )
 );
     
 wb_stage Wb_stage(
@@ -218,6 +222,7 @@ reg   [`REG_BUS]      cmt_wdata;
 reg   [`REG_BUS]      cmt_pc;
 reg   [`BUS_32]       cmt_inst;
 reg                   cmt_valid;      // control commit valid
+reg                   cmt_skip;       // control commit skip
 reg                   trap;
 reg   [7:0]           trap_code;
 reg   [`BUS_64]       cycleCnt;
@@ -227,9 +232,13 @@ reg   [`BUS_64]       regs_diff [0 : 31];
 
 wire inst_valid = ((pc != `PC_START) | (inst != 0)) & (instcycle_cnt_val == 4);
 
+// 让REF跳过指令的情况：
+// 1. putch: inst==7
+wire inst_skip = (inst == 7);
+
 always @(posedge clock) begin
   if (reset) begin
-    {cmt_wen, cmt_wdest, cmt_wdata, cmt_pc, cmt_inst, cmt_valid, trap, trap_code, cycleCnt, instrCnt} <= 0;
+    {cmt_wen, cmt_wdest, cmt_wdata, cmt_pc, cmt_inst, cmt_valid, cmt_skip, trap, trap_code, cycleCnt, instrCnt} <= 0;
   end
   else if (~trap) begin
     cmt_wen <= rd_wen;
@@ -237,6 +246,7 @@ always @(posedge clock) begin
     cmt_wdata <= rd_wdata;
     cmt_pc <= pc;
     cmt_inst <= inst;
+    cmt_skip <= inst_skip;
 
     cmt_valid <= inst_valid;
 
@@ -256,7 +266,7 @@ DifftestInstrCommit DifftestInstrCommit(
   .valid              (cmt_valid),
   .pc                 (cmt_pc),
   .instr              (cmt_inst),
-  .skip               (0),
+  .skip               (cmt_skip),
   .isRVC              (0),
   .scFailed           (0),
   .wen                (cmt_wen),

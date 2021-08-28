@@ -15,6 +15,10 @@ app:
 run:
 	./build.sh -e cpu_diff -d -s -a "-i $(ALLBIN).bin --dump-wave -b 0"
 
+# run all
+run-all:
+	./build.sh -e cpu_diff -r
+
 # Clean nemu/build
 clean:
 	@./build.sh -c

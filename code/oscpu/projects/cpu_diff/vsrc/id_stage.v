@@ -29,7 +29,6 @@ module id_stage(
   output  wire                  mem_wen,
   output  wire  [`BUS_64]       mem_waddr,
   output  wire  [`BUS_64]       mem_wdata,
-  output  wire  [`BUS_64]       mem_wmask,
   
   output  wire  [2 : 0]         itype,
   output  wire  [4 : 0]         opcode,
@@ -201,23 +200,6 @@ assign mem_waddr = ($signed(rs1_data) + $signed(imm));
 // mem_wdata
 assign mem_wdata = (rs2_data);
 
-// mem_wmask
-always@(*) begin
-  if (id_inactive)
-    mem_wmask = 0;
-  else
-    if (itype == `INST_S_TYPE)
-      case (funct3)
-        `FUNCT3_SB    : mem_wmask = 'hFF;
-        `FUNCT3_SH    : mem_wmask = 'hFFFF;
-        `FUNCT3_SW    : mem_wmask = 64'h00000000_FFFFFFFF;
-        `FUNCT3_SD    : mem_wmask = 64'hFFFFFFFF_FFFFFFFF;
-        default       : mem_wmask = 0;
-      endcase
-    else
-      mem_wmask = 0;
-end
-
 // op1
 always@(*) begin
   if (id_inactive) 
@@ -229,10 +211,9 @@ always@(*) begin
       `INST_I_TYPE  : op1 = rs1_data;
       `INST_J_TYPE  : op1 = pc + 4;
       `INST_U_TYPE  : begin
-        if (opcode == `OPCODE_AUIPC)
-          op1 = pc;
-        else
-          op1 = 0;
+        if (opcode == `OPCODE_LUI)            op1 = imm;
+        else if (opcode == `OPCODE_AUIPC)     op1 = pc;
+        else                                  op1 = 0;
       end
       default       : op1 = 0;
     endcase

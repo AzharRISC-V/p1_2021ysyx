@@ -19,6 +19,8 @@ int abs(int x) {
   return (x < 0 ? -x : x);
 }
 
+// 太简单了
+// 输入 "3 4 5"，得到 345，这个合理吗？
 int atoi(const char* nptr) {
   int x = 0;
   while (*nptr == ' ') { nptr ++; }
@@ -27,6 +29,45 @@ int atoi(const char* nptr) {
     nptr ++;
   }
   return x;
+}
+
+/*
+  功能：  int转换为零结尾的字符串
+  参数：
+    int     value   要转换的32位整数
+    char *  str     要写入的字符串缓冲区
+  返回值：
+    无
+  备注：  至多需要12个字节来产生32位整数的字符串形式
+*/
+void itoa(int value, char * str) {
+  // 32位整数，最大值是 2147483647，共10位，再加一个负号，一个零结束标志
+  char buf[12];
+  int n = 0;    // buf的写入位置
+  int n1 = 0;   // str的写入位置
+  bool neg = (value < 0); // 是否为负数
+  
+  // 负数处理
+  if (neg) {
+    value = -value;
+  }
+  
+  // 倒序存入
+  while (true) {
+    buf[n++] = (value % 10) + '0';
+    value = value / 10;
+    if (!value) {
+      break;
+    }
+  }
+  if (neg) {
+    buf[n++] = '-';
+  }
+  // 正序输出
+  for (; n > 0; n--) {
+    str[n1++] = buf[n - 1];
+  }
+  str[n1] = 0;
 }
 
 void *malloc(size_t size) {

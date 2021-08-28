@@ -1,7 +1,7 @@
 
 `timescale 1ns / 1ps
 
-`define CLK_CNT_VAL         64'h49          // 当执行时钟周期超过这个数时，打印信息
+`define CLK_CNT_VAL         64'h2          // 当执行时钟周期超过这个数时，打印信息
 
 // 常用的常数
 `define ZERO_WORD           64'h00000000_00000000       // 值位0的值

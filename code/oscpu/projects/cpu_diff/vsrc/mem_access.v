@@ -17,64 +17,73 @@ module mem_access (
   output  wire  [`BUS_64]       rdata,    // 读到的数据
 
   input   wire  [`BUS_64]       wdata,    // 写入数据
-  input   wire  [`BUS_64]       wmask,    // 写入数据的掩码
   input   wire                  wen       // 写使能
 );
 
-
-// 是否需要访问第二个64bit单元
-wire ena2 = (addr[2:0] == 3'b000) ? 0 : 1;
+// -------------------------- 读写共有的信号 --------------------------
+// 读或写信号至少有一个有效
+wire  en = ren | wen;
 
 // 除去基地址后的相对地址
-wire [`BUS_64] addr_rel = addr - 64'h00000000_80000000;
+wire  [`BUS_64]   addr_rel = (!en) ? 0 : addr - 64'h00000000_80000000;
 
 // 第1/2次访存地址
-wire [`BUS_64] addr1 = addr_rel >> 3;
-wire [`BUS_64] addr2 = addr1 + 64'b1;
+wire  [`BUS_64]   addr1 = (!en) ? 0 : addr_rel >> 3;
+wire  [`BUS_64]   addr2 = (!en) ? 0 : addr1 + 64'b1;
 
-// 8字节编址的内部偏移量（字节数）
-wire [2:0] byte_offset = addr[2:0];         
+// 字节偏移量（由地址低3位决定）：0 ~ 7
+wire  [2 : 0]     byte_offset1 = {{5{1'b0}}, addr[2:0]};
+wire  [2 : 0]     byte_offset2 = 8 - byte_offset1;
 
-// 是否打印调试信息？
-wire show_dbg = (clk_cnt >= `CLK_CNT_VAL);
+// 位偏移：0 ~ 63
+wire [5 : 0]      bit_offset1 = byte_offset1 << 3;
+wire [5 : 0]      bit_offset2 = 64 - bit_offset1;
 
-// 读取数据
-wire [`BUS_64] rdata1 = ram_read_helper(show_dbg, ren, addr1);
-wire [`BUS_64] rdata2 = ram_read_helper(show_dbg, ren & ena2, addr2);
+// 字节数（由funct3[1:0]决定）：1/2/4/8
+// Byte 00, Half 01, Word 10, Dword 11
+wire [7:0] bytes = 2 ** funct3[1:0];
 
+// 是否需要访问第二个64bit单元
+reg unit2_req = byte_offset1 + bytes > 8;
+
+// 数据的位掩码
+// byte   00000000_000000FF
+// half   00000000_0000FFFF
+// word   00000000_FFFFFFFF
+// dword  FFFFFFFF_FFFFFFFF
+reg [`BUS_64] bit_mask;
 always @(*) begin
-  if (ren && show_dbg)
-    $displayh("  MEMACC: raddr1=", addr1, " rdata1=", rdata1, " rdata=", rdata, " ren=", ren);
-end
-always @(*) begin
-  if ((ren & ena2) && show_dbg) 
-    $displayh("  MEMACC: raddr2=", addr2, " rdata2=", rdata2, " rdata=", rdata, " ren=", ren, " ena2=", ena2); 
-end
-
-// 合成读取数据
-reg [`BUS_64] rdata_0;
-always @(*) begin
-  if (ren) begin
-    case (byte_offset)
-      0'b000  : begin rdata_0 = {rdata1}; end
-      0'b001  : begin rdata_0 = {rdata2[ 7:0], rdata1[63: 8]}; end
-      0'b010  : begin rdata_0 = {rdata2[15:0], rdata1[63:16]}; end
-      0'b011  : begin rdata_0 = {rdata2[23:0], rdata1[63:24]}; end
-      0'b100  : begin rdata_0 = {rdata2[31:0], rdata1[63:32]}; end
-      0'b101  : begin rdata_0 = {rdata2[39:0], rdata1[63:40]}; end
-      0'b110  : begin rdata_0 = {rdata2[47:0], rdata1[63:48]}; end
-      0'b111  : begin rdata_0 = {rdata2[55:0], rdata1[63:56]}; end
-      default : begin rdata_0 = 64'd0; end
-    endcase
-    sig_memread_ok = 1; 
+  if (!en) begin
+    bit_mask = 0;
   end
   else begin
-    rdata_0 = 0;
-    sig_memread_ok = 0;
+    case (funct3[1:0])
+      2'b00   : bit_mask = 64'h00000000_000000FF;
+      2'b01   : bit_mask = 64'h00000000_0000FFFF;
+      2'b10   : bit_mask = 64'h00000000_FFFFFFFF;
+      2'b11   : bit_mask = 64'hFFFFFFFF_FFFFFFFF;
+      default : bit_mask = 0;
+    endcase
   end
 end
 
-// 从8字节中摘出需要读取的数据
+// 是否打印调试信息？
+wire show_dbg = 0;// (clk_cnt >= `CLK_CNT_VAL);
+
+// -------------------------- 读取 --------------------------
+
+// 读取使能信号
+wire ren_unit1 = ren & (!unit2_req);
+wire ren_unit2 = ren & unit2_req;
+
+// 读取两份数据
+wire [`BUS_64] rdata1 = (!ren_unit1) ? 0 : ram_read_helper(show_dbg, ren_unit1, addr1);
+wire [`BUS_64] rdata2 = (!ren_unit2) ? 0 : ram_read_helper(show_dbg, ren_unit2, addr2);
+
+// 读取到的两份数据合并位一份
+wire [`BUS_64] rdata_0 = (rdata1 >> bit_offset1) | (rdata2 << bit_offset2);
+
+// 过滤出摘出需要读取的数据
 always @(*) begin
   if (ren) begin
     case (funct3)
@@ -91,45 +100,61 @@ always @(*) begin
     rdata = 0;
   end
 end
-assign rdata = rdata_0;
 
-// 计算写入掩码1/2
-reg [`BUS_64] wmask1;
-reg [`BUS_64] wmask2;
+// 读取完成信号
 always @(*) begin
-  if (wen) begin
-    case (byte_offset)
-      0'b000  : begin wmask1 = 64'hFFFFFFFF_FFFFFFFF; wmask2 = 64'h00000000_00000000; end
-      0'b001  : begin wmask1 = 64'hFFFFFFFF_FFFFFF00; wmask2 = 64'h00000000_000000FF; end
-      0'b010  : begin wmask1 = 64'hFFFFFFFF_FFFF0000; wmask2 = 64'h00000000_0000FFFF; end
-      0'b011  : begin wmask1 = 64'hFFFFFFFF_FF000000; wmask2 = 64'h00000000_00FFFFFF; end
-      0'b100  : begin wmask1 = 64'hFFFFFFFF_00000000; wmask2 = 64'h00000000_FFFFFFFF; end
-      0'b101  : begin wmask1 = 64'hFFFFFF00_00000000; wmask2 = 64'h000000FF_FFFFFFFF; end
-      0'b110  : begin wmask1 = 64'hFFFF0000_00000000; wmask2 = 64'h0000FFFF_FFFFFFFF; end
-      0'b111  : begin wmask1 = 64'hFF000000_00000000; wmask2 = 64'h00FFFFFF_FFFFFFFF; end
-      default : begin wmask1 = 64'h00000000_00000000; wmask2 = 64'h00000000_00000000; end
-    endcase
+  if (ren) begin
+    sig_memread_ok = 1;
   end
   else begin
-    wmask1 = 0; wmask2 = 0;
+    sig_memread_ok = 0;
   end
 end
 
-// 写入数据
-wire [7 : 0] bit_offset = byte_offset << 3;
-wire [`BUS_64] wdata1 = wdata << bit_offset;
-wire [`BUS_64] wdata2 = wdata >> bit_offset;
+// 打印调试信息
+always @(*) begin
+  if (ren_unit1 && show_dbg)
+    $displayh("  MEMACC: raddr1=", addr1, " rdata1=", rdata1, " rdata=", rdata);
+end
+always @(*) begin
+  if (ren_unit2 && show_dbg) 
+    $displayh("  MEMACC: raddr2=", addr2, " rdata2=", rdata2, " rdata=", rdata); 
+end
+
+// -------------------------- 写入 --------------------------
+
+// 写使能
+wire wen_unit1 = wen & (!unit2_req);
+wire wen_unit2 = wen & unit2_req;
+
+// 写掩码
+reg [`BUS_64] wmask1 = (!wen_unit1) ? 0 : bit_mask << bit_offset1;
+reg [`BUS_64] wmask2 = (!wen_unit2) ? 0 : bit_mask >> bit_offset2;
+
+// 写数据
+wire [`BUS_64] wdata1 = (!wen_unit1) ? 0 : wdata << bit_offset1;
+wire [`BUS_64] wdata2 = (!wen_unit2) ? 0 : wdata >> bit_offset2;
+
+// 写入
 always @(posedge clk) begin
-    ram_write_helper(show_dbg, addr1, wdata1, wmask1, wen);
-    ram_write_helper(show_dbg, addr2, wdata2, wmask2, wen & ena2);
+  if (wen_unit1) begin
+    ram_write_helper(show_dbg, addr1, wdata1, wmask1, wen_unit1);
+    if (show_dbg) begin
+      $displayh("  MEMACC: waddr1=", addr1, " wdata1=", wdata1, " wmask1=", wmask1); 
+    end
+  end
 
-    if (wen)
-      sig_memwrite_ok = 1;
+  if (wen_unit2) begin
+    ram_write_helper(show_dbg, addr2, wdata2, wmask2, wen_unit2);
+    if (show_dbg) begin
+      $displayh("  MEMACC: waddr2=", addr2, " wdata2=", wdata2, " wmask2=", wmask2);
+    end
+  end
 
-    if (wen && (clk_cnt >= `CLK_CNT_VAL))
-      $displayh("  MEMACC: waddr1=", addr1, " wdata1=", wdata1, " wmask1=", wmask1, " wen=", wen); 
-    if ((wen & ena2) && (clk_cnt >= `CLK_CNT_VAL))
-      $displayh("  MEMACC: waddr2=", addr2, " wdata2=", wdata2, " wmask2=", wmask2, " wen=", wen, " ena2=", ena2);
+  if (wen) begin
+    sig_memwrite_ok = 1;
+  end
+
 end
 
 
