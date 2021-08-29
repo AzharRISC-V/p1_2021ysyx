@@ -210,7 +210,8 @@ NAME="${NAME##*\r}"
 if [[ "$CLEAN" == "true" ]]; then
     # This will cause re-build NEMU(emu)
     rm -rf $NEMU_HOME/build/
-    rm -rf $PROJECT_PATH/$BUILD_FOLDER $PROJECT_PATH/$DIFF_BUILD_FOLDER
+    rm -rf $PROJECT_PATH/$BUILD_FOLDER 
+    rm -rf $PROJECT_PATH/$DIFF_BUILD_FOLDER
     unlink $PROJECT_PATH/$DIFFTEST_FOLDER 1>/dev/null 2>&1
     exit 0
 fi
