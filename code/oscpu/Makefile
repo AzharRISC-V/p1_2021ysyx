@@ -17,7 +17,7 @@ run:
 
 # run all
 run-all:
-	@./build.sh -e cpu_diff -r
+	@./build.sh -e cpu_diff -b -r
 
 # Clean nemu/build
 clean:

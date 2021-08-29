@@ -69,7 +69,8 @@ end
 assign rd_wen = rd_wen0;
 
 // rd_wdata_o
-reg [`BUS_64] temp1;
+reg [`BUS_64] reg64_1;
+reg [`BUS_32] reg32_1;
 always_latch begin
   if(ex_inactive) begin
     rd_data = `ZERO_WORD;
@@ -89,7 +90,8 @@ always_latch begin
             `FUNCT3_ANDI    : begin rd_data = op1 & op2; end
             `FUNCT3_SLLI    : begin rd_data = op1 << op2; end
             `FUNCT3_SRLI    : begin
-              if (funct7[5])  begin temp1 = op1 >> op2; rd_data = { {33{t1[31]}}, temp1[30:0]}; end   // SRAI
+              // if (funct7[5])  begin reg64_1 = op1 >>> op2; rd_data = { {33{t1[31]}}, reg64_1[30:0]}; end   // SRAI
+              if (funct7[5])  begin rd_data = $signed(op1) >>> op2; end   // SRAI
               else            begin rd_data = op1 >> op2; end   // SRLI
             end
             default         :;
@@ -99,14 +101,14 @@ always_latch begin
         `OPCODE_JALR        : begin rd_data = t1; end
         `OPCODE_ADD         : begin
           case (funct3)
-            `FUNCT3_ADD     : begin rd_data = (funct7[5]) ? op1 - op2 : op1 + op2; end
-            `FUNCT3_SLL     : begin rd_data = op1 << op2; end
+            `FUNCT3_ADD     : begin rd_data = (funct7[5]) ? op1 - op2 : op1 + op2; end    // SUB or ADD
+            `FUNCT3_SLL     : begin rd_data = op1 << op2[5:0]; end
             `FUNCT3_SLT     : begin rd_data = ($signed(op1) < $signed(op2)) ? 1 : 0; end
             `FUNCT3_SLTU    : begin rd_data = (op1 < op2) ? 1 : 0; end
             `FUNCT3_XOR     : begin rd_data = op1 ^ op2; end
             `FUNCT3_SRL     : begin
-              if (funct7[5])  begin rd_data = $signed(op1) >> $signed(op2); end    // SRA
-              else            begin rd_data = op1 >> op2; end    // SRL
+              if (funct7[5])  begin rd_data = $signed(op1) >>> op2[5:0]; end   // SRA
+              else            begin rd_data = op1 >> op2[5:0]; end             // SRL
             end
             `FUNCT3_OR      : begin rd_data = op1 | op2; end
             `FUNCT3_AND     : begin rd_data = op1 & op2; end
@@ -115,11 +117,11 @@ always_latch begin
         end
         `OPCODE_ADDIW       : begin
           case (funct3)
-            `FUNCT3_ADDIW   : begin temp1 = op1 + $signed(op2); rd_data = {{33{temp1[31]}}, temp1[30:0]}; end
-            `FUNCT3_SLLIW   : begin temp1 = op1 << op2; rd_data = {{33{temp1[31]}}, temp1[30:0]}; end
+            `FUNCT3_ADDIW   : begin reg64_1 = op1 + $signed(op2); rd_data = {{33{reg64_1[31]}}, reg64_1[30:0]}; end
+            `FUNCT3_SLLIW   : begin reg64_1 = op1 << op2; rd_data = {{33{reg64_1[31]}}, reg64_1[30:0]}; end
             `FUNCT3_SRLIW   : begin
-              if (funct7[5])  begin temp1 = op1 >> op2; rd_data = {{33{temp1[31]}}, temp1[30:0]}; end
-              else            begin temp1 = {32'd0, op1[31:0]} >> op2; rd_data = temp1; end
+              if (funct7[5])  begin rd_data = $signed({{33{op1[31]}}, op1[30:0]}) >>> op2[4:0]; end               // SRAIW
+              else            begin reg32_1 = op1[31:0] >> op2[4:0]; rd_data = {{32{reg32_1[31]}}, reg32_1}; end  // SRLIW
             end
             default         : begin rd_data = 0; end
           endcase
@@ -127,13 +129,13 @@ always_latch begin
         `OPCODE_ADDW        : begin
           case (funct3)
             `FUNCT3_ADDW    : begin
-              if (funct7[5])  begin temp1 = op1 - $signed(op2); rd_data = {{33{temp1[31]}}, temp1[30:0]}; end
-              else            begin temp1 = op1 + $signed(op2); rd_data = {{33{temp1[31]}}, temp1[30:0]}; end
+              if (funct7[5])  begin reg64_1 = op1 - $signed(op2); rd_data = {{33{reg64_1[31]}}, reg64_1[30:0]}; end // SUBW
+              else            begin reg64_1 = op1 + $signed(op2); rd_data = {{33{reg64_1[31]}}, reg64_1[30:0]}; end // ADDW
             end
-            `FUNCT3_SLLW    : begin temp1 = op1 << op2; rd_data = {{33{temp1[31]}}, temp1[30:0]}; end
-            `FUNCT3_SRLW    : begin
-              if (funct7[5])  begin temp1 = op1 >> op2; rd_data = {{33{temp1[31]}}, temp1[30:0]}; end
-              else            begin temp1 = {32'd0, op1[31:0]} >> op2; rd_data = temp1; end
+            `FUNCT3_SLLW    : begin reg64_1 = op1 << op2[4:0]; rd_data = {{33{reg64_1[31]}}, reg64_1[30:0]}; end
+            `FUNCT3_SRAW    : begin
+              if (funct7[5])  begin rd_data = $signed({{33{op1[31]}}, op1[30:0]}) >>> op2[4:0]; end                 // SRAW
+              else            begin reg32_1 = op1[31:0] >> op2[4:0]; rd_data = {{32{reg32_1[31]}}, reg32_1}; end    // SRLW
             end
             default         : begin rd_data = 0; end
           endcase

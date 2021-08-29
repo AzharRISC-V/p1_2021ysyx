@@ -90,9 +90,10 @@ always @(*) begin
     `FUNCT3_LB    : rdata = $signed(rdata_0[7:0]);
     `FUNCT3_LH    : rdata = $signed(rdata_0[15:0]);
     `FUNCT3_LW    : rdata = $signed(rdata_0[31:0]);
-    `FUNCT3_LD    : rdata = $signed(rdata_0[63:0]);
+    `FUNCT3_LD    : rdata = rdata_0[63:0];
     `FUNCT3_LBU   : rdata = rdata_0[7:0];
     `FUNCT3_LHU   : rdata = rdata_0[15:0];
+    `FUNCT3_LWU   : rdata = rdata_0[31:0];
     default       : rdata = 0;
     endcase
   end
