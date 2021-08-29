@@ -123,3 +123,10 @@ hello-str string
 5. riscv-tests 测试记录
 未通过：
 其他已通过
+
+6. am-kernels/kernels/hello 测试
+已通过。
+如需向使用了am的程序的main()添加参数，
+使用 make mainargs=xxx 即可
+具体参考 am/srcipts/riscv64-mycpu.mk line:22
+
