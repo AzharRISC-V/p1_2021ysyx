@@ -13,6 +13,7 @@ else
   RV_DIR = isa/rv32ui
 endif
 
+# 排除了 fence_i.S ，可能是先期不测试这个命令
 ALL = $(basename $(notdir $(shell find $(RV_DIR)/. -name "*.S" | grep -v fence_i.S)))
 
 all: $(addprefix Makefile-, $(ALL))
@@ -26,6 +27,13 @@ Makefile-%: $(RV_DIR)/%.S
 	-@rm -f Makefile-$*
 
 run: all
+
+install:
+	@cp build/$(ALL)-* ../../bin/
+
+install-all:
+	@cp build/* ../../bin/ 2>/dev/null
+
 
 clean:
 	rm -rf Makefile-* build/

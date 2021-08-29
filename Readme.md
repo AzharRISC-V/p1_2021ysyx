@@ -192,9 +192,8 @@
   ```
   这是第2阶段的cpu测试，
   现在发现有两个版本，估计核心的源码相同，只是脚本不同。
-  1. https://github.com/riscv/riscv-tests					这应该是原版的
-  2. https://github.com/NJU-ProjectN/riscv-tests    		这估计是定制过的
-  位于 https://github.com/NJU-ProjectN/riscv-tests/
+  1. https://github.com/riscv/riscv-tests					这是原版的
+  2. https://github.com/NJU-ProjectN/riscv-tests    		这是定制过的
   注意submodule的更新，指令如下：
   git clone xx
   git submodule update --init --recursive

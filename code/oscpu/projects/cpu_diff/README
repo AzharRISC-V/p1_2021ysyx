@@ -120,3 +120,7 @@ movsx pacal select-sort max min3 mov-3 quick-sort
 recursion shift sum unalign
 hello-str string
 
+5. riscv-tests 测试记录
+未通过：
+lui lwu sll sllw srai sraiw sra sraw srliw srl srlw
+其他已通过

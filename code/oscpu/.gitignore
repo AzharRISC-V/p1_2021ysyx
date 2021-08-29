@@ -10,8 +10,7 @@
 !*.sh
 !*.py
 !*.mk
-!bin/inst.bin
-!bin/inst_diff.bin
+!bin/addi/*
 !Makefile
 !README
 !README.md
