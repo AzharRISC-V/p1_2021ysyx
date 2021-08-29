@@ -172,7 +172,7 @@ void handle_fault(uintptr_t addr, uintptr_t cause)
   user_llpt[addr/PGSIZE] = new_pte;
   flush_page(addr);
 
-  asm volatile ("fence.i");
+  __builtin___clear_cache(0,0);
 }
 
 void handle_trap(trapframe_t* tf)
