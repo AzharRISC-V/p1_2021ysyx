@@ -18,6 +18,7 @@
   waveform					开源的波形查看器
   abstract-machine			对上层应用程序封装了ISA差异的中间件
   am-kernels					采用am接口的一组应用
+  	test/cpu-tests			第一阶段的CPU指令测试
   oscpu-framework				一生一芯cpu项目的代码框架，包含了verilator,difftest等技术
   nemu						一个支持多ISA的模拟器
   difftest					一种测试技术，利用nemu与verilator产生的真机运行结果进行比对
@@ -29,6 +30,7 @@
   	NEMU			配套的模拟器
   SDL							跨平台的多媒体库，用于VGA设备模拟
   QEMU						著名的开源模拟器，用于同NEMU的REF
+  riscv-tests					第二阶段的cpu测试
   ```
   
   
@@ -174,6 +176,27 @@
   另一种解释：
   # 生产者准备好数据将标志位VALID置位，消费者准备好接收数据将标志位READY置位，在时钟沿同时出现VALID和READY置位，则完成数据传输。
   # 系统中所有信号在时钟信号的上升沿取样。valid信号在复位后置低，其他信号无要求。
+  ```
+
+  
+
+* cpu-tests 项目
+
+  ```
+  这是第一阶段的CPU测试，位于 am-kernels/test/cpu-tests，现已通过。
+  其中 hello-str, string 需要在 am/klib 中实现几个简易版本的库函数。
+  ```
+
+* riscv-tests
+
+  ```
+  这是第2阶段的cpu测试，位于 https://github.com/NJU-ProjectN/riscv-tests/
+  注意有个submodule的更新，指令如下：
+  git clone https://github.com/riscv/riscv-tests
+  git submodule init
+  git submodule update
+  以下是测试记录：
+  
   ```
 
   
