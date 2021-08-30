@@ -36,6 +36,9 @@ int strcmp(const char* s1, const char* s2) {
   return memcmp(s1, s2, n);
 }
 
+int strncmp (const char *s1, const char *s2, size_t n) {
+  return memcmp(s1, s2, n);
+}
 
 void* memset(void* v,int c,size_t n) {
   char * p = (char *)v;

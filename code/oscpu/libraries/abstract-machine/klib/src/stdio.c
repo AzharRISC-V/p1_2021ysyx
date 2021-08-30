@@ -89,6 +89,14 @@ int vsnprintf(char *out, size_t n, const char *fmt, va_list ap) {
         p += strlen(p);
         n_freebytes -= copy_len;
       }
+      // 字符
+      else if (c1 == 'c') {
+        copy_len = 1;
+        *p = (char)(va_arg(ap, int));
+        cnt += copy_len;
+        p += copy_len;
+        n_freebytes -= copy_len;
+      }
       // not support
       else {
         break;

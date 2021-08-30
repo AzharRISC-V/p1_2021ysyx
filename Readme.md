@@ -199,6 +199,31 @@
   git submodule update --init --recursive
   ```
 
-  
+  * native运行
+
+    ```
+    编译指令
+    $ cd am-kernels/tests/am-tests
+    $ make ARCH=native run mainargs=xxx
+    为运行不同子任务，设定mainargs参数
+    	在native中，make的这种参数会被 am/arc/native/platform.c:init_platform中的 getenv()函数接收，不知道原理
+    	在mycpu中，使用编译时刻给CFLAGS传递 -DMAINARGS=xx来实现，具体参考 riscv64-mycpu.mk中的 CFLAGS设定，以及 mycpu/trm.c中的 mainargs变量。
+    	总之，native与mycpu都是在编译时在make中给定mainargs参数，已达到运行不同子任务的目的。
+    ```
+
+  * riscv64-mycpu运行
+
+    ```
+    编译
+    $ cd am-kernels/tests/am-tests
+    $ make ARCH=riscv64-mycpu mainargs=xxx
+    安装，将 bin 拷贝至 oscpu/bin
+    $ make install
+    运行，在oscpu中当做普通的bin文件输入，用difftest比对即可。
+    ```
+
+  * 子程序 hello，很简单
+
+  * 子程序 rtc_test，需要实现 timer, rtc
 
 * 
