@@ -90,7 +90,6 @@ wire [`BUS_64]          pc_jmpaddr_o;
 // exe_stage -> wb_stage
 wire                    ex_rd_wen_o;
 wire [`BUS_64]          ex_rd_wdata_o;
-wire [4 : 0]            ex_rd_i;
 
 // mem_stage
 wire                    mem_ren;
@@ -109,6 +108,17 @@ wire [`BUS_64]          wb_rd_wdata_o;
 // rd_write -> regfile
 wire                    rd_wen;
 wire [`BUS_64]          rd_wdata;
+
+// csrfile
+wire [11 : 0]           csr_addr;
+wire [1 : 0]            csr_op;
+wire [11 : 0]           csr_waddr;
+wire [`BUS_64]          csr_wdata;
+wire [`BUS_64]          csr_rdata;
+
+// exe_stage -> wb_stage
+wire                    csr_rd_wen_o = csr_op != 2'b00;
+wire [`BUS_64]          csr_rd_wdata_o = (csr_op == 2'b00) ? 0 : csr_rdata;
 
 
 if_stage If_stage(
@@ -141,7 +151,6 @@ id_stage Id_stage(
   .rd                 (rd               ),
   .mem_ren            (mem_ren          ),
   .mem_raddr          (mem_raddr        ),
-  .mem_rdata          (mem_rdata        ),
   .mem_wen            (mem_wen          ),
   .mem_waddr          (mem_waddr        ),
   .mem_wdata          (mem_wdata        ),
@@ -151,7 +160,11 @@ id_stage Id_stage(
   .funct7             (funct7           ),
   .op1                (op1              ),
   .op2                (op2              ),
-  .t1                 (t1               )
+  .t1                 (t1               ),
+  .csr_addr           (csr_addr         ),
+  .csr_op             (csr_op           ),
+  .csr_wdata          (csr_wdata        ),
+  .csr_rdata          (csr_rdata        )
 );
 
 exe_stage Exe_stage(
@@ -194,6 +207,8 @@ wb_stage Wb_stage(
   .ex_wdata_i         (ex_rd_wdata_o    ),
   .mem_wen_i          (sig_memread_ok   ),
   .mem_wdata_i        (mem_rdata        ),
+  .csr_wen_i          (csr_rd_wen_o     ),
+  .csr_wdata_i        (csr_rd_wdata_o   ),
   .wen_o              (rd_wen           ),
   .wdata_o            (rd_wdata         )
 );
@@ -211,6 +226,10 @@ regfile Regfile(
   .rd_data            (rd_wdata         ),
   .rd_wen             (rd_wen           ),
   .sig_wb_ok          (sig_wb_ok        ),
+  .csr_addr           (csr_addr         ),
+  .csr_op             (csr_op           ),
+  .csr_wdata          (csr_wdata        ),
+  .csr_rdata          (csr_rdata        ),
   .regs_o             (regs             )
 );
 
@@ -325,7 +344,7 @@ DifftestCSRState DifftestCSRState(
   .clock              (clock),
   .coreid             (0),
   .priviledgeMode     (`RISCV_PRIV_MODE_M),
-  .mstatus            (0),
+  .mstatus            (64'h00000000_00001800),
   .sstatus            (0),
   .mepc               (0),
   .sepc               (0),

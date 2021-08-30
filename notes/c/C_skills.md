@@ -13,6 +13,20 @@
    
    ```
 
+2. 稀松数组的创建
+
+   ```
+   见 am/src/mycpu/ioe.c:lut
+   static void *lut[128] = {
+     [AM_TIMER_CONFIG] = __am_timer_config,
+     [AM_TIMER_RTC   ] = __am_timer_rtc,
+     [AM_TIMER_UPTIME] = __am_timer_uptime,
+     [AM_INPUT_CONFIG] = __am_input_config,
+     [AM_INPUT_KEYBRD] = __am_input_keybrd,
+   };
+   其中，AM_XX 是整数，这样定义的lut就是稀松的，并不是按照0,1,2这样排下去。
+   ```
+
    
 
-2. 
+3. 

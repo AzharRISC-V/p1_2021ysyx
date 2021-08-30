@@ -3,6 +3,13 @@
 void rtc_test() {
   AM_TIMER_RTC_T rtc;
   int sec = 1;
+
+  // printf("%d cycles\n", io_read(AM_TIMER_UPTIME).us);
+  // printf("%d cycles\n", io_read(AM_TIMER_UPTIME).us);
+  printf("%d cycles\n", io_read(AM_TIMER_UPTIME).us);
+
+  halt(0);
+
   while (1) {
     while(io_read(AM_TIMER_UPTIME).us / 1000000 < sec) ;
     rtc = io_read(AM_TIMER_RTC);

@@ -63,6 +63,7 @@ always@(*) begin
       `OPCODE_ADD       : begin rd_wen0 = 1; end
       `OPCODE_ADDIW     : begin rd_wen0 = 1; end
       `OPCODE_ADDW      : begin rd_wen0 = 1; end
+      `OPCODE_CSR       : begin rd_wen0 = 1; end
       default           : begin rd_wen0 = 0; end
     endcase
 end

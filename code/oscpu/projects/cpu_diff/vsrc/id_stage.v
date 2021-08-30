@@ -25,10 +25,14 @@ module id_stage(
 
   output  wire                  mem_ren,
   output  wire  [`BUS_64]       mem_raddr,
-  input   wire  [`BUS_64]       mem_rdata,
   output  wire                  mem_wen,
   output  wire  [`BUS_64]       mem_waddr,
   output  wire  [`BUS_64]       mem_wdata,
+
+  output  reg   [11 : 0]        csr_addr,
+  output  reg   [1 : 0]         csr_op,
+  output  reg   [`BUS_64]       csr_wdata,
+  input   reg   [`BUS_64]       csr_rdata,
   
   output  wire  [2 : 0]         itype,
   output  wire  [4 : 0]         opcode,
@@ -255,6 +259,59 @@ always@(*) begin
       `OPCODE_BEQ   : t1 = pc + imm;
       default       : t1 = 0;
     endcase
+  end
+end
+
+// ------------- csr -----------------
+
+// csr_op
+always@(*) begin
+  if (id_inactive)
+    csr_op = 0;
+  else begin
+    if (opcode == `OPCODE_CSR) begin
+      case (funct3)
+        `FUNCT3_CSRRW   : csr_op = 2'b01;
+        `FUNCT3_CSRRS   : csr_op = 2'b10;
+        `FUNCT3_CSRRC   : csr_op = 2'b11;
+        `FUNCT3_CSRRWI  : csr_op = 2'b01;
+        `FUNCT3_CSRRSI  : csr_op = 2'b11;
+        `FUNCT3_CSRRCI  : csr_op = 2'b11;
+        default         : csr_op = 0;
+      endcase
+    end
+    else begin
+      csr_op = 0;
+    end
+  end
+end
+
+// csr_inactive
+wire csr_inactive = csr_op == 2'b00;
+
+// csr_addr
+assign csr_addr = csr_inactive ?  0 : inst[31 : 20];
+
+// csr_wdata
+wire [`BUS_64] csr_zimm = csr_inactive ? 0 : {{60{inst[19]}}, inst[18:15]};
+always@(*) begin
+  if (csr_inactive)
+    csr_wdata = 0;
+  else begin
+    if (opcode == `OPCODE_CSR) begin
+      case (funct3)
+        `FUNCT3_CSRRW   : csr_wdata = rs1_data;
+        `FUNCT3_CSRRS   : csr_wdata = rs1_data;
+        `FUNCT3_CSRRC   : csr_wdata = rs1_data;
+        `FUNCT3_CSRRWI  : csr_wdata = csr_zimm;
+        `FUNCT3_CSRRSI  : csr_wdata = csr_zimm;
+        `FUNCT3_CSRRCI  : csr_wdata = csr_zimm;
+        default         : csr_wdata = 0;
+      endcase
+    end
+    else begin
+      csr_wdata = 0;
+    end
   end
 end
 

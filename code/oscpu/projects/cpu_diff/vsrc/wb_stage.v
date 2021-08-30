@@ -16,6 +16,8 @@ module wb_stage(
   input   wire  [`BUS_64]       ex_wdata_i    ,   
   input   wire                  mem_wen_i     ,   // MEM后的写回
   input   wire  [`BUS_64]       mem_wdata_i   ,
+  input   wire                  csr_wen_i     ,   // CSR后的写回
+  input   wire  [`BUS_64]       csr_wdata_i   ,
 
   output  reg                   wen_o,
   output  wire  [`BUS_64]       wdata_o
@@ -25,68 +27,35 @@ module wb_stage(
 wire wb_active = (instcycle_cnt_val == 4);
 wire wb_inactive = !wb_active;
 
-// // 保存ex的操作数
-// reg               ex_wen;
-// reg   [`REG_BUS]  ex_wdata;
-// always @(posedge clk) begin
-//   if (wb_inactive) begin
-//     ex_wen <= 0;
-//     ex_wdata <= 0;
-//   end
-//   else begin
-//     if (instcycle_cnt_val == 6) begin
-//       ex_wen <= ex_wen_i;
-//       ex_wdata <= ex_wdata_i;
-//     end
-//     else if (instcycle_cnt_val == 0) begin
-//       ex_wen <= 0;
-//       ex_wdata <= 0;
-//     end
-//   end
-// end
-
-// // 保存mem的操作数
-// reg               mem_wen;
-// reg   [`REG_BUS]  mem_wdata;
-// always @(posedge clk) begin
-//   if (wb_inactive) begin
-//     mem_wen <= 0;
-//     mem_wdata <= 0;
-//   end
-//   else begin
-//     if (instcycle_cnt_val == 6) begin
-//       mem_wen <= mem_wen_i;
-//       mem_wdata <= mem_wdata_i;
-//     end
-//     else if (instcycle_cnt_val == 2) begin
-//       mem_wen <= 0;
-//       mem_wdata <= 0;
-//     end
-//   end
-// end
-
 // 写使能
 always @(*) begin
   if (wb_inactive) begin
     wen_o = 0;
   end
   else begin
-    // if (instcycle_cnt_val == 6) begin
-    //   wen_o = ex_wen_i | mem_wen_i;
-    // end
-    // else if (instcycle_cnt_val == 2) begin
-    //   wen_o = 0;
-    // end
-
-    wen_o = ex_wen_i | mem_wen_i;
+    wen_o = ex_wen_i | mem_wen_i | csr_wen_i;
   end
 end
 
-// 写入数据的来源，0：EX, 1:MEM。
-// 两个信号同时到达时，MEM优先
-wire ch = mem_wen_i ? 1 : 0;
-
 // 写数据
-assign wdata_o = wen_o ? (ch ? mem_wdata_i : ex_wdata_i) : 0;
+always @(*) begin
+  if (!wen_o) begin
+    wdata_o = 0;
+  end
+  else begin
+    if (csr_wen_i) begin
+      wdata_o = csr_wdata_i;
+    end
+    else if (mem_wen_i) begin
+      wdata_o = mem_wdata_i;
+    end
+    else if (ex_wen_i) begin
+      wdata_o = ex_wdata_i;
+    end
+    else begin
+      wdata_o = 0;
+    end
+  end
+end
 
 endmodule

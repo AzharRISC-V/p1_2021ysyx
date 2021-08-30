@@ -16,6 +16,8 @@
 `define BUS_32              31:0
 `define BUS_64              63:0
 
+`define BUS_CSR_ADDR        11 : 0          // CSR存储器地址
+
 
 // 寄存器配置
 `define REG_BITS            64              // 寄存器位数
@@ -74,6 +76,7 @@
 `define OPCODE_ADD          5'b01100
 `define OPCODE_FENCE        5'b00011      // 同步
 `define OPCODE_ENV          5'b11100      // 环境
+`define OPCODE_CSR          5'b11100
 // RV64I
 `define OPCODE_ADDIW        5'b00110
 `define OPCODE_ADDW         5'b01110
