@@ -78,10 +78,21 @@ int vsnprintf(char *out, size_t n, const char *fmt, va_list ap) {
         cnt += copy_len;
         n_freebytes -= copy_len;
       }
-      // 整数
+      // 十进制整数（支持负数）
       else if (c1 == 'd') {
         int value = va_arg(ap, int);
         itoa(value, buf4val);
+        copy_len = strlen(buf4val);
+        copy_len = copy_len < n_freebytes ? copy_len : n_freebytes;
+        strncpy(p, buf4val, copy_len);
+        cnt += strlen(p);
+        p += strlen(p);
+        n_freebytes -= copy_len;
+      }
+      // 十六进制整数
+      else if (c1 == 'x') {
+        int value = va_arg(ap, int);
+        itox(value, buf4val);
         copy_len = strlen(buf4val);
         copy_len = copy_len < n_freebytes ? copy_len : n_freebytes;
         strncpy(p, buf4val, copy_len);

@@ -34,6 +34,7 @@ void   free      (void *ptr);
 int    abs       (int x);
 int    atoi      (const char *nptr);
 void   itoa      (int value, char * str);
+void   itox      (int value, char * str);
 
 // stdio.h
 int    printf    (const char *format, ...);

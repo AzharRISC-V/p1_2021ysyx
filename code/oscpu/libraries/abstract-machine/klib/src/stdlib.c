@@ -70,11 +70,69 @@ void itoa(int value, char * str) {
   str[n1] = 0;
 }
 
+
+/*
+  功能：  int转换为零结尾的无符号的Hex字符串
+  参数：
+    int     value   要转换的32位整数
+    char *  str     要写入的字符串缓冲区
+  返回值：
+    无
+  备注：  至多需要9个字节来产生32位整数的字符串形式
+*/
+void itox(int value, char * str) {
+  // 32位整数，最大值是 FFFFFFFF，共8位，再加一个零结束标志
+  char buf[9];
+  int n = 0;    // buf的写入位置
+  int n1 = 0;   // str的写入位置
+  uint32_t uval = (uint32_t)value;
+  
+  // 倒序存入
+  int rem = 0;
+  char c = 0;
+  while (true) {
+    rem = uval % 16;
+    if (rem > 9) c = (rem - 10) + 'A';
+    else c = rem + '0';
+    buf[n++] = c;
+    uval = uval / 16;
+    if (!uval) {
+      break;
+    }
+  }
+  // 正序输出
+  for (; n > 0; n--) {
+    str[n1++] = buf[n - 1];
+  }
+  str[n1] = 0;
+}
+
+// 一个内存块
+typedef struct {
+  char *  pstart;
+  size_t  size;
+} memBlk;
+
+// static char * s_pfree = 0;    // 指向空闲区域
+
 void *malloc(size_t size) {
-  panic("Not implemented");
+  size = (size + 0xf) & ~0xf;   // aligned to 16 Byte
+  if (heap.end - heap.start >= size) {
+    //printf("malloc %x bytes at %x\n", size, heap.start);
+
+    char * pstart = heap.start;
+    heap.start += size;
+    return pstart;
+  } else {
+    panic_on(0, "Run out of memory!");
+    return NULL;
+  }
+
+  //panic("Not implemented");
 }
 
 void free(void *ptr) {
+
 }
 
 #endif
