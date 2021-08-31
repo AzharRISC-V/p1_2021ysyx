@@ -15,6 +15,8 @@ Area heap = RANGE(&_heap_start, PMEM_END);
 static const char mainargs[] = MAINARGS;
 
 void putch(char ch) {
+  // char * s = ".word 0x00000007";
+  // asm volatile (s);
   asm volatile("mv a0, %0; .word 0x00000007" : : "r"(ch));
 }
 
