@@ -21,3 +21,6 @@ clean: myclean
 
 myclean:
 	-rm -rf ./nes/gen
+
+install:
+	@cp build/* ../../bin/ 2>/dev/null
