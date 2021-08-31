@@ -81,6 +81,7 @@ wire [`BUS_64]          rs1_data;
 wire [`BUS_64]          rs2_data;
 // regfile -> difftest
 wire [`BUS_64]          regs[0 : 31];
+wire [`BUS_64]          csrs[0 :  7];
 
 // exe_stage
 // exe_stage -> other stage
@@ -226,13 +227,18 @@ regfile Regfile(
   .rd_data            (rd_wdata         ),
   .rd_wen             (rd_wen           ),
   .sig_wb_ok          (sig_wb_ok        ),
+  .regs_o             (regs             )
+);
+
+csrfile Csrfile(
+  .clk                (clock            ),
+  .rst                (reset            ),
   .csr_addr           (csr_addr         ),
   .csr_op             (csr_op           ),
   .csr_wdata          (csr_wdata        ),
   .csr_rdata          (csr_rdata        ),
-  .regs_o             (regs             )
+  .csrs_o             (csrs             )
 );
-
 
 // Difftest
 reg                   cmt_wen;        // commit write enable
@@ -247,13 +253,14 @@ reg   [7:0]           trap_code;
 reg   [`BUS_64]       cycleCnt;
 reg   [`BUS_64]       instrCnt;
 reg   [`BUS_64]       regs_diff [0 : 31];
+reg   [`BUS_64]       csrs_diff [0 : 7];
 
 
 wire inst_valid = ((pc != `PC_START) | (inst != 0)) & (instcycle_cnt_val == 4);
 
 // 让REF跳过指令的情况：
 // 1. putch: inst==7
-wire inst_skip = (inst == 7);
+wire inst_skip = (inst == 7) | (opcode == `OPCODE_CSR);
 
 always @(posedge clock) begin
   if (reset) begin
@@ -270,6 +277,7 @@ always @(posedge clock) begin
     cmt_valid <= inst_valid;
 
 		regs_diff <= regs;
+		csrs_diff <= csrs;
 
     trap <= inst[6:0] == 7'h6b;
     trap_code <= regs[10][7:0];
@@ -344,7 +352,7 @@ DifftestCSRState DifftestCSRState(
   .clock              (clock),
   .coreid             (0),
   .priviledgeMode     (`RISCV_PRIV_MODE_M),
-  .mstatus            (64'h00000000_00001800),
+  .mstatus            (csrs[`CSR_IDX_MSTATUS]),
   .sstatus            (0),
   .mepc               (0),
   .sepc               (0),

@@ -16,8 +16,13 @@
 `define BUS_32              31:0
 `define BUS_64              63:0
 
+// CSR
 `define BUS_CSR_ADDR        11 : 0          // CSR存储器地址
 
+// CSR index in local memory
+`define CSR_IDX_NONE        0
+`define CSR_IDX_MSTATUS     1
+`define CSR_IDX_MCYCLE      2
 
 // 寄存器配置
 `define REG_BITS            64              // 寄存器位数
