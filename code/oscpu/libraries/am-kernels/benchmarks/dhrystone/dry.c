@@ -358,7 +358,7 @@ static uint32_t uptime_ms() { return io_read(AM_TIMER_UPTIME).us / 1000; }
 #define Start_Timer() Begin_Time = uptime_ms()
 #define Stop_Timer()  End_Time   = uptime_ms()
 
-#define NUMBER_OF_RUNS		500000 /* Default number of runs */
+#define NUMBER_OF_RUNS		50000 //500000 /* Default number of runs */
 #define PASS2
 
 #ifdef  NOSTRUCTASSIGN

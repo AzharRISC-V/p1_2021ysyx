@@ -130,3 +130,6 @@ hello-str string
 使用 make mainargs=xxx 即可
 具体参考 am/srcipts/riscv64-mycpu.mk line:22
 
+7. am-kernels/benchmarks测试
+coremark    100次     75s
+dhrystone   50000次   40s
