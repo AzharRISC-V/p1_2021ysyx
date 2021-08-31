@@ -11,6 +11,8 @@
 `define RISCV_PRIV_MODE_S   1
 `define RISCV_PRIV_MODE_M   3
 
+`define CLOCKS_PER_SECOND   64'd240_0000        // 每秒的clock数，约400万
+
 `define BUS_8               7:0
 `define BUS_16              15:0
 `define BUS_32              31:0

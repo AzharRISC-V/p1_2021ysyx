@@ -36,7 +36,7 @@ always @(negedge clk) begin
   end
   else begin
     clk_cnt += 1;
-    if (clk_cnt == 64'd3000000) begin
+    if (clk_cnt == `CLOCKS_PER_SECOND) begin
       clk_cnt = 0;
       second += 1;
       if (second == 60) begin
