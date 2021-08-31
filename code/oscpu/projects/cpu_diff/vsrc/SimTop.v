@@ -75,6 +75,7 @@ wire [6 : 0]            funct7;
 wire [`BUS_64]          op1;
 wire [`BUS_64]          op2;
 wire [`BUS_64]          t1;   // temp1
+wire                    skip_difftest;
 
 // regfile -> id_stage
 wire [`BUS_64]          rs1_data;
@@ -93,11 +94,10 @@ wire                    ex_rd_wen_o;
 wire [`BUS_64]          ex_rd_wdata_o;
 
 // mem_stage
+wire [`BUS_64]          mem_addr;
 wire                    mem_ren;
-wire [`BUS_64]          mem_raddr;
 reg  [`BUS_64]          mem_rdata;
 wire                    mem_wen;
-wire [`BUS_64]          mem_waddr;
 wire [`BUS_64]          mem_wdata;
 
 // wb_stage
@@ -150,10 +150,9 @@ id_stage Id_stage(
   .rs2_ren            (rs2_ren          ),
   .rs2                (rs2              ),
   .rd                 (rd               ),
+  .mem_addr           (mem_addr         ),
   .mem_ren            (mem_ren          ),
-  .mem_raddr          (mem_raddr        ),
   .mem_wen            (mem_wen          ),
-  .mem_waddr          (mem_waddr        ),
   .mem_wdata          (mem_wdata        ),
   .itype              (itype            ),
   .opcode             (opcode           ),
@@ -165,7 +164,8 @@ id_stage Id_stage(
   .csr_addr           (csr_addr         ),
   .csr_op             (csr_op           ),
   .csr_wdata          (csr_wdata        ),
-  .csr_rdata          (csr_rdata        )
+  .csr_rdata          (csr_rdata        ),
+  .skip_difftest      (skip_difftest    )
 );
 
 exe_stage Exe_stage(
@@ -191,12 +191,11 @@ mem_stage Mem_stage(
   .instcycle_cnt_val  (instcycle_cnt_val  ),
   .sig_memread_ok     (sig_memread_ok   ),     
   .sig_memwrite_ok    (sig_memwrite_ok  ), 
+  .addr               (mem_addr         ),
   .ren                (mem_ren          ),
-  .raddr              (mem_raddr        ),
   .funct3             (funct3           ),
   .rdata              (mem_rdata        ),
   .wen                (mem_wen          ),
-  .waddr              (mem_waddr        ),
   .wdata              (mem_wdata        )
 );
     
@@ -258,10 +257,6 @@ reg   [`BUS_64]       csrs_diff [0 : 7];
 
 wire inst_valid = ((pc != `PC_START) | (inst != 0)) & (instcycle_cnt_val == 4);
 
-// 让REF跳过指令的情况：
-// 1. putch: inst==7
-wire inst_skip = (inst == 7) | (opcode == `OPCODE_CSR);
-
 always @(posedge clock) begin
   if (reset) begin
     {cmt_wen, cmt_wdest, cmt_wdata, cmt_pc, cmt_inst, cmt_valid, cmt_skip, trap, trap_code, cycleCnt, instrCnt} <= 0;
@@ -272,7 +267,7 @@ always @(posedge clock) begin
     cmt_wdata <= rd_wdata;
     cmt_pc <= pc;
     cmt_inst <= inst;
-    cmt_skip <= inst_skip;
+    cmt_skip <= skip_difftest;
 
     cmt_valid <= inst_valid;
 

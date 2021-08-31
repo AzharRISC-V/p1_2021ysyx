@@ -24,9 +24,8 @@ module id_stage(
   output  wire  [4 : 0]         rd,
 
   output  wire                  mem_ren,
-  output  wire  [`BUS_64]       mem_raddr,
+  output  wire  [`BUS_64]       mem_addr,
   output  wire                  mem_wen,
-  output  wire  [`BUS_64]       mem_waddr,
   output  wire  [`BUS_64]       mem_wdata,
 
   output  reg   [11 : 0]        csr_addr,
@@ -40,7 +39,9 @@ module id_stage(
   output  wire  [6 : 0]         funct7,
   output  wire  [`BUS_64]       op1,            // 两个操作数
   output  wire  [`BUS_64]       op2,
-  output  wire  [`BUS_64]       t1
+  output  wire  [`BUS_64]       t1,
+
+  output  wire                  skip_difftest
 );
 
 // Indicate that if ID is working
@@ -186,9 +187,8 @@ always@(*) begin
   end
 end
 
-// mem_raddr
-//assign mem_raddr = (rs1_data + imm);
-assign mem_raddr = ($signed(rs1_data) + $signed(imm));
+// mem_addr
+assign mem_addr = (mem_ren | mem_wen) ? $signed(rs1_data) + $signed(imm) : 0;
 
 // mem_wen
 always@(*) begin
@@ -197,9 +197,6 @@ always@(*) begin
   else
     mem_wen = (itype == `INST_S_TYPE) ? 1 : 0;
 end
-
-// mem_waddr
-assign mem_waddr = ($signed(rs1_data) + $signed(imm));
 
 // mem_wdata
 assign mem_wdata = (rs2_data);
@@ -315,4 +312,13 @@ always@(*) begin
   end
 end
 
+// 让REF跳过指令比对
+wire mem_addr_is_device = (mem_addr & ~(64'hFFF)) == 64'h2000_0000;
+
+assign skip_difftest = 
+  (inst == 7)                 // putch
+  | (opcode == `OPCODE_CSR)   
+  | mem_addr_is_device
+  ;
+  
 endmodule

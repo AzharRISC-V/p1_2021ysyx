@@ -144,3 +144,9 @@
 `define FUNCT3_SLLW         3'b001
 `define FUNCT3_SRLW         3'b101
 `define FUNCT3_SRAW         3'b101
+
+
+// Devices
+`define DEV_BASEADDR        64'h00000000_20000000
+`define DEV_RTC_OFFSET      64'h100
+`define DEV_RTC             (`DEV_BASEADDR + `DEV_RTC_OFFSET)
