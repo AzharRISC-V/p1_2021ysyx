@@ -220,7 +220,9 @@ inline void Emulator::single_cycle() {
 #endif
 
 #if VM_TRACE == 1
+  if (enable_waveform) {
   tfp->dump(main_ticks++);
+  }
 #endif
 
   dut_ptr->clock = 1;
@@ -235,7 +237,9 @@ inline void Emulator::single_cycle() {
 #endif
 
 #if VM_TRACE == 1
+  if (enable_waveform) {
   tfp->dump(main_ticks++);
+  }
 #endif
 
   if (dut_ptr->io_uart_out_valid) {
