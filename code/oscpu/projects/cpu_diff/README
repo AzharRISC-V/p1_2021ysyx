@@ -133,3 +133,4 @@ hello-str string
 7. am-kernels/benchmarks测试
 coremark    100次     75s
 dhrystone   50000次   40s
+microbench  在默认ref参数下，bf测试通不过(太久了），fib测试稍久，其余的都很快
