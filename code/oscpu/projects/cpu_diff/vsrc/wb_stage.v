@@ -10,7 +10,6 @@
 module wb_stage(
   input   wire                  clk,
   input   wire                  rst,
-  input   wire [`BUS_8]         instcycle_cnt_val,
 
   input   wire                  ex_wen_i      ,   // EX后的写回
   input   wire  [`BUS_64]       ex_wdata_i    ,   
@@ -23,13 +22,9 @@ module wb_stage(
   output  wire  [`BUS_64]       wdata_o
 );
 
-// Indicate that if WB is working
-wire wb_active = (instcycle_cnt_val == 4);
-wire wb_inactive = !wb_active;
-
 // 写使能
 always @(*) begin
-  if (wb_inactive) begin
+  if (rst) begin
     wen_o = 0;
   end
   else begin

@@ -137,7 +137,7 @@ wire [`BUS_64] wdata1 = (!wen_unit1) ? 0 : wdata << bit_offset1;
 wire [`BUS_64] wdata2 = (!wen_unit2) ? 0 : wdata >> bit_offset2;
 
 // 写入
-always @(posedge clk) begin
+always @(negedge clk) begin
   if (wen_unit1) begin
     ram_write_helper(show_dbg, addr1, wdata1, wmask1, wen_unit1);
     if (show_dbg) begin

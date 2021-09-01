@@ -7,12 +7,12 @@ module if_stage(
   input   wire  [`BUS_64]       clk_cnt,
   input   wire                  clk,
   input   wire                  rst,
-  input   wire [`BUS_8]         instcycle_cnt_val,
+  input   wire                  finished,     // 上一条指令是否已经完成？
 
   input   wire                  pc_jmp,
   input   wire  [`BUS_64]       pc_jmpaddr,
 
-  output  reg   [`BUS_64]       pc_cur,
+  output  reg   [`BUS_64]       pc_old,
   output  reg   [`BUS_64]       pc,
   output  reg   [`BUS_32]       inst
 
@@ -21,24 +21,22 @@ module if_stage(
 
 // fetch an instruction
 always@(posedge clk) begin
-  if( rst == 1'b1 ) begin
-    pc_cur = `PC_START_RESET;
-    pc = `PC_START_RESET;
+  if(rst) begin
+    pc_old    <= 0;
+    pc        <= `PC_START_RESET;
   end
   else begin
-    if (instcycle_cnt_val == 3) begin
-      pc_cur = pc;
-      if (pc_jmp == 1'b1)
-        pc = pc_jmpaddr;
-      else
-        pc = pc + 4;
+    if (finished) begin
+      pc_old  <= pc;
+      pc      <= pc_jmp ? pc_jmpaddr : (pc + 4);
     end
   end
 end
 
 // Access memory
 reg [`BUS_64] two_inst_data;
-RAMHelper RAMHelper(
+
+RAMHelper InstMemory(
   .show_dbg         (0),
   .clk              (clk),
   .en               (1),
@@ -49,6 +47,7 @@ RAMHelper RAMHelper(
   .wmask            (0),
   .wen              (0)
 );
+
 
 // PC是4的倍数，形式为
 // PC             低16位

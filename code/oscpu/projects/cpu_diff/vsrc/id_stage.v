@@ -6,7 +6,6 @@
 module id_stage(
   input   wire                  clk,
   input   wire                  rst,
-  input   wire [`BUS_8]         instcycle_cnt_val,
   input   wire  [`BUS_32]       inst,
 
   output  reg                   sig_memread,
@@ -14,7 +13,7 @@ module id_stage(
 
   input   wire  [`BUS_64]       rs1_data,
   input   wire  [`BUS_64]       rs2_data,
-  input   wire  [`BUS_64]       pc_cur,
+  input   wire  [`BUS_64]       pc_old,
   input   wire  [`BUS_64]       pc,
 
   output  wire                  rs1_ren,
@@ -44,10 +43,6 @@ module id_stage(
   output  wire                  skip_difftest
 );
 
-// Indicate that if ID is working
-wire id_active = (instcycle_cnt_val == 4);
-wire id_inactive = !id_active;
-
 // decode
 wire [`BUS_64]imm;           // 带符号扩展的imm
 
@@ -61,37 +56,37 @@ wire [`BUS_32]J_imm;
 wire  [5 : 0]   shamt;
 wire  [`BUS_64] shamt_64;   // 扩展为64位后的值
 
-assign opcode = id_inactive ? 0 : inst[6  :  2];
-assign rd     = id_inactive ? 0 : inst[11 :  7];
-assign funct3 = id_inactive ? 0 : inst[14 : 12];
-assign rs1    = id_inactive ? 0 : inst[19 : 15];
-assign rs2    = id_inactive ? 0 : inst[24 : 20];
-assign funct7 = id_inactive ? 0 : inst[31 : 25];
+assign opcode = rst ? 0 : inst[6  :  2];
+assign rd     = rst ? 0 : inst[11 :  7];
+assign funct3 = rst ? 0 : inst[14 : 12];
+assign rs1    = rst ? 0 : inst[19 : 15];
+assign rs2    = rst ? 0 : inst[24 : 20];
+assign funct7 = rst ? 0 : inst[31 : 25];
 
-assign R_imm  = id_inactive ? 0 : 0;
-assign I_imm  = id_inactive ? 0 : { {20{inst[31]}}, inst[31 : 20] };
-assign S_imm  = id_inactive ? 0 : { {20{inst[31]}}, inst[31 : 25], inst[11 : 7] };
-assign B_imm  = id_inactive ? 0 : { {20{inst[31]}}, inst[7], inst[30 : 25], inst[11 : 8], 1'b0 };
-assign U_imm  = id_inactive ? 0 : { inst[31 : 12], 12'b0 };
-assign J_imm  = id_inactive ? 0 : { {12{inst[31]}}, inst[19 : 12], inst[20], inst[30 : 21], 1'b0 };
+assign R_imm  = rst ? 0 : 0;
+assign I_imm  = rst ? 0 : { {20{inst[31]}}, inst[31 : 20] };
+assign S_imm  = rst ? 0 : { {20{inst[31]}}, inst[31 : 25], inst[11 : 7] };
+assign B_imm  = rst ? 0 : { {20{inst[31]}}, inst[7], inst[30 : 25], inst[11 : 8], 1'b0 };
+assign U_imm  = rst ? 0 : { inst[31 : 12], 12'b0 };
+assign J_imm  = rst ? 0 : { {12{inst[31]}}, inst[19 : 12], inst[20], inst[30 : 21], 1'b0 };
 
-assign shamt  = id_inactive ? 0 : inst[25 : 20];
+assign shamt  = rst ? 0 : inst[25 : 20];
 assign shamt_64 = {58'd0, shamt};
 
 // sig_memread, sig_memwrite
-assign sig_memread  = id_inactive ? 0 : (opcode == `OPCODE_LB);
-assign sig_memwrite = id_inactive ? 0 : (opcode == `OPCODE_SB);
+assign sig_memread  = rst ? 0 : (opcode == `OPCODE_LB);
+assign sig_memwrite = rst ? 0 : (opcode == `OPCODE_SB);
 
 // inst-type
 
 // // 以后有机会再优化这部分组合逻辑
 // // (区分6种类型)
-// wire itype_R = id_inactive ? 0 : (opcode == `OPCODE_ADD );
-// wire itype_I = id_inactive ? 0 : (opcode == `OPCODE_JALR) || (opcode == `OPCODE_LB   ) || (opcode == `OPCODE_ADDI ) || (opcode == `OPCODE_FENCE) || (opcode == `OPCODE_ENV);
-// wire itype_U = id_inactive ? 0 : (opcode == `OPCODE_LUI ) || (opcode == `OPCODE_AUIPC);
-// wire itype_S = id_inactive ? 0 : (opcode == `OPCODE_SB  );
-// wire itype_B = id_inactive ? 0 : (opcode == `OPCODE_BEQ );
-// wire itype_J = id_inactive ? 0 : (opcode == `OPCODE_JAL );
+// wire itype_R = rst ? 0 : (opcode == `OPCODE_ADD );
+// wire itype_I = rst ? 0 : (opcode == `OPCODE_JALR) || (opcode == `OPCODE_LB   ) || (opcode == `OPCODE_ADDI ) || (opcode == `OPCODE_FENCE) || (opcode == `OPCODE_ENV);
+// wire itype_U = rst ? 0 : (opcode == `OPCODE_LUI ) || (opcode == `OPCODE_AUIPC);
+// wire itype_S = rst ? 0 : (opcode == `OPCODE_SB  );
+// wire itype_B = rst ? 0 : (opcode == `OPCODE_BEQ );
+// wire itype_J = rst ? 0 : (opcode == `OPCODE_JAL );
 // // (转换为0~5的数字)
 // wire [2:0] itype_R_val = 0;
 // wire [2:0] itype_I_val = itype_I ? 1 : 0;
@@ -128,7 +123,7 @@ end
 // 立即数的值
 reg [`BUS_32]imm0;
 always@(*) begin
-  if (id_inactive)
+  if (rst)
     imm0 = 0;
   else begin
     case (itype)
@@ -145,41 +140,37 @@ end
 assign imm = {{32{imm0[31]}}, imm0};
 
 // rs1读使能
-reg rs1_ren0;
-always@(*) begin
-  if (id_inactive) 
-    rs1_ren0 = 0;
+always @(*) begin
+  if (rst) 
+    rs1_ren = 0;
   else begin
     case (itype)
-      `INST_R_TYPE  : rs1_ren0 = 1;
-      `INST_I_TYPE  : rs1_ren0 = 1;
-      `INST_S_TYPE  : rs1_ren0 = 1;
-      `INST_B_TYPE  : rs1_ren0 = 1;
-      default       : rs1_ren0 = 0;
+      `INST_R_TYPE  : rs1_ren = 1;
+      `INST_I_TYPE  : rs1_ren = 1;
+      `INST_S_TYPE  : rs1_ren = 1;
+      `INST_B_TYPE  : rs1_ren = 1;
+      default       : rs1_ren = 0;
     endcase
   end
 end
-assign rs1_ren = rs1_ren0;
 
 // rs2读使能
-reg rs2_ren0;
-always@(*) begin
-  if (id_inactive)
-    rs2_ren0 = 0;
+always @(*) begin
+  if (rst)
+    rs2_ren = 0;
   else begin
     case (itype)
-      `INST_R_TYPE  : rs2_ren0 = 1;
-      `INST_S_TYPE  : rs2_ren0 = 1;
-      `INST_B_TYPE  : rs2_ren0 = 1;
-      default       : rs2_ren0 = 0;
+      `INST_R_TYPE  : rs2_ren = 1;
+      `INST_S_TYPE  : rs2_ren = 1;
+      `INST_B_TYPE  : rs2_ren = 1;
+      default       : rs2_ren = 0;
     endcase
   end
 end
-assign rs2_ren = rs2_ren0;
 
 // mem_ren
-always@(*) begin
-  if (id_inactive) begin
+always @(*) begin
+  if (rst) begin
     mem_ren = 0;
   end
   else begin
@@ -191,19 +182,25 @@ end
 assign mem_addr = (mem_ren | mem_wen) ? $signed(rs1_data) + $signed(imm) : 0;
 
 // mem_wen
-always@(*) begin
-  if (id_inactive) 
+always @(*) begin
+  if (rst) 
     mem_wen = 0;
   else
     mem_wen = (itype == `INST_S_TYPE) ? 1 : 0;
 end
 
 // mem_wdata
-assign mem_wdata = (rs2_data);
+always @(*) begin
+  if (rst)
+    mem_wdata = 0;
+  else begin
+    mem_wdata = rs2_data;
+  end
+end
 
 // op1
-always@(*) begin
-  if (id_inactive) 
+always @(*) begin
+  if (rst) 
     op1 = 0;
   else begin
     case (itype)
@@ -222,8 +219,8 @@ always@(*) begin
 end
 
 // op2
-always@(*) begin
-  if (id_inactive) 
+always @(*) begin
+  if (rst) 
     op2 = 0;
   else begin
     case (itype)
@@ -247,8 +244,8 @@ always@(*) begin
 end
 
 // t1
-always@(*) begin
-  if (id_inactive) 
+always @(*) begin
+  if (rst) 
     t1 = 0;
   else begin
     case (opcode)
@@ -262,8 +259,8 @@ end
 // ------------- csr -----------------
 
 // csr_op
-always@(*) begin
-  if (id_inactive)
+always @(*) begin
+  if (rst)
     csr_op = 0;
   else begin
     if (opcode == `OPCODE_CSR) begin
@@ -289,8 +286,10 @@ wire csr_inactive = csr_op == 2'b00;
 // csr_addr
 assign csr_addr = csr_inactive ?  0 : inst[31 : 20];
 
-// csr_wdata
+// csr_zimm
 wire [`BUS_64] csr_zimm = csr_inactive ? 0 : {{60{inst[19]}}, inst[18:15]};
+
+// csr_wdata
 always@(*) begin
   if (csr_inactive)
     csr_wdata = 0;
@@ -315,6 +314,7 @@ end
 // 让REF跳过指令比对
 wire mem_addr_is_device = (mem_addr & ~(64'hFFF)) == 64'h2000_0000;
 
+// skip_difftest
 assign skip_difftest = 
   (inst == 7)                 // putch
   | (opcode == `OPCODE_CSR)   

@@ -7,7 +7,6 @@ module mem_stage(
   input   wire  [`BUS_64]       clk_cnt,
   input   wire                  clk,
   input   wire                  rst,
-  input   wire [`BUS_8]         instcycle_cnt_val,
 
   output  wire                  sig_memread_ok,
   output  wire                  sig_memwrite_ok,

@@ -19,19 +19,6 @@ module SimTop(
     input   [7:0]       io_uart_in_ch
 );
 
-// A counter for controlling IF actions
-reg                     instcycle_cnt_clear;
-wire  [`BUS_8]          instcycle_cnt_val;
-
-counter InstCycleCunter (
-  .clk                  (clock                  ),
-  .rst                  (reset                  ),
-  .clear                (instcycle_cnt_clear    ),
-  .min                  (3                      ),
-  .max                  (4                      ),
-  .val                  (instcycle_cnt_val      )
-);
-
 // Global counter
 reg [`BUS_64]           clk_cnt;
 always @(posedge clock) begin
@@ -40,7 +27,7 @@ end
 
 // Special Instruction: putch a0
 always @(posedge clock) begin
-  if ((inst == 7) && (instcycle_cnt_val == 4)) begin
+  if (inst == 7) begin
     $write("%c", regs[10][7:0]);
   end
 end
@@ -54,9 +41,10 @@ reg                     sig_wb;
 wire                    sig_wb_ok;
   
 // if_stage
+wire                    inst_finished = 1;
 wire                    pc_jmp;
 wire [`BUS_64]          pc_jmpaddr;
-wire [`BUS_64]          pc_cur;
+wire [`BUS_64]          pc_old;
 wire [`BUS_64]          pc;
 wire [`BUS_32]          inst;
 wire                    inst_start;
@@ -126,10 +114,10 @@ if_stage If_stage(
   .clk_cnt            (clk_cnt          ),
   .clk                (clock              ),
   .rst                (reset              ),
-  .instcycle_cnt_val  (instcycle_cnt_val  ),
+  .finished           (inst_finished      ),
   .pc_jmp             (pc_jmp_o         ),
   .pc_jmpaddr         (pc_jmpaddr_o     ),
-  .pc_cur             (pc_cur           ),
+  .pc_old             (pc_old           ),
   .pc                 (pc               ),
   .inst               (inst             )
 );
@@ -137,13 +125,12 @@ if_stage If_stage(
 id_stage Id_stage(
   .clk                (clock            ),
   .rst                (reset            ),
-  .instcycle_cnt_val  (instcycle_cnt_val  ),
   .inst               (inst             ),
   .sig_memread        (sig_memread      ),     
   .sig_memwrite       (sig_memwrite     ),  
   .rs1_data           (rs1_data         ),
   .rs2_data           (rs2_data         ),
-  .pc_cur             (pc_cur           ),
+  .pc_old             (pc_old           ),
   .pc                 (pc               ),
   .rs1_ren            (rs1_ren          ),
   .rs1                (rs1              ),
@@ -171,7 +158,6 @@ id_stage Id_stage(
 exe_stage Exe_stage(
   .clk                (clock            ),
   .rst                (reset            ),
-  .instcycle_cnt_val  (instcycle_cnt_val  ),
   .opcode_i           (opcode           ),
   .funct3_i           (funct3           ),
   .funct7_i           (funct7           ),
@@ -188,7 +174,6 @@ mem_stage Mem_stage(
   .clk_cnt            (clk_cnt          ),
   .clk                (clock            ),
   .rst                (reset            ),
-  .instcycle_cnt_val  (instcycle_cnt_val  ),
   .sig_memread_ok     (sig_memread_ok   ),     
   .sig_memwrite_ok    (sig_memwrite_ok  ), 
   .addr               (mem_addr         ),
@@ -202,7 +187,6 @@ mem_stage Mem_stage(
 wb_stage Wb_stage(
   .clk                (clock            ),
   .rst                (reset            ),
-  .instcycle_cnt_val  (instcycle_cnt_val  ),
   .ex_wen_i           (ex_rd_wen_o      ),
   .ex_wdata_i         (ex_rd_wdata_o    ),
   .mem_wen_i          (sig_memread_ok   ),
@@ -255,9 +239,9 @@ reg   [`BUS_64]       regs_diff [0 : 31];
 reg   [`BUS_64]       csrs_diff [0 : 7];
 
 
-wire inst_valid = ((pc != `PC_START) | (inst != 0)) & (instcycle_cnt_val == 4);
+wire inst_valid = ((pc != `PC_START) | (inst != 0));
 
-always @(posedge clock) begin
+always @(negedge clock) begin
   if (reset) begin
     {cmt_wen, cmt_wdest, cmt_wdata, cmt_pc, cmt_inst, cmt_valid, cmt_skip, trap, trap_code, cycleCnt, instrCnt} <= 0;
   end
@@ -267,7 +251,7 @@ always @(posedge clock) begin
     cmt_wdata <= rd_wdata;
     cmt_pc <= pc;
     cmt_inst <= inst;
-    cmt_skip <= skip_difftest;
+    cmt_skip <= 0;// skip_difftest;
 
     cmt_valid <= inst_valid;
 
