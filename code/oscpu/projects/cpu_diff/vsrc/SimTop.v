@@ -26,11 +26,19 @@ always @(posedge clock) begin
 end
 
 // Special Instruction: putch a0
-always @(posedge clock) begin
-  if (inst == 7) begin
-    $write("%c", regs[10][7:0]);
-  end
-end
+wire            putch_wen     = inst == 7;
+wire [7 : 0]    putch_wdata   = (!putch_wen) ? 0 : (regs[10][7:0]); 
+putch Putch(
+  .clk                (clock            ),
+  .rst                (reset            ),
+  .wen                (putch_wen        ),
+  .wdata              (putch_wdata      ) 
+);
+// always @(posedge clock) begin
+//   if (inst == 7) begin
+//     $write("%c", regs[10][7:0]);
+//   end
+// end
 
 // State
 reg                     sig_memread;
@@ -251,7 +259,7 @@ always @(negedge clock) begin
     cmt_wdata <= rd_wdata;
     cmt_pc <= pc;
     cmt_inst <= inst;
-    cmt_skip <= 0;// skip_difftest;
+    cmt_skip <= skip_difftest;
 
     cmt_valid <= inst_valid;
 

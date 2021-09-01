@@ -2,7 +2,29 @@
 
 char buf[128];
 
+//不设置noinline属性的话，会被gcc内联到每个调用语句处的，空间换时间的优化
+void mydl(uint64_t tm) __attribute__ ((noinline));    
+void mydl(uint64_t tm) {
+  for(uint64_t i = tm; i != 0;) {
+    asm volatile("");    //这句是根据avrgcc改的
+    i--;
+  }
+}
+
 int main() {
+
+  for (int i = 0; i < 100; i++) {
+    //printf("%d\n", i);
+    putch('a' + (i%10));
+    mydl(10000);
+    if ((i + 1) % 10 == 0) {
+      putch('\n');
+    }
+  }
+  putch('\n');
+
+  putch('b');
+  putch('c');
   printf("===TEST Started!\n");
 
 	sprintf(buf, "%s", "Hello world!\n");
