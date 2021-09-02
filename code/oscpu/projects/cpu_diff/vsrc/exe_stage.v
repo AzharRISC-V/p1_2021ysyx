@@ -157,7 +157,7 @@ always @(*) begin
           `FUNCT3_BLT     : begin pc_jmp = ($signed(op1) < $signed(op2)) ? 1 : 0; end
           `FUNCT3_BGE     : begin pc_jmp = ($signed(op1) >= $signed(op2)) ? 1 : 0; end
           `FUNCT3_BLTU    : begin pc_jmp = (op1 < op2) ? 1 : 0; end
-          `FUNCT3_BGEU    : begin pc_jmp = ($signed(op1) >= $signed(op2)) ? 1 : 0; end
+          `FUNCT3_BGEU    : begin pc_jmp = (op1 >= op2) ? 1 : 0; end
           default         : begin pc_jmp = 0; end
         endcase
         pc_jmpaddr = t1; 
