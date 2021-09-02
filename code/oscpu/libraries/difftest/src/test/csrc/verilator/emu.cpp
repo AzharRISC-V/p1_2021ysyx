@@ -106,6 +106,8 @@ inline EmuArgs parse_args(int argc, const char *argv[]) {
     }
   }
 
+  printf("EMU, dump:%d, log_begin:%ld, log_end:%ld\n", args.enable_waveform, args.log_begin, args.log_end);
+
   Verilated::commandArgs(argc, argv); // Prepare extra args for TLMonitor
   return args;
 }
@@ -221,7 +223,10 @@ inline void Emulator::single_cycle() {
 
 #if VM_TRACE == 1
   if (enable_waveform) {
-  tfp->dump(main_ticks++);
+    main_ticks++;
+    if (main_ticks > args.log_begin && main_ticks < args.log_end) {
+      tfp->dump(main_ticks);
+    }
   }
 #endif
 
@@ -238,7 +243,10 @@ inline void Emulator::single_cycle() {
 
 #if VM_TRACE == 1
   if (enable_waveform) {
-  tfp->dump(main_ticks++);
+    main_ticks++;
+    if (main_ticks > args.log_begin && main_ticks < args.log_end) {
+      tfp->dump(main_ticks);
+    }
   }
 #endif
 

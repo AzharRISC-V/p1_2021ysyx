@@ -1,6 +1,9 @@
 
 ALL ?= inst_diff
 
+START ?= 1
+END ?= -1
+
 ifeq ($(ALL), inst_diff)
 	ALLBIN := $(ALL)
 else
@@ -9,7 +12,7 @@ endif
 
 # build and run
 app:
-	./build.sh -e cpu_diff -d -b -m "EMU_TRACE=1" -s -a "-i $(ALLBIN).bin --dump-wave -b 0"
+	./build.sh -e cpu_diff -d -b -m "EMU_TRACE=1" -s -a "-i $(ALLBIN).bin --dump-wave -b $(START) -e $(END)"
 
 # run without dump
 run:
@@ -17,7 +20,7 @@ run:
 
 # run with dump
 dump:
-	./build.sh -e cpu_diff -d -s -a "-i $(ALLBIN).bin --dump-wave -b 0"
+	./build.sh -e cpu_diff -d -s -a "-i $(ALLBIN).bin --dump-wave -b $(START) -e $(END)"
 
 # run all
 run-all:
