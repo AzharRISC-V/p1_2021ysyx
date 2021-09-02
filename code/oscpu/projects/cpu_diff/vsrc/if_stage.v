@@ -7,7 +7,6 @@ module if_stage(
   input   wire  [`BUS_64]       clk_cnt,
   input   wire                  clk,
   input   wire                  rst,
-  input   wire                  finished,     // 上一条指令是否已经完成？
 
   input   wire                  pc_jmp,
   input   wire  [`BUS_64]       pc_jmpaddr,
@@ -26,10 +25,8 @@ always@(posedge clk) begin
     pc        <= `PC_START_RESET;
   end
   else begin
-    if (finished) begin
-      pc_old  <= pc;
-      pc      <= pc_jmp ? pc_jmpaddr : (pc + 4);
-    end
+    pc_old  <= pc;
+    pc      <= pc_jmp ? pc_jmpaddr : (pc + 4);
   end
 end
 

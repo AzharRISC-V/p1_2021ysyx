@@ -8,15 +8,12 @@ module id_stage(
   input   wire                  rst,
   input   wire  [`BUS_32]       inst,
 
-  output  reg                   sig_memread,
-  output  reg                   sig_memwrite,
-
   input   wire  [`BUS_64]       rs1_data,
   input   wire  [`BUS_64]       rs2_data,
   input   wire  [`BUS_64]       pc_old,
   input   wire  [`BUS_64]       pc,
 
-  output  wire                  rs1_ren,
+  output  reg                   rs1_ren,
   output  wire  [4 : 0]         rs1,
   output  wire                  rs2_ren,
   output  wire  [4 : 0]         rs2,
@@ -72,10 +69,6 @@ assign J_imm  = rst ? 0 : { {12{inst[31]}}, inst[19 : 12], inst[20], inst[30 : 2
 
 assign shamt  = rst ? 0 : inst[25 : 20];
 assign shamt_64 = {58'd0, shamt};
-
-// sig_memread, sig_memwrite
-assign sig_memread  = rst ? 0 : (opcode == `OPCODE_LB);
-assign sig_memwrite = rst ? 0 : (opcode == `OPCODE_SB);
 
 // inst-type
 

@@ -39,17 +39,8 @@ putch Putch(
 //     $write("%c", regs[10][7:0]);
 //   end
 // end
-
-// State
-reg                     sig_memread;
-wire                    sig_memwrite;
-wire                    sig_memread_ok;
-wire                    sig_memwrite_ok;
-reg                     sig_wb;
-wire                    sig_wb_ok;
   
 // if_stage
-wire                    inst_finished = 1;
 wire                    pc_jmp;
 wire [`BUS_64]          pc_jmpaddr;
 wire [`BUS_64]          pc_old;
@@ -120,9 +111,8 @@ wire [`BUS_64]          csr_rd_wdata_o = (csr_op == 2'b00) ? 0 : csr_rdata;
 
 if_stage If_stage(
   .clk_cnt            (clk_cnt          ),
-  .clk                (clock              ),
-  .rst                (reset              ),
-  .finished           (inst_finished      ),
+  .clk                (clock            ),
+  .rst                (reset            ),
   .pc_jmp             (pc_jmp_o         ),
   .pc_jmpaddr         (pc_jmpaddr_o     ),
   .pc_old             (pc_old           ),
@@ -134,8 +124,6 @@ id_stage Id_stage(
   .clk                (clock            ),
   .rst                (reset            ),
   .inst               (inst             ),
-  .sig_memread        (sig_memread      ),     
-  .sig_memwrite       (sig_memwrite     ),  
   .rs1_data           (rs1_data         ),
   .rs2_data           (rs2_data         ),
   .pc_old             (pc_old           ),
@@ -182,8 +170,6 @@ mem_stage Mem_stage(
   .clk_cnt            (clk_cnt          ),
   .clk                (clock            ),
   .rst                (reset            ),
-  .sig_memread_ok     (sig_memread_ok   ),     
-  .sig_memwrite_ok    (sig_memwrite_ok  ), 
   .addr               (mem_addr         ),
   .ren                (mem_ren          ),
   .funct3             (funct3           ),
@@ -197,7 +183,7 @@ wb_stage Wb_stage(
   .rst                (reset            ),
   .ex_wen_i           (ex_rd_wen_o      ),
   .ex_wdata_i         (ex_rd_wdata_o    ),
-  .mem_wen_i          (sig_memread_ok   ),
+  .mem_wen_i          (mem_ren          ),
   .mem_wdata_i        (mem_rdata        ),
   .csr_wen_i          (csr_rd_wen_o     ),
   .csr_wdata_i        (csr_rd_wdata_o   ),
@@ -217,7 +203,6 @@ regfile Regfile(
   .rd                 (rd               ),
   .rd_data            (rd_wdata         ),
   .rd_wen             (rd_wen           ),
-  .sig_wb_ok          (sig_wb_ok        ),
   .regs_o             (regs             )
 );
 

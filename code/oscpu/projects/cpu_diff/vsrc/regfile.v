@@ -17,7 +17,6 @@ module regfile(
   input   wire  [4  : 0]    rd,
   input   wire              rd_wen,
   input   wire  [`BUS_64]   rd_data,
-  output  wire              sig_wb_ok,
 
   // difftest
   output  wire  [`BUS_64]   regs_o[0 : 31]
@@ -70,8 +69,6 @@ begin
       regs[rd] <= rd_data;
   end
 end
-
-assign sig_wb_ok = (!rst) & (rd_wen) & (rd != 5'h00);
 
 // rs1 读取
 always @(*) begin

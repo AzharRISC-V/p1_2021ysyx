@@ -10,11 +10,8 @@ module mem_access (
   input   wire  [`BUS_64]       addr,     // 以字节为单位的访存地址
   input   wire  [2 : 0]         funct3,
 
-  output  reg                   sig_memread_ok,
-  output  reg                   sig_memwrite_ok,
-
   input   wire                  ren,      // 读使能
-  output  wire  [`BUS_64]       rdata,    // 读到的数据
+  output  reg   [`BUS_64]       rdata,    // 读到的数据
 
   input   wire  [`BUS_64]       wdata,    // 写入数据
   input   wire                  wen       // 写使能
@@ -102,16 +99,6 @@ always @(*) begin
   end
 end
 
-// 读取完成信号
-always @(*) begin
-  if (ren) begin
-    sig_memread_ok = 1;
-  end
-  else begin
-    sig_memread_ok = 0;
-  end
-end
-
 // 打印调试信息
 always @(*) begin
   if (ren_unit1 && show_dbg)
@@ -150,10 +137,6 @@ always @(negedge clk) begin
     if (show_dbg) begin
       $displayh("  MEMACC: waddr2=", addr2, " wdata2=", wdata2, " wmask2=", wmask2);
     end
-  end
-
-  if (wen) begin
-    sig_memwrite_ok = 1;
   end
 
 end

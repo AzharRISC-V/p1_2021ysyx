@@ -9,7 +9,7 @@ void rtc_test() {
   // halt(0);
 
   while (1) {
-    while(io_read(AM_TIMER_UPTIME).us / 2400000 < sec) ;
+    while(io_read(AM_TIMER_UPTIME).us / 1000000 < sec) ;
     rtc = io_read(AM_TIMER_RTC);
     //printf("%d-%d-%d %02d:%02d:%02d GMT (", rtc.year, rtc.month, rtc.day, rtc.hour, rtc.minute, rtc.second);
     printf("%d-%d-%d %d:%d:%d GMT (", rtc.year, rtc.month, rtc.day, rtc.hour, rtc.minute, rtc.second);

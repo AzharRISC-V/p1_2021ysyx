@@ -8,9 +8,6 @@ module mem_stage(
   input   wire                  clk,
   input   wire                  rst,
 
-  output  wire                  sig_memread_ok,
-  output  wire                  sig_memwrite_ok,
-
   input   wire  [`BUS_64]       addr,
   input   wire                  ren,
   input   wire  [2 : 0]         funct3,
@@ -41,16 +38,12 @@ mem_access Mem_access(
   .clk_cnt            (clk_cnt          ),
   .clk                (clk              ),
   .ren                (ren & is_mem     ),
-  .sig_memread_ok     (mem_read_ok      ),
-  .sig_memwrite_ok    (sig_memwrite_ok  ),
   .addr               (addr_0           ),
   .funct3             (funct3_0         ),
   .rdata              (mem_rdata        ),
   .wdata              (wdata            ),
   .wen                (wen & is_mem     )
 );
-
-assign sig_memread_ok = (!en) ? 0 : (is_mem ? mem_read_ok : dev_read_ok);
 
 wire   [`BUS_64] dev_rdata;
 
