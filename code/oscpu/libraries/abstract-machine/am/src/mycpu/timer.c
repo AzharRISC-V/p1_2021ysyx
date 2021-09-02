@@ -25,6 +25,14 @@ void __am_timer_uptime(AM_TIMER_UPTIME_T *uptime) {
   uptime->us = cycle * 10 / 24;
 }
 
+void __am_timer_uptime2(AM_TIMER_UPTIME_T *uptime) {
+  #define RTC_ADD         0x2000B008
+  #define TICKS_PER_US    3
+
+  uint64_t ticks = *((volatile uint64_t *)RTC_ADD);
+  uptime->us = ticks / TICKS_PER_US;
+}
+
 void __am_timer_rtc(AM_TIMER_RTC_T *rtc) {
 
   uint64_t rtc_val = *((uint64_t *)0x20000100);

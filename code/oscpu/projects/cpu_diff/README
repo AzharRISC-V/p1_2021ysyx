@@ -142,7 +142,48 @@ microbench  在默认ref参数下，bf测试通不过(太久了），fib测试�
 
 2021.09.02 改进后重新测试
 coremark    100次     37s
-coremark    1000次    ？午饭时测一下
+coremark    1000次    375s,=6min
+  Running CoreMark for 1000 iterations
+    2K performance run parameters for coremark.
+  CoreMark Size    : 666
+  Total time (ms)  : 375038
+  Iterations       : 1000
+  Compiler version : GCC9.3.0
+  seedcrc          : 0x[0]crclist       : 0x[0]crcmatrix     : 0x[0]crcstate      : 0x[0]crcfinal      : 0xFinised in 375038 ms.
+  ==================================================
+  CoreMark PASS       7 Marks
+                  vs. 100000 Marks (i7-7700K @ 4.20GHz)
+
+dhrystone   50000次   18s
+microbench            3000s,=50min
+  ======= Running MicroBench [input *ref*] =======
+  [qsort] Quick sort: * Passed.
+    min time: 10121.035 ms [43]
+  [queen] Queen placement: * Passed.
+    min time: 14573.418 ms [27]
+  [bf] Brainf**k interpreter: * Passed.
+    min time: 97555.140 ms [17]
+  [fib] Fibonacci number: * Passed.
+    min time: 2443636.967 ms [0]
+  [sieve] Eratosthenes sieve: * Passed.
+    min time: 183325.212 ms [18]
+  [15pz] A* 15-puzzle search: * Passed.
+    min time: 22925.841 ms [23]
+  [dinic] Dinic's maxflow algorithm: * Passed.
+    min time: 29258.914 ms [27]
+  [lzip] Lzip compression: * Passed.
+    min time: 27659.181 ms [24]
+  [ssort] Suffix sort: * Passed.
+    min time: 43883.163 ms [9]
+  [md5] MD5 digest: * Passed.
+    min time: 158985.709 ms [9]
+  ==================================================
+  MicroBench PASS        19 Marks
+                    vs. 100000 Marks (i9-9900K @ 3.60GHz)
+  Scored time: 3031924.580 ms
+  Total  time: 3229665.207 ms
+  Core 0: HIT GOOD TRAP at pc = 0x800048b8
+
 
 
 附录B - 解决bug的记录:
