@@ -71,7 +71,7 @@ generate
 endgenerate
 
 // mcycle模拟
-always @(negedge clk) begin
+always @(posedge clk) begin
   if (rst) begin
     csrs[`CSR_IDX_MCYCLE] = 0;
   end

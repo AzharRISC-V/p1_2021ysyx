@@ -60,7 +60,7 @@ clk_negedge   MEM_Write, WB
 0x6B (opcode[4:0]=11010)    // nemu_trap a0
 0x07 (opcode[4:0]=00001)    // putch a0
 
-附录：
+附录A：
 1. verilog中的一些常用语法现象
 a. wire(线网) 与 reg(寄存器) 类型
   线网与实际中的电线类似，其数值只能通过连续赋值，由赋值符右侧连接的驱动源决定。
@@ -139,3 +139,19 @@ hello-str string
 coremark    100次     75s
 dhrystone   50000次   40s
 microbench  在默认ref参数下，bf测试通不过(太久了），fib测试稍久，其余的都很快
+
+
+附录B - 解决bug的记录:
+1. csr读取mcycle时错误
+刚开始发现NEMU暂不支持mcycle，和minstret寄存器，本觉得这是个简单的任务，可以修改源码并使之支持，
+后来改到一半发现mcycle的生成机制并不清楚:
+  需要REF,DUT之间的数据拷贝，这几个变量没有弄清楚。虽然模拟的写出了mcycle寄存器的访问过程。
+后来想想，这两个数据用模拟器是难以模拟的：
+  mcycle虽然可以用clock来模拟，但是否同硬件一致？
+  最难的是minstret，不知道一个指令到底消耗几个时钟周期。
+后来就使用 difftest 的 skip 机制了，
+  刚开始认为skip只是跳过当前指令，那么 csrr %0,0xb00 在读取数据后，%0分配的寄存器值被改变了啊！
+  于是想着后续加入一条li xN,0来消除刚才寄存器的输入，并跟踪csrr，跳过连续的两条指令，
+  但这样也有问题：如果是中断进来呢？另外这个寄存器的值是否进入时需要push来保存？
+后来发现有更好的方法，difftest 的 skip 机制会拷贝执行结果，那个受影响的寄存器状态会被复制过去，我多虑了。
+后来比对看到为何 csrr 之后的数据总是差1，原来是 mcycle寄存器我是在clk_negedge时变化的，改为posedge即可。
