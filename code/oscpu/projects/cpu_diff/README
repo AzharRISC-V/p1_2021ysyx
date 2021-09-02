@@ -140,6 +140,10 @@ coremark    100次     75s
 dhrystone   50000次   40s
 microbench  在默认ref参数下，bf测试通不过(太久了），fib测试稍久，其余的都很快
 
+2021.09.02 改进后重新测试
+coremark    100次     37s
+coremark    1000次    ？午饭时测一下
+
 
 附录B - 解决bug的记录:
 1. csr读取mcycle时错误
