@@ -4,23 +4,25 @@ BIN ?= inst_diff
 START ?= 1
 END ?= -1
 
+PROJECT = cpu_axi_diff
+
 
 # build and run
 app:
-	./build.sh -e cpu_diff -d -b -s -a "-i $(BIN).bin --dump-wave -b $(START) -e $(END)" -m "EMU_TRACE=1"
+	./build.sh -e $(PROJECT) -d -b -s -a "-i $(BIN).bin --dump-wave -b $(START) -e $(END)" -m "EMU_TRACE=1"
 
 # run without dump
 run:
-	./build.sh -e cpu_diff -d -s -a "-i $(BIN).bin"
+	./build.sh -e $(PROJECT) -d -s -a "-i $(BIN).bin"
 
 # run with dump
 dump:
-	./build.sh -e cpu_diff -d -s -a "-i $(BIN).bin --dump-wave -b $(START) -e $(END)" -m "EMU_TRACE=1"
+	./build.sh -e $(PROJECT) -d -s -a "-i $(BIN).bin --dump-wave -b $(START) -e $(END)" -m "EMU_TRACE=1"
 
 # run all
 run-all:
-	@./build.sh -e cpu_diff -b -r
+	@./build.sh -e $(PROJECT) -b -r
 
 # Clean nemu/build
 clean:
-	@./build.sh -e cpu_diff -c
+	@./build.sh -e $(PROJECT) -c
