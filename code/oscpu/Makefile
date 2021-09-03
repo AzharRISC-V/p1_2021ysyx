@@ -1,26 +1,21 @@
 
-ALL ?= inst_diff
+BIN ?= inst_diff
 
 START ?= 1
 END ?= -1
 
-ifeq ($(ALL), inst_diff)
-	ALLBIN := $(ALL)
-else
-	ALLBIN := $(ALL)-riscv64-mycpu
-endif
 
 # build and run
 app:
-	./build.sh -e cpu_diff -d -b -m "EMU_TRACE=1" -s -a "-i $(ALLBIN).bin --dump-wave -b $(START) -e $(END)"
+	./build.sh -e cpu_diff -d -b -s -a "-i $(BIN).bin --dump-wave -b $(START) -e $(END)" -m "EMU_TRACE=1"
 
 # run without dump
 run:
-	./build.sh -e cpu_diff -d -s -a "-i $(ALLBIN).bin"
+	./build.sh -e cpu_diff -d -s -a "-i $(BIN).bin"
 
 # run with dump
 dump:
-	./build.sh -e cpu_diff -d -s -a "-i $(ALLBIN).bin --dump-wave -b $(START) -e $(END)"
+	./build.sh -e cpu_diff -d -s -a "-i $(BIN).bin --dump-wave -b $(START) -e $(END)" -m "EMU_TRACE=1"
 
 # run all
 run-all:

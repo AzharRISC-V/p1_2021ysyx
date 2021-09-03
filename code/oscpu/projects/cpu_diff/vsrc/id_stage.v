@@ -309,7 +309,7 @@ wire mem_addr_is_device = (mem_addr & ~(64'hFFF)) == 64'h2000_0000;
 
 // skip_difftest
 assign skip_difftest = 
-  (inst == 7)                 // putch
+  (inst == 32'h7b)                 // putch
   | (opcode == `OPCODE_CSR)   
   | mem_addr_is_device
   ;

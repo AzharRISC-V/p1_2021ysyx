@@ -26,19 +26,21 @@ always @(posedge clock) begin
 end
 
 // Special Instruction: putch a0
-wire            putch_wen     = inst == 7;
+wire            putch_wen     = inst == 32'h7b;
 wire [7 : 0]    putch_wdata   = (!putch_wen) ? 0 : (regs[10][7:0]); 
-putch Putch(
-  .clk                (clock            ),
-  .rst                (reset            ),
-  .wen                (putch_wen        ),
-  .wdata              (putch_wdata      ) 
-);
+// putch Putch(
+//   .clk                (clock            ),
+//   .rst                (reset            ),
+//   .wen                (putch_wen        ),
+//   .wdata              (putch_wdata      ) 
+// );
 // always @(posedge clock) begin
 //   if (inst == 7) begin
 //     $write("%c", regs[10][7:0]);
 //   end
 // end
+assign io_uart_out_valid = putch_wen;
+assign io_uart_out_ch = putch_wdata;
   
 // if_stage
 wire                    pc_jmp;
