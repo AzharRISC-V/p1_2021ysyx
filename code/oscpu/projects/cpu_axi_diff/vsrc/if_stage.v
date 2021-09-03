@@ -8,8 +8,12 @@ module if_stage(
   input wire clk,
   input wire rst,
   
-  output reg [63:0] pc,
-  output reg [31:0] inst,
+  input   wire                  pc_jmp,
+  input   wire  [`BUS_64]       pc_jmpaddr,
+
+  output  reg   [`BUS_64]       pc_old,
+  output  reg   [`BUS_64]       pc,
+  output  reg   [`BUS_32]       inst,
 
 	output if_valid,
 	input  if_ready,
@@ -27,13 +31,15 @@ reg [63:0] addr;
 // fetch an instruction
 always @( posedge clk ) begin
   if (rst) begin
+    pc_old    <= 0;
     pc <= `PC_START;
     if_addr <= `PC_START;
     fetched <= 0;
   end
   else if ( handshake_done ) begin
+    pc_old  <= pc;
     pc <= if_addr;
-    if_addr <= if_addr + 4;
+    if_addr <= pc_jmp ? pc_jmpaddr : (if_addr + 4);
     fetched <= 1;
     inst <= if_data_read[31:0];
   end

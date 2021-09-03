@@ -15,36 +15,128 @@ module cpu(
     input  [1:0]                        if_resp
 );
 
-// if_stage
-wire [63 : 0] pc;
-wire [31 : 0] inst;
+// // if_stage
+// wire [63 : 0] pc;
+// wire [31 : 0] inst;
 
-// id_stage
+// // id_stage
+// // id_stage -> regfile
+// wire rs1_r_ena;
+// wire [4 : 0]rs1_r_addr;
+// wire rs2_r_ena;
+// wire [4 : 0]rs2_r_addr;
+// wire rd_w_ena;
+// wire [4 : 0]rd_w_addr;
+// // id_stage -> exe_stage
+// wire [4 : 0]inst_type;
+// wire [7 : 0]inst_opcode;
+// wire [`REG_BUS]op1;
+// wire [`REG_BUS]op2;
+
+// // regfile -> id_stage
+// wire [`REG_BUS] r_data1;
+// wire [`REG_BUS] r_data2;
+// // regfile -> difftest
+// wire [`REG_BUS] regs[0 : 31];
+
+// // exe_stage
+// // exe_stage -> other stage
+// wire [4 : 0]inst_type_o;
+// // exe_stage -> regfile
+// wire [`REG_BUS]rd_data;
+
+
+
+// Global counter
+reg [`BUS_64]           clk_cnt;
+always @(posedge clock) begin
+  clk_cnt += 1;
+end
+
+// Special Instruction: putch a0
+wire            putch_wen     = inst == 32'h7b;
+wire [7 : 0]    putch_wdata   = (!putch_wen) ? 0 : (regs[10][7:0]); 
+// putch Putch(
+//   .clk                (clock            ),
+//   .rst                (reset            ),
+//   .wen                (putch_wen        ),
+//   .wdata              (putch_wdata      ) 
+// );
+// always @(posedge clock) begin
+//   if (inst == 7) begin
+//     $write("%c", regs[10][7:0]);
+//   end
+// end
+// assign io_uart_out_valid = putch_wen;
+// assign io_uart_out_ch = putch_wdata;
+  
+// if_stage
+wire                    pc_jmp;
+wire [`BUS_64]          pc_jmpaddr;
+wire [`BUS_64]          pc_old;
+wire [`BUS_64]          pc;
+wire [`BUS_32]          inst;
+wire                    inst_start;
+
 // id_stage -> regfile
-wire rs1_r_ena;
-wire [4 : 0]rs1_r_addr;
-wire rs2_r_ena;
-wire [4 : 0]rs2_r_addr;
-wire rd_w_ena;
-wire [4 : 0]rd_w_addr;
+wire                    rs1_ren;
+wire [4 : 0]            rs1;
+wire                    rs2_ren;
+wire [4 : 0]            rs2;
+wire [4 : 0]            rd;
 // id_stage -> exe_stage
-wire [4 : 0]inst_type;
-wire [7 : 0]inst_opcode;
-wire [`REG_BUS]op1;
-wire [`REG_BUS]op2;
+wire [2 : 0]            itype;    // instruction type : R,I,S,B,U,J
+wire [4 : 0]            opcode;
+wire [2 : 0]            funct3;
+wire [6 : 0]            funct7;
+wire [`BUS_64]          op1;
+wire [`BUS_64]          op2;
+wire [`BUS_64]          t1;   // temp1
+wire                    skip_difftest;
 
 // regfile -> id_stage
-wire [`REG_BUS] r_data1;
-wire [`REG_BUS] r_data2;
+wire [`BUS_64]          rs1_data;
+wire [`BUS_64]          rs2_data;
 // regfile -> difftest
-wire [`REG_BUS] regs[0 : 31];
+wire [`BUS_64]          regs[0 : 31];
+wire [`BUS_64]          csrs[0 :  7];
 
 // exe_stage
 // exe_stage -> other stage
-wire [4 : 0]inst_type_o;
-// exe_stage -> regfile
-wire [`REG_BUS]rd_data;
+wire [4 : 0]            opcode_o;
+wire                    pc_jmp_o;
+wire [`BUS_64]          pc_jmpaddr_o;
+// exe_stage -> wb_stage
+wire                    ex_rd_wen_o;
+wire [`BUS_64]          ex_rd_wdata_o;
 
+// mem_stage
+wire [`BUS_64]          mem_addr;
+wire                    mem_ren;
+reg  [`BUS_64]          mem_rdata;
+wire                    mem_wen;
+wire [`BUS_64]          mem_wdata;
+
+// wb_stage
+wire                    wb_rd_wen_i;
+wire [`BUS_64]          wb_rd_wdata_i;
+wire                    wb_rd_wen_o;
+wire [`BUS_64]          wb_rd_wdata_o;
+
+// rd_write -> regfile
+wire                    rd_wen;
+wire [`BUS_64]          rd_wdata;
+
+// csrfile
+wire [11 : 0]           csr_addr;
+wire [1 : 0]            csr_op;
+wire [11 : 0]           csr_waddr;
+wire [`BUS_64]          csr_wdata;
+wire [`BUS_64]          csr_rdata;
+
+// exe_stage -> wb_stage
+wire                    csr_rd_wen_o = csr_op != 2'b00;
+wire [`BUS_64]          csr_rd_wdata_o = (csr_op == 2'b00) ? 0 : csr_rdata;
 
 wire fetched;
 
@@ -52,8 +144,14 @@ if_stage If_stage(
   .clk                (clock),
   .rst                (reset),
   
-  .pc                 (pc),
-  .inst               (inst),
+  // .pc                 (pc),
+  // .inst               (inst),
+
+  .pc_jmp             (pc_jmp_o         ),
+  .pc_jmpaddr         (pc_jmpaddr_o     ),
+  .pc_old             (pc_old           ),
+  .pc                 (pc               ),
+  .inst               (inst             ),
 
   .if_valid           (if_valid),
   .if_ready           (if_ready),
@@ -67,53 +165,135 @@ if_stage If_stage(
 
 id_stage Id_stage(
   .rst                (reset),
-  .inst               (inst),
-  .rs1_data           (r_data1),
-  .rs2_data           (r_data2),
+  // .inst               (inst),
+  // .rs1_data           (r_data1),
+  // .rs2_data           (r_data2),
   
-  .rs1_r_ena          (rs1_r_ena),
-  .rs1_r_addr         (rs1_r_addr),
-  .rs2_r_ena          (rs2_r_ena),
-  .rs2_r_addr         (rs2_r_addr),
-  .rd_w_ena           (rd_w_ena),
-  .rd_w_addr          (rd_w_addr),
-  .inst_type          (inst_type),
-  .inst_opcode        (inst_opcode),
-  .op1                (op1),
-  .op2                (op2)
+  // .rs1_r_ena          (rs1_r_ena),
+  // .rs1_r_addr         (rs1_r_addr),
+  // .rs2_r_ena          (rs2_r_ena),
+  // .rs2_r_addr         (rs2_r_addr),
+  // .rd_w_ena           (rd_w_ena),
+  // .rd_w_addr          (rd_w_addr),
+  // .inst_type          (inst_type),
+  // .inst_opcode        (inst_opcode),
+  // .op1                (op1),
+  // .op2                (op2)
+  
+  .inst               (inst             ),
+  .rs1_data           (rs1_data         ),
+  .rs2_data           (rs2_data         ),
+  .pc_old             (pc_old           ),
+  .pc                 (pc               ),
+  .rs1_ren            (rs1_ren          ),
+  .rs1                (rs1              ),
+  .rs2_ren            (rs2_ren          ),
+  .rs2                (rs2              ),
+  .rd                 (rd               ),
+  .mem_addr           (mem_addr         ),
+  .mem_ren            (mem_ren          ),
+  .mem_wen            (mem_wen          ),
+  .mem_wdata          (mem_wdata        ),
+  .itype              (itype            ),
+  .opcode             (opcode           ),
+  .funct3             (funct3           ),
+  .funct7             (funct7           ),
+  .op1                (op1              ),
+  .op2                (op2              ),
+  .t1                 (t1               ),
+  .csr_addr           (csr_addr         ),
+  .csr_op             (csr_op           ),
+  .csr_wdata          (csr_wdata        ),
+  .csr_rdata          (csr_rdata        ),
+  .skip_difftest      (skip_difftest    )
 );
 
 exe_stage Exe_stage(
   .rst                (reset),
-  .inst_type_i        (inst_type),
-  .inst_opcode        (inst_opcode),
-  .op1                (op1),
-  .op2                (op2),
+  // .inst_type_i        (inst_type),
+  // .inst_opcode        (inst_opcode),
+  // .op1                (op1),
+  // .op2                (op2),
   
-  .inst_type_o        (inst_type_o),
-  .rd_data            (rd_data)
+  // .inst_type_o        (inst_type_o),
+  // .rd_data            (rd_data)
+  
+  .opcode_i           (opcode           ),
+  .funct3_i           (funct3           ),
+  .funct7_i           (funct7           ),
+  .op1_i              (op1              ),
+  .op2_i              (op2              ),
+  .t1_i               (t1               ),
+  .pc_jmp             (pc_jmp_o         ),
+  .pc_jmpaddr         (pc_jmpaddr_o     ),
+  .rd_wen             (ex_rd_wen_o      ),
+  .rd_data            (ex_rd_wdata_o    )
 );
 
+mem_stage Mem_stage(
+  .clk_cnt            (clk_cnt          ),
+  .clk                (clock            ),
+  .rst                (reset            ),
+  .addr               (mem_addr         ),
+  .ren                (mem_ren          ),
+  .funct3             (funct3           ),
+  .rdata              (mem_rdata        ),
+  .wen                (mem_wen          ),
+  .wdata              (mem_wdata        )
+);
+    
+wb_stage Wb_stage(
+  .clk                (clock            ),
+  .rst                (reset            ),
+  .ex_wen_i           (ex_rd_wen_o      ),
+  .ex_wdata_i         (ex_rd_wdata_o    ),
+  .mem_wen_i          (mem_ren          ),
+  .mem_wdata_i        (mem_rdata        ),
+  .csr_wen_i          (csr_rd_wen_o     ),
+  .csr_wdata_i        (csr_rd_wdata_o   ),
+  .wen_o              (rd_wen           ),
+  .wdata_o            (rd_wdata         )
+);
 
-wire w_ena = rd_w_ena & fetched;
+// wire w_ena = rd_w_ena & fetched;
+wire w_ena = rd_wen & fetched;
 
 regfile Regfile(
   .clk                (clock),
   .rst                (reset),
-  .w_addr             (rd_w_addr),
-  .w_data             (rd_data),
-  .w_ena              (w_ena),
+  // .w_addr             (rd_w_addr),
+  // .w_data             (rd_data),
+  // .w_ena              (w_ena),
   
-  .r_addr1            (rs1_r_addr),
-  .r_data1            (r_data1),
-  .r_ena1             (rs1_r_ena),
-  .r_addr2            (rs2_r_addr),
-  .r_data2            (r_data2),
-  .r_ena2             (rs2_r_ena),
+  // .r_addr1            (rs1_r_addr),
+  // .r_data1            (r_data1),
+  // .r_ena1             (rs1_r_ena),
+  // .r_addr2            (rs2_r_addr),
+  // .r_data2            (r_data2),
+  // .r_ena2             (rs2_r_ena),
+
+  .rs1                (rs1              ),
+  .rs1_ren            (rs1_ren          ),
+  .rs1_data           (rs1_data         ),
+  .rs2                (rs2              ),
+  .rs2_ren            (rs2_ren          ),
+  .rs2_data           (rs2_data         ),
+  .rd                 (rd               ),
+  .rd_data            (rd_wdata         ),
+  .rd_wen             (rd_wen           ),
 
   .regs_o             (regs)
 );
 
+csrfile Csrfile(
+  .clk                (clock            ),
+  .rst                (reset            ),
+  .csr_addr           (csr_addr         ),
+  .csr_op             (csr_op           ),
+  .csr_wdata          (csr_wdata        ),
+  .csr_rdata          (csr_rdata        ),
+  .csrs_o             (csrs             )
+);
 
 // Difftest
 reg cmt_wen;
@@ -122,27 +302,32 @@ reg [`REG_BUS] cmt_wdata;
 reg [`REG_BUS] cmt_pc;
 reg [31:0] cmt_inst;
 reg cmt_valid;
+reg                   cmt_skip;       // control commit skip
 reg trap;
 reg [7:0] trap_code;
 reg [63:0] cycleCnt;
 reg [63:0] instrCnt;
 reg [`REG_BUS] regs_diff [0 : 31];
+reg   [`BUS_64]       csrs_diff [0 : 7];
 
 wire inst_valid = fetched;
 
 always @(negedge clock) begin
   if (reset) begin
-    {cmt_wen, cmt_wdest, cmt_wdata, cmt_pc, cmt_inst, cmt_valid, trap, trap_code, cycleCnt, instrCnt} <= 0;
+    {cmt_wen, cmt_wdest, cmt_wdata, cmt_pc, cmt_inst, cmt_valid, cmt_skip, trap, trap_code, cycleCnt, instrCnt} <= 0;
   end
   else if (~trap) begin
-    cmt_wen <= rd_w_ena;
-    cmt_wdest <= {3'd0, rd_w_addr};
-    cmt_wdata <= rd_data;
+    cmt_wen <= rd_wen;
+    cmt_wdest <= {3'd0, rd};
+    cmt_wdata <= rd_wdata;
     cmt_pc <= pc;
     cmt_inst <= inst;
+    cmt_skip <= skip_difftest;
+
     cmt_valid <= inst_valid;
 
     regs_diff <= regs;
+		csrs_diff <= csrs;
 
     trap <= inst[6:0] == 7'h6b;
     trap_code <= regs[10][7:0];
@@ -158,7 +343,7 @@ DifftestInstrCommit DifftestInstrCommit(
   .valid              (cmt_valid),
   .pc                 (cmt_pc),
   .instr              (cmt_inst),
-  .skip               (0),
+  .skip               (cmt_skip),
   .isRVC              (0),
   .scFailed           (0),
   .wen                (cmt_wen),
@@ -217,7 +402,7 @@ DifftestCSRState DifftestCSRState(
   .clock              (clock),
   .coreid             (0),
   .priviledgeMode     (`RISCV_PRIV_MODE_M),
-  .mstatus            (0),
+  .mstatus            (csrs[`CSR_IDX_MSTATUS]),
   .sstatus            (0),
   .mepc               (0),
   .sepc               (0),
