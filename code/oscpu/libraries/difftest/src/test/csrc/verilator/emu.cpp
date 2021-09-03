@@ -122,7 +122,7 @@ inline EmuArgs parse_args(int argc, const char *argv[]) {
 
 Emulator::Emulator(int argc, const char *argv[]):
   dut_ptr(new VSimTop),
-  cycles(0), trapCode(STATE_RUNNING)
+  cycles(0), trapCode(STATE_RUNNING), maintime(0)
 {
   args = parse_args(argc, argv);
 
@@ -202,11 +202,10 @@ inline void Emulator::single_cycle() {
   axi.aw.addr -= 0x80000000UL;
   axi.ar.addr -= 0x80000000UL;
   dramsim3_helper_rising(axi);
+
 #endif
 
-  dut_ptr->clock = 1;
-  dut_ptr->eval();
-
+// by ZhengpuShi, 我认为上升下降都应该捕获波形
 #if VM_TRACE == 1
   if (enable_waveform) {
     auto trap = difftest[0]->get_trap_event();
@@ -214,9 +213,15 @@ inline void Emulator::single_cycle() {
     uint64_t begin = dut_ptr->io_logCtrl_log_begin;
     uint64_t end   = dut_ptr->io_logCtrl_log_end;
     bool in_range  = (begin <= cycle) && (cycle <= end);
-    if (in_range) { tfp->dump(cycle); }
+    if (in_range) { 
+      tfp->dump(maintime++); //cycle); 
+    }
   }
+
 #endif
+
+  dut_ptr->clock = 1;
+  dut_ptr->eval();
 
 #ifdef WITH_DRAMSIM3
   axi_copy_from_dut_ptr(dut_ptr, axi);
@@ -226,17 +231,19 @@ inline void Emulator::single_cycle() {
   axi_set_dut_ptr(dut_ptr, axi);
 #endif
 
-// by ZhengpuShi, 我认为上升下降都应该捕获波形
-#if 0// VM_TRACE == 1
+#if VM_TRACE == 1
   if (enable_waveform) {
     auto trap = difftest[0]->get_trap_event();
     uint64_t cycle = trap->cycleCnt;
     uint64_t begin = dut_ptr->io_logCtrl_log_begin;
     uint64_t end   = dut_ptr->io_logCtrl_log_end;
     bool in_range  = (begin <= cycle) && (cycle <= end);
-    if (in_range) { tfp->dump(cycle); }
+    if (in_range) { 
+      tfp->dump(maintime++); //cycle); 
+    }
   }
 #endif
+
   if (dut_ptr->io_uart_out_valid) {
     printf("%c", dut_ptr->io_uart_out_ch);
     fflush(stdout);

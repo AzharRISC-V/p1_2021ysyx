@@ -111,6 +111,8 @@ private:
   uint64_t cycles;
   int trapCode;
 
+  uint64_t maintime;
+
   inline void reset_ncycles(size_t cycles);
 
   inline void single_cycle();
