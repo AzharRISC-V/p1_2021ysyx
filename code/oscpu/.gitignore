@@ -11,6 +11,8 @@
 !*.py
 !*.mk
 !bin/addi/*
+!bin/custom-output/*
+!bin/nont-output/*
 !Makefile
 !README
 !README.md

@@ -26,7 +26,7 @@ help() {
 create_soft_link() {
     mkdir ${1} 1>/dev/null 2>&1
     find -L ${1} -type l -delete
-    FILES=`eval "find ${2} -mindepth 1 -maxdepth 1 -name ${3}"`
+    FILES=`eval "find ${2} -mindepth 1 -maxdepth 2 -name ${3}"`
     for FILE in ${FILES[@]}
     do
         eval "ln -s \"`realpath --relative-to="${1}" "$FILE"`\" \"${1}/${FILE##*/}\" 1>/dev/null 2>&1"
@@ -90,7 +90,7 @@ compile_chisel() {
 
 compile_difftest() {
     cd $DIFFTEST_HOME
-    make DESIGN_DIR=$PROJECT_PATH $DIFFTEST_PARAM
+    make -s DESIGN_DIR=$PROJECT_PATH $DIFFTEST_PARAM
     if [ $? -ne 0 ]; then
         echo "Failed to build difftest!!!"
         exit 1
