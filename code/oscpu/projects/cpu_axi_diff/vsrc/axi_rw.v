@@ -200,7 +200,7 @@ module axi_rw # (
     parameter AXI_SIZE      = $clog2(AXI_DATA_WIDTH / 8);
     parameter MASK_WIDTH    = AXI_DATA_WIDTH * 2;
     parameter TRANS_LEN     = RW_DATA_WIDTH / AXI_DATA_WIDTH;
-    parameter BLOCK_TRANS   = TRANS_LEN > 1 ? 1'b1 : 0'b0;
+    parameter BLOCK_TRANS   = TRANS_LEN > 1 ? 1'b1 : 1'b0;
 
     wire aligned            = BLOCK_TRANS | rw_addr_i[ALIGNED_WIDTH-1:0] == 0;
     wire size_b             = rw_size_i == `SIZE_B;

@@ -1,11 +1,11 @@
 #!/bin/bash
 
-VERSION="1.15"
+VERSION="1.18"
 
 help() {
     echo "Version v"$VERSION
     echo "Usage:"
-    echo "build.sh [-e project_name] [-b] [-t top_file] [-s] [-a parameters_list] [-f] [-l] [-g] [-w] [-c] [-d] [-m]"
+    echo "build.sh [-e project_name] [-b] [-t top_file] [-s] [-a parameters_list] [-f] [-l] [-g] [-w] [-c] [-d] [-m] [-r test_cases]"
     echo "Description:"
     echo "-e: Specify a example project. For example: -e counter. If not specified, the default directory \"cpu\" will be used."
     echo "-b: Build project using verilator and make tools automatically. It will generate the \"build\"(difftest) or \"build_test\" subfolder under the project directory."
@@ -19,30 +19,35 @@ help() {
     echo "-c: Delete \"build\" and \"build_test\" folders under the project directory."
     echo "-d: Connect to XiangShan difftest framework."
     echo "-m: Parameters passed to the difftest makefile. For example: -m \"EMU_TRACE=1 EMU_THREADS=4\". Multiple parameters require double quotes."
-    echo "-r: Run all test cases in the \"bin\" directory. This option requires the project to be able to connect to difftest."
+    echo "-r: Run all test cases of the specified directory in the \"bin\" directory. For example: -r \"case1 case2\". This option requires the project to be able to connect to difftest."
     exit 0
 }
 
 create_soft_link() {
     mkdir ${1} 1>/dev/null 2>&1
     find -L ${1} -type l -delete
-    FILES=`eval "find ${2} -name ${3}"`
+    FILES=`eval "find ${2} -mindepth 1 -maxdepth 1 -name ${3}"`
     for FILE in ${FILES[@]}
     do
         eval "ln -s \"`realpath --relative-to="${1}" "$FILE"`\" \"${1}/${FILE##*/}\" 1>/dev/null 2>&1"
     done
 }
 
-install_packages() {
-    for ARG in $*                     
+create_bin_soft_link() {
+    find -L $BUILD_PATH -maxdepth 1 -type l -delete
+    FOLDERS=`find bin -mindepth 1 -maxdepth 1 -type d`
+    for FOLDER in ${FOLDERS[@]}
     do
-      [[ ! `dpkg -l | grep $ARG` ]] && sudo apt-get --yes install $ARG
+        SUBFOLDER=${FOLDER##*/}
+        eval "ln -s \"`realpath --relative-to="$BUILD_PATH" "$OSCPU_PATH/$FOLDER"`\" \"$BUILD_PATH/${FOLDER##*/}\" 1>/dev/null 2>&1"
     done
+
+    # create soft link ($BUILD_PATH/*.bin -> $OSCPU_PATH/$BIN_FOLDER/*.bin). Why? Because of laziness!
+    create_soft_link $BUILD_PATH $OSCPU_PATH/$BIN_FOLDER \"*.bin\"
 }
 
 compile_dramsim3() {
     if [[ ! -f $OSCPU_PATH/$DRAMSIM3_FOLDER/build/libdramsim3.a ]]; then
-        install_packages cmake
         [[ ! `dpkg -l | grep cmake` ]] && sudo apt-get --yes install cmake
         mkdir $OSCPU_PATH/$DRAMSIM3_FOLDER/build
         cd $OSCPU_PATH/$DRAMSIM3_FOLDER/build
@@ -58,10 +63,8 @@ compile_dramsim3() {
 
 compile_nemu() {
     if [[ ! -f $NEMU_HOME/build/riscv64-nemu-interpreter-so ]]; then
-        install_packages libreadline-dev libsdl2-dev bison
         cd $NEMU_HOME
-        make riscv64-xs-ref_defconfig
-        sed -i 's/CONFIG_MSIZE=0x200000000/CONFIG_MSIZE=0x10000000/' .config
+        make riscv64-ysyx-ref_defconfig
         make
         if [ $? -ne 0 ]; then
             echo "Failed to build nemu!!!"
@@ -71,10 +74,23 @@ compile_nemu() {
     fi
 }
 
+compile_chisel() {
+    if [[ -f $PROJECT_PATH/build.sc ]]; then
+        # create soft link ($PROJECT_PATH/difftest -> $LIBRARIES_HOME/difftest)
+        if [[ ! -L $PROJECT_PATH/$DIFFTEST_FOLDER ]]; then
+            eval "ln -s \"`realpath --relative-to="$PROJECT_PATH" "$LIBRARIES_HOME"`/$DIFFTEST_FOLDER\" \"$PROJECT_PATH/$DIFFTEST_FOLDER\" 1>/dev/null 2>&1"
+        fi
+
+        cd $PROJECT_PATH
+        mkdir vsrc 1>/dev/null 2>&1
+        mill -i oscpu.runMain TopMain -td vsrc
+        cd $OSCPU_PATH
+    fi
+}
+
 compile_difftest() {
     cd $DIFFTEST_HOME
-    #sed -i 's/#define EMU_RAM_SIZE (8 \* 1024 \* 1024 \* 1024UL)/#define EMU_RAM_SIZE (256 \* 1024 \* 1024UL)/' src/test/csrc/common/ram.h
-    make -s DESIGN_DIR=$PROJECT_PATH $DIFFTEST_PARAM
+    make DESIGN_DIR=$PROJECT_PATH $DIFFTEST_PARAM
     if [ $? -ne 0 ]; then
         echo "Failed to build difftest!!!"
         exit 1
@@ -83,17 +99,15 @@ compile_difftest() {
 }
 
 build_diff_proj() {
+    compile_dramsim3
+    compile_nemu
+    compile_chisel
+
     # Refresh the modification time of the top file, otherwise some changes to the RTL source code will not take effect in next compilation.
     touch -m `find $BUILD_PATH -name $DIFFTEST_TOP_FILE` 1>/dev/null 2>&1
     # create soft link ($BUILD_PATH/*.v -> $PROJECT_PATH/$VSRC_FOLDER/*.v)
     create_soft_link $BUILD_PATH $PROJECT_PATH/$VSRC_FOLDER \"*.v\"
-    # create soft link ($PROJECT_PATH/difftest -> $LIBRARIES_HOME/difftest)
-    if [[ ! -L $PROJECT_PATH/$DIFFTEST_FOLDER ]]; then
-        eval "ln -s \"`realpath --relative-to="$PROJECT_PATH" "$LIBRARIES_HOME"`/$DIFFTEST_FOLDER\" \"$PROJECT_PATH/$DIFFTEST_FOLDER\" 1>/dev/null 2>&1"
-    fi
 
-    compile_dramsim3
-    compile_nemu
     compile_difftest
 }
 
@@ -158,11 +172,12 @@ DIFFTEST_TOP_FILE="SimTop.v"
 NEMU_PATH=$LIBRARIES_FOLDER"/NEMU"
 DIFFTEST_HELPER_PATH="src/test/vsrc/common"
 DIFFTEST_PARAM=
-RUNALL="false"
+TEST_CASES="false"
 DRAMSIM3_FOLDER="libraries/DRAMsim3"
+TEST_CASES=
 
 # Check parameters
-while getopts 'he:bt:sa:f:l:gwcdm:r' OPT; do
+while getopts 'he:bt:sa:f:l:gwcdm:r:' OPT; do
     case $OPT in
         h) help;;
         e) PROJECT_FOLDER="$OPTARG";;
@@ -177,12 +192,11 @@ while getopts 'he:bt:sa:f:l:gwcdm:r' OPT; do
         c) CLEAN="true";;
         d) DIFFTEST="true";;
         m) DIFFTEST_PARAM="$OPTARG";;
-        r) RUNALL="true";;
+        r) TEST_CASES="$OPTARG"; DIFFTEST="true";;
         ?) help;;
     esac
 done
 
-[[ $RUNALL == "true" ]] && DIFFTEST="true"
 [[ $LDFLAGS ]] && LDFLAGS="-LDFLAGS "\"$LDFLAGS\"
 
 PROJECT_PATH=$OSCPU_PATH/projects/$PROJECT_FOLDER
@@ -208,10 +222,7 @@ NAME="${NAME##*\r}"
 
 # Clean
 if [[ "$CLEAN" == "true" ]]; then
-    # This will cause re-build NEMU(emu)
-    rm -rf $NEMU_HOME/build/
-    rm -rf $PROJECT_PATH/$BUILD_FOLDER 
-    rm -rf $PROJECT_PATH/$DIFF_BUILD_FOLDER
+    rm -rf $PROJECT_PATH/$BUILD_FOLDER $PROJECT_PATH/$DIFF_BUILD_FOLDER $PROJECT_PATH/out
     unlink $PROJECT_PATH/$DIFFTEST_FOLDER 1>/dev/null 2>&1
     exit 0
 fi
@@ -221,18 +232,19 @@ if [[ "$BUILD" == "true" ]]; then
     [[ "$DIFFTEST" == "true" ]] && build_diff_proj || build_proj
 
     #git commit
-    #git add . -A --ignore-errors
-    #(echo $NAME && echo $ID && hostnamectl && uptime) | git commit -F - -q --author='tracer-oscpu2021 <tracer@oscpu.org>' --no-verify --allow-empty 1>/dev/null 2>&1
-    #sync
+    # if [[ ! -f $OSCPU_PATH/.no_commit ]]; then
+    #     git add . -A --ignore-errors
+    #     (echo $NAME && echo $ID && hostnamectl && uptime) | git commit -F - -q --author='tracer-oscpu2021 <tracer@oscpu.org>' --no-verify --allow-empty 1>/dev/null 2>&1
+    #     sync
+    # fi
 fi
 
 # Simulate
 if [[ "$SIMULATE" == "true" ]]; then
+    create_bin_soft_link
+
     cd $BUILD_PATH
-
-    # create soft link ($BUILD_PATH/*.bin -> $OSCPU_PATH/$BIN_FOLDER/*.bin). Why? Because of laziness!
-    create_soft_link $BUILD_PATH $OSCPU_PATH/$BIN_FOLDER \"*.bin\"
-
+    
     # run simulation program
     echo "Simulating..."
     [[ "$GDB" == "true" ]] && gdb -s $EMU_FILE --args ./$EMU_FILE $PARAMETERS || ./$EMU_FILE $PARAMETERS
@@ -259,25 +271,27 @@ fi
 [[ "$FAILED" == "true" ]] && exit 1
 
 # Run all
-if [[ $RUNALL == "true" ]]; then
+if [[ -n $TEST_CASES ]]; then
+    create_bin_soft_link
+
     cd $BUILD_PATH
 
-    create_soft_link $BUILD_PATH $OSCPU_PATH/$BIN_FOLDER \"*.bin\"
-
     mkdir log 1>/dev/null 2>&1
-    BIN_FILES=`ls *.bin`
-
-    for BIN_FILE in $BIN_FILES; do
-        FILE_NAME=${BIN_FILE%.*}
-        printf "[%30s] " $FILE_NAME
-        LOG_FILE=log/$FILE_NAME-log.txt
-        ./$EMU_FILE -i $BIN_FILE &> $LOG_FILE
-        if (grep 'HIT GOOD TRAP' $LOG_FILE > /dev/null) then
-            echo -e "\033[1;32mPASS!\033[0m"
-            rm $LOG_FILE
-        else
-            echo -e "\033[1;31mFAIL!\033[0m see $BUILD_PATH/$LOG_FILE for more information"
-        fi
+    for FOLDER in ${TEST_CASES[@]}
+    do
+        BIN_FILES=`eval "find $FOLDER -mindepth 1 -maxdepth 1 -regex \".*\.\(bin\)\""`
+        for BIN_FILE in $BIN_FILES; do
+            FILE_NAME=`basename ${BIN_FILE%.*}`
+            printf "[%30s] " $FILE_NAME
+            LOG_FILE=log/$FILE_NAME-log.txt
+            ./$EMU_FILE -i $BIN_FILE &> $LOG_FILE
+            if (grep 'HIT GOOD TRAP' $LOG_FILE > /dev/null) then
+                echo -e "\033[1;32mPASS!\033[0m"
+                rm $LOG_FILE
+            else
+                echo -e "\033[1;31mFAIL!\033[0m see $BUILD_PATH/$LOG_FILE for more information"
+            fi
+        done
     done
 
     cd $OSCPU_PATH

@@ -28,17 +28,13 @@
 #include <sys/prctl.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-#define FORK_INTERVAL 10 // unit: second
-#define SLOT_SIZE 3
-#define FAIT_EXIT    exit(EXIT_FAILURE);
-#define WAIT_INTERVAL 1
-#define SNAPSHOT_INTERVAL 60 // unit: second
-
+#ifdef EMU_THREAD
+#include <verilated_threads.h>
+#endif 
 typedef struct shinfo{
-  int exitNum;
-  int resInfo;
   bool flag;
+  bool notgood;
+  uint64_t endCycles;
 } shinfo;
 
 class ForkShareMemory{
@@ -69,6 +65,8 @@ struct EmuArgs {
   bool enable_snapshot;
   bool force_dump_result;
   bool enable_diff;
+  bool enable_fork;
+  bool enable_jtag;
 
   EmuArgs() {
     seed = 0;
@@ -84,6 +82,8 @@ struct EmuArgs {
     enable_snapshot = true;
     force_dump_result = false;
     enable_diff = true;
+    enable_fork = false;
+    enable_jtag = false;
   }
 };
 
@@ -96,9 +96,7 @@ private:
   VerilatedSaveMem snapshot_slot[2];
 #endif
   EmuArgs args;
-#ifdef EN_FORKWAIT
   ForkShareMemory forkshm;
-#endif
 
   enum {
     STATE_GOODTRAP = 0,
@@ -115,17 +113,6 @@ private:
 
   inline void reset_ncycles(size_t cycles);
 
-  /*
-    主时间控制，采样clk的上升沿和下降沿都要递增
-  */
-  uint64_t main_ticks;
-
-  /*
-    根据时间、使能等标志，判断是否需要dump波形
-    cycle_ptr 输出计算后的cycle
-  */
-  inline bool need_dump(uint64_t * cycle_ptr);
-
   inline void single_cycle();
   void trigger_stat_dump();
   void display_trapinfo();
@@ -135,6 +122,7 @@ private:
   void snapshot_save(const char *filename);
   void snapshot_load(const char *filename);
   inline char* waveform_filename(time_t t);
+  inline char* cycle_wavefile(uint64_t cycles, time_t t);
 #if VM_COVERAGE == 1
   inline void save_coverage(time_t t);
 #endif

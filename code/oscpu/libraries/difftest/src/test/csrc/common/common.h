@@ -23,10 +23,7 @@
 #include <cstdint>
 #include <cassert>
 #include <pthread.h>
-
-#ifndef NUM_CORES
-#define NUM_CORES 1
-#endif
+#include "../../../../config/config.h"
 
 #define FMT_64_HEX          "%016lx"
 

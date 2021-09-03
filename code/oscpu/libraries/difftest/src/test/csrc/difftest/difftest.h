@@ -23,14 +23,9 @@
 #define DIFF_PROXY NemuProxy
 
 #define DIFFTEST_CORE_NUMBER  NUM_CORES
-#define DIFFTEST_COMMIT_WIDTH 6
-#define DIFFTEST_STORE_WIDTH  2
-#define DIFFTEST_LOAD_WIDTH   2
-
-#define DIFFTEST_STORE_COMMIT
 
 enum { DIFFTEST_TO_DUT, DIFFTEST_TO_REF };
-//enum { REF_TO_DUT, DUT_TO_REF };
+enum { REF_TO_DUT, DUT_TO_REF };
 enum { REF_TO_DIFFTEST, DUT_TO_DIFFTEST };
 // DIFFTEST_TO_DUT ~ REF_TO_DUT ~ REF_TO_DIFFTEST
 // DIFFTEST_TO_REF ~ DUT_TO_REF ~ DUT_TO_DIFFTEST
@@ -53,6 +48,7 @@ typedef struct {
   uint32_t interrupt = 0;
   uint32_t exception = 0;
   uint64_t exceptionPC = 0;
+  uint32_t exceptionInst = 0;
 } arch_event_t;
 
 typedef struct {
@@ -140,7 +136,7 @@ typedef struct {
   arch_csr_state_t csr;
   sbuffer_state_t  sbuffer;
   store_event_t    store[DIFFTEST_STORE_WIDTH];
-  load_event_t     load[DIFFTEST_LOAD_WIDTH];
+  load_event_t     load[DIFFTEST_COMMIT_WIDTH];
   atomic_event_t   atomic;
   ptw_event_t      ptw;
 } difftest_core_state_t;
@@ -153,18 +149,19 @@ enum retire_inst_type {
 
 class DiffState {
 public:
-  DiffState(int history_length = 32);
+  DiffState();
   void record_group(uint64_t pc, uint64_t count) {
     retire_group_pc_queue [retire_group_pointer] = pc;
     retire_group_cnt_queue[retire_group_pointer] = count;
     retire_group_pointer = (retire_group_pointer + 1) % DEBUG_GROUP_TRACE_SIZE;
   };
-  void record_inst(uint64_t pc, uint32_t inst, uint8_t en, uint8_t dest, uint64_t data) {
+  void record_inst(uint64_t pc, uint32_t inst, uint8_t en, uint8_t dest, uint64_t data, bool skip) {
     retire_inst_pc_queue   [retire_inst_pointer] = pc;
     retire_inst_inst_queue [retire_inst_pointer] = inst;
     retire_inst_wen_queue  [retire_inst_pointer] = en;
     retire_inst_wdst_queue [retire_inst_pointer] = dest;
     retire_inst_wdata_queue[retire_inst_pointer] = data;
+    retire_inst_skip_queue[retire_inst_pointer] = skip;
     retire_inst_type_queue[retire_inst_pointer] = RET_NORMAL;
     retire_inst_pointer = (retire_inst_pointer + 1) % DEBUG_INST_TRACE_SIZE;
   };
@@ -178,9 +175,6 @@ public:
   void display(int coreid);
 
 private:
-  const static size_t DEBUG_GROUP_TRACE_SIZE = 16;
-  const static size_t DEBUG_INST_TRACE_SIZE = 16;
-
   int retire_group_pointer = 0;
   uint64_t retire_group_pc_queue[DEBUG_GROUP_TRACE_SIZE] = {0};
   uint32_t retire_group_cnt_queue[DEBUG_GROUP_TRACE_SIZE] = {0};
@@ -192,6 +186,7 @@ private:
   uint32_t retire_inst_wdst_queue[DEBUG_INST_TRACE_SIZE] = {0};
   uint64_t retire_inst_wdata_queue[DEBUG_INST_TRACE_SIZE] = {0};
   uint32_t retire_inst_type_queue[DEBUG_INST_TRACE_SIZE] = {0};
+  bool retire_inst_skip_queue[DEBUG_INST_TRACE_SIZE] = {0};
 };
 
 class Difftest {
@@ -202,6 +197,7 @@ public:
   Difftest(int coreid);
   DIFF_PROXY *proxy = NULL;
   uint32_t num_commit = 0; // # of commits if made progress
+  bool has_commit = false;
   // Trigger a difftest checking procdure
   int step();
   void update_nemuproxy(int);
@@ -247,8 +243,8 @@ public:
   }
 
 private:
-  const uint64_t firstCommit_limit = 500000000;// 119; //119;// 5000;
-  const uint64_t stuck_limit = 118;// 5000;
+  const uint64_t firstCommit_limit = 5000;
+  const uint64_t stuck_limit = 5000;
 
   int id;
   difftest_core_state_t dut;
@@ -257,7 +253,6 @@ private:
   uint64_t *dut_regs_ptr = (uint64_t*)&dut.regs;
 
   bool progress = false;
-  bool has_commit = false;
   uint64_t ticks = 0;
   uint64_t last_commit = 0;
 

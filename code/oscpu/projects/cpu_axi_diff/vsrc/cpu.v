@@ -94,12 +94,15 @@ exe_stage Exe_stage(
   .rd_data            (rd_data)
 );
 
+
+wire w_ena = rd_w_ena & fetched;
+
 regfile Regfile(
   .clk                (clock),
   .rst                (reset),
   .w_addr             (rd_w_addr),
   .w_data             (rd_data),
-  .w_ena              (rd_w_ena),
+  .w_ena              (w_ena),
   
   .r_addr1            (rs1_r_addr),
   .r_data1            (r_data1),
