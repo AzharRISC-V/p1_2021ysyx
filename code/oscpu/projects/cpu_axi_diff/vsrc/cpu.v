@@ -138,7 +138,9 @@ wire [`BUS_64]          csr_rdata;
 wire                    csr_rd_wen_o = csr_op != 2'b00;
 wire [`BUS_64]          csr_rd_wdata_o = (csr_op == 2'b00) ? 0 : csr_rdata;
 
-wire fetched;
+wire  fetched;
+wire  decoded;
+wire  writebacked;
 
 if_stage If_stage(
   .clk                (clock),
@@ -160,10 +162,13 @@ if_stage If_stage(
   .if_size            (if_size),
   .if_resp            (if_resp),
 
+  .decoded            (decoded),
+  .writebacked        (writebacked),
   .fetched            (fetched)
 );
 
 id_stage Id_stage(
+  .clk                (clock),
   .rst                (reset),
   // .inst               (inst),
   // .rs1_data           (r_data1),
@@ -205,6 +210,10 @@ id_stage Id_stage(
   .csr_op             (csr_op           ),
   .csr_wdata          (csr_wdata        ),
   .csr_rdata          (csr_rdata        ),
+
+  .fetched            (fetched          ),
+  .decoded            (decoded          ),
+
   .skip_difftest      (skip_difftest    )
 );
 
@@ -280,7 +289,8 @@ regfile Regfile(
   .rs2_data           (rs2_data         ),
   .rd                 (rd               ),
   .rd_data            (rd_wdata         ),
-  .rd_wen             (rd_wen           ),
+  .rd_wen             (w_ena            ),
+  .writebacked        (writebacked      ),
 
   .regs_o             (regs)
 );

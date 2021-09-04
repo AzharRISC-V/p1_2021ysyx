@@ -136,11 +136,6 @@ Emulator::Emulator(int argc, const char *argv[]):
   if (args.enable_jtag) { 
     jtag = new remote_bitbang_t(23334);
   }
-  // init core
-  reset_ncycles(10);
-
-  // init ram
-  init_ram(args.image);
 
 #if VM_TRACE == 1
   enable_waveform = args.enable_waveform && !args.enable_fork;
@@ -152,6 +147,12 @@ Emulator::Emulator(int argc, const char *argv[]):
     tfp->open(waveform_filename(now));	// Open the dump file
   }
 #endif
+
+  // init core
+  reset_ncycles(10);
+
+  // init ram
+  init_ram(args.image);
 
 #ifdef VM_SAVABLE
   if (args.snapshot_path != NULL) {
@@ -182,14 +183,25 @@ Emulator::~Emulator() {
 }
 
 inline void Emulator::reset_ncycles(size_t cycles) {
+  dut_ptr->reset = 1;
+
   for(int i = 0; i < cycles; i++) {
-    dut_ptr->reset = 1;
     dut_ptr->clock = 0;
     dut_ptr->eval();
+
+    if (enable_waveform) {
+      tfp->dump(maintime++); //cycle); 
+    }
+
     dut_ptr->clock = 1;
     dut_ptr->eval();
-    dut_ptr->reset = 0;
+
+    if (enable_waveform) {
+      tfp->dump(maintime++); //cycle); 
+    }
   }
+
+  dut_ptr->reset = 0;
 }
 
 inline void Emulator::single_cycle() {

@@ -22,6 +22,8 @@ module if_stage(
   output [1:0] if_size,
   input  [1:0] if_resp,
 
+  input  wire                   decoded,
+  input  wire                   writebacked,
   output reg fetched
 );
 
@@ -32,7 +34,7 @@ reg [63:0] addr;
 always @( posedge clk ) begin
   if (rst) begin
     pc_old    <= 0;
-    pc <= `PC_START;
+    pc        <= 0;
     if_addr <= `PC_START;
     fetched <= 0;
   end

@@ -32,6 +32,9 @@ module regfile(
   input   wire              rd_wen,
   input   wire  [`BUS_64]   rd_data,
 
+  // 是否写回操作完毕？
+  output  reg               writebacked,
+
   // difftest
   output  wire  [`BUS_64]   regs_o[0 : 31]
     );
@@ -40,13 +43,14 @@ module regfile(
 	reg [`REG_BUS] 	regs[0 : 31];
 
   // register alias name
-  wire [`REG_BUS] x01_zero  = regs[01];
-  wire [`REG_BUS] x02_ra    = regs[02];
-  wire [`REG_BUS] x03_sp    = regs[03];
-  wire [`REG_BUS] x04_gp    = regs[04];
-  wire [`REG_BUS] x05_tp    = regs[05];
-  wire [`REG_BUS] x06_t0    = regs[06];
-  wire [`REG_BUS] x07_t1    = regs[07];
+  wire [`REG_BUS] x00_zero  = regs[00];
+  wire [`REG_BUS] x01_ra    = regs[01];
+  wire [`REG_BUS] x02_sp    = regs[02];
+  wire [`REG_BUS] x03_gp    = regs[03];
+  wire [`REG_BUS] x04_tp    = regs[04];
+  wire [`REG_BUS] x05_t0    = regs[05];
+  wire [`REG_BUS] x06_t1    = regs[06];
+  wire [`REG_BUS] x07_t2    = regs[07];
   wire [`REG_BUS] x08_s0    = regs[08];
   wire [`REG_BUS] x09_s1    = regs[09];
   wire [`REG_BUS] x10_a0    = regs[10];
@@ -70,7 +74,7 @@ module regfile(
   wire [`REG_BUS] x28_t3    = regs[28];
   wire [`REG_BUS] x29_t4    = regs[29];
   wire [`REG_BUS] x30_t5    = regs[30];
-  wire [`REG_BUS] x31_56    = regs[31];
+  wire [`REG_BUS] x31_t6    = regs[31];
 
 	
 // rd 写入
@@ -164,6 +168,20 @@ always @(*) begin
     rs2_data = regs[rs2];
   else
     rs2_data = `ZERO_WORD;
+end
+
+// 写回完毕
+always @(posedge clk) begin
+  if (rst)
+    writebacked     <= 1'b1;
+  else begin
+    if (rd_wen) begin
+      writebacked   <= 1'b1;
+    end
+    else begin
+      writebacked   <= 1'b0;
+    end
+  end
 end
 
 // difftest regs接口

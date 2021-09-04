@@ -4,6 +4,7 @@
 `include "defines.v"
 
 module id_stage(
+  input   wire                  clk,
   input wire rst,
   // input wire [31 : 0]inst,
   // input wire [`REG_BUS]rs1_data,
@@ -52,6 +53,9 @@ module id_stage(
   output  wire  [`BUS_64]       op1,            // 两个操作数
   output  wire  [`BUS_64]       op2,
   output  wire  [`BUS_64]       t1,
+
+  input   wire                  fetched,
+  output  wire                  decoded,
 
   output  wire                  skip_difftest
 );
@@ -371,5 +375,20 @@ assign skip_difftest =
   | (opcode == `OPCODE_CSR)   
   | mem_addr_is_device
   ;
+
+
+// 解码完毕
+always @(posedge clk) begin
+  if (rst)
+    decoded     <= 1'b0;
+  else begin
+    if (fetched) begin
+      decoded   <= 1'b1;
+    end
+    else begin
+      decoded   <= 1'b0;
+    end
+  end
+end
 
 endmodule
