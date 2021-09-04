@@ -30,6 +30,8 @@ module if_stage(
 wire handshake_done = if_valid & if_ready;
 reg [63:0] addr;
 
+reg jmp_allow;
+
 // fetch an instruction
 always @( posedge clk ) begin
   if (rst) begin
@@ -37,16 +39,26 @@ always @( posedge clk ) begin
     pc        <= 0;
     if_addr <= `PC_START;
     fetched <= 0;
-  end
-  else if ( handshake_done ) begin
-    pc_old  <= pc;
-    pc <= if_addr;
-    if_addr <= pc_jmp ? pc_jmpaddr : (if_addr + 4);
-    fetched <= 1;
-    inst <= if_data_read[31:0];
+    jmp_allow  <= 1;
   end
   else begin
-    fetched <= 0;
+    if ( handshake_done ) begin
+      if (pc_jmp & jmp_allow) begin
+        jmp_allow <= 0;
+        if_addr <= pc_jmpaddr;
+      end
+      else begin
+        pc_old  <= pc;
+        pc <= if_addr;
+        if_addr <= if_addr + 4;
+        fetched <= 1;
+        inst <= if_data_read[31:0];
+        jmp_allow <= 1;
+      end
+    end
+    else begin
+      fetched <= 0;
+    end
   end
 end
 

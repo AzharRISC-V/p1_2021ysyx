@@ -152,6 +152,8 @@ assign shamt_64 = {58'd0, shamt};
 // // wire [5:0] itype_sum = itype_R_val + itype_I_val + itype_U_val + itype_S_val + itype_B_val + itype_J_val;
 // // assign itype = itype_sum[2:0];
 
+wire id_inactive = !fetched;
+
 always@(*) begin
   if (rst)
     itype = 0;

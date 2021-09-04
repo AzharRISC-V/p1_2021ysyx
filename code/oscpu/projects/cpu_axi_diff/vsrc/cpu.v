@@ -265,7 +265,7 @@ wb_stage Wb_stage(
 );
 
 // wire w_ena = rd_w_ena & fetched;
-wire w_ena = rd_wen & fetched;
+wire w_ena = rd_wen & decoded;
 
 regfile Regfile(
   .clk                (clock),
@@ -320,7 +320,7 @@ reg [63:0] instrCnt;
 reg [`REG_BUS] regs_diff [0 : 31];
 reg   [`BUS_64]       csrs_diff [0 : 7];
 
-wire inst_valid = fetched;
+wire inst_valid = decoded;
 
 always @(negedge clock) begin
   if (reset) begin
