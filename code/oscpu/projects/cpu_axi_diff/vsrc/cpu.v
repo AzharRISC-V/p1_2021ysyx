@@ -4,8 +4,8 @@
 `include "defines.v"
 
 module cpu(
-    input                               clock,
-    input                               reset,
+    input                               clk,
+    input                               rst,
     
     output                              if_valid,
     input                               if_ready,
@@ -15,41 +15,9 @@ module cpu(
     input  [1:0]                        if_resp
 );
 
-// // if_stage
-// wire [63 : 0] pc;
-// wire [31 : 0] inst;
-
-// // id_stage
-// // id_stage -> regfile
-// wire rs1_r_ena;
-// wire [4 : 0]rs1_r_addr;
-// wire rs2_r_ena;
-// wire [4 : 0]rs2_r_addr;
-// wire rd_w_ena;
-// wire [4 : 0]rd_w_addr;
-// // id_stage -> exe_stage
-// wire [4 : 0]inst_type;
-// wire [7 : 0]inst_opcode;
-// wire [`REG_BUS]op1;
-// wire [`REG_BUS]op2;
-
-// // regfile -> id_stage
-// wire [`REG_BUS] r_data1;
-// wire [`REG_BUS] r_data2;
-// // regfile -> difftest
-// wire [`REG_BUS] regs[0 : 31];
-
-// // exe_stage
-// // exe_stage -> other stage
-// wire [4 : 0]inst_type_o;
-// // exe_stage -> regfile
-// wire [`REG_BUS]rd_data;
-
-
-
 // Global counter
 reg [`BUS_64]           clk_cnt;
-always @(posedge clock) begin
+always @(posedge clk) begin
   clk_cnt += 1;
 end
 
@@ -139,52 +107,31 @@ wire                    csr_rd_wen_o = csr_op != 2'b00;
 wire [`BUS_64]          csr_rd_wdata_o = (csr_op == 2'b00) ? 0 : csr_rdata;
 
 wire  fetched;
-wire  decoded;
-wire  writebacked;
 
 if_stage If_stage(
-  .clk                (clock),
-  .rst                (reset),
+  .clk                (clk              ),
+  .rst                (rst              ),
   
-  // .pc                 (pc),
-  // .inst               (inst),
-
   .pc_jmp             (pc_jmp_o         ),
   .pc_jmpaddr         (pc_jmpaddr_o     ),
   .pc_old             (pc_old           ),
   .pc                 (pc               ),
   .inst               (inst             ),
 
-  .if_valid           (if_valid),
-  .if_ready           (if_ready),
-  .if_data_read       (if_data_read),
-  .if_addr            (if_addr),
-  .if_size            (if_size),
-  .if_resp            (if_resp),
+  .if_valid           (if_valid         ),
+  .if_ready           (if_ready         ),
+  .if_data_read       (if_data_read     ),
+  .if_addr            (if_addr          ),
+  .if_size            (if_size          ),
+  .if_resp            (if_resp          ),
 
-  .decoded            (decoded),
-  .writebacked        (writebacked),
-  .fetched            (fetched)
+  .fetched            (fetched          )
 );
 
 id_stage Id_stage(
-  .clk                (clock),
-  .rst                (reset),
-  // .inst               (inst),
-  // .rs1_data           (r_data1),
-  // .rs2_data           (r_data2),
-  
-  // .rs1_r_ena          (rs1_r_ena),
-  // .rs1_r_addr         (rs1_r_addr),
-  // .rs2_r_ena          (rs2_r_ena),
-  // .rs2_r_addr         (rs2_r_addr),
-  // .rd_w_ena           (rd_w_ena),
-  // .rd_w_addr          (rd_w_addr),
-  // .inst_type          (inst_type),
-  // .inst_opcode        (inst_opcode),
-  // .op1                (op1),
-  // .op2                (op2)
-  
+  .clk                (clk              ),
+  .rst                (rst              ),
+
   .inst               (inst             ),
   .rs1_data           (rs1_data         ),
   .rs2_data           (rs2_data         ),
@@ -210,23 +157,11 @@ id_stage Id_stage(
   .csr_op             (csr_op           ),
   .csr_wdata          (csr_wdata        ),
   .csr_rdata          (csr_rdata        ),
-
-  .fetched            (fetched          ),
-  .decoded            (decoded          ),
-
   .skip_difftest      (skip_difftest    )
 );
 
 exe_stage Exe_stage(
-  .rst                (reset),
-  // .inst_type_i        (inst_type),
-  // .inst_opcode        (inst_opcode),
-  // .op1                (op1),
-  // .op2                (op2),
-  
-  // .inst_type_o        (inst_type_o),
-  // .rd_data            (rd_data)
-  
+  .rst                (rst              ),
   .opcode_i           (opcode           ),
   .funct3_i           (funct3           ),
   .funct7_i           (funct7           ),
@@ -240,9 +175,9 @@ exe_stage Exe_stage(
 );
 
 mem_stage Mem_stage(
+  .clk                (clk              ),
+  .rst                (rst              ),
   .clk_cnt            (clk_cnt          ),
-  .clk                (clock            ),
-  .rst                (reset            ),
   .addr               (mem_addr         ),
   .ren                (mem_ren          ),
   .funct3             (funct3           ),
@@ -252,8 +187,8 @@ mem_stage Mem_stage(
 );
     
 wb_stage Wb_stage(
-  .clk                (clock            ),
-  .rst                (reset            ),
+  .clk                (clk              ),
+  .rst                (rst              ),
   .ex_wen_i           (ex_rd_wen_o      ),
   .ex_wdata_i         (ex_rd_wdata_o    ),
   .mem_wen_i          (mem_ren          ),
@@ -264,22 +199,11 @@ wb_stage Wb_stage(
   .wdata_o            (rd_wdata         )
 );
 
-// wire w_ena = rd_w_ena & fetched;
-wire w_ena = rd_wen & decoded;
+wire w_ena = rd_wen & fetched;
 
 regfile Regfile(
-  .clk                (clock),
-  .rst                (reset),
-  // .w_addr             (rd_w_addr),
-  // .w_data             (rd_data),
-  // .w_ena              (w_ena),
-  
-  // .r_addr1            (rs1_r_addr),
-  // .r_data1            (r_data1),
-  // .r_ena1             (rs1_r_ena),
-  // .r_addr2            (rs2_r_addr),
-  // .r_data2            (r_data2),
-  // .r_ena2             (rs2_r_ena),
+  .clk                (clk              ),
+  .rst                (rst              ),
 
   .rs1                (rs1              ),
   .rs1_ren            (rs1_ren          ),
@@ -290,14 +214,13 @@ regfile Regfile(
   .rd                 (rd               ),
   .rd_data            (rd_wdata         ),
   .rd_wen             (w_ena            ),
-  .writebacked        (writebacked      ),
 
   .regs_o             (regs)
 );
 
 csrfile Csrfile(
-  .clk                (clock            ),
-  .rst                (reset            ),
+  .clk                (clk              ),
+  .rst                (rst              ),
   .csr_addr           (csr_addr         ),
   .csr_op             (csr_op           ),
   .csr_wdata          (csr_wdata        ),
@@ -320,10 +243,10 @@ reg [63:0] instrCnt;
 reg [`REG_BUS] regs_diff [0 : 31];
 reg   [`BUS_64]       csrs_diff [0 : 7];
 
-wire inst_valid = decoded;
+wire inst_valid = fetched;
 
-always @(negedge clock) begin
-  if (reset) begin
+always @(negedge clk) begin
+  if (rst) begin
     {cmt_wen, cmt_wdest, cmt_wdata, cmt_pc, cmt_inst, cmt_valid, cmt_skip, trap, trap_code, cycleCnt, instrCnt} <= 0;
   end
   else if (~trap) begin
@@ -347,7 +270,7 @@ always @(negedge clock) begin
 end
 
 DifftestInstrCommit DifftestInstrCommit(
-  .clock              (clock),
+  .clock              (clk),
   .coreid             (0),
   .index              (0),
   .valid              (cmt_valid),
@@ -362,7 +285,7 @@ DifftestInstrCommit DifftestInstrCommit(
 );
 
 DifftestArchIntRegState DifftestArchIntRegState (
-  .clock              (clock),
+  .clock              (clk),
   .coreid             (0),
   .gpr_0              (regs_diff[0]),
   .gpr_1              (regs_diff[1]),
@@ -399,7 +322,7 @@ DifftestArchIntRegState DifftestArchIntRegState (
 );
 
 DifftestTrapEvent DifftestTrapEvent(
-  .clock              (clock),
+  .clock              (clk),
   .coreid             (0),
   .valid              (trap),
   .code               (trap_code),
@@ -409,7 +332,7 @@ DifftestTrapEvent DifftestTrapEvent(
 );
 
 DifftestCSRState DifftestCSRState(
-  .clock              (clock),
+  .clock              (clk),
   .coreid             (0),
   .priviledgeMode     (`RISCV_PRIV_MODE_M),
   .mstatus            (csrs[`CSR_IDX_MSTATUS]),
@@ -432,7 +355,7 @@ DifftestCSRState DifftestCSRState(
 );
 
 DifftestArchFpRegState DifftestArchFpRegState(
-  .clock              (clock),
+  .clock              (clk),
   .coreid             (0),
   .fpr_0              (0),
   .fpr_1              (0),

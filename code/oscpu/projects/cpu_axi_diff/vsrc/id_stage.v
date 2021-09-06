@@ -5,23 +5,7 @@
 
 module id_stage(
   input   wire                  clk,
-  input wire rst,
-  // input wire [31 : 0]inst,
-  // input wire [`REG_BUS]rs1_data,
-  // input wire [`REG_BUS]rs2_data,
-  
-  
-  // output wire rs1_r_ena,
-  // output wire [4 : 0]rs1_r_addr,
-  // output wire rs2_r_ena,
-  // output wire [4 : 0]rs2_r_addr,
-  // output wire rd_w_ena,
-  // output wire [4 : 0]rd_w_addr,
-  
-  // output wire [4 : 0]inst_type,
-  // output wire [7 : 0]inst_opcode,
-  // output wire [`REG_BUS]op1,
-  // output wire [`REG_BUS]op2
+  input   wire                  rst,
 
   input   wire  [`BUS_32]       inst,
 
@@ -53,9 +37,6 @@ module id_stage(
   output  wire  [`BUS_64]       op1,            // 两个操作数
   output  wire  [`BUS_64]       op2,
   output  wire  [`BUS_64]       t1,
-
-  input   wire                  fetched,
-  output  wire                  decoded,
 
   output  wire                  skip_difftest
 );
@@ -151,8 +132,6 @@ assign shamt_64 = {58'd0, shamt};
 // wire [2:0] itype_J_val = itype_J ? 5 : 0;
 // // wire [5:0] itype_sum = itype_R_val + itype_I_val + itype_U_val + itype_S_val + itype_B_val + itype_J_val;
 // // assign itype = itype_sum[2:0];
-
-wire id_inactive = !fetched;
 
 always@(*) begin
   if (rst)
@@ -378,19 +357,5 @@ assign skip_difftest =
   | mem_addr_is_device
   ;
 
-
-// 解码完毕
-always @(posedge clk) begin
-  if (rst)
-    decoded     <= 1'b0;
-  else begin
-    if (fetched) begin
-      decoded   <= 1'b1;
-    end
-    else begin
-      decoded   <= 1'b0;
-    end
-  end
-end
 
 endmodule

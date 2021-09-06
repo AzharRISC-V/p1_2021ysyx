@@ -291,7 +291,7 @@ module axi_rw # (
                 if (reset) begin
                     data_read_o[i*AXI_DATA_WIDTH+:AXI_DATA_WIDTH] <= 0;
                 end
-                else if (axi_r_ready_o & axi_r_valid_i) begin
+                else if (r_hs) begin
                     if (~aligned & overstep) begin
                         if (len[0]) begin
                             data_read_o[AXI_DATA_WIDTH-1:0] <= data_read_o[AXI_DATA_WIDTH-1:0] | axi_r_data_h;

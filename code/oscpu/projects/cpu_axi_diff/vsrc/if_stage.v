@@ -5,8 +5,8 @@
 
 
 module if_stage(
-  input wire clk,
-  input wire rst,
+  input   wire                  clk,
+  input   wire                  rst,
   
   input   wire                  pc_jmp,
   input   wire  [`BUS_64]       pc_jmpaddr,
@@ -15,16 +15,14 @@ module if_stage(
   output  reg   [`BUS_64]       pc,
   output  reg   [`BUS_32]       inst,
 
-	output if_valid,
-	input  if_ready,
-  input  [63:0] if_data_read,
-  output reg [63:0] if_addr,
-  output [1:0] if_size,
-  input  [1:0] if_resp,
+	output                        if_valid,
+	input                         if_ready,
+  input         [63:0]          if_data_read,
+  output reg    [63:0]          if_addr,
+  output        [1:0]           if_size,
+  input         [1:0]           if_resp,
 
-  input  wire                   decoded,
-  input  wire                   writebacked,
-  output reg fetched
+  output reg                    fetched
 );
 
 wire handshake_done = if_valid & if_ready;
@@ -51,10 +49,11 @@ always @( posedge clk ) begin
         pc_old  <= pc;
         pc <= if_addr;
         if_addr <= if_addr + 4;
-        fetched <= 1;
         inst <= if_data_read[31:0];
         jmp_allow <= 1;
       end
+
+      fetched <= 1;
     end
     else begin
       fetched <= 0;

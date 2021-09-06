@@ -20,8 +20,10 @@ dump:
 	./build.sh -e $(PROJECT) -d -s -a "-i $(BIN).bin --dump-wave -b $(START) -e $(END)" -m "EMU_TRACE=1 $(PROJECT_AXI_FLAGS)"
 
 # run all
-run-all:
-	@./build.sh -e $(PROJECT) -b -r
+run-all-1:
+	./build.sh -e $(PROJECT) -b -r "non-output/cpu-tests" -m "EMU_TRACE=1 $(PROJECT_AXI_FLAGS)"
+run-all-2:
+	./build.sh -e $(PROJECT) -b -r "non-output/riscv-tests" -m "EMU_TRACE=1 $(PROJECT_AXI_FLAGS)"
 
 # Clean nemu/build
 clean:
