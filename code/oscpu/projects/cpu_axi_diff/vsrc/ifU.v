@@ -6,51 +6,51 @@
 `include "defines.v"
 
 module ifU(
-  input   wire                clk,
-  input   wire                rst,
+  input   wire                i_clk,
+  input   wire                i_rst,
 
   /////////////////////////////////////////////////////////
   // AXI interface for Fetch
-	input                       axi_ready_i,
-  input         [63:0]        axi_data_read_i,
-  input         [1:0]         axi_resp_i,
-	output reg                  axi_valid_o,
-  output reg    [63:0]        axi_addr_o,
-  output        [1:0]         axi_size_o,
+	input                       i_axi_ready,
+  input         [63:0]        i_axi_data_read,
+  input         [1:0]         i_axi_resp,
+	output reg                  o_axi_valid,
+  output reg    [63:0]        o_axi_addr,
+  output        [1:0]         o_axi_size,
   
   /////////////////////////////////////////////////////////
-  input   wire                pc_jmp_i,
-  input   wire  [`BUS_64]     pc_jmpaddr_i,
-  output  reg   [`BUS_64]     pc_old_o,
-  output  reg   [`BUS_64]     pc_o,
-  output  wire  [`BUS_64]     pc_pred_o,    // 预测的下一个PC
-  output  reg   [`BUS_32]     inst_o,
+  input   wire                i_pc_jmp,
+  input   wire  [`BUS_64]     i_pc_jmpaddr,
+  output  reg   [`BUS_64]     o_pc_old,
+  output  reg   [`BUS_64]     o_pc,
+  output  wire  [`BUS_64]     o_pc_pred,    // 预测的下一个PC
+  output  reg   [`BUS_32]     o_inst,
   output                      fetched_pulse     // 取到指令的通知
 );
 
-assign axi_valid_o = 1'b1;
+assign o_axi_valid = 1'b1;
 
-wire handshake_done = axi_valid_o & axi_ready_i;
+wire handshake_done = o_axi_valid & i_axi_ready;
 
 // fetch an instruction
-always @( posedge clk ) begin
-  if (rst) begin
+always @( posedge i_clk ) begin
+  if (i_rst) begin
     // pc_old    <= 0;
-    pc_o                      <= 0;
-    axi_addr_o                <= `PC_START;
+    o_pc                      <= 0;
+    o_axi_addr                <= `PC_START;
   end
   else begin
     if (handshake_done) begin
-      inst_o                  <= axi_data_read_i[31:0];
-      pc_o                    <= axi_addr_o;
-      axi_addr_o              <= axi_addr_o + 4;
+      o_inst                  <= i_axi_data_read[31:0];
+      o_pc                    <= o_axi_addr;
+      o_axi_addr              <= o_axi_addr + 4;
     end
   end
 end
 
 assign fetched_pulse = handshake_done;
 
-assign pc_pred_o = pc_o + 4;
-assign axi_size_o = `SIZE_W;
+assign o_pc_pred = o_pc + 4;
+assign o_axi_size = `SIZE_W;
 
 endmodule

@@ -6,81 +6,81 @@
 `include "defines.v"
 
 module id_stage(
-  input   wire                clk,
-  input   wire                rst,
-  input   reg                 id_fetched_req_i,
-  output  reg                 id_fetched_ack_o,
-  input   reg                 id_decoded_ack_i,
-  output  reg                 id_decoded_req_o,
-  input   wire  [`BUS_32]     id_inst_i,
-  input   wire  [`BUS_64]     id_rs1_data_i,
-  input   wire  [`BUS_64]     id_rs2_data_i,
-  input   wire  [`BUS_64]     id_pc_old_i,
-  input   wire  [`BUS_64]     id_pc_i,
-  output  reg                 id_rs1_ren_o,
-  output  wire  [4 : 0]       id_rs1_o,
-  output  wire                id_rs2_ren_o,
-  output  wire  [4 : 0]       id_rs2_o,
-  output  wire  [4 : 0]       id_rd_o,
-  output  wire                id_memren_o,
-  output  wire  [`BUS_64]     id_memaddr_o,
-  output  wire                id_memwen_o,
-  output  wire  [`BUS_64]     id_memwdata_o,
-  output  reg   [11 : 0]      id_csr_addr_o,
-  output  reg   [1 : 0]       id_csr_op_o,
-  output  reg   [`BUS_64]     id_csr_wdata_o,
-  input   reg   [`BUS_64]     id_csr_rdata_i,
-  output  wire  [2 : 0]       id_itype_o,
-  output  wire  [6 : 0]       id_opcode_o,
-  output  wire  [2 : 0]       id_funct3_o,
-  output  wire  [6 : 0]       id_funct7_o,
-  output  wire  [`BUS_64]     id_op1_o,            // 两个操作数
-  output  wire  [`BUS_64]     id_op2_o,
-  output  wire  [`BUS_64]     id_t1_o,
-  input   wire  [`BUS_64]     id_pc_pred_i,
-  output  wire  [`BUS_64]     id_pc_pred_o,
-  output  wire                id_skip_difftest_o
+  input   wire                i_clk,
+  input   wire                i_rst,
+  input   reg                 i_id_fetched_req,
+  output  reg                 o_id_fetched_ack,
+  input   reg                 i_id_decoded_ack,
+  output  reg                 o_id_decoded_req,
+  input   wire  [`BUS_32]     i_id_inst,
+  input   wire  [`BUS_64]     i_id_rs1_data,
+  input   wire  [`BUS_64]     i_id_rs2_data,
+  input   wire  [`BUS_64]     i_id_pc_old,
+  input   wire  [`BUS_64]     i_id_pc,
+  output  reg                 o_id_rs1_ren,
+  output  wire  [4 : 0]       o_id_rs1,
+  output  wire                o_id_rs2_ren,
+  output  wire  [4 : 0]       o_id_rs2,
+  output  wire  [4 : 0]       o_id_rd,
+  output  wire                o_id_memren,
+  output  wire  [`BUS_64]     o_id_memaddr,
+  output  wire                o_id_memwen,
+  output  wire  [`BUS_64]     o_id_memwdata,
+  output  reg   [11 : 0]      o_id_csr_addr,
+  output  reg   [1 : 0]       o_id_csr_op,
+  output  reg   [`BUS_64]     o_id_csr_wdata,
+  input   reg   [`BUS_64]     i_id_csr_rdata,
+  output  wire  [2 : 0]       o_id_itype,
+  output  wire  [6 : 0]       o_id_opcode,
+  output  wire  [2 : 0]       o_id_funct3,
+  output  wire  [6 : 0]       o_id_funct7,
+  output  wire  [`BUS_64]     o_id_op1,
+  output  wire  [`BUS_64]     o_id_op2,
+  output  wire  [`BUS_64]     o_id_t1,
+  input   wire  [`BUS_64]     i_id_pc_pred,
+  output  wire  [`BUS_64]     o_id_pc_pred,
+  output  wire                o_id_skip_difftest
 );
 
 
-assign id_fetched_ack_o = 1'b1;
+assign o_id_fetched_ack = 1'b1;
 
-wire fetched_hs = id_fetched_req_i & id_fetched_ack_o;
+wire fetched_hs = i_id_fetched_req & o_id_fetched_ack;
 
 
 // 保存输入信息
-reg   [`BUS_32]               tmp_id_inst_i;
-reg   [`BUS_64]               tmp_id_rs1_data_i;
-reg   [`BUS_64]               tmp_id_rs2_data_i;
-reg   [`BUS_64]               tmp_id_pc_old_i;
-reg   [`BUS_64]               tmp_id_pc_i;
-reg   [`BUS_64]               tmp_id_pc_pred_i;
+reg   [`BUS_32]               tmp_i_id_inst;
+reg   [`BUS_64]               tmp_i_id_rs1_data;
+reg   [`BUS_64]               tmp_i_id_rs2_data;
+reg   [`BUS_64]               tmp_i_id_pc_old;
+reg   [`BUS_64]               tmp_i_id_pc;
+reg   [`BUS_64]               tmp_i_id_pc_pred;
 
-always @(posedge clk) begin
-  if (rst) begin
+always @(posedge i_clk) begin
+  if (i_rst) begin
     {
-      tmp_id_inst_i,
-      tmp_id_rs1_data_i,
-      tmp_id_rs2_data_i,
-      tmp_id_pc_old_i,
-      tmp_id_pc_i
+      tmp_i_id_inst,
+      tmp_i_id_rs1_data,
+      tmp_i_id_rs2_data,
+      tmp_i_id_pc_old,
+      tmp_i_id_pc
     } <= 0;
 
-    id_decoded_req_o <= 0;
+    o_id_decoded_req <= 0;
   end
   else begin
     if (fetched_hs) begin
-      tmp_id_inst_i       <= id_inst_i;
-      tmp_id_rs1_data_i   <= id_rs1_data_i;
-      tmp_id_rs2_data_i   <= id_rs2_data_i;
-      tmp_id_pc_old_i     <= id_pc_old_i;
-      tmp_id_pc_i         <= id_pc_i;
-      tmp_id_pc_pred_i    <= id_pc_pred_i;
+      tmp_i_id_inst       <= i_id_inst;
+      tmp_i_id_rs1_data   <= i_id_rs1_data;
+      tmp_i_id_rs2_data   <= i_id_rs2_data;
+      tmp_i_id_pc_old     <= i_id_pc_old;
+      tmp_i_id_pc         <= i_id_pc;
+      tmp_i_id_pc_pred    <= i_id_pc_pred;
 
-      id_decoded_req_o    <= 1;
+      o_id_decoded_req    <= 1;
     end
-    else if (id_decoded_ack_i) begin
-      id_decoded_req_o    <= 0;
+    else if (i_id_decoded_ack) begin
+      o_id_decoded_req    <= 0;
     end
   end
 end
@@ -90,34 +90,34 @@ end
 
 
 idU IdU(
-  .inst                       (tmp_id_inst_i              ),
-  .rs1_data                   (tmp_id_rs1_data_i          ),
-  .rs2_data                   (tmp_id_rs2_data_i          ),
-  .pc_old                     (tmp_id_pc_old_i            ),
-  .pc                         (tmp_id_pc_i                ),
-  .rs1_ren                    (id_rs1_ren_o               ),
-  .rs1                        (id_rs1_o                   ),
-  .rs2_ren                    (id_rs2_ren_o               ),
-  .rs2                        (id_rs2_o                   ),
-  .rd                         (id_rd_o                    ),
-  .memaddr                    (id_memaddr_o               ),
-  .memren                     (id_memren_o                ),
-  .memwen                     (id_memwen_o                ),
-  .memwdata                   (id_memwdata_o              ),
-  .itype                      (id_itype_o                 ),
-  .opcode                     (id_opcode_o                ),
-  .funct3                     (id_funct3_o                ),
-  .funct7                     (id_funct7_o                ),
-  .op1                        (id_op1_o                   ),
-  .op2                        (id_op2_o                   ),
-  .t1                         (id_t1_o                    ),
-  .csr_addr                   (id_csr_addr_o              ),
-  .csr_op                     (id_csr_op_o                ),
-  .csr_wdata                  (id_csr_wdata_o             ),
-  .csr_rdata                  (id_csr_rdata_i             ),
-  .pc_pred_i                  (tmp_id_pc_pred_i           ),
-  .pc_pred_o                  (id_pc_pred_o               ),
-  .skip_difftest              (id_skip_difftest_o         )
+  .i_inst                     (tmp_i_id_inst              ),
+  .i_rs1_data                 (tmp_i_id_rs1_data          ),
+  .i_rs2_data                 (tmp_i_id_rs2_data          ),
+  .i_pc_old                   (tmp_i_id_pc_old            ),
+  .i_pc                       (tmp_i_id_pc                ),
+  .o_rs1_ren                  (o_id_rs1_ren               ),
+  .o_rs1                      (o_id_rs1                   ),
+  .o_rs2_ren                  (o_id_rs2_ren               ),
+  .o_rs2                      (o_id_rs2                   ),
+  .o_rd                       (o_id_rd                    ),
+  .o_memaddr                  (o_id_memaddr               ),
+  .o_memren                   (o_id_memren                ),
+  .o_memwen                   (o_id_memwen                ),
+  .o_memwdata                 (o_id_memwdata              ),
+  .o_itype                    (o_id_itype                 ),
+  .o_opcode                   (o_id_opcode                ),
+  .o_funct3                   (o_id_funct3                ),
+  .o_funct7                   (o_id_funct7                ),
+  .o_op1                      (o_id_op1                   ),
+  .o_op2                      (o_id_op2                   ),
+  .o_t1                       (o_id_t1                    ),
+  .o_csr_addr                 (o_id_csr_addr              ),
+  .o_csr_op                   (o_id_csr_op                ),
+  .o_csr_wdata                (o_id_csr_wdata             ),
+  .i_csr_rdata                (i_id_csr_rdata             ),
+  .i_pc_pred                  (tmp_i_id_pc_pred           ),
+  .o_pc_pred                  (o_id_pc_pred               ),
+  .o_skip_difftest            (o_id_skip_difftest         )
 );
 
 endmodule
