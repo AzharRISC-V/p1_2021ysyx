@@ -8,91 +8,91 @@
 module exe_stage(
   input   wire                rst,
   input   wire                clk,
-  input   reg                 ex_decoded_req_i,
-  output  reg                 ex_decoded_ack_o,
-  output  reg                 ex_executed_req_o,
-  input   reg                 ex_executed_ack_i,
-  input   wire  [6 : 0]       ex_opcode_i,
-  input   wire  [2 : 0]       ex_funct3_i,
-  input   wire  [6 : 0]       ex_funct7_i,
-  input   wire  [`REG_BUS]    ex_op1_i,
-  input   wire  [`REG_BUS]    ex_op2_i,
-  input   wire  [`REG_BUS]    ex_t1_i,
-  input   wire                ex_memren_i,
-  input   wire                ex_memwen_i,
-  input   wire  [`BUS_64]     ex_pc_pred_i,     // 顺序计算得出的pc值，用于对比
-  output  reg                 ex_pc_jmp_o,
-  output  reg   [`BUS_64]     ex_pc_jmpaddr_o,
-  output  wire                ex_rd_wen_o,
-  output  wire  [`BUS_64]     ex_rd_wdata_o,
-  output  wire                ex_memren_o,
-  output  wire                ex_memwen_o
+  input   reg                 i_ex_decoded_req,
+  output  reg                 o_ex_decoded_ack,
+  output  reg                 o_ex_executed_req,
+  input   reg                 i_ex_executed_ack,
+  input   wire  [6 : 0]       i_ex_opcode,
+  input   wire  [2 : 0]       i_ex_funct3,
+  input   wire  [6 : 0]       i_ex_funct7,
+  input   wire  [`REG_BUS]    i_ex_op1,
+  input   wire  [`REG_BUS]    i_ex_op2,
+  input   wire  [`REG_BUS]    i_ex_t1,
+  input   wire                i_ex_memren,
+  input   wire                i_ex_memwen,
+  input   wire  [`BUS_64]     i_ex_pc_pred,
+  output  reg                 o_ex_pc_jmp,
+  output  reg   [`BUS_64]     o_ex_pc_jmpaddr,
+  output  wire                o_ex_rd_wen,
+  output  wire  [`BUS_64]     o_ex_rd_wdata,
+  output  wire                o_ex_memren,
+  output  wire                o_ex_memwen
 );
 
-assign ex_decoded_ack_o = 1'b1;
+assign o_ex_decoded_ack = 1'b1;
 
-wire decoded_hs = ex_decoded_req_i & ex_decoded_ack_o;
+wire decoded_hs = i_ex_executed_ack & o_ex_decoded_ack;
 
 // 保存输入信息
-reg   [4 : 0]                 tmp_ex_opcode_i;
-reg   [2 : 0]                 tmp_ex_funct3_i;
-reg   [6 : 0]                 tmp_ex_funct7_i;
-reg   [`REG_BUS]              tmp_ex_op1_i;
-reg   [`REG_BUS]              tmp_ex_op2_i;
-reg   [`REG_BUS]              tmp_ex_t1_i;
-reg                           tmp_ex_memren_i;
-reg                           tmp_ex_memwen_i;
+reg   [6 : 0]                 tmp_i_ex_opcode;
+reg   [2 : 0]                 tmp_i_ex_funct3;
+reg   [6 : 0]                 tmp_i_ex_funct7;
+reg   [`REG_BUS]              tmp_i_ex_op1;
+reg   [`REG_BUS]              tmp_i_ex_op2;
+reg   [`REG_BUS]              tmp_i_ex_t1;
+reg                           tmp_i_ex_memren;
+reg                           tmp_i_ex_memwen;
 
 always @(posedge clk) begin
   if (rst) begin
     {
-      tmp_ex_opcode_i, 
-      tmp_ex_funct3_i, 
-      tmp_ex_funct7_i, 
-      tmp_ex_op1_i, 
-      tmp_ex_op2_i, 
-      tmp_ex_t1_i,
-      tmp_ex_memren_i,
-      tmp_ex_memwen_i
+      tmp_i_ex_opcode, 
+      tmp_i_ex_funct3, 
+      tmp_i_ex_funct7, 
+      tmp_i_ex_op1, 
+      tmp_i_ex_op2, 
+      tmp_i_ex_t1,
+      tmp_i_ex_memren,
+      tmp_i_ex_memwen
     } <= 0;
 
-    ex_executed_req_o <= 0;
+    o_ex_decoded_ack <= 0;
   end
   else begin
     if (decoded_hs) begin
-      tmp_ex_opcode_i   <= ex_opcode_i; 
-      tmp_ex_funct3_i   <= ex_funct3_i;
-      tmp_ex_funct7_i   <= ex_funct7_i;
-      tmp_ex_op1_i      <= ex_op1_i;
-      tmp_ex_op2_i      <= ex_op2_i;
-      tmp_ex_t1_i       <= ex_t1_i;
-      tmp_ex_memren_i   <= ex_memren_i;
-      tmp_ex_memwen_i   <= ex_memwen_i;
+      tmp_i_ex_opcode   <= i_ex_opcode; 
+      tmp_i_ex_funct3   <= i_ex_funct3;
+      tmp_i_ex_funct7   <= i_ex_funct7;
+      tmp_i_ex_op1      <= i_ex_op1;
+      tmp_i_ex_op2      <= i_ex_op2;
+      tmp_i_ex_t1       <= i_ex_t1;
+      tmp_i_ex_memren   <= i_ex_memren;
+      tmp_i_ex_memwen   <= i_ex_memwen;
 
-      ex_executed_req_o <= 1;
+      o_ex_decoded_ack <= 1;
     end
-    else if (ex_executed_ack_i) begin
-      ex_executed_req_o <= 0;
+    else if (i_ex_executed_ack) begin
+      o_ex_decoded_ack <= 0;
     end
   end
 end
 
 exeU ExeU(
-  .opcode                     (tmp_ex_opcode_i            ),
-  .funct3                     (tmp_ex_funct3_i            ),
-  .funct7                     (tmp_ex_funct7_i            ),
-  .op1                        (tmp_ex_op1_i               ),
-  .op2                        (tmp_ex_op2_i               ),
-  .t1                         (tmp_ex_t1_i                ),
-  .memren_i                   (tmp_ex_memren_i            ),
-  .memwen_i                   (tmp_ex_memwen_i            ),
-  .pc_pred                    (ex_pc_pred_i               ),
-  .pc_jmp                     (ex_pc_jmp_o                ),
-  .pc_jmpaddr                 (ex_pc_jmpaddr_o            ),
-  .rd_wen                     (ex_rd_wen_o                ),
-  .rd_data                    (ex_rd_wdata_o              ),
-  .memren_o                   (ex_memren_o                ),
-  .memwen_o                   (ex_memwen_o                )
+  .i_opcode                   (tmp_i_ex_opcode            ),
+  .i_funct3                   (tmp_i_ex_funct3            ),
+  .i_funct7                   (tmp_i_ex_funct7            ),
+  .i_op1                      (tmp_i_ex_op1               ),
+  .i_op2                      (tmp_i_ex_op2               ),
+  .i_t1                       (tmp_i_ex_t1                ),
+  .i_memren                   (tmp_i_ex_memren            ),
+  .i_memwen                   (tmp_i_ex_memwen            ),
+  .i_pc_pred                  (i_ex_pc_pred               ),
+  .o_pc_jmp                   (o_ex_pc_jmp                ),
+  .o_pc_jmpaddr               (o_ex_pc_jmpaddr            ),
+  .o_rd_wen                   (o_ex_rd_wen                ),
+  .o_rd_data                  (o_ex_rd_wdata              ),
+  .o_memren                   (o_ex_memren                ),
+  .o_memwen                   (o_ex_memwen                )
 );
 
 endmodule

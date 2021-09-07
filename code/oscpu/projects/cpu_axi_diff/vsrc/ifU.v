@@ -6,8 +6,8 @@
 `include "defines.v"
 
 module ifU(
-  input   wire                i_clk,
-  input   wire                i_rst,
+  input   wire                clk,
+  input   wire                rst,
 
   /////////////////////////////////////////////////////////
   // AXI interface for Fetch
@@ -33,8 +33,8 @@ assign o_axi_valid = 1'b1;
 wire handshake_done = o_axi_valid & i_axi_ready;
 
 // fetch an instruction
-always @( posedge i_clk ) begin
-  if (i_rst) begin
+always @( posedge clk ) begin
+  if (rst) begin
     // pc_old    <= 0;
     o_pc                      <= 0;
     o_axi_addr                <= `PC_START;
@@ -49,7 +49,7 @@ always @( posedge i_clk ) begin
 end
 
 assign fetched_pulse = handshake_done;
-
+// 顺序计算得出的pc值，用于对比
 assign o_pc_pred = o_pc + 4;
 assign o_axi_size = `SIZE_W;
 

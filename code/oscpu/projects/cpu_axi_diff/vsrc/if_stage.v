@@ -6,8 +6,8 @@
 `include "defines.v"
 
 module if_stage(
-  input   wire                i_clk,
-  input   wire                i_rst,
+  input   wire                clk,
+  input   wire                rst,
   output reg                  o_if_fetched_req,
   input  reg                  i_if_fetched_ack,
 
@@ -33,8 +33,8 @@ module if_stage(
 wire fetched_pulse;
 
 ifU IfU(
-  .i_clk                      (i_clk                      ),
-  .i_rst                      (i_rst                      ),
+  .clk                        (clk                        ),
+  .rst                        (rst                        ),
 	.i_axi_ready                (i_if_axi_ready             ),
   .i_axi_data_read            (i_if_axi_data_read         ),
   .i_axi_resp                 (i_if_axi_resp              ),
@@ -50,8 +50,8 @@ ifU IfU(
   .fetched_pulse              (fetched_pulse              )
 );
 
-always @( posedge i_clk ) begin
-  if (i_rst) begin
+always @( posedge clk ) begin
+  if (rst) begin
     o_if_fetched_req          <= 0;
   end
   else begin

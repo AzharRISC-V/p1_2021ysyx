@@ -6,8 +6,8 @@
 `include "defines.v"
 
 module id_stage(
-  input   wire                i_clk,
-  input   wire                i_rst,
+  input   wire                clk,
+  input   wire                rst,
   input   reg                 i_id_fetched_req,
   output  reg                 o_id_fetched_ack,
   input   reg                 i_id_decoded_ack,
@@ -56,8 +56,8 @@ reg   [`BUS_64]               tmp_i_id_pc_old;
 reg   [`BUS_64]               tmp_i_id_pc;
 reg   [`BUS_64]               tmp_i_id_pc_pred;
 
-always @(posedge i_clk) begin
-  if (i_rst) begin
+always @(posedge clk) begin
+  if (rst) begin
     {
       tmp_i_id_inst,
       tmp_i_id_rs1_data,

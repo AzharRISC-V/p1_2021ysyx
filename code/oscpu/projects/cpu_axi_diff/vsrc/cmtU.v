@@ -8,14 +8,14 @@
 module cmtU(
   input   wire                clk,
   input   wire                rst,
-  input   wire [4 : 0]        rd,
-  input   wire                rd_wen,
-  input   wire [`BUS_64]      rd_wdata,
-  input   wire [`BUS_64]      pc,
-  input   wire [`BUS_32]      inst,
-  input   wire                skip_difftest,
-  input   wire [`BUS_64]      regs[0 : 31],
-  input   wire [`BUS_64]      csrs[0 :  7]
+  input   wire [4 : 0]        i_rd,
+  input   wire                i_rd_wen,
+  input   wire [`BUS_64]      i_rd_wdata,
+  input   wire [`BUS_64]      i_pc,
+  input   wire [`BUS_32]      i_inst,
+  input   wire                i_skip_difftest,
+  input   wire [`BUS_64]      i_regs[0 : 31],
+  input   wire [`BUS_64]      i_csrs[0 :  7]
 );
 
 
@@ -41,17 +41,17 @@ always @(negedge clk) begin
     {cmt_wen, cmt_wdest, cmt_wdata, cmt_pc, cmt_inst, cmt_valid, cmt_skip, trap, trap_code, cycleCnt, instrCnt} <= 0;
   end
   else if (~trap) begin
-    cmt_wen       <= rd_wen;
-    cmt_wdest     <= {3'd0, rd};
-    cmt_wdata     <= rd_wdata;
-    cmt_pc        <= pc;
-    cmt_inst      <= inst;
-    cmt_skip      <= skip_difftest;
+    cmt_wen       <= i_rd_wen;
+    cmt_wdest     <= {3'd0, i_rd};
+    cmt_wdata     <= i_rd_wdata;
+    cmt_pc        <= i_pc;
+    cmt_inst      <= i_inst;
+    cmt_skip      <= i_skip_difftest;
     cmt_valid     <= inst_valid;
-    regs_diff     <= regs;
-		csrs_diff     <= csrs;
-    trap          <= inst[6:0] == 7'h6b;
-    trap_code     <= regs[10][7:0];
+    regs_diff     <= i_regs;
+		csrs_diff     <= i_csrs;
+    trap          <= i_inst[6:0] == 7'h6b;
+    trap_code     <= i_regs[10][7:0];
     cycleCnt      <= cycleCnt + 1;
     instrCnt      <= instrCnt + inst_valid;
   end
@@ -123,7 +123,7 @@ DifftestCSRState DifftestCSRState(
   .clock              (clk),
   .coreid             (0),
   .priviledgeMode     (`RISCV_PRIV_MODE_M),
-  .mstatus            (csrs[`CSR_IDX_MSTATUS]),
+  .mstatus            (i_csrs[`CSR_IDX_MSTATUS]),
   .sstatus            (0),
   .mepc               (0),
   .sepc               (0),

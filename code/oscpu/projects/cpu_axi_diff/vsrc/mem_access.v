@@ -6,29 +6,27 @@
 // 内存读取控制器，将1字节访问转换为8字节对齐的一次或两次访问
 module mem_access (
   input   wire                  clk,
-  input   wire  [`BUS_64]       addr_i,     // 以字节为单位的访存地址
-  input   wire  [2 : 0]         funct3_i,
-
-  input   wire                  ren_i,      // 读使能
-  output  reg   [`BUS_64]       rdata_o,    // 读到的数据
-
-  input   wire  [`BUS_64]       wdata_i,    // 写入数据
-  input   wire                  wen_i       // 写使能
+  input   wire  [`BUS_64]       i_addr,     // 以字节为单位的访存地址
+  input   wire  [2 : 0]         i_funct3,
+  input   wire                  i_ren,      // 读使能
+  input   wire  [`BUS_64]       i_wdata,    // 写入数据
+  input   wire                  i_wen,      // 写使能
+  output  reg   [`BUS_64]       o_rdata     // 读到的数据
 );
 
 // -------------------------- 读写共有的信号 --------------------------
 // 读或写信号至少有一个有效
-wire  en = ren_i | wen_i;
+wire  en = i_ren | i_wen;
 
 // 除去基地址后的相对地址
-wire  [`BUS_64]   addr_rel = (!en) ? 0 : addr_i - 64'h00000000_80000000;
+wire  [`BUS_64]   addr_rel = (!en) ? 0 : i_addr - 64'h00000000_80000000;
 
 // 第1/2次访存地址
 wire  [`BUS_64]   addr1 = (!en) ? 0 : addr_rel >> 3;
 wire  [`BUS_64]   addr2 = (!en) ? 0 : addr1 + 64'b1;
 
 // 字节偏移量（由地址低3位决定）：0 ~ 7
-wire  [2 : 0]     byte_offset1 = {{5{1'b0}}, addr_i[2:0]};
+wire  [2 : 0]     byte_offset1 = {{5{1'b0}}, i_addr[2:0]};
 wire  [2 : 0]     byte_offset2 = 8 - byte_offset1;
 
 // 位偏移：0 ~ 63
@@ -37,7 +35,7 @@ wire [5 : 0]      bit_offset2 = 64 - bit_offset1;
 
 // 字节数（由funct3[1:0]决定）：1/2/4/8
 // Byte 00, Half 01, Word 10, Dword 11
-wire [7:0] bytes = 2 ** funct3_i[1:0];
+wire [7:0] bytes = 2 ** i_funct3[1:0];
 
 // 是否需要访问第二个64bit单元
 reg unit2_req = byte_offset1 + bytes > 8;
@@ -53,7 +51,7 @@ always @(*) begin
     bit_mask = 0;
   end
   else begin
-    case (funct3_i[1:0])
+    case (i_funct3[1:0])
       2'b00   : bit_mask = 64'h00000000_000000FF;
       2'b01   : bit_mask = 64'h00000000_0000FFFF;
       2'b10   : bit_mask = 64'h00000000_FFFFFFFF;
@@ -69,8 +67,8 @@ wire show_dbg = 0;// (clk_cnt >= `CLK_CNT_VAL);
 // -------------------------- 读取 --------------------------
 
 // 读取使能信号
-wire ren_unit1 = ren_i & (!unit2_req);
-wire ren_unit2 = ren_i & unit2_req;
+wire ren_unit1 = i_ren & (!unit2_req);
+wire ren_unit2 = i_ren & unit2_req;
 
 // 读取两份数据
 wire [`BUS_64] rdata1 = (!ren_unit1) ? 0 : ram_read_helper(show_dbg, ren_unit1, addr1);
@@ -81,46 +79,46 @@ wire [`BUS_64] rdata_0 = (rdata1 >> bit_offset1) | (rdata2 << bit_offset2);
 
 // 过滤出摘出需要读取的数据
 always @(*) begin
-  if (ren_i) begin
-    case (funct3_i)
-    `FUNCT3_LB    : rdata_o = $signed(rdata_0[7:0]);
-    `FUNCT3_LH    : rdata_o = $signed(rdata_0[15:0]);
-    `FUNCT3_LW    : rdata_o = $signed(rdata_0[31:0]);
-    `FUNCT3_LD    : rdata_o = rdata_0[63:0];
-    `FUNCT3_LBU   : rdata_o = rdata_0[7:0];
-    `FUNCT3_LHU   : rdata_o = rdata_0[15:0];
-    `FUNCT3_LWU   : rdata_o = rdata_0[31:0];
-    default       : rdata_o = 0;
+  if (i_ren) begin
+    case (i_funct3)
+    `FUNCT3_LB    : o_rdata = $signed(rdata_0[7:0]);
+    `FUNCT3_LH    : o_rdata = $signed(rdata_0[15:0]);
+    `FUNCT3_LW    : o_rdata = $signed(rdata_0[31:0]);
+    `FUNCT3_LD    : o_rdata = rdata_0[63:0];
+    `FUNCT3_LBU   : o_rdata = rdata_0[7:0];
+    `FUNCT3_LHU   : o_rdata = rdata_0[15:0];
+    `FUNCT3_LWU   : o_rdata = rdata_0[31:0];
+    default       : o_rdata = 0;
     endcase
   end
   else begin
-    rdata_o = 0;
+    o_rdata = 0;
   end
 end
 
 // 打印调试信息
 always @(*) begin
   if (ren_unit1 && show_dbg)
-    $displayh("  MEMACC: raddr1=", addr1, " rdata1=", rdata1, " rdata_o=", rdata_o);
+    $displayh("  MEMACC: raddr1=", addr1, " rdata1=", rdata1, " o_rdata=", o_rdata);
 end
 always @(*) begin
   if (ren_unit2 && show_dbg) 
-    $displayh("  MEMACC: raddr2=", addr2, " rdata2=", rdata2, " rdata_o=", rdata_o); 
+    $displayh("  MEMACC: raddr2=", addr2, " rdata2=", rdata2, " o_rdata=", o_rdata); 
 end
 
 // -------------------------- 写入 --------------------------
 
 // 写使能
-wire wen_unit1 = wen_i & (!unit2_req);
-wire wen_unit2 = wen_i & unit2_req;
+wire wen_unit1 = i_wen & (!unit2_req);
+wire wen_unit2 = i_wen & unit2_req;
 
 // 写掩码
 reg [`BUS_64] wmask1 = (!wen_unit1) ? 0 : bit_mask << bit_offset1;
 reg [`BUS_64] wmask2 = (!wen_unit2) ? 0 : bit_mask >> bit_offset2;
 
 // 写数据
-wire [`BUS_64] wdata1 = (!wen_unit1) ? 0 : wdata_i << bit_offset1;
-wire [`BUS_64] wdata2 = (!wen_unit2) ? 0 : wdata_i >> bit_offset2;
+wire [`BUS_64] wdata1 = (!wen_unit1) ? 0 : i_wdata << bit_offset1;
+wire [`BUS_64] wdata2 = (!wen_unit2) ? 0 : i_wdata >> bit_offset2;
 
 // 写入
 always @(negedge clk) begin

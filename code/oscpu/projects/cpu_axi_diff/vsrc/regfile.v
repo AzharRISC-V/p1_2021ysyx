@@ -4,22 +4,17 @@
 module regfile(
   input   wire                  clk,
   input   wire                  rst,
-	
-  // 读取普通寄存器
-  input   wire  [4  : 0]        rs1,
-  input   wire                  rs1_ren,
-  input   wire  [4  : 0]        rs2,
-  input   wire                  rs2_ren,
-  output  reg   [`BUS_64]       rs1_data,
-  output  reg   [`BUS_64]       rs2_data,
- 
-  // 写入普通寄存器
-  input   wire  [4  : 0]        rd,
-  input   wire                  rd_wen,
-  input   wire  [`BUS_64]       rd_data,
 
-  // difftest
-  output  wire  [`BUS_64]       regs_o[0 : 31]
+  input   wire  [4  : 0]        i_rs1,
+  input   wire                  i_rs1_ren,
+  input   wire  [4  : 0]        i_rs2,
+  input   wire                  i_rs2_ren,
+  input   wire  [4  : 0]        i_rd,
+  input   wire                  i_rd_wen,
+  input   wire  [`BUS_64]       i_rd_data,
+  output  reg   [`BUS_64]       o_rs1_data,
+  output  reg   [`BUS_64]       o_rs2_data,
+  output  wire  [`BUS_64]       o_regs[0 : 31]
 );
 
   // 32 registers
@@ -60,7 +55,7 @@ wire [`REG_BUS] x30_t5    = regs[30];
 wire [`REG_BUS] x31_t6    = regs[31];
 
 	
-// rd 写入
+// i_rd 写入
 always @(posedge clk) begin
   if ( rst == 1'b1 ) begin
     regs[ 0] <= `ZERO_WORD;
@@ -99,36 +94,36 @@ always @(posedge clk) begin
     // if ((w_ena == 1'b1) && (w_addr != 5'h00))	
     // 	regs[w_addr] <= w_data;
       
-    if (rd_wen && (rd != 5'h00))
-      regs[rd] <= rd_data;
+    if (i_rd_wen && (i_rd != 5'h00))
+      regs[i_rd] <= i_rd_data;
   end
 end
 
-// rs1 读取
+// i_rs1 读取
 always @(*) begin
   if (rst == 1'b1)
-    rs1_data = `ZERO_WORD;
-  else if (rs1_ren == 1'b1)
-    rs1_data = regs[rs1];
+    o_rs1_data = `ZERO_WORD;
+  else if (i_rs1_ren == 1'b1)
+    o_rs1_data = regs[i_rs1];
   else
-    rs1_data = `ZERO_WORD;
+    o_rs1_data = `ZERO_WORD;
 end
 
-// rs2 读取
+// i_rs2 读取
 always @(*) begin
   if (rst == 1'b1)
-    rs2_data = `ZERO_WORD;
-  else if (rs2_ren == 1'b1)
-    rs2_data = regs[rs2];
+    o_rs2_data = `ZERO_WORD;
+  else if (i_rs2_ren == 1'b1)
+    o_rs2_data = regs[i_rs2];
   else
-    rs2_data = `ZERO_WORD;
+    o_rs2_data = `ZERO_WORD;
 end
 
 // difftest regs接口
 genvar i;
 generate
   for (i = 0; i < 32; i = i + 1) begin
-    assign regs_o[i] = (rd_wen & rd == i & i != 0) ? rd_data : regs[i];
+    assign o_regs[i] = (i_rd_wen & i_rd == i & i != 0) ? i_rd_data : regs[i];
   end
 endgenerate
 

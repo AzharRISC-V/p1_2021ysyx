@@ -111,8 +111,8 @@ assign csr_rd_wdata_o = (csr_op == 2'b00) ? 0 : csr_rdata;
 /////////////////////////////////////////////////
 // Stages
 if_stage If_stage(
-  .i_clk                      (clk                        ),
-  .i_rst                      (rst                        ),
+  .rst                        (rst                        ),
+  .clk                        (clk                        ),
   .o_if_fetched_req           (fetched_req                ),
   .i_if_fetched_ack           (fetched_ack                ),
   .o_if_axi_valid             (if_valid                   ),
@@ -130,8 +130,8 @@ if_stage If_stage(
 );
 
 id_stage Id_stage(
-  .i_clk                      (clk                        ),
-  .i_rst                      (rst                        ),
+  .rst                        (rst                        ),
+  .clk                        (clk                        ),
   .i_id_fetched_req           (fetched_req                ),
   .o_id_fetched_ack           (fetched_ack                ),
   .o_id_decoded_req           (decoded_req                ),
@@ -169,40 +169,40 @@ id_stage Id_stage(
 exe_stage Exe_stage(
   .rst                        (rst                        ),
   .clk                        (clk                        ),
-  .ex_decoded_req_i           (decoded_req                ),
-  .ex_decoded_ack_o           (decoded_ack                ),
-  .ex_executed_req_o          (executed_req               ),
-  .ex_executed_ack_i          (executed_ack               ),
-  .ex_opcode_i                (id_opcode_o                ),
-  .ex_funct3_i                (id_funct3_o                ),
-  .ex_funct7_i                (id_funct7_o                ),
-  .ex_op1_i                   (id_op1_o                   ),
-  .ex_op2_i                   (id_op2_o                   ),
-  .ex_t1_i                    (id_t1_o                    ),
-  .ex_pc_pred_i               (id_pc_pred_o               ),
-  .ex_memren_i                (id_memren_o                ),
-  .ex_memwen_i                (id_memwen_o                ),
-  .ex_pc_jmp_o                (ex_pc_jmp_o                ),
-  .ex_pc_jmpaddr_o            (ex_pc_jmpaddr_o            ),
-  .ex_rd_wen_o                (ex_rd_wen_o                ),
-  .ex_rd_wdata_o              (ex_rd_wdata_o              ),
-  .ex_memren_o                (ex_memren_o                ),
-  .ex_memwen_o                (ex_memwen_o                )
+  .i_ex_decoded_req           (decoded_req                ),
+  .o_ex_decoded_ack           (decoded_ack                ),
+  .o_ex_executed_req          (executed_req               ),
+  .i_ex_executed_ack          (executed_ack               ),
+  .i_ex_opcode                (id_opcode_o                ),
+  .i_ex_funct3                (id_funct3_o                ),
+  .i_ex_funct7                (id_funct7_o                ),
+  .i_ex_op1                   (id_op1_o                   ),
+  .i_ex_op2                   (id_op2_o                   ),
+  .i_ex_t1                    (id_t1_o                    ),
+  .i_ex_pc_pred               (id_pc_pred_o               ),
+  .i_ex_memren                (id_memren_o                ),
+  .i_ex_memwen                (id_memwen_o                ),
+  .o_ex_pc_jmp                (ex_pc_jmp_o                ),
+  .o_ex_pc_jmpaddr            (ex_pc_jmpaddr_o            ),
+  .o_ex_rd_wen                (ex_rd_wen_o                ),
+  .o_ex_rd_wdata              (ex_rd_wdata_o              ),
+  .o_ex_memren                (ex_memren_o                ),
+  .o_ex_memwen                (ex_memwen_o                )
 );
 
 mem_stage Mem_stage(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
-  .mem_executed_req_i         (executed_req               ),
-  .mem_executed_ack_o         (executed_ack               ),
-  .mem_memoryed_req_o         (memoryed_req               ),
-  .mem_memoryed_ack_i         (memoryed_ack               ),
-  .mem_addr_i                 (ex_memaddr_o               ),
-  .mem_ren_i                  (ex_memren_o                ),
-  .mem_wen_i                  (ex_memwen_o                ),
-  .mem_wdata_i                (ex_memwdata_o              ),
-  .mem_funct3_i               (ex_funct3_o                ),
-  .mem_rdata_o                (mem_rdata_o                )
+  .i_mem_executed_req         (executed_req               ),
+  .o_mem_executed_ack         (executed_ack               ),
+  .o_mem_memoryed_req         (memoryed_req               ),
+  .i_mem_memoryed_ack         (memoryed_ack               ),
+  .i_mem_addr                 (ex_memaddr_o               ),
+  .i_mem_ren                  (ex_memren_o                ),
+  .i_mem_wen                  (ex_memwen_o                ),
+  .i_mem_wdata                (ex_memwdata_o              ),
+  .i_mem_funct3               (ex_funct3_o                ),
+  .o_mem_rdata                (mem_rdata_o                )
 );
 
 
@@ -213,16 +213,16 @@ wire  [`BUS_64]               wb_rd_wdata_o;
 wb_stage Wb_stage(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
-  .wb_memoryed_req_i          (memoryed_req               ),
-  .wb_memoryed_ack_o          (memoryed_ack               ),
-  .wb_writebacked_req_o       (writebacked_req            ),
-  .wb_writebacked_ack_i       (writebacked_ack            ),
-  .wb_rd_i                    (ex_rd_wen_o                ),
-  .wb_rd_wen_i                (ex_rd_wen_o                ),
-  .wb_rd_wdata_i              (ex_rd_wdata_o              ),
-  .wb_rd_o                    (wb_rd_o                    ),
-  .wb_rd_wen_o                (wb_rd_wen_o                ),
-  .wb_rd_wdata_o              (wb_rd_wdata_o              )
+  .i_wb_memoryed_req          (memoryed_req               ),
+  .o_wb_memoryed_ack          (memoryed_ack               ),
+  .o_wb_writebacked_req       (writebacked_req            ),
+  .i_wb_writebacked_ack       (writebacked_ack            ),
+  .i_wb_rd                    (ex_rd_wen_o                ),
+  .i_wb_rd_wen                (ex_rd_wen_o                ),
+  .i_wb_rd_wdata              (ex_rd_wdata_o              ),
+  .o_wb_rd                    (wb_rd_o                    ),
+  .o_wb_rd_wen                (wb_rd_wen_o                ),
+  .o_wb_rd_wdata              (wb_rd_wdata_o              )
   // .ex_wen_i                   (ex_rd_wen_o                ),
   // .ex_wdata_i                 (ex_rd_wdata_o              ),
   // .mem_wen_i                  (ex_memwen                  ),
@@ -236,41 +236,41 @@ wb_stage Wb_stage(
 cmt_stage Cmt_stage(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
-  .cmt_writebacked_req_i      (writebacked_req            ),
-  .cmt_writebacked_ack_o      (writebacked_ack            ),
-  .cmt_rd_i                   (wb_rd_o                    ),
-  .cmt_rd_wen_i               (wb_rd_wen_o                ),
-  .cmt_rd_wdata_i             (wb_rd_wdata_o              ),
-  .cmt_pc_i                   (if_pc_o                    ),
-  .cmt_inst_i                 (if_inst_o                  ),
-  .cmt_skip_difftest_i        (id_skip_difftest_o         ),
-  .cmt_regs_i                 (reg_regs_o                 ),
-  .cmt_csrs_i                 (csr_csrs_o                 )
+  .i_cmt_writebacked_req      (writebacked_req            ),
+  .o_cmt_writebacked_ack      (writebacked_ack            ),
+  .i_cmt_rd                   (wb_rd_o                    ),
+  .i_cmt_rd_wen               (wb_rd_wen_o                ),
+  .i_cmt_rd_wdata             (wb_rd_wdata_o              ),
+  .i_cmt_pc                   (if_pc_o                    ),
+  .i_cmt_inst                 (if_inst_o                  ),
+  .i_cmt_skip_difftest        (id_skip_difftest_o         ),
+  .i_cmt_regs                 (reg_regs_o                 ),
+  .i_cmt_csrs                 (csr_csrs_o                 )
 );
 
 regfile Regfile(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
-  .rs1                        (id_rs1_o                   ),
-  .rs1_ren                    (id_rs1_ren_o               ),
-  .rs2                        (id_rs2_o                   ),
-  .rs2_ren                    (id_rs2_ren_o               ),
-  .rd                         (wb_rd_o                    ),
-  .rd_wen                     (wb_rd_wen_o                ),
-  .rd_data                    (wb_rd_wdata_o              ),
-  .rs1_data                   (reg_id_rs1_data_o          ),
-  .rs2_data                   (reg_id_rs2_data_o          ),
-  .regs_o                     (reg_regs_o                 )
+  .i_rs1                      (id_rs1_o                   ),
+  .i_rs1_ren                  (id_rs1_ren_o               ),
+  .i_rs2                      (id_rs2_o                   ),
+  .i_rs2_ren                  (id_rs2_ren_o               ),
+  .i_rd                       (wb_rd_o                    ),
+  .i_rd_wen                   (wb_rd_wen_o                ),
+  .i_rd_data                  (wb_rd_wdata_o              ),
+  .o_rs1_data                 (reg_id_rs1_data_o          ),
+  .o_rs2_data                 (reg_id_rs2_data_o          ),
+  .o_regs                     (reg_regs_o                 )
 );
 
 csrfile Csrfile(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
-  .csr_addr                   (csr_addr                   ),
-  .csr_op                     (csr_op                     ),
-  .csr_wdata                  (csr_wdata                  ),
-  .csr_rdata                  (csr_rdata                  ),
-  .csrs_o                     (csr_csrs_o                 )
+  .i_csr_addr                 (csr_addr                   ),
+  .i_csr_op                   (csr_op                     ),
+  .i_csr_wdata                (csr_wdata                  ),
+  .o_csr_rdata                (csr_rdata                  ),
+  .o_csrs                     (csr_csrs_o                 )
 );
 
 
