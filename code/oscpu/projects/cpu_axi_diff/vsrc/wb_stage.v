@@ -14,14 +14,18 @@ module wb_stage(
   input   reg                 i_wb_writebacked_ack,
   input   wire  [`BUS_64]     i_wb_pc,
   input   wire  [`BUS_32]     i_wb_inst,
-  input   wire  [4 : 0]       i_wb_rd,
+  input   wire  [`BUS_RIDX]   i_wb_rd,
   input   wire                i_wb_rd_wen,
   input   wire  [`BUS_64]     i_wb_rd_wdata,
+  input   wire                i_wb_nocmt,
+  input   wire                i_wb_skipcmt,
   output  wire  [`BUS_64]     o_wb_pc,
   output  wire  [`BUS_32]     o_wb_inst,
-  output  reg   [4 : 0]       o_wb_rd,
+  output  reg   [`BUS_RIDX]   o_wb_rd,
   output  reg                 o_wb_rd_wen,
-  output  wire  [`BUS_64]     o_wb_rd_wdata
+  output  wire  [`BUS_64]     o_wb_rd_wdata,
+  output  reg                 o_wb_nocmt,
+  output  reg                 o_wb_skipcmt
   // input   wire                  csr_wen_i     ,   // CSR后的写回
   // input   wire  [`BUS_64]       csr_wdata_i   ,
 );
@@ -41,6 +45,8 @@ reg   [`BUS_32]               tmp_i_wb_inst;
 reg   [4 : 0]                 tmp_i_wb_rd;
 reg                           tmp_i_wb_rd_wen;
 reg   [`BUS_64]               tmp_i_wb_rd_wdata;
+reg                           tmp_i_wb_nocmt;
+reg                           tmp_i_wb_skipcmt;
 
 always @(posedge clk) begin
   if (rst) begin
@@ -49,7 +55,9 @@ always @(posedge clk) begin
       tmp_i_wb_inst,
       tmp_i_wb_rd, 
       tmp_i_wb_rd_wen, 
-      tmp_i_wb_rd_wdata
+      tmp_i_wb_rd_wdata,
+      tmp_i_wb_nocmt,
+      tmp_i_wb_skipcmt
     } <= 0;
 
     o_wb_writebacked_req  <= 0;
@@ -57,11 +65,13 @@ always @(posedge clk) begin
   end
   else begin
     if (memoryed_hs) begin
-      tmp_i_wb_pc           <= i_wb_pc;
-      tmp_i_wb_inst         <= i_wb_inst;
-      tmp_i_wb_rd           <= i_wb_rd; 
-      tmp_i_wb_rd_wen       <= i_wb_rd_wen;
-      tmp_i_wb_rd_wdata     <= i_wb_rd_wdata;
+      tmp_i_wb_pc             <= i_wb_pc;
+      tmp_i_wb_inst           <= i_wb_inst;
+      tmp_i_wb_rd             <= i_wb_rd; 
+      tmp_i_wb_rd_wen         <= i_wb_rd_wen;
+      tmp_i_wb_rd_wdata       <= i_wb_rd_wdata;
+      tmp_i_wb_nocmt          <= i_wb_nocmt;
+      tmp_i_wb_skipcmt        <= i_wb_skipcmt;
 
       o_wb_writebacked_req  <= 1;
       i_ena                 <= 1;
@@ -73,8 +83,10 @@ always @(posedge clk) begin
   end
 end
 
-assign o_wb_pc = tmp_i_wb_pc;
-assign o_wb_inst = tmp_i_wb_inst;
+assign o_wb_pc      = i_disable ? 0 : tmp_i_wb_pc;
+assign o_wb_inst    = i_disable ? 0 : tmp_i_wb_inst;
+assign o_wb_nocmt   = i_disable ? 0 : tmp_i_wb_nocmt;
+assign o_wb_skipcmt = i_disable ? 0 : tmp_i_wb_skipcmt;
 
 wbU WbU(
   .i_ena                      (i_ena                      ),

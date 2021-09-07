@@ -50,10 +50,10 @@ module wbU(
   input   wire                i_ena,
   input   wire                clk,
   input   wire                rst,
-  input   wire  [4 : 0]       i_rd,
+  input   wire  [`BUS_RIDX]   i_rd,
   input   wire                i_rd_wen,
   input   wire  [`BUS_64]     i_rd_wdata,
-  output  reg   [4 : 0]       o_rd,
+  output  reg   [`BUS_RIDX]   o_rd,
   output  reg                 o_rd_wen,
   output  wire  [`BUS_64]     o_rd_wdata
 );

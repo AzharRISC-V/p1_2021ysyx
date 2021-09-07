@@ -12,7 +12,7 @@ module memU(
   input   wire                rst,
   input   wire  [`BUS_64]     i_addr,
   input   wire                i_ren,
-  input   wire  [2 : 0]       i_funct3,
+  input   wire  [`BUS_FUNCT3] i_funct3,
   input   wire                i_wen,
   input   wire  [`BUS_64]     i_wdata,
   output  wire  [`BUS_64]     o_rdata

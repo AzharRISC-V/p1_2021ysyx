@@ -7,9 +7,9 @@
 
 module exeU(
   input   wire                i_ena,
-  input   wire  [6 : 0]       i_opcode,
-  input   wire  [2 : 0]       i_funct3,
-  input   wire  [6 : 0]       i_funct7,
+  input   wire  [`BUS_OPCODE] i_opcode,
+  input   wire  [`BUS_FUNCT3] i_funct3,
+  input   wire  [`BUS_FUNCT7] i_funct7,
   input   wire  [`BUS_64]     i_op1,
   input   wire  [`BUS_64]     i_op2,
   input   wire  [`BUS_64]     i_t1,

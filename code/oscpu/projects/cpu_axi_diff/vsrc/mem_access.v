@@ -7,7 +7,7 @@
 module mem_access (
   input   wire                  clk,
   input   wire  [`BUS_64]       i_addr,     // 以字节为单位的访存地址
-  input   wire  [2 : 0]         i_funct3,
+  input   wire  [`BUS_FUNCT3]   i_funct3,
   input   wire                  i_ren,      // 读使能
   input   wire  [`BUS_64]       i_wdata,    // 写入数据
   input   wire                  i_wen,      // 写使能

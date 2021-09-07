@@ -14,25 +14,24 @@ module if_stage(
   ///////////////////////////////////////////////
   // AXI interface for Fetch
 	input                       i_if_axi_ready,
-  input         [63:0]        i_if_axi_data_read,
+  input         [`BUS_64]     i_if_axi_data_read,
   input         [1:0]         i_if_axi_resp,
 	output reg                  o_if_axi_valid,
-  output reg    [63:0]        o_if_axi_addr,
+  output reg    [`BUS_64]     o_if_axi_addr,
   output        [1:0]         o_if_axi_size,
   
   ///////////////////////////////////////////////
   input   wire                i_if_pc_jmp,
   input   wire  [`BUS_64]     i_if_pc_jmpaddr,
-  output  reg   [`BUS_64]     o_if_pc_old,
   output  reg   [`BUS_64]     o_if_pc,
-  output  wire  [`BUS_64]     o_if_pc_pred,    // 预测的下一个PC
-  output  reg   [`BUS_32]     o_if_inst
+  output  wire  [`BUS_64]     o_if_pc_pred,
+  output  reg   [`BUS_32]     o_if_inst,
+  output                      o_if_nocmt
 );
 
 
-wire fetched_pulse;
-
 ifU IfU(
+  .i_ena                      (1                          ),
   .clk                        (clk                        ),
   .rst                        (rst                        ),
 	.i_axi_ready                (i_if_axi_ready             ),
@@ -43,25 +42,25 @@ ifU IfU(
   .o_axi_size                 (o_if_axi_size              ),
   .i_pc_jmp                   (i_if_pc_jmp                ),
   .i_pc_jmpaddr               (i_if_pc_jmpaddr            ),
-  .o_pc_old                   (o_if_pc_old                ),
   .o_pc                       (o_if_pc                    ),
   .o_pc_pred                  (o_if_pc_pred               ),
   .o_inst                     (o_if_inst                  ),
-  .fetched_pulse              (fetched_pulse              )
+  .o_fetched                  (o_if_fetched_req           ),
+  .o_nocmt                    (o_if_nocmt                 )
 );
 
-always @( posedge clk ) begin
-  if (rst) begin
-    o_if_fetched_req          <= 0;
-  end
-  else begin
-    if (fetched_pulse) begin
-      o_if_fetched_req        <= 1;
-    end
-    else if (i_if_fetched_ack) begin
-      o_if_fetched_req        <= 0; 
-    end
-  end
-end
+// always @( posedge clk ) begin
+//   if (rst) begin
+//     o_if_fetched_req          <= 0;
+//   end
+//   else begin
+//     if (o_fetched) begin
+//       o_if_fetched_req        <= 1;
+//     end
+//     else if (i_if_fetched_ack) begin
+//       o_if_fetched_req        <= 0; 
+//     end
+//   end
+// end
 
 endmodule

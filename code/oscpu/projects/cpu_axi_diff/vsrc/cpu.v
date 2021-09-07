@@ -27,7 +27,7 @@ wire                          writebacked_req;
 wire                          writebacked_ack;
 
 // Unknown, developping
-wire  [`BUS_64]               id_pc_pred_o;
+wire  [`BUS_64]               o_id_pc_pred;
 wire                          pipe_flush_req;
 wire                          pipe_flush_ack;
 wire  [`BUS_64]               pipe_flush_pc;
@@ -40,12 +40,15 @@ wire  [`BUS_64]               o_if_pc_old;
 wire  [`BUS_64]               o_if_pc;
 wire  [`BUS_64]               o_if_pc_pred;
 wire  [`BUS_32]               o_if_inst;
+wire                          o_if_nocmt;
+
+// id_stage
 // id_stage -> regfile
 wire                          o_id_rs1_ren;
-wire  [4 : 0]                 o_id_rs1;
+wire  [`BUS_RIDX]             o_id_rs1;
 wire                          o_id_rs2_ren;
-wire  [4 : 0]                 o_id_rs2;
-wire  [4 : 0]                 o_id_rd;
+wire  [`BUS_RIDX]             o_id_rs2;
+wire  [`BUS_RIDX]             o_id_rd;
 // id_stage -> csrfile
 wire  [11 : 0]                o_id_csraddr;
 wire  [1 : 0]                 o_id_csrop;
@@ -53,54 +56,58 @@ wire  [11 : 0]                o_id_csrwaddr;
 wire  [`BUS_64]               o_id_csrwdata;
 // id_stage -> exe_stage
 wire  [2 : 0]                 o_id_itype;
-wire  [6 : 0]                 o_id_opcode;
-wire  [2 : 0]                 o_id_funct3;
-wire  [6 : 0]                 o_id_funct7;
+wire  [`BUS_OPCODE]           o_id_opcode;
+wire  [`BUS_FUNCT3]           o_id_funct3;
+wire  [`BUS_FUNCT7]           o_id_funct7;
 wire  [`BUS_64]               o_id_op1;
 wire  [`BUS_64]               o_id_op2;
-wire                          o_id_memaddr;
+wire  [`BUS_64]               o_id_memaddr;
 wire                          o_id_memren;
 wire                          o_id_memwen;
 wire  [`BUS_64]               o_id_memwdata;
 wire  [`BUS_64]               o_id_t1;
-wire                          o_id_skip_difftest;
+wire                          o_id_nocmt;
+wire                          o_id_skipcmt;
 wire  [`BUS_64]               o_id_pc;
 wire  [`BUS_32]               o_id_inst;
 
 // exe_stage
 // exe_stage -> mem_stage
-wire [2 : 0]                  o_ex_funct3;
+wire [`BUS_FUNCT3]            o_ex_funct3;
 wire [`BUS_64]                o_ex_memaddr;
 wire                          o_ex_memren;
 wire                          o_ex_memwen;
 wire  [`BUS_64]               o_ex_memwdata;
 wire  [`BUS_64]               o_ex_pc;
 wire  [`BUS_32]               o_ex_inst;
-wire  [4 : 0]                 o_ex_opcode;
+wire  [`BUS_OPCODE]           o_ex_opcode;
 wire                          o_ex_pc_jmp;
 wire  [`BUS_64]               o_ex_pc_jmpaddr;
-wire  [5 : 0]                 o_ex_rd;
+wire  [`BUS_RIDX]             o_ex_rd;
 wire                          o_ex_rd_wen;
 wire  [`BUS_64]               o_ex_rd_wdata;
-wire                          o_ex_skip_difftest;
+wire                          o_ex_nocmt;
+wire                          o_ex_skipcmt;
 
 // mem_stage
 // mem_stage -> wb_stage
 reg   [`BUS_64]               o_mem_rdata;
 wire  [`BUS_64]               o_mem_pc;
 wire  [`BUS_32]               o_mem_inst;
-wire  [5 : 0]                 o_mem_rd;
+wire  [`BUS_RIDX]             o_mem_rd;
 wire                          o_mem_rd_wen;
 wire  [`BUS_64]               o_mem_rd_wdata;
-wire                          o_mem_skip_difftest;
+wire                          o_mem_nocmt;
+wire                          o_mem_skipcmt;
 
 // wb_stage
 // wb_stage -> cmt_stage
 wire  [`BUS_64]               o_wb_pc;
 wire  [`BUS_32]               o_wb_inst;
-wire                          o_wb_skip_difftest;
+wire                          o_wb_nocmt;
+wire                          o_wb_skipcmt;
 // wb_stage -> regfile
-wire  [4 : 0]                 o_wb_rd;
+wire  [`BUS_RIDX]             o_wb_rd;
 reg                           o_wb_rd_wen;
 wire  [`BUS_64]               o_wb_rd_wdata;
 
@@ -137,10 +144,10 @@ if_stage If_stage(
   .i_if_axi_resp              (if_resp                    ),
   .i_if_pc_jmp                (o_ex_pc_jmp                ),
   .i_if_pc_jmpaddr            (o_ex_pc_jmpaddr            ),
-  .o_if_pc_old                (o_if_pc_old                ),
   .o_if_pc                    (o_if_pc                    ),
   .o_if_pc_pred               (o_if_pc_pred               ),
-  .o_if_inst                  (o_if_inst                  )
+  .o_if_inst                  (o_if_inst                  ),
+  .o_if_nocmt                 (o_if_nocmt                 ) 
 );
 
 id_stage Id_stage(
@@ -154,8 +161,9 @@ id_stage Id_stage(
   .i_id_inst                  (o_if_inst                  ),
   .i_id_rs1_data              (o_reg_id_rs1_data          ),
   .i_id_rs2_data              (o_reg_id_rs2_data          ),
-  .i_id_pc_old                (o_if_pc_old                ),
+  .i_id_nocmt                 (o_if_nocmt                 ),
   .o_id_pc                    (o_id_pc                    ),
+  .i_id_pc_pred               (o_if_pc_pred               ),
   .o_id_inst                  (o_id_inst                  ),
   .o_id_rs1_ren               (o_id_rs1_ren               ),
   .o_id_rs1                   (o_id_rs1                   ),
@@ -177,9 +185,9 @@ id_stage Id_stage(
   .o_id_csr_op                (o_id_csrop                 ),
   .o_id_csr_wdata             (o_id_csrwdata              ),
   .i_id_csr_rdata             (o_csr_rdata                ),
-  .i_id_pc_pred               (o_if_pc_pred               ),
-  .o_id_pc_pred               (id_pc_pred_o               ),
-  .o_id_skip_difftest         (o_id_skip_difftest         )
+  .o_id_pc_pred               (o_id_pc_pred               ),
+  .o_id_nocmt                 (o_id_nocmt                 ),
+  .o_id_skipcmt               (o_id_skipcmt               )
 );
 
 exe_stage Exe_stage(
@@ -197,10 +205,12 @@ exe_stage Exe_stage(
   .i_ex_op1                   (o_id_op1                   ),
   .i_ex_op2                   (o_id_op2                   ),
   .i_ex_t1                    (o_id_t1                    ),
-  .i_ex_pc_pred               (id_pc_pred_o               ),
+  .i_ex_pc_pred               (o_id_pc_pred               ),
   .i_ex_memren                (o_id_memren                ),
   .i_ex_memwen                (o_id_memwen                ),
   .i_ex_rd                    (o_id_rd                    ),
+  .i_ex_nocmt                 (o_id_nocmt                 ),
+  .i_ex_skipcmt               (o_id_skipcmt               ),
   .o_ex_pc                    (o_ex_pc                    ),
   .o_ex_inst                  (o_ex_inst                  ),
   .o_ex_pc_jmp                (o_ex_pc_jmp                ),
@@ -209,7 +219,9 @@ exe_stage Exe_stage(
   .o_ex_rd_wen                (o_ex_rd_wen                ),
   .o_ex_rd_wdata              (o_ex_rd_wdata              ),
   .o_ex_memren                (o_ex_memren                ),
-  .o_ex_memwen                (o_ex_memwen                )
+  .o_ex_memwen                (o_ex_memwen                ),
+  .o_ex_nocmt                 (o_ex_nocmt                 ),
+  .o_ex_skipcmt               (o_ex_skipcmt               )
 );
 
 mem_stage Mem_stage(
@@ -229,12 +241,16 @@ mem_stage Mem_stage(
   .i_mem_rd                   (o_ex_rd                    ),
   .i_mem_rd_wen               (o_ex_rd_wen                ),
   .i_mem_rd_wdata             (o_ex_rd_wdata              ),
+  .i_mem_nocmt                (o_ex_nocmt                 ),
+  .i_mem_skipcmt              (o_ex_skipcmt               ),
   .o_mem_rd                   (o_mem_rd                   ),
   .o_mem_rd_wen               (o_mem_rd_wen               ),
   .o_mem_rd_wdata             (o_mem_rd_wdata             ),
   .o_mem_pc                   (o_mem_pc                   ),
   .o_mem_inst                 (o_mem_inst                 ),
-  .o_mem_rdata                (o_mem_rdata                )
+  .o_mem_rdata                (o_mem_rdata                ),
+  .o_mem_nocmt                (o_mem_nocmt                ),
+  .o_mem_skipcmt              (o_mem_skipcmt              )
 );
 
 wb_stage Wb_stage(
@@ -249,11 +265,15 @@ wb_stage Wb_stage(
   .i_wb_rd                    (o_mem_rd                   ),
   .i_wb_rd_wen                (o_mem_rd_wen               ),
   .i_wb_rd_wdata              (o_mem_rd_wdata             ),
+  .i_wb_nocmt                 (o_mem_nocmt                ),
+  .i_wb_skipcmt               (o_mem_skipcmt              ),
   .o_wb_pc                    (o_wb_pc                    ),
   .o_wb_inst                  (o_wb_inst                  ),
   .o_wb_rd                    (o_wb_rd                    ),
   .o_wb_rd_wen                (o_wb_rd_wen                ),
-  .o_wb_rd_wdata              (o_wb_rd_wdata              )
+  .o_wb_rd_wdata              (o_wb_rd_wdata              ),
+  .o_wb_nocmt                 (o_wb_nocmt                 ),
+  .o_wb_skipcmt               (o_wb_skipcmt               )
   // .ex_wen_i                   (o_ex_rd_wen                ),
   // .ex_wdata_i                 (o_ex_rd_wdata              ),
   // .mem_wen_i                  (ex_memwen                  ),
@@ -274,7 +294,8 @@ cmt_stage Cmt_stage(
   .i_cmt_rd_wdata             (o_wb_rd_wdata              ),
   .i_cmt_pc                   (o_wb_pc                    ),
   .i_cmt_inst                 (o_wb_inst                  ),
-  .i_cmt_skip_difftest        (o_wb_skip_difftest         ),
+  .i_cmt_nocmt                (o_wb_nocmt                 ),
+  .i_cmt_skipcmt              (o_wb_skipcmt               ),
   .i_cmt_regs                 (o_reg_regs                 ),
   .i_cmt_csrs                 (o_csr_csrs                 )
 );

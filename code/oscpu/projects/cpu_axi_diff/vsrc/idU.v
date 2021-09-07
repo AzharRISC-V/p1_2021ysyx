@@ -10,14 +10,13 @@ module idU(
   input   wire  [`BUS_32]     i_inst,
   input   wire  [`BUS_64]     i_rs1_data,
   input   wire  [`BUS_64]     i_rs2_data,
-  input   wire  [`BUS_64]     i_pc_old,
   input   wire  [`BUS_64]     i_pc,
   input   wire  [`BUS_64]     i_pc_pred,
   output  reg                 o_rs1_ren,
-  output  wire  [4 : 0]       o_rs1,
+  output  wire  [`BUS_RIDX]   o_rs1,
   output  wire                o_rs2_ren,
-  output  wire  [4 : 0]       o_rs2,
-  output  wire  [4 : 0]       o_rd,
+  output  wire  [`BUS_RIDX]   o_rs2,
+  output  wire  [`BUS_RIDX]   o_rd,
   output  wire                o_memren,
   output  wire  [`BUS_64]     o_memaddr,
   output  wire                o_memwen,
@@ -27,14 +26,14 @@ module idU(
   output  reg   [`BUS_64]     o_csr_wdata,
   input   reg   [`BUS_64]     i_csr_rdata,
   output  wire  [2 : 0]       o_itype,
-  output  wire  [6 : 0]       o_opcode,
-  output  wire  [2 : 0]       o_funct3,
-  output  wire  [6 : 0]       o_funct7,
-  output  wire  [`BUS_64]     o_op1,            // 两个操作数
+  output  wire  [`BUS_OPCODE] o_opcode,
+  output  wire  [`BUS_FUNCT3] o_funct3,
+  output  wire  [`BUS_FUNCT7] o_funct7,
+  output  wire  [`BUS_64]     o_op1,      // 两个操作数
   output  wire  [`BUS_64]     o_op2,
   output  wire  [`BUS_64]     o_t1,
   output  wire  [`BUS_64]     o_pc_pred,
-  output  wire                o_skip_difftest
+  output  wire                o_skipcmt
 );
 
 
@@ -281,8 +280,8 @@ end
 // 让REF跳过指令比对
 wire mem_addr_is_device = (o_memaddr & ~(64'hFFF)) == 64'h2000_0000;
 
-// o_skip_difftest
-assign o_skip_difftest = 
+// 某些自定义指令，需要通知difftest跳过比对（提交，但不对比）
+assign o_skipcmt = 
   (i_inst == 32'h7b)                 // putch
   | (o_opcode == `OPCODE_CSR)   
   | mem_addr_is_device

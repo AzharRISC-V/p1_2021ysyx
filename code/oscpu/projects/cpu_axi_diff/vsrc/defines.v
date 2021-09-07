@@ -28,6 +28,10 @@
 `define BUS_16              15:0
 `define BUS_32              31:0
 `define BUS_64              63:0
+`define BUS_RIDX            4:0                 // 寄存器索引的总线
+`define BUS_FUNCT3          2:0                 // funct3的总线
+`define BUS_FUNCT7          6:0                 // funct7的总线
+`define BUS_OPCODE          6:0                 // opcode的总线
 
 // 指令状态机
 `define STATE_BUS           3:0
@@ -76,6 +80,7 @@
 `define ROM_SIZE_BUS        4095:0          // ROM单元数总线
 
 // 已编码的指令
+`define INST_NOP            32'h0000_0013   // addi x0,x0,0
 `define INST_ECALL          32'h0000_0073   // ecall 指令
 `define INST_EBREAK         32'h0010_0073   // ebreak 指令
 

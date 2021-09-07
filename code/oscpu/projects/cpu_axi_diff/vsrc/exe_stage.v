@@ -14,25 +14,29 @@ module exe_stage(
   input   reg                 i_ex_executed_ack,
   input   wire  [`BUS_64]     i_ex_pc,
   input   wire  [`BUS_32]     i_ex_inst,
-  input   wire  [6 : 0]       i_ex_opcode,
-  input   wire  [2 : 0]       i_ex_funct3,
-  input   wire  [6 : 0]       i_ex_funct7,
+  input   wire  [`BUS_OPCODE] i_ex_opcode,
+  input   wire  [`BUS_FUNCT3] i_ex_funct3,
+  input   wire  [`BUS_FUNCT7] i_ex_funct7,
   input   wire  [`BUS_64]     i_ex_op1,
   input   wire  [`BUS_64]     i_ex_op2,
   input   wire  [`BUS_64]     i_ex_t1,
   input   wire                i_ex_memren,
   input   wire                i_ex_memwen,
   input   wire  [`BUS_64]     i_ex_pc_pred,
-  input   wire  [4 : 0]       i_ex_rd,
+  input   wire  [`BUS_RIDX]   i_ex_rd,
+  input   wire                i_ex_nocmt,
+  input   wire                i_ex_skipcmt,
   output  reg   [`BUS_64]     o_ex_pc,
   output  reg   [`BUS_32]     o_ex_inst,
   output  reg                 o_ex_pc_jmp,
   output  reg   [`BUS_64]     o_ex_pc_jmpaddr,
-  output  reg   [4 : 0]       o_ex_rd,
+  output  reg   [`BUS_RIDX]   o_ex_rd,
   output  reg                 o_ex_rd_wen,
   output  reg   [`BUS_64]     o_ex_rd_wdata,
   output  reg                 o_ex_memren,
-  output  reg                 o_ex_memwen
+  output  reg                 o_ex_memwen,
+  output  wire                o_ex_nocmt,
+  output  wire                o_ex_skipcmt
 );
 
 assign o_ex_decoded_ack = 1'b1;
@@ -56,6 +60,8 @@ reg   [`BUS_64]               tmp_i_ex_t1;
 reg                           tmp_i_ex_memren;
 reg                           tmp_i_ex_memwen;
 reg   [4 : 0]                 tmp_i_ex_rd;
+reg                           tmp_i_ex_nocmt;
+reg                           tmp_i_ex_skipcmt;
 
 always @(posedge clk) begin
   if (rst) begin
@@ -70,7 +76,9 @@ always @(posedge clk) begin
       tmp_i_ex_t1,
       tmp_i_ex_memren,
       tmp_i_ex_memwen,
-      tmp_i_ex_rd
+      tmp_i_ex_rd,
+      tmp_i_ex_nocmt,
+      tmp_i_ex_skipcmt
     } <= 0;
 
     o_ex_executed_req   <= 0;
@@ -89,6 +97,8 @@ always @(posedge clk) begin
       tmp_i_ex_memren   <= i_ex_memren;
       tmp_i_ex_memwen   <= i_ex_memwen;
       tmp_i_ex_rd       <= i_ex_rd;
+      tmp_i_ex_nocmt    <= i_ex_nocmt;
+      tmp_i_ex_skipcmt  <= i_ex_skipcmt;
 
       o_ex_executed_req <= 1;
       i_ena             <= 1;
@@ -101,9 +111,11 @@ always @(posedge clk) begin
   end
 end
 
-assign o_ex_pc    = i_disable ? 0 : tmp_i_ex_pc;
-assign o_ex_inst  = i_disable ? 0 : tmp_i_ex_inst;
-assign o_ex_rd    = i_disable ? 0 : tmp_i_ex_rd;
+assign o_ex_pc      = i_disable ? 0 : tmp_i_ex_pc;
+assign o_ex_inst    = i_disable ? 0 : tmp_i_ex_inst;
+assign o_ex_rd      = i_disable ? 0 : tmp_i_ex_rd;
+assign o_ex_nocmt   = i_disable ? 0 : tmp_i_ex_nocmt;
+assign o_ex_skipcmt = i_disable ? 0 : tmp_i_ex_skipcmt;
 
 exeU ExeU(
   .i_ena                      (i_ena                      ),

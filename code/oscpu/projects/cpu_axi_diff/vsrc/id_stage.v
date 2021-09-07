@@ -13,17 +13,18 @@ module id_stage(
   input   reg                 i_id_decoded_ack,
   output  reg                 o_id_decoded_req,
   input   wire  [`BUS_64]     i_id_pc,
+  input   wire  [`BUS_64]     i_id_pc_pred,
   input   wire  [`BUS_32]     i_id_inst,
   input   wire  [`BUS_64]     i_id_rs1_data,
   input   wire  [`BUS_64]     i_id_rs2_data,
-  input   wire  [`BUS_64]     i_id_pc_old,
+  input   wire                i_id_nocmt,
   output  wire  [`BUS_64]     o_id_pc,
   output  wire  [`BUS_32]     o_id_inst,
   output  reg                 o_id_rs1_ren,
-  output  wire  [4 : 0]       o_id_rs1,
+  output  wire  [`BUS_RIDX]   o_id_rs1,
   output  wire                o_id_rs2_ren,
-  output  wire  [4 : 0]       o_id_rs2,
-  output  wire  [4 : 0]       o_id_rd,
+  output  wire  [`BUS_RIDX]   o_id_rs2,
+  output  wire  [`BUS_RIDX]   o_id_rd,
   output  wire                o_id_memren,
   output  wire  [`BUS_64]     o_id_memaddr,
   output  wire                o_id_memwen,
@@ -33,15 +34,15 @@ module id_stage(
   output  reg   [`BUS_64]     o_id_csr_wdata,
   input   reg   [`BUS_64]     i_id_csr_rdata,
   output  wire  [2 : 0]       o_id_itype,
-  output  wire  [6 : 0]       o_id_opcode,
-  output  wire  [2 : 0]       o_id_funct3,
-  output  wire  [6 : 0]       o_id_funct7,
+  output  wire  [`BUS_OPCODE] o_id_opcode,
+  output  wire  [`BUS_FUNCT3] o_id_funct3,
+  output  wire  [`BUS_FUNCT7] o_id_funct7,
   output  wire  [`BUS_64]     o_id_op1,
   output  wire  [`BUS_64]     o_id_op2,
   output  wire  [`BUS_64]     o_id_t1,
-  input   wire  [`BUS_64]     i_id_pc_pred,
   output  wire  [`BUS_64]     o_id_pc_pred,
-  output  wire                o_id_skip_difftest
+  output  wire                o_id_nocmt,
+  output  wire                o_id_skipcmt
 );
 
 
@@ -55,17 +56,18 @@ reg                           i_ena;
 
 
 // 保存输入信息
-reg   [`BUS_32]               tmp_i_id_inst;
-reg   [`BUS_64]               tmp_i_id_pc_old;
 reg   [`BUS_64]               tmp_i_id_pc;
 reg   [`BUS_64]               tmp_i_id_pc_pred;
+reg   [`BUS_32]               tmp_i_id_inst;
+reg                           tmp_i_id_nocmt;
 
 always @(posedge clk) begin
   if (rst) begin
     {
+      tmp_i_id_pc,
+      tmp_i_id_pc_pred,
       tmp_i_id_inst,
-      tmp_i_id_pc_old,
-      tmp_i_id_pc
+      tmp_i_id_nocmt
     } <= 0;
 
     o_id_decoded_req      <= 0;
@@ -73,10 +75,10 @@ always @(posedge clk) begin
   end
   else begin
     if (fetched_hs) begin
-      tmp_i_id_inst       <= i_id_inst;
-      tmp_i_id_pc_old     <= i_id_pc_old;
       tmp_i_id_pc         <= i_id_pc;
       tmp_i_id_pc_pred    <= i_id_pc_pred;
+      tmp_i_id_inst       <= i_id_inst;
+      tmp_i_id_nocmt      <= i_id_nocmt;
 
       o_id_decoded_req    <= 1;
       i_ena               <= 1;
@@ -91,9 +93,9 @@ end
 wire i_disable = !i_ena;
 
 assign o_id_pc      = i_disable ? 0 : tmp_i_id_pc;
+assign o_id_pc_pred = i_disable ? 0 : tmp_i_id_pc_pred;
 assign o_id_inst    = i_disable ? 0 : tmp_i_id_inst;
-// assign id_op1_o = tmp_op1;
-// assign id_op2_o = tmp_op2;
+assign o_id_nocmt   = i_disable ? 0 : tmp_i_id_nocmt;
 
 
 idU IdU(
@@ -101,8 +103,8 @@ idU IdU(
   .i_inst                     (tmp_i_id_inst              ),
   .i_rs1_data                 (i_id_rs1_data              ),
   .i_rs2_data                 (i_id_rs2_data              ),
-  .i_pc_old                   (tmp_i_id_pc_old            ),
   .i_pc                       (tmp_i_id_pc                ),
+  .i_pc_pred                  (tmp_i_id_pc_pred           ),
   .o_rs1_ren                  (o_id_rs1_ren               ),
   .o_rs1                      (o_id_rs1                   ),
   .o_rs2_ren                  (o_id_rs2_ren               ),
@@ -123,9 +125,8 @@ idU IdU(
   .o_csr_op                   (o_id_csr_op                ),
   .o_csr_wdata                (o_id_csr_wdata             ),
   .i_csr_rdata                (i_id_csr_rdata             ),
-  .i_pc_pred                  (tmp_i_id_pc_pred           ),
   .o_pc_pred                  (o_id_pc_pred               ),
-  .o_skip_difftest            (o_id_skip_difftest         )
+  .o_skipcmt                  (o_id_skipcmt               )
 );
 
 endmodule

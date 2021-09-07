@@ -8,15 +8,15 @@
 module cmtU(
   input   wire                clk,
   input   wire                rst,
-  input   wire [4 : 0]        i_rd,
+  input   wire [`BUS_RIDX]    i_rd,
   input   wire                i_rd_wen,
   input   wire [`BUS_64]      i_rd_wdata,
   input   wire [`BUS_64]      i_pc,
   input   wire [`BUS_32]      i_inst,
-  input   wire                i_skip_difftest,
   input   wire [`BUS_64]      i_regs[0 : 31],
   input   wire [`BUS_64]      i_csrs[0 :  7],
-  input   wire                i_valid
+  input   wire                i_cmtvalid,
+  input   wire                i_skipcmt
 );
 
 
@@ -35,7 +35,7 @@ reg   [`BUS_64]               instrCnt;
 reg   [`BUS_64]               regs_diff [0 : 31];
 reg   [`BUS_64]               csrs_diff [0 : 7];
 
-reg   [`BUS_64] instrCnt_inc = i_valid ? 1 : 0;
+reg   [`BUS_64] instrCnt_inc = i_cmtvalid ? 1 : 0;
 
 always @(negedge clk) begin
   if (rst) begin
@@ -47,8 +47,8 @@ always @(negedge clk) begin
     cmt_wdata     <= i_rd_wdata;
     cmt_pc        <= i_pc;
     cmt_inst      <= i_inst;
-    cmt_skip      <= i_skip_difftest;
-    cmt_valid     <= i_valid;
+    cmt_skip      <= i_skipcmt;
+    cmt_valid     <= i_cmtvalid;
     regs_diff     <= i_regs;
 		csrs_diff     <= i_csrs;
     trap          <= i_inst[6:0] == 7'h6b;
