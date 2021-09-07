@@ -64,6 +64,8 @@ wire                          o_id_memwen;
 wire [`BUS_64]                o_id_memwdata;
 wire [`BUS_64]                o_id_t1;
 wire                          o_id_skip_difftest;
+wire [`BUS_64]                o_id_pc;
+wire [`BUS_32]                o_id_inst;
 
 // exe_stage
 // exe_stage -> mem_stage
@@ -72,21 +74,29 @@ wire [`BUS_64]                o_ex_memaddr;
 wire                          o_ex_memren;
 wire                          o_ex_memwen;
 wire [`BUS_64]                o_ex_memwdata;
-// exe_stage -> wb_stage
+wire [`BUS_64]                o_ex_pc;
+wire [`BUS_32]                o_ex_inst;
 wire [4 : 0]                  o_ex_opcode;
 wire                          o_ex_pc_jmp;
 wire [`BUS_64]                o_ex_pc_jmpaddr;
 wire                          o_ex_rd_wen;
 wire [`BUS_64]                o_ex_rd_wdata;
+wire                          o_ex_skip_difftest;
 
 // mem_stage
 // mem_stage -> wb_stage
 reg  [`BUS_64]                o_mem_rdata;
+wire [`BUS_64]                o_mem_pc;
+wire [`BUS_32]                o_mem_inst;
+wire                          o_mem_skip_difftest;
 
 // wb_stage
 // wb_stage -> cmt_stage
+wire [`BUS_64]                o_wb_pc;
+wire [`BUS_32]                o_wb_inst;
 wire                          o_wb_rd_wen;
 wire [`BUS_64]                o_wb_rd_wdata;
+wire                          o_wb_skip_difftest;
 
 // regfile
 // regfile -> id_stage
@@ -134,11 +144,13 @@ id_stage Id_stage(
   .o_id_fetched_ack           (fetched_ack                ),
   .o_id_decoded_req           (decoded_req                ),
   .i_id_decoded_ack           (decoded_ack                ),
+  .i_id_pc                    (o_if_pc                    ),
   .i_id_inst                  (o_if_inst                  ),
   .i_id_rs1_data              (o_reg_id_rs1_data          ),
   .i_id_rs2_data              (o_reg_id_rs2_data          ),
   .i_id_pc_old                (o_if_pc_old                ),
-  .i_id_pc                    (o_if_pc                    ),
+  .o_id_pc                    (o_id_pc                    ),
+  .o_id_inst                  (o_id_inst                  ),
   .o_id_rs1_ren               (o_id_rs1_ren               ),
   .o_id_rs1                   (o_id_rs1                   ),
   .o_id_rs2_ren               (o_id_rs2_ren               ),
@@ -170,6 +182,8 @@ exe_stage Exe_stage(
   .i_ex_decoded_req           (decoded_req                ),
   .o_ex_decoded_ack           (decoded_ack                ),
   .o_ex_executed_req          (executed_req               ),
+  .i_ex_pc                    (o_id_pc                    ),
+  .i_ex_inst                  (o_id_inst                  ),
   .i_ex_executed_ack          (executed_ack               ),
   .i_ex_opcode                (o_id_opcode                ),
   .i_ex_funct3                (o_id_funct3                ),
@@ -180,6 +194,8 @@ exe_stage Exe_stage(
   .i_ex_pc_pred               (id_pc_pred_o               ),
   .i_ex_memren                (o_id_memren                ),
   .i_ex_memwen                (o_id_memwen                ),
+  .o_ex_pc                    (o_ex_pc                    ),
+  .o_ex_inst                  (o_ex_inst                  ),
   .o_ex_pc_jmp                (o_ex_pc_jmp                ),
   .o_ex_pc_jmpaddr            (o_ex_pc_jmpaddr            ),
   .o_ex_rd_wen                (o_ex_rd_wen                ),
@@ -194,12 +210,16 @@ mem_stage Mem_stage(
   .i_mem_executed_req         (executed_req               ),
   .o_mem_executed_ack         (executed_ack               ),
   .o_mem_memoryed_req         (memoryed_req               ),
+  .i_mem_pc                   (o_ex_pc                    ),
+  .i_mem_inst                 (o_ex_inst                  ),
   .i_mem_memoryed_ack         (memoryed_ack               ),
   .i_mem_addr                 (o_ex_memaddr               ),
   .i_mem_ren                  (o_ex_memren                ),
   .i_mem_wen                  (o_ex_memwen                ),
   .i_mem_wdata                (o_ex_memwdata              ),
   .i_mem_funct3               (o_ex_funct3                ),
+  .o_mem_pc                   (o_mem_pc                   ),
+  .o_mem_inst                 (o_mem_inst                 ),
   .o_mem_rdata                (o_mem_rdata                )
 );
 
@@ -215,9 +235,13 @@ wb_stage Wb_stage(
   .o_wb_memoryed_ack          (memoryed_ack               ),
   .o_wb_writebacked_req       (writebacked_req            ),
   .i_wb_writebacked_ack       (writebacked_ack            ),
+  .i_wb_pc                    (o_mem_pc                   ),
+  .i_wb_inst                  (o_mem_inst                 ),
   .i_wb_rd                    (o_ex_rd_wen                ),
   .i_wb_rd_wen                (o_ex_rd_wen                ),
   .i_wb_rd_wdata              (o_ex_rd_wdata              ),
+  .o_wb_pc                    (o_wb_pc                    ),
+  .o_wb_inst                  (o_wb_inst                  ),
   .o_wb_rd                    (o_wb_rd                    ),
   .o_wb_rd_wen                (o_wb_rd_wen                ),
   .o_wb_rd_wdata              (o_wb_rd_wdata              )
@@ -239,9 +263,9 @@ cmt_stage Cmt_stage(
   .i_cmt_rd                   (o_wb_rd                    ),
   .i_cmt_rd_wen               (o_wb_rd_wen                ),
   .i_cmt_rd_wdata             (o_wb_rd_wdata              ),
-  .i_cmt_pc                   (o_if_pc                    ),
-  .i_cmt_inst                 (o_if_inst                  ),
-  .i_cmt_skip_difftest        (o_id_skip_difftest         ),
+  .i_cmt_pc                   (o_wb_pc                    ),
+  .i_cmt_inst                 (o_wb_inst                  ),
+  .i_cmt_skip_difftest        (o_wb_skip_difftest         ),
   .i_cmt_regs                 (o_reg_regs                 ),
   .i_cmt_csrs                 (o_csr_csrs                 )
 );

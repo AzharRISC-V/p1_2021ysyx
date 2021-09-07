@@ -18,41 +18,41 @@ module regfile(
 );
 
   // 32 registers
-reg [`REG_BUS] 	regs[0 : 31];
+reg   [`BUS_64]   regs[0 : 31];
 
 // register alias name
-wire [`REG_BUS] x00_zero  = regs[00];
-wire [`REG_BUS] x01_ra    = regs[01];
-wire [`REG_BUS] x02_sp    = regs[02];
-wire [`REG_BUS] x03_gp    = regs[03];
-wire [`REG_BUS] x04_tp    = regs[04];
-wire [`REG_BUS] x05_t0    = regs[05];
-wire [`REG_BUS] x06_t1    = regs[06];
-wire [`REG_BUS] x07_t2    = regs[07];
-wire [`REG_BUS] x08_s0    = regs[08];
-wire [`REG_BUS] x09_s1    = regs[09];
-wire [`REG_BUS] x10_a0    = regs[10];
-wire [`REG_BUS] x11_a1    = regs[11];
-wire [`REG_BUS] x12_a2    = regs[12];
-wire [`REG_BUS] x13_a3    = regs[13];
-wire [`REG_BUS] x14_a4    = regs[14];
-wire [`REG_BUS] x15_a5    = regs[15];
-wire [`REG_BUS] x16_a6    = regs[16];
-wire [`REG_BUS] x17_a7    = regs[17];
-wire [`REG_BUS] x18_s2    = regs[18];
-wire [`REG_BUS] x19_s3    = regs[19];
-wire [`REG_BUS] x20_s4    = regs[20];
-wire [`REG_BUS] x21_s5    = regs[21];
-wire [`REG_BUS] x22_s6    = regs[22];
-wire [`REG_BUS] x23_s7    = regs[23];
-wire [`REG_BUS] x24_s8    = regs[24];
-wire [`REG_BUS] x25_s9    = regs[25];
-wire [`REG_BUS] x26_s10   = regs[26];
-wire [`REG_BUS] x27_s11   = regs[27];
-wire [`REG_BUS] x28_t3    = regs[28];
-wire [`REG_BUS] x29_t4    = regs[29];
-wire [`REG_BUS] x30_t5    = regs[30];
-wire [`REG_BUS] x31_t6    = regs[31];
+wire  [`BUS_64]   x00_zero  = regs[00];
+wire  [`BUS_64]   x01_ra    = regs[01];
+wire  [`BUS_64]   x02_sp    = regs[02];
+wire  [`BUS_64]   x03_gp    = regs[03];
+wire  [`BUS_64]   x04_tp    = regs[04];
+wire  [`BUS_64]   x05_t0    = regs[05];
+wire  [`BUS_64]   x06_t1    = regs[06];
+wire  [`BUS_64]   x07_t2    = regs[07];
+wire  [`BUS_64]   x08_s0    = regs[08];
+wire  [`BUS_64]   x09_s1    = regs[09];
+wire  [`BUS_64]   x10_a0    = regs[10];
+wire  [`BUS_64]   x11_a1    = regs[11];
+wire  [`BUS_64]   x12_a2    = regs[12];
+wire  [`BUS_64]   x13_a3    = regs[13];
+wire  [`BUS_64]   x14_a4    = regs[14];
+wire  [`BUS_64]   x15_a5    = regs[15];
+wire  [`BUS_64]   x16_a6    = regs[16];
+wire  [`BUS_64]   x17_a7    = regs[17];
+wire  [`BUS_64]   x18_s2    = regs[18];
+wire  [`BUS_64]   x19_s3    = regs[19];
+wire  [`BUS_64]   x20_s4    = regs[20];
+wire  [`BUS_64]   x21_s5    = regs[21];
+wire  [`BUS_64]   x22_s6    = regs[22];
+wire  [`BUS_64]   x23_s7    = regs[23];
+wire  [`BUS_64]   x24_s8    = regs[24];
+wire  [`BUS_64]   x25_s9    = regs[25];
+wire  [`BUS_64]   x26_s10   = regs[26];
+wire  [`BUS_64]   x27_s11   = regs[27];
+wire  [`BUS_64]   x28_t3    = regs[28];
+wire  [`BUS_64]   x29_t4    = regs[29];
+wire  [`BUS_64]   x30_t5    = regs[30];
+wire  [`BUS_64]   x31_t6    = regs[31];
 
 	
 // i_rd 写入

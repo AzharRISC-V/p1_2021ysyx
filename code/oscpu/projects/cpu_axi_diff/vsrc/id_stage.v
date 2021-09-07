@@ -12,11 +12,13 @@ module id_stage(
   output  reg                 o_id_fetched_ack,
   input   reg                 i_id_decoded_ack,
   output  reg                 o_id_decoded_req,
+  input   wire  [`BUS_64]     i_id_pc,
   input   wire  [`BUS_32]     i_id_inst,
   input   wire  [`BUS_64]     i_id_rs1_data,
   input   wire  [`BUS_64]     i_id_rs2_data,
   input   wire  [`BUS_64]     i_id_pc_old,
-  input   wire  [`BUS_64]     i_id_pc,
+  output  wire  [`BUS_64]     o_id_pc,
+  output  wire  [`BUS_32]     o_id_inst,
   output  reg                 o_id_rs1_ren,
   output  wire  [4 : 0]       o_id_rs1,
   output  wire                o_id_rs2_ren,
@@ -85,6 +87,8 @@ always @(posedge clk) begin
   end
 end
 
+assign o_id_pc = tmp_i_id_pc;
+assign o_id_inst = tmp_i_id_inst;
 // assign id_op1_o = tmp_op1;
 // assign id_op2_o = tmp_op2;
 

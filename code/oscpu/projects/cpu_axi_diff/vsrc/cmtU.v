@@ -22,8 +22,8 @@ module cmtU(
 // Difftest
 reg                           cmt_wen;
 reg   [7:0]                   cmt_wdest;
-reg   [`REG_BUS]              cmt_wdata;
-reg   [`REG_BUS]              cmt_pc;
+reg   [`BUS_64]               cmt_wdata;
+reg   [`BUS_64]               cmt_pc;
 reg   [31:0]                  cmt_inst;
 reg                           cmt_valid;
 reg                           cmt_skip;       // control commit skip
@@ -31,7 +31,7 @@ reg                           trap;
 reg   [7:0]                   trap_code;
 reg   [63:0]                  cycleCnt;
 reg   [63:0]                  instrCnt;
-reg   [`REG_BUS]              regs_diff [0 : 31];
+reg   [`BUS_64]               regs_diff [0 : 31];
 reg   [`BUS_64]               csrs_diff [0 : 7];
 
 wire inst_valid = 0;// fetched_req;

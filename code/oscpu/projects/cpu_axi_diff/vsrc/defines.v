@@ -2,9 +2,7 @@
 `timescale 1ns / 1ps
 
 `define ZERO_WORD  64'h00000000_00000000
-`define PC_START   64'h00000000_80000000  
-// `define REG_BUS    63 : 0     
-// `define INST_ADD   8'h11
+`define PC_START   64'h00000000_80000000 
 
 `define AXI_ADDR_WIDTH      64
 `define AXI_DATA_WIDTH      64
@@ -51,7 +49,7 @@
 
 // 寄存器配置
 `define REG_BITS            64              // 寄存器位数
-`define REG_BUS             63:0            // 寄存器总线
+`define REG_BUS_old         63:0            // 寄存器总线
 `define REG_ADDR_BITS       5               // 寄存器地址位数
 `define REG_ADDR_BUS        4:0             // 寄存器地址总线
 `define REG_NUM             32              // 寄存器个数
