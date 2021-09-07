@@ -1,79 +1,72 @@
 
 // ZhengpuShi
 
-// Decode Unit, 组合逻辑电路
+// Instruction Decode Unit, 组合逻辑电路
 
 `include "defines.v"
 
-module decU(
-  input   wire  [`BUS_32]       inst,
+module idU(
+  input   wire  [`BUS_32]     inst,
 
-  input   wire  [`BUS_64]       rs1_data,
-  input   wire  [`BUS_64]       rs2_data,
-  input   wire  [`BUS_64]       pc_old,
-  input   wire  [`BUS_64]       pc,
-
-  output  reg                   rs1_ren,
-  output  wire  [4 : 0]         rs1,
-  output  wire                  rs2_ren,
-  output  wire  [4 : 0]         rs2,
-  output  wire  [4 : 0]         rd,
-
-  output  wire                  mem_ren,
-  output  wire  [`BUS_64]       mem_addr,
-  output  wire                  mem_wen,
-  output  wire  [`BUS_64]       mem_wdata,
-
-  output  reg   [11 : 0]        csr_addr,
-  output  reg   [1 : 0]         csr_op,
-  output  reg   [`BUS_64]       csr_wdata,
-  input   reg   [`BUS_64]       csr_rdata,
-  
-  output  wire  [2 : 0]         itype,
-  output  wire  [4 : 0]         opcode,
-  output  wire  [2 : 0]         funct3,
-  output  wire  [6 : 0]         funct7,
-  output  wire  [`BUS_64]       op1,            // 两个操作数
-  output  wire  [`BUS_64]       op2,
-  output  wire  [`BUS_64]       t1,
-
-  input   wire  [`BUS_64]       pc_pred_i,
-  output  wire  [`BUS_64]       pc_pred_o,
-
-  output  wire                  skip_difftest
+  input   wire  [`BUS_64]     rs1_data,
+  input   wire  [`BUS_64]     rs2_data,
+  input   wire  [`BUS_64]     pc_old,
+  input   wire  [`BUS_64]     pc,
+  input   wire  [`BUS_64]     pc_pred_i,
+  output  reg                 rs1_ren,
+  output  wire  [4 : 0]       rs1,
+  output  wire                rs2_ren,
+  output  wire  [4 : 0]       rs2,
+  output  wire  [4 : 0]       rd,
+  output  wire                mem_ren,
+  output  wire  [`BUS_64]     mem_addr,
+  output  wire                mem_wen,
+  output  wire  [`BUS_64]     mem_wdata,
+  output  reg   [11 : 0]      csr_addr,
+  output  reg   [1 : 0]       csr_op,
+  output  reg   [`BUS_64]     csr_wdata,
+  input   reg   [`BUS_64]     csr_rdata,
+  output  wire  [2 : 0]       itype,
+  output  wire  [4 : 0]       opcode,
+  output  wire  [2 : 0]       funct3,
+  output  wire  [6 : 0]       funct7,
+  output  wire  [`BUS_64]     op1,            // 两个操作数
+  output  wire  [`BUS_64]     op2,
+  output  wire  [`BUS_64]     t1,
+  output  wire  [`BUS_64]     pc_pred_o,
+  output  wire                skip_difftest
 );
 
 
 assign pc_pred_o = pc_pred_i;
 
 // decode
-wire [`BUS_64]imm;           // 带符号扩展的imm
+// 带符号扩展的imm
+wire  [`BUS_64]               imm;
+wire  [`BUS_32]               R_imm;
+wire  [`BUS_32]               I_imm;
+wire  [`BUS_32]               S_imm;
+wire  [`BUS_32]               B_imm;
+wire  [`BUS_32]               U_imm;
+wire  [`BUS_32]               J_imm;
 
-wire [`BUS_32]R_imm;
-wire [`BUS_32]I_imm;
-wire [`BUS_32]S_imm;
-wire [`BUS_32]B_imm;
-wire [`BUS_32]U_imm;
-wire [`BUS_32]J_imm;
+wire  [5 : 0]                 shamt;
+wire  [`BUS_64]               shamt_64;   // 扩展为64位后的值
 
-wire  [5 : 0]   shamt;
-wire  [`BUS_64] shamt_64;   // 扩展为64位后的值
+assign opcode   = inst[6  :  2];
+assign rd       = inst[11 :  7];
+assign funct3   = inst[14 : 12];
+assign rs1      = inst[19 : 15];
+assign rs2      = inst[24 : 20];
+assign funct7   = inst[31 : 25];
 
-assign opcode = inst[6  :  2];
-assign rd     = inst[11 :  7];
-assign funct3 = inst[14 : 12];
-assign rs1    = inst[19 : 15];
-assign rs2    = inst[24 : 20];
-assign funct7 = inst[31 : 25];
-
-assign R_imm  = 0;
-assign I_imm  = { {20{inst[31]}}, inst[31 : 20] };
-assign S_imm  = { {20{inst[31]}}, inst[31 : 25], inst[11 : 7] };
-assign B_imm  = { {20{inst[31]}}, inst[7], inst[30 : 25], inst[11 : 8], 1'b0 };
-assign U_imm  = { inst[31 : 12], 12'b0 };
-assign J_imm  = { {12{inst[31]}}, inst[19 : 12], inst[20], inst[30 : 21], 1'b0 };
-
-assign shamt  = inst[25 : 20];
+assign R_imm    = 0;
+assign I_imm    = { {20{inst[31]}}, inst[31 : 20] };
+assign S_imm    = { {20{inst[31]}}, inst[31 : 25], inst[11 : 7] };
+assign B_imm    = { {20{inst[31]}}, inst[7], inst[30 : 25], inst[11 : 8], 1'b0 };
+assign U_imm    = { inst[31 : 12], 12'b0 };
+assign J_imm    = { {12{inst[31]}}, inst[19 : 12], inst[20], inst[30 : 21], 1'b0 };
+assign shamt    = inst[25 : 20];
 assign shamt_64 = {58'd0, shamt};
 
 // inst-type

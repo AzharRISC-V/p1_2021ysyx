@@ -1,92 +1,67 @@
 
 // ZhengpuShi
 
-// Instruction Fetch Interface
+// Fetch Interface
 
 `include "defines.v"
 
 module if_stage(
-  input   wire                  clk,
-  input   wire                  rst,
+  input   wire                clk,
+  input   wire                rst,
+  output reg                  if_fetched_req,
+  input  reg                  if_fetched_ack,
 
-  /////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////
   // AXI interface for Fetch
-	output reg                    if_valid,
-	input                         if_ready,
-  input         [63:0]          if_data_read,
-  output reg    [63:0]          if_addr,
-  output        [1:0]           if_size,
-  input         [1:0]           if_resp,
+	input                       if_axi_ready_i,
+  input         [63:0]        if_axi_data_read_i,
+  input         [1:0]         if_axi_resp_i,
+	output reg                  if_axi_valid_o,
+  output reg    [63:0]        if_axi_addr_o,
+  output        [1:0]         if_axi_size_o,
   
-  /////////////////////////////////////////////////////////
-  input   wire                  pc_jmp,
-  input   wire  [`BUS_64]       pc_jmpaddr,
-
-  output  reg   [`BUS_64]       pc_old,
-  output  reg   [`BUS_64]       pc,
-  output  wire  [`BUS_64]       pc_pred_o,    // 预测的下一个PC
-  output  reg   [`BUS_32]       inst,
-
-
-  output reg                    if_fetched_req,//,
-  input  reg                    if_fetched_ack//,
-
-  // 冲刷流水线
-  // input   wire                  pipe_flush_req,
-  // input   wire  [`BUS_64]       pipe_flush_pc,
-  // output  wire                  pipe_flush_ack
-  
-  // ,
-	// input                         if_flush      // 冲刷掉这条指令，使用 addi x0,x0,0
+  ///////////////////////////////////////////////
+  input   wire                if_pc_jmp_i,
+  input   wire  [`BUS_64]     if_pc_jmpaddr_i,
+  output  reg   [`BUS_64]     if_pc_old_o,
+  output  reg   [`BUS_64]     if_pc_o,
+  output  wire  [`BUS_64]     if_pc_pred_o,    // 预测的下一个PC
+  output  reg   [`BUS_32]     if_inst_o
 );
 
-wire handshake_done = if_valid & if_ready;
-reg [63:0] addr;
 
-// wire pipe_flush_hs = pipe_flush_req & pipe_flush_ack;
-// assign pipe_flush_ack = 1'b1;
+wire fetched_pulse;
 
-// pc生成
-// always @(posedge clk) begin
-//   if (rst) begin
-//     pc      <= `PC_START;
-//   end
-//   else begin
-//     // 
-//     if (i_jump_flush_req) begin
-//       pc    <= i_jump_flush_pc;
-//     end
-//     else begin
-      
-//     end
-//   end
-// end
-
-// fetch an instruction
-assign if_valid = 1'b1;
+ifU IfU(
+  .clk                        (clk                        ),
+  .rst                        (rst                        ),
+	.axi_ready_i                (if_axi_ready_i             ),
+  .axi_data_read_i            (if_axi_data_read_i         ),
+  .axi_resp_i                 (if_axi_resp_i              ),
+	.axi_valid_o                (if_axi_valid_o             ),
+  .axi_addr_o                 (if_axi_addr_o              ),
+  .axi_size_o                 (if_axi_size_o              ),
+  .pc_jmp_i                   (if_pc_jmp_i                ),
+  .pc_jmpaddr_i               (if_pc_jmpaddr_i            ),
+  .pc_old_o                   (if_pc_old_o                ),
+  .pc_o                       (if_pc_o                    ),
+  .pc_pred_o                  (if_pc_pred_o               ),
+  .inst_o                     (if_inst_o                  ),
+  .fetched_pulse              (fetched_pulse              )
+);
 
 always @( posedge clk ) begin
   if (rst) begin
-    // pc_old    <= 0;
-    pc              <= 0;
-    if_addr         <= `PC_START;
-    if_fetched_req  <= 0;
+    if_fetched_req            <= 0;
   end
   else begin
-    if (handshake_done) begin
-      inst              <= if_data_read[31:0];
-      pc                <= if_addr;
-      if_addr           <= if_addr + 4;
-      if_fetched_req    <= 1;
+    if (fetched_pulse) begin
+      if_fetched_req          <= 1;
     end
     else if (if_fetched_ack) begin
-      if_fetched_req    <= 0; 
+      if_fetched_req          <= 0; 
     end
   end
 end
-
-assign pc_pred_o = pc + 4;
-
-assign if_size = `SIZE_W;
 
 endmodule

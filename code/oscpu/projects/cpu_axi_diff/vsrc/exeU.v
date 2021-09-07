@@ -6,24 +6,43 @@
 `include "defines.v"
 
 module exeU(
-  input   wire  [4 : 0]         opcode,
-  input   wire  [2 : 0]         funct3,
-  input   wire  [6 : 0]         funct7,
-  input   wire  [`REG_BUS]      op1,
-  input   wire  [`REG_BUS]      op2,
-  input   wire  [`REG_BUS]      t1,
-
-  input   wire  [`BUS_64]       pc_pred,     // 顺序计算得出的pc值，用于对比
-  input                         memren_i,
-  input                         memwen_i,
-  output  reg                   pc_jmp,
-  output  reg   [`BUS_64]       pc_jmpaddr,
-  output  wire                  rd_wen,
-  output  wire  [`BUS_64]       rd_data,
-  output                        memren_o,
-  output                        memwen_o
+  input   wire  [4 : 0]       opcode,
+  input   wire  [2 : 0]       funct3,
+  input   wire  [6 : 0]       funct7,
+  input   wire  [`REG_BUS]    op1,
+  input   wire  [`REG_BUS]    op2,
+  input   wire  [`REG_BUS]    t1,
+  input   wire  [`BUS_64]     pc_pred,     // 顺序计算得出的pc值，用于对比
+  input                       memren_i,
+  input                       memwen_i,
+  output  reg                 pc_jmp,
+  output  reg   [`BUS_64]     pc_jmpaddr,
+  output  wire                rd_wen,
+  output  wire  [`BUS_64]     rd_data,
+  output                      memren_o,
+  output                      memwen_o
 
 );
+
+
+// Special Instruction: putch a0
+// wire                          putch_wen;
+// wire [7 : 0]                  putch_wdata;
+// assign putch_wen              = if_inst_o == 32'h7b;
+// assign putch_wdata            = (!putch_wen) ? 0 : (regs[10][7:0]); 
+// putch Putch(
+//   .clk                (clock            ),
+//   .rst                (reset            ),
+//   .wen                (putch_wen        ),
+//   .wdata              (putch_wdata      ) 
+// );
+// always @(posedge clock) begin
+//   if (inst == 7) begin
+//     $write("%c", regs[10][7:0]);
+//   end
+// end
+// assign io_uart_out_valid = putch_wen;
+// assign io_uart_out_ch = putch_wdata;
 
 // rd_wen
 always @(*) begin

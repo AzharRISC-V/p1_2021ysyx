@@ -1,53 +1,45 @@
 
 // ZhengpuShi
 
-// Decode Interface
+// Instruction Decode Interface
 
 `include "defines.v"
 
 module id_stage(
-  input   wire                  clk,
-  input   wire                  rst,
-  input   reg                   id_fetched_req_i,
-  output  reg                   id_fetched_ack_o,
-  input   reg                   id_decoded_ack_i,
-  output  reg                   id_decoded_req_o,
-
-  input   wire  [`BUS_32]       id_inst_i,
-
-  input   wire  [`BUS_64]       id_rs1_data_i,
-  input   wire  [`BUS_64]       id_rs2_data_i,
-  input   wire  [`BUS_64]       id_pc_old_i,
-  input   wire  [`BUS_64]       id_pc_i,
-
-  output  reg                   id_rs1_ren_o,
-  output  wire  [4 : 0]         id_rs1_o,
-  output  wire                  id_rs2_ren_o,
-  output  wire  [4 : 0]         id_rs2_o,
-  output  wire  [4 : 0]         id_rd_o,
-
-  output  wire                  id_mem_ren_o,
-  output  wire  [`BUS_64]       id_mem_addr_o,
-  output  wire                  id_mem_wen_o,
-  output  wire  [`BUS_64]       id_mem_wdata_o,
-
-  output  reg   [11 : 0]        id_csr_addr_o,
-  output  reg   [1 : 0]         id_csr_op_o,
-  output  reg   [`BUS_64]       id_csr_wdata_o,
-  input   reg   [`BUS_64]       id_csr_rdata_i,
-  
-  output  wire  [2 : 0]         id_itype_o,
-  output  wire  [4 : 0]         id_opcode_o,
-  output  wire  [2 : 0]         id_funct3_o,
-  output  wire  [6 : 0]         id_funct7_o,
-  output  wire  [`BUS_64]       id_op1_o,            // 两个操作数
-  output  wire  [`BUS_64]       id_op2_o,
-  output  wire  [`BUS_64]       id_t1_o,
-
-  input   wire  [`BUS_64]       id_pc_pred_i,
-  output  wire  [`BUS_64]       id_pc_pred_o,
-
-  output  wire                  id_skip_difftest_o
+  input   wire                clk,
+  input   wire                rst,
+  input   reg                 id_fetched_req_i,
+  output  reg                 id_fetched_ack_o,
+  input   reg                 id_decoded_ack_i,
+  output  reg                 id_decoded_req_o,
+  input   wire  [`BUS_32]     id_inst_i,
+  input   wire  [`BUS_64]     id_rs1_data_i,
+  input   wire  [`BUS_64]     id_rs2_data_i,
+  input   wire  [`BUS_64]     id_pc_old_i,
+  input   wire  [`BUS_64]     id_pc_i,
+  output  reg                 id_rs1_ren_o,
+  output  wire  [4 : 0]       id_rs1_o,
+  output  wire                id_rs2_ren_o,
+  output  wire  [4 : 0]       id_rs2_o,
+  output  wire  [4 : 0]       id_rd_o,
+  output  wire                id_mem_ren_o,
+  output  wire  [`BUS_64]     id_mem_addr_o,
+  output  wire                id_mem_wen_o,
+  output  wire  [`BUS_64]     id_mem_wdata_o,
+  output  reg   [11 : 0]      id_csr_addr_o,
+  output  reg   [1 : 0]       id_csr_op_o,
+  output  reg   [`BUS_64]     id_csr_wdata_o,
+  input   reg   [`BUS_64]     id_csr_rdata_i,
+  output  wire  [2 : 0]       id_itype_o,
+  output  wire  [4 : 0]       id_opcode_o,
+  output  wire  [2 : 0]       id_funct3_o,
+  output  wire  [6 : 0]       id_funct7_o,
+  output  wire  [`BUS_64]     id_op1_o,            // 两个操作数
+  output  wire  [`BUS_64]     id_op2_o,
+  output  wire  [`BUS_64]     id_t1_o,
+  input   wire  [`BUS_64]     id_pc_pred_i,
+  output  wire  [`BUS_64]     id_pc_pred_o,
+  output  wire                id_skip_difftest_o
 );
 
 
@@ -57,11 +49,11 @@ wire fetched_hs = id_fetched_req_i & id_fetched_ack_o;
 
 
 // 保存输入信息
-reg   [`BUS_32]       tmp_id_inst_i;
-reg   [`BUS_64]       tmp_id_rs1_data_i;
-reg   [`BUS_64]       tmp_id_rs2_data_i;
-reg   [`BUS_64]       tmp_id_pc_old_i;
-reg   [`BUS_64]       tmp_id_pc_i;
+reg   [`BUS_32]               tmp_id_inst_i;
+reg   [`BUS_64]               tmp_id_rs1_data_i;
+reg   [`BUS_64]               tmp_id_rs2_data_i;
+reg   [`BUS_64]               tmp_id_pc_old_i;
+reg   [`BUS_64]               tmp_id_pc_i;
 
 always @(posedge clk) begin
   if (rst) begin
@@ -95,7 +87,7 @@ end
 // assign id_op2_o = tmp_op2;
 
 
-decU DecU(
+idU IdU(
   .inst                       (tmp_id_inst_i              ),
   .rs1_data                   (tmp_id_rs1_data_i          ),
   .rs2_data                   (tmp_id_rs2_data_i          ),

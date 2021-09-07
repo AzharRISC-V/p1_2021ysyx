@@ -6,34 +6,33 @@
 `include "defines.v"
 
 module cmtU(
-  input   wire                  clk,
-  input   wire                  rst,
-
-  input   wire [4 : 0]          rd,
-  input   wire                  rd_wen,
-  input   wire [`BUS_64]        rd_wdata,
-  input   wire [`BUS_64]        pc,
-  input   wire [`BUS_32]        inst,
-  input   wire                  skip_difftest,
-  input   wire [`BUS_64]        regs[0 : 31],
-  input   wire [`BUS_64]        csrs[0 :  7]
+  input   wire                clk,
+  input   wire                rst,
+  input   wire [4 : 0]        rd,
+  input   wire                rd_wen,
+  input   wire [`BUS_64]      rd_wdata,
+  input   wire [`BUS_64]      pc,
+  input   wire [`BUS_32]      inst,
+  input   wire                skip_difftest,
+  input   wire [`BUS_64]      regs[0 : 31],
+  input   wire [`BUS_64]      csrs[0 :  7]
 );
 
 
 // Difftest
-reg cmt_wen;
-reg [7:0] cmt_wdest;
-reg [`REG_BUS] cmt_wdata;
-reg [`REG_BUS] cmt_pc;
-reg [31:0] cmt_inst;
-reg cmt_valid;
-reg                   cmt_skip;       // control commit skip
-reg trap;
-reg [7:0] trap_code;
-reg [63:0] cycleCnt;
-reg [63:0] instrCnt;
-reg [`REG_BUS] regs_diff [0 : 31];
-reg   [`BUS_64]       csrs_diff [0 : 7];
+reg                           cmt_wen;
+reg   [7:0]                   cmt_wdest;
+reg   [`REG_BUS]              cmt_wdata;
+reg   [`REG_BUS]              cmt_pc;
+reg   [31:0]                  cmt_inst;
+reg                           cmt_valid;
+reg                           cmt_skip;       // control commit skip
+reg                           trap;
+reg   [7:0]                   trap_code;
+reg   [63:0]                  cycleCnt;
+reg   [63:0]                  instrCnt;
+reg   [`REG_BUS]              regs_diff [0 : 31];
+reg   [`BUS_64]               csrs_diff [0 : 7];
 
 wire inst_valid = 0;// fetched_req;
 
@@ -42,22 +41,19 @@ always @(negedge clk) begin
     {cmt_wen, cmt_wdest, cmt_wdata, cmt_pc, cmt_inst, cmt_valid, cmt_skip, trap, trap_code, cycleCnt, instrCnt} <= 0;
   end
   else if (~trap) begin
-    cmt_wen <= rd_wen;
-    cmt_wdest <= {3'd0, rd};
-    cmt_wdata <= rd_wdata;
-    cmt_pc <= pc;
-    cmt_inst <= inst;
-    cmt_skip <= skip_difftest;
-
-    cmt_valid <= inst_valid;
-
-    regs_diff <= regs;
-		csrs_diff <= csrs;
-
-    trap <= inst[6:0] == 7'h6b;
-    trap_code <= regs[10][7:0];
-    cycleCnt <= cycleCnt + 1;
-    instrCnt <= instrCnt + inst_valid;
+    cmt_wen       <= rd_wen;
+    cmt_wdest     <= {3'd0, rd};
+    cmt_wdata     <= rd_wdata;
+    cmt_pc        <= pc;
+    cmt_inst      <= inst;
+    cmt_skip      <= skip_difftest;
+    cmt_valid     <= inst_valid;
+    regs_diff     <= regs;
+		csrs_diff     <= csrs;
+    trap          <= inst[6:0] == 7'h6b;
+    trap_code     <= regs[10][7:0];
+    cycleCnt      <= cycleCnt + 1;
+    instrCnt      <= instrCnt + inst_valid;
   end
 end
 

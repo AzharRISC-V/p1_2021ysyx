@@ -5,7 +5,6 @@
 
 // 内存读取控制器，将1字节访问转换为8字节对齐的一次或两次访问
 module mem_access (
-  input   wire  [`BUS_64]       clk_cnt,
   input   wire                  clk,
   input   wire  [`BUS_64]       addr_i,     // 以字节为单位的访存地址
   input   wire  [2 : 0]         funct3_i,

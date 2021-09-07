@@ -47,15 +47,14 @@
 
 
 module wbU(
-  input   wire                  clk,
-  input   wire                  rst,
-
-  input   wire  [4 : 0]         rd_i,
-  input   wire                  rd_wen_i,
-  input   wire  [`BUS_64]       rd_wdata_i,
-  output  reg   [4 : 0]         rd_o,
-  output  reg                   rd_wen_o,
-  output  wire  [`BUS_64]       rd_wdata_o
+  input   wire                clk,
+  input   wire                rst,
+  input   wire  [4 : 0]       rd_i,
+  input   wire                rd_wen_i,
+  input   wire  [`BUS_64]     rd_wdata_i,
+  output  reg   [4 : 0]       rd_o,
+  output  reg                 rd_wen_o,
+  output  wire  [`BUS_64]     rd_wdata_o
 );
 
 assign rd_o = rd_i;
