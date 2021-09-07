@@ -22,16 +22,16 @@ module id_stage(
   output  wire                id_rs2_ren_o,
   output  wire  [4 : 0]       id_rs2_o,
   output  wire  [4 : 0]       id_rd_o,
-  output  wire                id_mem_ren_o,
-  output  wire  [`BUS_64]     id_mem_addr_o,
-  output  wire                id_mem_wen_o,
-  output  wire  [`BUS_64]     id_mem_wdata_o,
+  output  wire                id_memren_o,
+  output  wire  [`BUS_64]     id_memaddr_o,
+  output  wire                id_memwen_o,
+  output  wire  [`BUS_64]     id_memwdata_o,
   output  reg   [11 : 0]      id_csr_addr_o,
   output  reg   [1 : 0]       id_csr_op_o,
   output  reg   [`BUS_64]     id_csr_wdata_o,
   input   reg   [`BUS_64]     id_csr_rdata_i,
   output  wire  [2 : 0]       id_itype_o,
-  output  wire  [4 : 0]       id_opcode_o,
+  output  wire  [6 : 0]       id_opcode_o,
   output  wire  [2 : 0]       id_funct3_o,
   output  wire  [6 : 0]       id_funct7_o,
   output  wire  [`BUS_64]     id_op1_o,            // 两个操作数
@@ -54,6 +54,7 @@ reg   [`BUS_64]               tmp_id_rs1_data_i;
 reg   [`BUS_64]               tmp_id_rs2_data_i;
 reg   [`BUS_64]               tmp_id_pc_old_i;
 reg   [`BUS_64]               tmp_id_pc_i;
+reg   [`BUS_64]               tmp_id_pc_pred_i;
 
 always @(posedge clk) begin
   if (rst) begin
@@ -74,6 +75,7 @@ always @(posedge clk) begin
       tmp_id_rs2_data_i   <= id_rs2_data_i;
       tmp_id_pc_old_i     <= id_pc_old_i;
       tmp_id_pc_i         <= id_pc_i;
+      tmp_id_pc_pred_i    <= id_pc_pred_i;
 
       id_decoded_req_o    <= 1;
     end
@@ -98,10 +100,10 @@ idU IdU(
   .rs2_ren                    (id_rs2_ren_o               ),
   .rs2                        (id_rs2_o                   ),
   .rd                         (id_rd_o                    ),
-  .mem_addr                   (id_mem_addr_o              ),
-  .mem_ren                    (id_mem_ren_o               ),
-  .mem_wen                    (id_mem_wen_o               ),
-  .mem_wdata                  (id_mem_wdata_o             ),
+  .memaddr                    (id_memaddr_o               ),
+  .memren                     (id_memren_o                ),
+  .memwen                     (id_memwen_o                ),
+  .memwdata                   (id_memwdata_o              ),
   .itype                      (id_itype_o                 ),
   .opcode                     (id_opcode_o                ),
   .funct3                     (id_funct3_o                ),
@@ -113,7 +115,7 @@ idU IdU(
   .csr_op                     (id_csr_op_o                ),
   .csr_wdata                  (id_csr_wdata_o             ),
   .csr_rdata                  (id_csr_rdata_i             ),
-  .pc_pred_i                  (id_pc_pred_i               ),
+  .pc_pred_i                  (tmp_id_pc_pred_i           ),
   .pc_pred_o                  (id_pc_pred_o               ),
   .skip_difftest              (id_skip_difftest_o         )
 );

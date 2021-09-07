@@ -12,7 +12,7 @@ module exe_stage(
   output  reg                 ex_decoded_ack_o,
   output  reg                 ex_executed_req_o,
   input   reg                 ex_executed_ack_i,
-  input   wire  [4 : 0]       ex_opcode_i,
+  input   wire  [6 : 0]       ex_opcode_i,
   input   wire  [2 : 0]       ex_funct3_i,
   input   wire  [6 : 0]       ex_funct7_i,
   input   wire  [`REG_BUS]    ex_op1_i,

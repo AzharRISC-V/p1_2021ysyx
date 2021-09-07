@@ -48,6 +48,8 @@ always @( posedge clk ) begin
   end
 end
 
+assign fetched_pulse = handshake_done;
+
 assign pc_pred_o = pc_o + 4;
 assign axi_size_o = `SIZE_W;
 

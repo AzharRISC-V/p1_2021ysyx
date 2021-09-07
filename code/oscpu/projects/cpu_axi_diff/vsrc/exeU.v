@@ -6,7 +6,7 @@
 `include "defines.v"
 
 module exeU(
-  input   wire  [4 : 0]       opcode,
+  input   wire  [6 : 0]       opcode,
   input   wire  [2 : 0]       funct3,
   input   wire  [6 : 0]       funct7,
   input   wire  [`REG_BUS]    op1,

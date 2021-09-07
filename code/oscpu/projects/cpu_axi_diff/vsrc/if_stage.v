@@ -8,8 +8,8 @@
 module if_stage(
   input   wire                clk,
   input   wire                rst,
-  output reg                  if_fetched_req,
-  input  reg                  if_fetched_ack,
+  output reg                  if_fetched_req_o,
+  input  reg                  if_fetched_ack_i,
 
   ///////////////////////////////////////////////
   // AXI interface for Fetch
@@ -52,14 +52,14 @@ ifU IfU(
 
 always @( posedge clk ) begin
   if (rst) begin
-    if_fetched_req            <= 0;
+    if_fetched_req_o          <= 0;
   end
   else begin
     if (fetched_pulse) begin
-      if_fetched_req          <= 1;
+      if_fetched_req_o        <= 1;
     end
-    else if (if_fetched_ack) begin
-      if_fetched_req          <= 0; 
+    else if (if_fetched_ack_i) begin
+      if_fetched_req_o        <= 0; 
     end
   end
 end

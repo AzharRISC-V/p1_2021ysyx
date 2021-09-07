@@ -18,16 +18,16 @@ module idU(
   output  wire                rs2_ren,
   output  wire  [4 : 0]       rs2,
   output  wire  [4 : 0]       rd,
-  output  wire                mem_ren,
-  output  wire  [`BUS_64]     mem_addr,
-  output  wire                mem_wen,
-  output  wire  [`BUS_64]     mem_wdata,
+  output  wire                memren,
+  output  wire  [`BUS_64]     memaddr,
+  output  wire                memwen,
+  output  wire  [`BUS_64]     memwdata,
   output  reg   [11 : 0]      csr_addr,
   output  reg   [1 : 0]       csr_op,
   output  reg   [`BUS_64]     csr_wdata,
   input   reg   [`BUS_64]     csr_rdata,
   output  wire  [2 : 0]       itype,
-  output  wire  [4 : 0]       opcode,
+  output  wire  [6 : 0]       opcode,
   output  wire  [2 : 0]       funct3,
   output  wire  [6 : 0]       funct7,
   output  wire  [`BUS_64]     op1,            // 两个操作数
@@ -53,7 +53,7 @@ wire  [`BUS_32]               J_imm;
 wire  [5 : 0]                 shamt;
 wire  [`BUS_64]               shamt_64;   // 扩展为64位后的值
 
-assign opcode   = inst[6  :  2];
+assign opcode   = inst[6  :  0];
 assign rd       = inst[11 :  7];
 assign funct3   = inst[14 : 12];
 assign rs1      = inst[19 : 15];
@@ -89,6 +89,7 @@ assign shamt_64 = {58'd0, shamt};
 // // wire [5:0] itype_sum = itype_R_val + itype_I_val + itype_U_val + itype_S_val + itype_B_val + itype_J_val;
 // // assign itype = itype_sum[2:0];
 
+// instruction type : R,I,S,B,U,J
 always@(*) begin
   case (opcode)
     `OPCODE_LUI   : itype = `INST_U_TYPE;
@@ -145,16 +146,16 @@ always @(*) begin
 end
 
 // mem_ren
-assign mem_ren = (opcode == `OPCODE_LB) ? 1 : 0;
+assign memren = (opcode == `OPCODE_LB) ? 1 : 0;
 
 // mem_addr
-assign mem_addr = (mem_ren | mem_wen) ? $signed(rs1_data) + $signed(imm) : 0;
+assign memaddr = (memren | memwen) ? $signed(rs1_data) + $signed(imm) : 0;
 
 // mem_wen
-assign mem_wen = (itype == `INST_S_TYPE) ? 1 : 0;
+assign memwen = (itype == `INST_S_TYPE) ? 1 : 0;
 
 // mem_wdata
-assign mem_wdata = rs2_data;
+assign memwdata = rs2_data;
 
 // op1
 always @(*) begin
@@ -250,7 +251,7 @@ always@(*) begin
 end
 
 // 让REF跳过指令比对
-wire mem_addr_is_device = (mem_addr & ~(64'hFFF)) == 64'h2000_0000;
+wire mem_addr_is_device = (memaddr & ~(64'hFFF)) == 64'h2000_0000;
 
 // skip_difftest
 assign skip_difftest = 

@@ -85,31 +85,31 @@
 `define INST_ADD            8'h11
 
 // inst-type
-`define INST_R_TYPE         3'b000
-`define INST_I_TYPE         3'b001
-`define INST_S_TYPE         3'b010
-`define INST_B_TYPE         3'b011
-`define INST_U_TYPE         3'b100
-`define INST_J_TYPE         3'b101
+`define INST_R_TYPE         3'b001
+`define INST_I_TYPE         3'b010
+`define INST_S_TYPE         3'b011
+`define INST_B_TYPE         3'b100
+`define INST_U_TYPE         3'b101
+`define INST_J_TYPE         3'b110
 
 
 // opcode，用于指令译码
 // RV32I
-`define OPCODE_LUI          5'b01101
-`define OPCODE_AUIPC        5'b00101
-`define OPCODE_JAL          5'b11011
-`define OPCODE_JALR         5'b11001
-`define OPCODE_BEQ          5'b11000
-`define OPCODE_LB           5'b00000
-`define OPCODE_SB           5'b01000
-`define OPCODE_ADDI         5'b00100
-`define OPCODE_ADD          5'b01100
-`define OPCODE_FENCE        5'b00011      // 同步
-`define OPCODE_ENV          5'b11100      // 环境
-`define OPCODE_CSR          5'b11100
+`define OPCODE_LUI          7'b0110111
+`define OPCODE_AUIPC        7'b0010111
+`define OPCODE_JAL          7'b1101111
+`define OPCODE_JALR         7'b1100111
+`define OPCODE_BEQ          7'b1100011
+`define OPCODE_LB           7'b0000011
+`define OPCODE_SB           7'b0100011
+`define OPCODE_ADDI         7'b0010011
+`define OPCODE_ADD          7'b0110011
+`define OPCODE_FENCE        7'b0001111      // 同步
+`define OPCODE_ENV          7'b1110011      // 环境
+`define OPCODE_CSR          7'b1110011
 // RV64I
-`define OPCODE_ADDIW        5'b00110
-`define OPCODE_ADDW         5'b01110
+`define OPCODE_ADDIW        7'b0011011
+`define OPCODE_ADDW         7'b0111011
 
 // 某个opcode对应的 funct3，用于指令译码
 // 若还不能区分，手动判断 funct7
