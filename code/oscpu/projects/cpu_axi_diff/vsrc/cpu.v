@@ -43,6 +43,7 @@ wire                    pc_jmp;
 wire [`BUS_64]          pc_jmpaddr;
 wire [`BUS_64]          pc_old;
 wire [`BUS_64]          pc;
+wire [`BUS_64]          if_pc_pred_o;
 wire [`BUS_32]          inst;
 wire                    inst_start;
 
@@ -80,9 +81,11 @@ wire [`BUS_64]          ex_rd_wdata_o;
 
 // mem_stage
 wire [`BUS_64]          mem_addr;
-wire                    mem_ren;
+wire                    id_memren;
+wire                    ex_memren;
 reg  [`BUS_64]          mem_rdata;
-wire                    mem_wen;
+wire                    id_memwen;
+wire                    ex_memwen;
 wire [`BUS_64]          mem_wdata;
 
 // wb_stage
@@ -106,289 +109,198 @@ wire [`BUS_64]          csr_rdata;
 wire                    csr_rd_wen_o = csr_op != 2'b00;
 wire [`BUS_64]          csr_rd_wdata_o = (csr_op == 2'b00) ? 0 : csr_rdata;
 
-wire  fetched;
+wire  fetched_req;
+wire  fetched_ack;
+wire  decoded_req;
+wire  decoded_ack;
+wire  executed_req;
+wire  executed_ack;
+wire  memoryed_req;
+wire  memoryed_ack;
+wire  writebacked_req;
+wire  writebacked_ack;
+
+wire [`BUS_64]          id_pc_pred_o;
+
+wire                    pipe_flush_req;
+wire                    pipe_flush_ack;
+wire  [`BUS_64]         pipe_flush_pc;
+
+wire                    minidec_pc_jmp;
+wire  [`BUS_64]         minidec_pc_jmpaddr;
 
 if_stage If_stage(
-  .clk                (clk              ),
-  .rst                (rst              ),
-  
-  .pc_jmp             (pc_jmp_o         ),
-  .pc_jmpaddr         (pc_jmpaddr_o     ),
-  .pc_old             (pc_old           ),
-  .pc                 (pc               ),
-  .inst               (inst             ),
-
-  .if_valid           (if_valid         ),
-  .if_ready           (if_ready         ),
-  .if_data_read       (if_data_read     ),
-  .if_addr            (if_addr          ),
-  .if_size            (if_size          ),
-  .if_resp            (if_resp          ),
-
-  .fetched            (fetched          )
+  .clk                        (clk                        ),
+  .rst                        (rst                        ),
+  .pc_jmp                     (pc_jmp                     ),
+  .pc_jmpaddr                 (pc_jmpaddr                 ),
+  .pc_old                     (pc_old                     ),
+  .pc                         (pc                         ),
+  .pc_pred_o                  (if_pc_pred_o               ),
+  .inst                       (inst                       ),
+  .if_valid                   (if_valid                   ),
+  .if_ready                   (if_ready                   ),
+  .if_data_read               (if_data_read               ),
+  .if_addr                    (if_addr                    ),
+  .if_size                    (if_size                    ),
+  .if_resp                    (if_resp                    ),
+  .if_fetched_req             (fetched_req                ),
+  .if_fetched_ack             (fetched_ack                )
+  // .pipe_flush_req     (pipe_flush_req       ),
+  // .pipe_flush_ack     (pipe_flush_ack       ),
+  // .pipe_flush_pc      (pipe_flush_pc        )
 );
 
 id_stage Id_stage(
-  .clk                (clk              ),
-  .rst                (rst              ),
-
-  .inst               (inst             ),
-  .rs1_data           (rs1_data         ),
-  .rs2_data           (rs2_data         ),
-  .pc_old             (pc_old           ),
-  .pc                 (pc               ),
-  .rs1_ren            (rs1_ren          ),
-  .rs1                (rs1              ),
-  .rs2_ren            (rs2_ren          ),
-  .rs2                (rs2              ),
-  .rd                 (rd               ),
-  .mem_addr           (mem_addr         ),
-  .mem_ren            (mem_ren          ),
-  .mem_wen            (mem_wen          ),
-  .mem_wdata          (mem_wdata        ),
-  .itype              (itype            ),
-  .opcode             (opcode           ),
-  .funct3             (funct3           ),
-  .funct7             (funct7           ),
-  .op1                (op1              ),
-  .op2                (op2              ),
-  .t1                 (t1               ),
-  .csr_addr           (csr_addr         ),
-  .csr_op             (csr_op           ),
-  .csr_wdata          (csr_wdata        ),
-  .csr_rdata          (csr_rdata        ),
-  .skip_difftest      (skip_difftest    )
+  .clk                        (clk                        ),
+  .rst                        (rst                        ),
+  .id_fetched_req_i           (fetched_req                ),
+  .id_fetched_ack_o           (fetched_ack                ),
+  .id_decoded_req_o           (decoded_req                ),
+  .id_decoded_ack_i           (decoded_ack                ),
+  .id_inst_i                  (inst                       ),
+  .id_rs1_data_i              (rs1_data                   ),
+  .id_rs2_data_i              (rs2_data                   ),
+  .id_pc_old_i                (pc_old                     ),
+  .id_pc_i                    (pc                         ),
+  .id_rs1_ren_o               (rs1_ren                    ),
+  .id_rs1_o                   (rs1                        ),
+  .id_rs2_ren_o               (rs2_ren                    ),
+  .id_rs2_o                   (rs2                        ),
+  .id_rd_o                    (rd                         ),
+  .id_mem_addr_o              (mem_addr                   ),
+  .id_mem_ren_o               (id_memren                  ),
+  .id_mem_wen_o               (id_memwen                  ),
+  .id_mem_wdata_o             (mem_wdata                  ),
+  .id_itype_o                 (itype                      ),
+  .id_opcode_o                (opcode                     ),
+  .id_funct3_o                (funct3                     ),
+  .id_funct7_o                (funct7                     ),
+  .id_op1_o                   (op1                        ),
+  .id_op2_o                   (op2                        ),
+  .id_t1_o                    (t1                         ),
+  .id_csr_addr_o              (csr_addr                   ),
+  .id_csr_op_o                (csr_op                     ),
+  .id_csr_wdata_o             (csr_wdata                  ),
+  .id_csr_rdata_i             (csr_rdata                  ),
+  .id_pc_pred_i               (if_pc_pred_o               ),
+  .id_pc_pred_o               (id_pc_pred_o               ),
+  .id_skip_difftest_o         (skip_difftest              )
 );
 
 exe_stage Exe_stage(
-  .rst                (rst              ),
-  .opcode_i           (opcode           ),
-  .funct3_i           (funct3           ),
-  .funct7_i           (funct7           ),
-  .op1_i              (op1              ),
-  .op2_i              (op2              ),
-  .t1_i               (t1               ),
-  .pc_jmp             (pc_jmp_o         ),
-  .pc_jmpaddr         (pc_jmpaddr_o     ),
-  .rd_wen             (ex_rd_wen_o      ),
-  .rd_data            (ex_rd_wdata_o    )
+  .rst                        (rst                        ),
+  .clk                        (clk                        ),
+  .ex_decoded_req_i           (decoded_req                ),
+  .ex_decoded_ack_o           (decoded_ack                ),
+  .ex_executed_req_o          (executed_req               ),
+  .ex_executed_ack_i          (executed_ack               ),
+  .ex_opcode_i                (opcode                     ),
+  .ex_funct3_i                (funct3                     ),
+  .ex_funct7_i                (funct7                     ),
+  .ex_op1_i                   (op1                        ),
+  .ex_op2_i                   (op2                        ),
+  .ex_t1_i                    (t1                         ),
+  .ex_pc_pred_i               (id_pc_pred_o               ),
+  .ex_memren_i                (id_memren                  ),
+  .ex_memwen_i                (id_memwen                  ),
+  .ex_pc_jmp_o                (pc_jmp_o                   ),
+  .ex_pc_jmpaddr_o            (pc_jmpaddr_o               ),
+  .ex_rd_wen_o                (ex_rd_wen_o                ),
+  .ex_rd_wdata_o              (ex_rd_wdata_o              ),
+  .ex_memren_o                (ex_memren                  ),
+  .ex_memwen_o                (ex_memwen                  )
+  // .o_jump_flush_req   (jump_flush_req       ),
+  // .o_jump_flush_pc    (jump_flush_pc        )
 );
 
 mem_stage Mem_stage(
-  .clk                (clk              ),
-  .rst                (rst              ),
-  .clk_cnt            (clk_cnt          ),
-  .addr               (mem_addr         ),
-  .ren                (mem_ren          ),
-  .funct3             (funct3           ),
-  .rdata              (mem_rdata        ),
-  .wen                (mem_wen          ),
-  .wdata              (mem_wdata        )
-);
-    
-wb_stage Wb_stage(
-  .clk                (clk              ),
-  .rst                (rst              ),
-  .ex_wen_i           (ex_rd_wen_o      ),
-  .ex_wdata_i         (ex_rd_wdata_o    ),
-  .mem_wen_i          (mem_ren          ),
-  .mem_wdata_i        (mem_rdata        ),
-  .csr_wen_i          (csr_rd_wen_o     ),
-  .csr_wdata_i        (csr_rd_wdata_o   ),
-  .wen_o              (rd_wen           ),
-  .wdata_o            (rd_wdata         )
+  .clk                        (clk                        ),
+  .rst                        (rst                        ),
+  .clk_cnt                    (clk_cnt                    ),
+  .mem_executed_req_i         (executed_req               ),
+  .mem_executed_ack_o         (executed_ack               ),
+  .mem_memoryed_req_o         (memoryed_req               ),
+  .mem_memoryed_ack_i         (memoryed_ack               ),
+  .mem_addr_i                 (mem_addr                   ),
+  .mem_ren_i                  (ex_memren                  ),
+  .mem_funct3_i               (funct3                     ),
+  .mem_wen_i                  (ex_memwen                  ),
+  .mem_wdata_i                (mem_wdata                  ),
+  .mem_rdata_o                (mem_rdata                  )
 );
 
-wire w_ena = rd_wen & fetched;
+
+wire  [4 : 0]         wb_rd_o;
+reg                   wb_rd_wen_o;
+wire  [`BUS_64]       wb_rd_wdata_o;
+
+wb_stage Wb_stage(
+  .clk                        (clk                        ),
+  .rst                        (rst                        ),
+  .wb_memoryed_req_i          (memoryed_req               ),
+  .wb_memoryed_ack_o          (memoryed_ack               ),
+  .wb_writebacked_req_o       (writebacked_req            ),
+  .wb_writebacked_ack_i       (writebacked_ack            ),
+  .wb_rd_i                    (ex_rd_wen_o                ),
+  .wb_rd_wen_i                (ex_rd_wen_o                ),
+  .wb_rd_wdata_i              (ex_rd_wdata_o              ),
+  .wb_rd_o                    (wb_rd_o                    ),
+  .wb_rd_wen_o                (wb_rd_wen_o                ),
+  .wb_rd_wdata_o              (wb_rd_wdata_o              )
+  // .ex_wen_i                   (ex_rd_wen_o                ),
+  // .ex_wdata_i                 (ex_rd_wdata_o              ),
+  // .mem_wen_i                  (ex_memwen                  ),
+  // .mem_wdata_i                (mem_rdata                  ),
+  // .csr_wen_i                  (csr_rd_wen_o               ),
+  // .csr_wdata_i                (csr_rd_wdata_o             ),
+  // .wen_o                      (rd_wen                     ),
+  // .wdata_o                    (rd_wdata                   )
+);
+
+cmt_stage Cmt_stage(
+  .clk                        (clk                        ),
+  .rst                        (rst                        ),
+  .cmt_writebacked_req_i      (writebacked_req            ),
+  .cmt_writebacked_ack_o      (writebacked_ack            ),
+  .cmt_rd_i                   (rd                         ),
+  .cmt_rd_wen_i               (rd_wen                     ),
+  .cmt_rd_wdata_i             (rd_wdata                   ),
+  .cmt_pc_i                   (pc                         ),
+  .cmt_inst_i                 (inst                       ),
+  .cmt_skip_difftest_i        (skip_difftest              ),
+  .cmt_regs_i                 (regs                       ),
+  .cmt_csrs_i                 (csrs                       )
+);
+
+wire w_ena = rd_wen & fetched_req;
 
 regfile Regfile(
-  .clk                (clk              ),
-  .rst                (rst              ),
-
-  .rs1                (rs1              ),
-  .rs1_ren            (rs1_ren          ),
-  .rs1_data           (rs1_data         ),
-  .rs2                (rs2              ),
-  .rs2_ren            (rs2_ren          ),
-  .rs2_data           (rs2_data         ),
-  .rd                 (rd               ),
-  .rd_data            (rd_wdata         ),
-  .rd_wen             (w_ena            ),
-
-  .regs_o             (regs)
+  .clk                        (clk                        ),
+  .rst                        (rst                        ),
+  .rs1                        (rs1                        ),
+  .rs1_ren                    (rs1_ren                    ),
+  .rs1_data                   (rs1_data                   ),
+  .rs2                        (rs2                        ),
+  .rs2_ren                    (rs2_ren                    ),
+  .rs2_data                   (rs2_data                   ),
+  .rd                         (wb_rd_o                    ),
+  .rd_wen                     (wb_rd_wen_o                ),
+  .rd_data                    (wb_rd_wdata_o              ),
+  .regs_o                     (regs                       )
 );
 
 csrfile Csrfile(
-  .clk                (clk              ),
-  .rst                (rst              ),
-  .csr_addr           (csr_addr         ),
-  .csr_op             (csr_op           ),
-  .csr_wdata          (csr_wdata        ),
-  .csr_rdata          (csr_rdata        ),
-  .csrs_o             (csrs             )
+  .clk                        (clk                        ),
+  .rst                        (rst                        ),
+  .csr_addr                   (csr_addr                   ),
+  .csr_op                     (csr_op                     ),
+  .csr_wdata                  (csr_wdata                  ),
+  .csr_rdata                  (csr_rdata                  ),
+  .csrs_o                     (csrs                       )
 );
 
-// Difftest
-reg cmt_wen;
-reg [7:0] cmt_wdest;
-reg [`REG_BUS] cmt_wdata;
-reg [`REG_BUS] cmt_pc;
-reg [31:0] cmt_inst;
-reg cmt_valid;
-reg                   cmt_skip;       // control commit skip
-reg trap;
-reg [7:0] trap_code;
-reg [63:0] cycleCnt;
-reg [63:0] instrCnt;
-reg [`REG_BUS] regs_diff [0 : 31];
-reg   [`BUS_64]       csrs_diff [0 : 7];
 
-wire inst_valid = fetched;
 
-always @(negedge clk) begin
-  if (rst) begin
-    {cmt_wen, cmt_wdest, cmt_wdata, cmt_pc, cmt_inst, cmt_valid, cmt_skip, trap, trap_code, cycleCnt, instrCnt} <= 0;
-  end
-  else if (~trap) begin
-    cmt_wen <= rd_wen;
-    cmt_wdest <= {3'd0, rd};
-    cmt_wdata <= rd_wdata;
-    cmt_pc <= pc;
-    cmt_inst <= inst;
-    cmt_skip <= skip_difftest;
-
-    cmt_valid <= inst_valid;
-
-    regs_diff <= regs;
-		csrs_diff <= csrs;
-
-    trap <= inst[6:0] == 7'h6b;
-    trap_code <= regs[10][7:0];
-    cycleCnt <= cycleCnt + 1;
-    instrCnt <= instrCnt + inst_valid;
-  end
-end
-
-DifftestInstrCommit DifftestInstrCommit(
-  .clock              (clk),
-  .coreid             (0),
-  .index              (0),
-  .valid              (cmt_valid),
-  .pc                 (cmt_pc),
-  .instr              (cmt_inst),
-  .skip               (cmt_skip),
-  .isRVC              (0),
-  .scFailed           (0),
-  .wen                (cmt_wen),
-  .wdest              (cmt_wdest),
-  .wdata              (cmt_wdata)
-);
-
-DifftestArchIntRegState DifftestArchIntRegState (
-  .clock              (clk),
-  .coreid             (0),
-  .gpr_0              (regs_diff[0]),
-  .gpr_1              (regs_diff[1]),
-  .gpr_2              (regs_diff[2]),
-  .gpr_3              (regs_diff[3]),
-  .gpr_4              (regs_diff[4]),
-  .gpr_5              (regs_diff[5]),
-  .gpr_6              (regs_diff[6]),
-  .gpr_7              (regs_diff[7]),
-  .gpr_8              (regs_diff[8]),
-  .gpr_9              (regs_diff[9]),
-  .gpr_10             (regs_diff[10]),
-  .gpr_11             (regs_diff[11]),
-  .gpr_12             (regs_diff[12]),
-  .gpr_13             (regs_diff[13]),
-  .gpr_14             (regs_diff[14]),
-  .gpr_15             (regs_diff[15]),
-  .gpr_16             (regs_diff[16]),
-  .gpr_17             (regs_diff[17]),
-  .gpr_18             (regs_diff[18]),
-  .gpr_19             (regs_diff[19]),
-  .gpr_20             (regs_diff[20]),
-  .gpr_21             (regs_diff[21]),
-  .gpr_22             (regs_diff[22]),
-  .gpr_23             (regs_diff[23]),
-  .gpr_24             (regs_diff[24]),
-  .gpr_25             (regs_diff[25]),
-  .gpr_26             (regs_diff[26]),
-  .gpr_27             (regs_diff[27]),
-  .gpr_28             (regs_diff[28]),
-  .gpr_29             (regs_diff[29]),
-  .gpr_30             (regs_diff[30]),
-  .gpr_31             (regs_diff[31])
-);
-
-DifftestTrapEvent DifftestTrapEvent(
-  .clock              (clk),
-  .coreid             (0),
-  .valid              (trap),
-  .code               (trap_code),
-  .pc                 (cmt_pc),
-  .cycleCnt           (cycleCnt),
-  .instrCnt           (instrCnt)
-);
-
-DifftestCSRState DifftestCSRState(
-  .clock              (clk),
-  .coreid             (0),
-  .priviledgeMode     (`RISCV_PRIV_MODE_M),
-  .mstatus            (csrs[`CSR_IDX_MSTATUS]),
-  .sstatus            (0),
-  .mepc               (0),
-  .sepc               (0),
-  .mtval              (0),
-  .stval              (0),
-  .mtvec              (0),
-  .stvec              (0),
-  .mcause             (0),
-  .scause             (0),
-  .satp               (0),
-  .mip                (0),
-  .mie                (0),
-  .mscratch           (0),
-  .sscratch           (0),
-  .mideleg            (0),
-  .medeleg            (0)
-);
-
-DifftestArchFpRegState DifftestArchFpRegState(
-  .clock              (clk),
-  .coreid             (0),
-  .fpr_0              (0),
-  .fpr_1              (0),
-  .fpr_2              (0),
-  .fpr_3              (0),
-  .fpr_4              (0),
-  .fpr_5              (0),
-  .fpr_6              (0),
-  .fpr_7              (0),
-  .fpr_8              (0),
-  .fpr_9              (0),
-  .fpr_10             (0),
-  .fpr_11             (0),
-  .fpr_12             (0),
-  .fpr_13             (0),
-  .fpr_14             (0),
-  .fpr_15             (0),
-  .fpr_16             (0),
-  .fpr_17             (0),
-  .fpr_18             (0),
-  .fpr_19             (0),
-  .fpr_20             (0),
-  .fpr_21             (0),
-  .fpr_22             (0),
-  .fpr_23             (0),
-  .fpr_24             (0),
-  .fpr_25             (0),
-  .fpr_26             (0),
-  .fpr_27             (0),
-  .fpr_28             (0),
-  .fpr_29             (0),
-  .fpr_30             (0),
-  .fpr_31             (0)
-);
 
 endmodule

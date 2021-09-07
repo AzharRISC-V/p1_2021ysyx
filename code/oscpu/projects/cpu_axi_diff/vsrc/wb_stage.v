@@ -1,56 +1,71 @@
+
 // Zhengpu Shi
 
-`include "defines.v"
+// Writeback Interface
 
-/*
-  rd 有两处写入，这里做一个简单的处理
-  目前还不是流水线，而一个指令不可能同时在EX/MEM后访问rd，所以没有冲突
-*/
+`include "defines.v"
 
 module wb_stage(
   input   wire                  clk,
   input   wire                  rst,
+  input   reg                   wb_memoryed_req_i,
+  output  reg                   wb_memoryed_ack_o,
+  output  reg                   wb_writebacked_req_o,
+  input   reg                   wb_writebacked_ack_i,
 
-  input   wire                  ex_wen_i      ,   // EX后的写回
-  input   wire  [`BUS_64]       ex_wdata_i    ,   
-  input   wire                  mem_wen_i     ,   // MEM后的写回
-  input   wire  [`BUS_64]       mem_wdata_i   ,
-  input   wire                  csr_wen_i     ,   // CSR后的写回
-  input   wire  [`BUS_64]       csr_wdata_i   ,
-
-  output  reg                   wen_o,
-  output  wire  [`BUS_64]       wdata_o
+  input   wire  [4 : 0]         wb_rd_i,
+  input   wire                  wb_rd_wen_i,
+  input   wire  [`BUS_64]       wb_rd_wdata_i,
+  output  reg   [4 : 0]         wb_rd_o,
+  output  reg                   wb_rd_wen_o,
+  output  wire  [`BUS_64]       wb_rd_wdata_o
+  // input   wire                  csr_wen_i     ,   // CSR后的写回
+  // input   wire  [`BUS_64]       csr_wdata_i   ,
 );
 
-// 写使能
-always @(*) begin
+
+assign wb_memoryed_ack_o = 1'b1;
+
+wire memoryed_hs = wb_memoryed_req_i & wb_memoryed_ack_o;
+
+// 保存输入信息
+reg   [4 : 0]         tmp_wb_rd_i;
+reg                   tmp_wb_rd_wen_i;
+reg   [`BUS_64]       tmp_wb_rd_wdata_i;
+
+always @(posedge clk) begin
   if (rst) begin
-    wen_o = 0;
+    {
+      tmp_wb_rd_i, 
+      tmp_wb_rd_wen_i, 
+      tmp_wb_rd_wdata_i
+    } <= 0;
+
+    wb_writebacked_req_o <= 0;
   end
   else begin
-    wen_o = ex_wen_i | mem_wen_i | csr_wen_i;
+    if (memoryed_hs) begin
+      tmp_wb_rd_i           <= wb_rd_i; 
+      tmp_wb_rd_wen_i       <= wb_rd_wen_i;
+      tmp_wb_rd_wdata_i     <= wb_rd_wdata_i;
+
+      wb_writebacked_req_o <= 1;
+    end
+    else if (wb_writebacked_ack_i) begin
+      wb_writebacked_req_o <= 0;
+    end
   end
 end
 
-// 写数据
-always @(*) begin
-  if (!wen_o) begin
-    wdata_o = 0;
-  end
-  else begin
-    if (csr_wen_i) begin
-      wdata_o = csr_wdata_i;
-    end
-    else if (mem_wen_i) begin
-      wdata_o = mem_wdata_i;
-    end
-    else if (ex_wen_i) begin
-      wdata_o = ex_wdata_i;
-    end
-    else begin
-      wdata_o = 0;
-    end
-  end
-end
+wbU WbU(
+  .clk                        (clk                        ),
+  .rst                        (rst                        ),
+  .rd_i                       (tmp_wb_rd_i                ),
+  .rd_wen_i                   (tmp_wb_rd_wen_i            ),
+  .rd_wdata_i                 (tmp_wb_rd_wdata_i          ),
+  .rd_o                       (wb_rd_o                    ),
+  .rd_wen_o                   (wb_rd_wen_o                ),
+  .rd_wdata_o                 (wb_rd_wdata_o              )
+);
 
 endmodule

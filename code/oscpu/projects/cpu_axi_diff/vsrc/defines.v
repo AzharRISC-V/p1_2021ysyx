@@ -31,6 +31,16 @@
 `define BUS_32              31:0
 `define BUS_64              63:0
 
+// 指令状态机
+`define STATE_BUS           3:0
+`define STATE_NONE          4'd0
+`define STATE_IF            4'd1
+`define STATE_ID            4'd2
+`define STATE_EX            4'd3
+`define STATE_MEM           4'd4
+`define STATE_WB            4'd5
+`define STATE_CMT           4'd6
+
 // CSR
 `define BUS_CSR_ADDR        11 : 0          // CSR存储器地址
 

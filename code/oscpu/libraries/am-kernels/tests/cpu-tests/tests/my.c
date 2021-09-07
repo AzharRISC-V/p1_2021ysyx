@@ -12,6 +12,7 @@ int main() {
   asm volatile("addi a0,zero,5");
   asm volatile("addi a0,zero,6");
   asm volatile("addi a0,zero,7");
+  asm volatile("addi zero,zero,0");   // "li a0,0"
 
   return 0;
 }

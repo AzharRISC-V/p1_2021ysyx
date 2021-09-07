@@ -1,64 +1,76 @@
+
 // Zhengpu Shi
 
+// Memory Interface
+
 `include "defines.v";
-`include "mem_access.v"
 
 module mem_stage(
   input   wire  [`BUS_64]       clk_cnt,
   input   wire                  clk,
   input   wire                  rst,
-
-  input   wire  [`BUS_64]       addr,
-  input   wire                  ren,
-  input   wire  [2 : 0]         funct3,
-  output  wire  [`BUS_64]       rdata,
-
-  input   wire                  wen,
-  input   wire  [`BUS_64]       wdata
-);
-
-// If access memory?
-wire  is_mem        = (addr & ~(64'hFFFFFFF)) == 64'h80000000;
-// If access device?
-wire  is_device     = (addr & ~(64'hFFF)) == 64'h20000000;
-
-wire [`BUS_64] s1 = (addr & ~(64'hFFFFFFF));
-wire [`BUS_64] s2 = (addr & ~(64'hFFF));
-
-wire            en        = ren | wen;
-wire  [`BUS_64] addr_0    = (!en) ? 0 : addr;
-wire  [2 : 0]   funct3_0  = (!en) ? 0 : funct3;
-
-wire   [`BUS_64] mem_rdata;
-
-wire mem_read_ok;
-
-// 访问内存，将1字节访问转换为8字节对齐的一次或两次访问
-mem_access Mem_access(
-  .clk_cnt            (clk_cnt          ),
-  .clk                (clk              ),
-  .ren                (ren & is_mem     ),
-  .addr               (addr_0           ),
-  .funct3             (funct3_0         ),
-  .rdata              (mem_rdata        ),
-  .wdata              (wdata            ),
-  .wen                (wen & is_mem     )
-);
-
-wire   [`BUS_64] dev_rdata;
-
-wire  dev_read_ok;
-
-devices Devices(
-  .clk                (clk              ),
-  .rst                (rst              ),
-  .ren                (ren & is_device  ),
-  .raddr              (addr_0           ),
-  .rdata              (dev_rdata        ),
-  .read_ok            (dev_read_ok      )  
+  input   reg                   mem_executed_req_i,
+  output  reg                   mem_executed_ack_o,
+  output  reg                   mem_memoryed_req_o,
+  input   reg                   mem_memoryed_ack_i,
+  input   wire  [`BUS_64]       mem_addr_i,
+  input   wire                  mem_ren_i,
+  input   wire  [2 : 0]         mem_funct3_i,
+  input   wire                  mem_wen_i,
+  input   wire  [`BUS_64]       mem_wdata_i,
+  output  wire  [`BUS_64]       mem_rdata_o
 );
 
 
-assign rdata = (!en) ? 0 : (is_mem ? mem_rdata : dev_rdata);
+assign mem_executed_ack_o = 1'b1;
+
+wire executed_hs = mem_executed_req_i & mem_executed_ack_o;
+
+// 保存输入信息
+reg   [`BUS_64]       tmp_mem_addr_i;
+reg                   tmp_mem_ren_i;
+reg   [2 : 0]         tmp_mem_funct3_i;
+reg                   tmp_mem_wen_i;
+reg   [`BUS_64]       tmp_mem_wdata_i;
+
+always @(posedge clk) begin
+  if (rst) begin
+    {
+      tmp_mem_addr_i, 
+      tmp_mem_ren_i, 
+      tmp_mem_funct3_i, 
+      tmp_mem_wen_i, 
+      tmp_mem_wdata_i 
+    } <= 0;
+
+    mem_memoryed_req_o <= 0;
+  end
+  else begin
+    if (executed_hs) begin
+      tmp_mem_addr_i      <= mem_addr_i; 
+      tmp_mem_ren_i       <= mem_ren_i;
+      tmp_mem_funct3_i    <= mem_funct3_i;
+      tmp_mem_wen_i       <= mem_wen_i;
+      tmp_mem_wdata_i     <= mem_wdata_i;
+
+      mem_memoryed_req_o <= 1;
+    end
+    else if (mem_memoryed_ack_i) begin
+      mem_memoryed_req_o <= 0;
+    end
+  end
+end
+
+memU MemU(
+  .clk_cnt                    (clk_cnt                    ),
+  .clk                        (clk                        ),
+  .rst                        (rst                        ),
+  .addr_i                     (tmp_mem_addr_i             ),
+  .ren_i                      (tmp_mem_ren_i              ),
+  .funct3_i                   (tmp_mem_funct3_i           ),
+  .wen_i                      (tmp_mem_wen_i              ),
+  .wdata_i                    (tmp_mem_wdata_i            ),
+  .rdata_o                    (mem_rdata_o                )
+);
 
 endmodule

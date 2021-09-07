@@ -1,169 +1,104 @@
 
-//--xuezhen--
+// ZhengpuShi
+
+// Execute Interface
 
 `include "defines.v"
 
 module exe_stage(
   input   wire                  rst,
+  input   wire                  clk,
+  input   reg                   ex_decoded_req_i,
+  output  reg                   ex_decoded_ack_o,
+  output  reg                   ex_executed_req_o,
+  input   reg                   ex_executed_ack_i,
 
-  input   wire  [4 : 0]         opcode_i,
-  input   wire  [2 : 0]         funct3_i,
-  input   wire  [6 : 0]         funct7_i,
-  input   wire  [`REG_BUS]      op1_i,
-  input   wire  [`REG_BUS]      op2_i,
-  input   wire  [`REG_BUS]      t1_i,
+  input   wire  [4 : 0]         ex_opcode_i,
+  input   wire  [2 : 0]         ex_funct3_i,
+  input   wire  [6 : 0]         ex_funct7_i,
+  input   wire  [`REG_BUS]      ex_op1_i,
+  input   wire  [`REG_BUS]      ex_op2_i,
+  input   wire  [`REG_BUS]      ex_t1_i,
+  input   wire                  ex_memren_i,
+  input   wire                  ex_memwen_i,
 
-  output  reg                   pc_jmp,
-  output  reg   [`BUS_64]       pc_jmpaddr,
-  output  wire                  rd_wen,
-  output  wire  [`BUS_64]       rd_data
+  input   wire  [`BUS_64]       ex_pc_pred_i,     // 顺序计算得出的pc值，用于对比
+  output  reg                   ex_pc_jmp_o,
+  output  reg   [`BUS_64]       ex_pc_jmpaddr_o,
+  output  wire                  ex_rd_wen_o,
+  output  wire  [`BUS_64]       ex_rd_wdata_o,
+  output  wire                  ex_memren_o,
+  output  wire                  ex_memwen_o
+  
+  // output  wire                  pipe_flush_req,
+  // output  wire  [`BUS_64]       pipe_flush_pc,
+  // input   wire                  pipe_flush_ack
 );
 
-// 保存解码信息
-reg   [4 : 0]     opcode;
-reg   [2 : 0]     funct3;
-reg   [6 : 0]     funct7;
-reg   [`REG_BUS]  op1;
-reg   [`REG_BUS]  op2;
-reg   [`REG_BUS]  t1;
-always @(*) begin
+assign ex_decoded_ack_o = 1'b1;
+
+wire decoded_hs = ex_decoded_req_i & ex_decoded_ack_o;
+
+// 保存输入信息
+reg   [4 : 0]     tmp_ex_opcode_i;
+reg   [2 : 0]     tmp_ex_funct3_i;
+reg   [6 : 0]     tmp_ex_funct7_i;
+reg   [`REG_BUS]  tmp_ex_op1_i;
+reg   [`REG_BUS]  tmp_ex_op2_i;
+reg   [`REG_BUS]  tmp_ex_t1_i;
+reg               tmp_ex_memren_i;
+reg               tmp_ex_memwen_i;
+
+always @(posedge clk) begin
   if (rst) begin
-    {opcode, funct3, funct7, op1, op2, t1} = 0;
+    {
+      tmp_ex_opcode_i, 
+      tmp_ex_funct3_i, 
+      tmp_ex_funct7_i, 
+      tmp_ex_op1_i, 
+      tmp_ex_op2_i, 
+      tmp_ex_t1_i,
+      tmp_ex_memren_i,
+      tmp_ex_memwen_i
+    } <= 0;
+
+    ex_executed_req_o <= 0;
   end
   else begin
-    opcode = opcode_i; 
-    funct3 = funct3_i;
-    funct7 = funct7_i;
-    op1 = op1_i;
-    op2 = op2_i;
-    t1 = t1_i;
+    if (decoded_hs) begin
+      tmp_ex_opcode_i   <= ex_opcode_i; 
+      tmp_ex_funct3_i   <= ex_funct3_i;
+      tmp_ex_funct7_i   <= ex_funct7_i;
+      tmp_ex_op1_i      <= ex_op1_i;
+      tmp_ex_op2_i      <= ex_op2_i;
+      tmp_ex_t1_i       <= ex_t1_i;
+      tmp_ex_memren_i   <= ex_memren_i;
+      tmp_ex_memwen_i   <= ex_memwen_i;
+
+      ex_executed_req_o <= 1;
+    end
+    else if (ex_executed_ack_i) begin
+      ex_executed_req_o <= 0;
+    end
   end
 end
 
-// rd_wen
-always @(*) begin
-  if (rst) begin
-    rd_wen = 0;
-  end
-  else
-    case (opcode)
-      `OPCODE_LUI       : begin rd_wen = 1; end
-      `OPCODE_AUIPC     : begin rd_wen = 1; end
-      `OPCODE_ADDI      : begin rd_wen = 1; end
-      `OPCODE_JAL       : begin rd_wen = 1; end
-      `OPCODE_JALR      : begin rd_wen = 1; end
-      `OPCODE_LB        : begin rd_wen = 1; end
-      `OPCODE_ADD       : begin rd_wen = 1; end
-      `OPCODE_ADDIW     : begin rd_wen = 1; end
-      `OPCODE_ADDW      : begin rd_wen = 1; end
-      `OPCODE_CSR       : begin rd_wen = 1; end
-      default           : begin rd_wen = 0; end
-    endcase
-end
-
-// rd_wdata_o
-reg [`BUS_64] reg64_1;
-reg [`BUS_32] reg32_1;
-always @(*) begin
-  if(rst) begin
-    rd_data = `ZERO_WORD;
-  end
-  else begin
-    //if (instcycle_cnt_val == 4) begin
-      case( opcode )
-        `OPCODE_LUI         : begin rd_data = op1; end
-        `OPCODE_AUIPC       : begin rd_data = op1 + op2; end
-        `OPCODE_ADDI        : begin
-          case( funct3 )
-            `FUNCT3_ADDI    : begin rd_data = op1 + op2; end
-            `FUNCT3_SLTI    : begin rd_data = ($signed(op1) < $signed(op2)) ? 1 : 0; end
-            `FUNCT3_SLTIU   : begin rd_data = op1 < op2 ? 1 : 0; end
-            `FUNCT3_XORI    : begin rd_data = op1 ^ op2; end
-            `FUNCT3_ORI     : begin rd_data = op1 | op2; end
-            `FUNCT3_ANDI    : begin rd_data = op1 & op2; end
-            `FUNCT3_SLLI    : begin rd_data = op1 << op2; end
-            `FUNCT3_SRLI    : begin
-              // if (funct7[5])  begin reg64_1 = op1 >>> op2; rd_data = { {33{t1[31]}}, reg64_1[30:0]}; end   // SRAI
-              if (funct7[5])  begin rd_data = $signed(op1) >>> op2; end   // SRAI
-              else            begin rd_data = op1 >> op2; end   // SRLI
-            end
-            default         :;
-          endcase
-        end
-        `OPCODE_JAL         : begin rd_data = op1; end
-        `OPCODE_JALR        : begin rd_data = t1; end
-        `OPCODE_ADD         : begin
-          case (funct3)
-            `FUNCT3_ADD     : begin rd_data = (funct7[5]) ? op1 - op2 : op1 + op2; end    // SUB or ADD
-            `FUNCT3_SLL     : begin rd_data = op1 << op2[5:0]; end
-            `FUNCT3_SLT     : begin rd_data = ($signed(op1) < $signed(op2)) ? 1 : 0; end
-            `FUNCT3_SLTU    : begin rd_data = (op1 < op2) ? 1 : 0; end
-            `FUNCT3_XOR     : begin rd_data = op1 ^ op2; end
-            `FUNCT3_SRL     : begin
-              if (funct7[5])  begin rd_data = $signed(op1) >>> op2[5:0]; end   // SRA
-              else            begin rd_data = op1 >> op2[5:0]; end             // SRL
-            end
-            `FUNCT3_OR      : begin rd_data = op1 | op2; end
-            `FUNCT3_AND     : begin rd_data = op1 & op2; end
-            default         : begin rd_data = 0; end
-          endcase
-        end
-        `OPCODE_ADDIW       : begin
-          case (funct3)
-            `FUNCT3_ADDIW   : begin reg64_1 = op1 + $signed(op2); rd_data = {{33{reg64_1[31]}}, reg64_1[30:0]}; end
-            `FUNCT3_SLLIW   : begin reg64_1 = op1 << op2; rd_data = {{33{reg64_1[31]}}, reg64_1[30:0]}; end
-            `FUNCT3_SRLIW   : begin
-              if (funct7[5])  begin rd_data = $signed({{33{op1[31]}}, op1[30:0]}) >>> op2[4:0]; end               // SRAIW
-              else            begin reg32_1 = op1[31:0] >> op2[4:0]; rd_data = {{32{reg32_1[31]}}, reg32_1}; end  // SRLIW
-            end
-            default         : begin rd_data = 0; end
-          endcase
-        end
-        `OPCODE_ADDW        : begin
-          case (funct3)
-            `FUNCT3_ADDW    : begin
-              if (funct7[5])  begin reg64_1 = op1 - $signed(op2); rd_data = {{33{reg64_1[31]}}, reg64_1[30:0]}; end // SUBW
-              else            begin reg64_1 = op1 + $signed(op2); rd_data = {{33{reg64_1[31]}}, reg64_1[30:0]}; end // ADDW
-            end
-            `FUNCT3_SLLW    : begin reg64_1 = op1 << op2[4:0]; rd_data = {{33{reg64_1[31]}}, reg64_1[30:0]}; end
-            `FUNCT3_SRAW    : begin
-              if (funct7[5])  begin rd_data = $signed({{33{op1[31]}}, op1[30:0]}) >>> op2[4:0]; end                 // SRAW
-              else            begin reg32_1 = op1[31:0] >> op2[4:0]; rd_data = {{32{reg32_1[31]}}, reg32_1}; end    // SRLW
-            end
-            default         : begin rd_data = 0; end
-          endcase
-        end
-        default             : begin rd_data = `ZERO_WORD; end
-      endcase
-    //end
-  end
-end
-
-// pc_jmp, pc_jmpaddr
-always @(*) begin
-  if (rst) begin
-    pc_jmp      = 0;
-    pc_jmpaddr  = `ZERO_WORD;
-  end
-  else begin
-    case (opcode)
-      `OPCODE_JAL         : begin pc_jmp = 1; pc_jmpaddr = op2; end
-      `OPCODE_JALR        : begin pc_jmp = 1; pc_jmpaddr = (op1 + op2) & ~1; end
-      `OPCODE_BEQ         : begin 
-        case (funct3)
-          `FUNCT3_BEQ     : begin pc_jmp = (op1 == op2) ? 1 : 0; end
-          `FUNCT3_BNE     : begin pc_jmp = (op1 != op2) ? 1 : 0; end
-          `FUNCT3_BLT     : begin pc_jmp = ($signed(op1) < $signed(op2)) ? 1 : 0; end
-          `FUNCT3_BGE     : begin pc_jmp = ($signed(op1) >= $signed(op2)) ? 1 : 0; end
-          `FUNCT3_BLTU    : begin pc_jmp = (op1 < op2) ? 1 : 0; end
-          `FUNCT3_BGEU    : begin pc_jmp = (op1 >= op2) ? 1 : 0; end
-          default         : begin pc_jmp = 0; end
-        endcase
-        pc_jmpaddr = t1; 
-      end
-      default             : begin pc_jmp = 0; end
-    endcase
-  end
-end
+exeU ExeU(
+  .opcode                     (tmp_ex_opcode_i            ),
+  .funct3                     (tmp_ex_funct3_i            ),
+  .funct7                     (tmp_ex_funct7_i            ),
+  .op1                        (tmp_ex_op1_i               ),
+  .op2                        (tmp_ex_op2_i               ),
+  .t1                         (tmp_ex_t1_i                ),
+  .memren_i                   (tmp_ex_memren_i            ),
+  .memwen_i                   (tmp_ex_memwen_i            ),
+  .pc_pred                    (ex_pc_pred_i               ),
+  .pc_jmp                     (ex_pc_jmp_o                ),
+  .pc_jmpaddr                 (ex_pc_jmpaddr_o            ),
+  .rd_wen                     (ex_rd_wen_o                ),
+  .rd_data                    (ex_rd_wdata_o              ),
+  .memren_o                   (ex_memren_o                ),
+  .memwen_o                   (ex_memwen_o                )
+);
 
 endmodule
