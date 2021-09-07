@@ -52,8 +52,6 @@ wire fetched_hs = i_id_fetched_req & o_id_fetched_ack;
 
 // 保存输入信息
 reg   [`BUS_32]               tmp_i_id_inst;
-reg   [`BUS_64]               tmp_i_id_rs1_data;
-reg   [`BUS_64]               tmp_i_id_rs2_data;
 reg   [`BUS_64]               tmp_i_id_pc_old;
 reg   [`BUS_64]               tmp_i_id_pc;
 reg   [`BUS_64]               tmp_i_id_pc_pred;
@@ -62,8 +60,6 @@ always @(posedge clk) begin
   if (rst) begin
     {
       tmp_i_id_inst,
-      tmp_i_id_rs1_data,
-      tmp_i_id_rs2_data,
       tmp_i_id_pc_old,
       tmp_i_id_pc
     } <= 0;
@@ -73,8 +69,6 @@ always @(posedge clk) begin
   else begin
     if (fetched_hs) begin
       tmp_i_id_inst       <= i_id_inst;
-      tmp_i_id_rs1_data   <= i_id_rs1_data;
-      tmp_i_id_rs2_data   <= i_id_rs2_data;
       tmp_i_id_pc_old     <= i_id_pc_old;
       tmp_i_id_pc         <= i_id_pc;
       tmp_i_id_pc_pred    <= i_id_pc_pred;
@@ -95,8 +89,8 @@ assign o_id_inst = tmp_i_id_inst;
 
 idU IdU(
   .i_inst                     (tmp_i_id_inst              ),
-  .i_rs1_data                 (tmp_i_id_rs1_data          ),
-  .i_rs2_data                 (tmp_i_id_rs2_data          ),
+  .i_rs1_data                 (i_id_rs1_data              ),
+  .i_rs2_data                 (i_id_rs2_data              ),
   .i_pc_old                   (tmp_i_id_pc_old            ),
   .i_pc                       (tmp_i_id_pc                ),
   .o_rs1_ren                  (o_id_rs1_ren               ),

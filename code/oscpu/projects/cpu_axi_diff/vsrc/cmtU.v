@@ -15,7 +15,8 @@ module cmtU(
   input   wire [`BUS_32]      i_inst,
   input   wire                i_skip_difftest,
   input   wire [`BUS_64]      i_regs[0 : 31],
-  input   wire [`BUS_64]      i_csrs[0 :  7]
+  input   wire [`BUS_64]      i_csrs[0 :  7],
+  input   wire                i_valid
 );
 
 
@@ -24,17 +25,17 @@ reg                           cmt_wen;
 reg   [7:0]                   cmt_wdest;
 reg   [`BUS_64]               cmt_wdata;
 reg   [`BUS_64]               cmt_pc;
-reg   [31:0]                  cmt_inst;
+reg   [`BUS_32]               cmt_inst;
 reg                           cmt_valid;
 reg                           cmt_skip;       // control commit skip
 reg                           trap;
 reg   [7:0]                   trap_code;
-reg   [63:0]                  cycleCnt;
-reg   [63:0]                  instrCnt;
+reg   [`BUS_64]               cycleCnt;
+reg   [`BUS_64]               instrCnt;
 reg   [`BUS_64]               regs_diff [0 : 31];
 reg   [`BUS_64]               csrs_diff [0 : 7];
 
-wire inst_valid = 0;// fetched_req;
+reg   [`BUS_64] instrCnt_inc = i_valid ? 1 : 0;
 
 always @(negedge clk) begin
   if (rst) begin
@@ -47,13 +48,13 @@ always @(negedge clk) begin
     cmt_pc        <= i_pc;
     cmt_inst      <= i_inst;
     cmt_skip      <= i_skip_difftest;
-    cmt_valid     <= inst_valid;
+    cmt_valid     <= i_valid;
     regs_diff     <= i_regs;
 		csrs_diff     <= i_csrs;
     trap          <= i_inst[6:0] == 7'h6b;
     trap_code     <= i_regs[10][7:0];
     cycleCnt      <= cycleCnt + 1;
-    instrCnt      <= instrCnt + inst_valid;
+    instrCnt      <= instrCnt + instrCnt_inc;
   end
 end
 
