@@ -27,7 +27,7 @@ wire                          writebacked_req;
 wire                          writebacked_ack;
 
 // Unknown, developping
-wire [`BUS_64]                id_pc_pred_o;
+wire  [`BUS_64]               id_pc_pred_o;
 wire                          pipe_flush_req;
 wire                          pipe_flush_ack;
 wire  [`BUS_64]               pipe_flush_pc;
@@ -36,36 +36,36 @@ wire  [`BUS_64]               minidec_pc_jmpaddr;
 
 // if_stage
 // if_stage -> id_stage
-wire [`BUS_64]                o_if_pc_old;
-wire [`BUS_64]                o_if_pc;
-wire [`BUS_64]                o_if_pc_pred;
-wire [`BUS_32]                o_if_inst;
+wire  [`BUS_64]               o_if_pc_old;
+wire  [`BUS_64]               o_if_pc;
+wire  [`BUS_64]               o_if_pc_pred;
+wire  [`BUS_32]               o_if_inst;
 // id_stage -> regfile
 wire                          o_id_rs1_ren;
-wire [4 : 0]                  o_id_rs1;
+wire  [4 : 0]                 o_id_rs1;
 wire                          o_id_rs2_ren;
-wire [4 : 0]                  o_id_rs2;
-wire [4 : 0]                  o_id_rd;
+wire  [4 : 0]                 o_id_rs2;
+wire  [4 : 0]                 o_id_rd;
 // id_stage -> csrfile
-wire [11 : 0]                 o_id_csraddr;
-wire [1 : 0]                  o_id_csrop;
-wire [11 : 0]                 o_id_csrwaddr;
-wire [`BUS_64]                o_id_csrwdata;
+wire  [11 : 0]                o_id_csraddr;
+wire  [1 : 0]                 o_id_csrop;
+wire  [11 : 0]                o_id_csrwaddr;
+wire  [`BUS_64]               o_id_csrwdata;
 // id_stage -> exe_stage
-wire [2 : 0]                  o_id_itype;
-wire [6 : 0]                  o_id_opcode;
-wire [2 : 0]                  o_id_funct3;
-wire [6 : 0]                  o_id_funct7;
-wire [`BUS_64]                o_id_op1;
-wire [`BUS_64]                o_id_op2;
+wire  [2 : 0]                 o_id_itype;
+wire  [6 : 0]                 o_id_opcode;
+wire  [2 : 0]                 o_id_funct3;
+wire  [6 : 0]                 o_id_funct7;
+wire  [`BUS_64]               o_id_op1;
+wire  [`BUS_64]               o_id_op2;
 wire                          o_id_memaddr;
 wire                          o_id_memren;
 wire                          o_id_memwen;
-wire [`BUS_64]                o_id_memwdata;
-wire [`BUS_64]                o_id_t1;
+wire  [`BUS_64]               o_id_memwdata;
+wire  [`BUS_64]               o_id_t1;
 wire                          o_id_skip_difftest;
-wire [`BUS_64]                o_id_pc;
-wire [`BUS_32]                o_id_inst;
+wire  [`BUS_64]               o_id_pc;
+wire  [`BUS_32]               o_id_inst;
 
 // exe_stage
 // exe_stage -> mem_stage
@@ -73,45 +73,51 @@ wire [2 : 0]                  o_ex_funct3;
 wire [`BUS_64]                o_ex_memaddr;
 wire                          o_ex_memren;
 wire                          o_ex_memwen;
-wire [`BUS_64]                o_ex_memwdata;
-wire [`BUS_64]                o_ex_pc;
-wire [`BUS_32]                o_ex_inst;
-wire [4 : 0]                  o_ex_opcode;
+wire  [`BUS_64]               o_ex_memwdata;
+wire  [`BUS_64]               o_ex_pc;
+wire  [`BUS_32]               o_ex_inst;
+wire  [4 : 0]                 o_ex_opcode;
 wire                          o_ex_pc_jmp;
-wire [`BUS_64]                o_ex_pc_jmpaddr;
+wire  [`BUS_64]               o_ex_pc_jmpaddr;
+wire  [5 : 0]                 o_ex_rd;
 wire                          o_ex_rd_wen;
-wire [`BUS_64]                o_ex_rd_wdata;
+wire  [`BUS_64]               o_ex_rd_wdata;
 wire                          o_ex_skip_difftest;
 
 // mem_stage
 // mem_stage -> wb_stage
-reg  [`BUS_64]                o_mem_rdata;
-wire [`BUS_64]                o_mem_pc;
-wire [`BUS_32]                o_mem_inst;
+reg   [`BUS_64]               o_mem_rdata;
+wire  [`BUS_64]               o_mem_pc;
+wire  [`BUS_32]               o_mem_inst;
+wire  [5 : 0]                 o_mem_rd;
+wire                          o_mem_rd_wen;
+wire  [`BUS_64]               o_mem_rd_wdata;
 wire                          o_mem_skip_difftest;
 
 // wb_stage
 // wb_stage -> cmt_stage
-wire [`BUS_64]                o_wb_pc;
-wire [`BUS_32]                o_wb_inst;
-wire                          o_wb_rd_wen;
-wire [`BUS_64]                o_wb_rd_wdata;
+wire  [`BUS_64]               o_wb_pc;
+wire  [`BUS_32]               o_wb_inst;
 wire                          o_wb_skip_difftest;
+// wb_stage -> regfile
+wire  [4 : 0]                 o_wb_rd;
+reg                           o_wb_rd_wen;
+wire  [`BUS_64]               o_wb_rd_wdata;
 
 // regfile
 // regfile -> id_stage
-wire [`BUS_64]                o_reg_id_rs1_data;
-wire [`BUS_64]                o_reg_id_rs2_data;
+wire  [`BUS_64]               o_reg_id_rs1_data;
+wire  [`BUS_64]               o_reg_id_rs2_data;
 // regfile -> difftest
-wire [`BUS_64]                o_reg_regs[0 : 31];
+wire  [`BUS_64]               o_reg_regs[0 : 31];
 
 // csrfile
 // csrfile -> ex_stage
-wire [`BUS_64]                o_csr_rdata;
-wire [`BUS_64]                o_csr_csrs[0 :  7];
+wire  [`BUS_64]               o_csr_rdata;
+wire  [`BUS_64]               o_csr_csrs[0 :  7];
 // csrfile -> wb_stage
 wire                          o_csr_rd_wen;
-wire [`BUS_64]                o_csr_rd_wdata;
+wire  [`BUS_64]               o_csr_rd_wdata;
 
 assign o_csr_rd_wen  = o_id_csrop != 2'b00;
 assign o_csr_rd_wdata = (o_id_csrop == 2'b00) ? 0 : o_csr_rdata;
@@ -194,10 +200,12 @@ exe_stage Exe_stage(
   .i_ex_pc_pred               (id_pc_pred_o               ),
   .i_ex_memren                (o_id_memren                ),
   .i_ex_memwen                (o_id_memwen                ),
+  .i_ex_rd                    (o_id_rd                    ),
   .o_ex_pc                    (o_ex_pc                    ),
   .o_ex_inst                  (o_ex_inst                  ),
   .o_ex_pc_jmp                (o_ex_pc_jmp                ),
   .o_ex_pc_jmpaddr            (o_ex_pc_jmpaddr            ),
+  .o_ex_rd                    (o_ex_rd                    ),
   .o_ex_rd_wen                (o_ex_rd_wen                ),
   .o_ex_rd_wdata              (o_ex_rd_wdata              ),
   .o_ex_memren                (o_ex_memren                ),
@@ -218,15 +226,16 @@ mem_stage Mem_stage(
   .i_mem_wen                  (o_ex_memwen                ),
   .i_mem_wdata                (o_ex_memwdata              ),
   .i_mem_funct3               (o_ex_funct3                ),
+  .i_mem_rd                   (o_ex_rd                    ),
+  .i_mem_rd_wen               (o_ex_rd_wen                ),
+  .i_mem_rd_wdata             (o_ex_rd_wdata              ),
+  .o_mem_rd                   (o_mem_rd                   ),
+  .o_mem_rd_wen               (o_mem_rd_wen               ),
+  .o_mem_rd_wdata             (o_mem_rd_wdata             ),
   .o_mem_pc                   (o_mem_pc                   ),
   .o_mem_inst                 (o_mem_inst                 ),
   .o_mem_rdata                (o_mem_rdata                )
 );
-
-
-wire  [4 : 0]                 o_wb_rd;
-reg                           o_wb_rd_wen;
-wire  [`BUS_64]               o_wb_rd_wdata;
 
 wb_stage Wb_stage(
   .clk                        (clk                        ),
@@ -237,9 +246,9 @@ wb_stage Wb_stage(
   .i_wb_writebacked_ack       (writebacked_ack            ),
   .i_wb_pc                    (o_mem_pc                   ),
   .i_wb_inst                  (o_mem_inst                 ),
-  .i_wb_rd                    (o_ex_rd_wen                ),
-  .i_wb_rd_wen                (o_ex_rd_wen                ),
-  .i_wb_rd_wdata              (o_ex_rd_wdata              ),
+  .i_wb_rd                    (o_mem_rd                   ),
+  .i_wb_rd_wen                (o_mem_rd_wen               ),
+  .i_wb_rd_wdata              (o_mem_rd_wdata             ),
   .o_wb_pc                    (o_wb_pc                    ),
   .o_wb_inst                  (o_wb_inst                  ),
   .o_wb_rd                    (o_wb_rd                    ),

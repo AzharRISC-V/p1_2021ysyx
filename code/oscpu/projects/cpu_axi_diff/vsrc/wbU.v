@@ -47,6 +47,7 @@
 
 
 module wbU(
+  input   wire                i_ena,
   input   wire                clk,
   input   wire                rst,
   input   wire  [4 : 0]       i_rd,
@@ -57,8 +58,11 @@ module wbU(
   output  wire  [`BUS_64]     o_rd_wdata
 );
 
-assign o_rd = i_rd;
-assign o_rd_wen = i_rd_wen;
-assign o_rd_wdata = i_rd_wdata;
+
+wire i_disable = !i_ena;
+
+assign o_rd = i_disable ? 0 : i_rd;
+assign o_rd_wen = i_disable ? 0 : i_rd_wen;
+assign o_rd_wdata = i_disable ? 0 : i_rd_wdata;
 
 endmodule

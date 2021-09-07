@@ -31,6 +31,10 @@ assign o_wb_memoryed_ack = 1'b1;
 
 wire memoryed_hs = i_wb_memoryed_req & o_wb_memoryed_ack;
 
+// 是否使能组合逻辑单元部件
+reg                           i_ena;
+wire                          i_disable = !i_ena;
+
 // 保存输入信息
 reg   [`BUS_64]               tmp_i_wb_pc;
 reg   [`BUS_32]               tmp_i_wb_inst;
@@ -48,7 +52,8 @@ always @(posedge clk) begin
       tmp_i_wb_rd_wdata
     } <= 0;
 
-    o_wb_writebacked_req <= 0;
+    o_wb_writebacked_req  <= 0;
+    i_ena                 <= 0;
   end
   else begin
     if (memoryed_hs) begin
@@ -58,10 +63,12 @@ always @(posedge clk) begin
       tmp_i_wb_rd_wen       <= i_wb_rd_wen;
       tmp_i_wb_rd_wdata     <= i_wb_rd_wdata;
 
-      o_wb_writebacked_req <= 1;
+      o_wb_writebacked_req  <= 1;
+      i_ena                 <= 1;
     end
     else if (i_wb_writebacked_ack) begin
-      o_wb_writebacked_req <= 0;
+      o_wb_writebacked_req  <= 0;
+      i_ena                 <= 0;
     end
   end
 end
@@ -70,6 +77,7 @@ assign o_wb_pc = tmp_i_wb_pc;
 assign o_wb_inst = tmp_i_wb_inst;
 
 wbU WbU(
+  .i_ena                      (i_ena                      ),
   .clk                        (clk                        ),
   .rst                        (rst                        ),
   .i_rd                       (tmp_i_wb_rd                ),

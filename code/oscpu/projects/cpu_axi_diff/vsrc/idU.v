@@ -6,6 +6,7 @@
 `include "defines.v"
 
 module idU(
+  input   wire                i_ena,
   input   wire  [`BUS_32]     i_inst,
   input   wire  [`BUS_64]     i_rs1_data,
   input   wire  [`BUS_64]     i_rs2_data,
@@ -37,7 +38,9 @@ module idU(
 );
 
 
-assign o_pc_pred = i_pc_pred;
+wire i_disable = !i_ena;
+
+assign o_pc_pred = i_disable ? 0 : i_pc_pred;
 
 // decode
 // 带符号扩展的imm
@@ -52,65 +55,58 @@ wire  [`BUS_32]               J_imm;
 wire  [5 : 0]                 shamt;
 wire  [`BUS_64]               shamt_64;   // 扩展为64位后的值
 
-assign o_opcode   = i_inst[6  :  0];
-assign o_rd       = i_inst[11 :  7];
-assign o_funct3   = i_inst[14 : 12];
-assign o_rs1      = i_inst[19 : 15];
-assign o_rs2      = i_inst[24 : 20];
-assign o_funct7   = i_inst[31 : 25];
+assign o_opcode   = i_disable ? 0 : i_inst[6  :  0];
+assign o_rd       = i_disable ? 0 : i_inst[11 :  7];
+assign o_funct3   = i_disable ? 0 : i_inst[14 : 12];
+assign o_rs1      = i_disable ? 0 : i_inst[19 : 15];
+assign o_rs2      = i_disable ? 0 : i_inst[24 : 20];
+assign o_funct7   = i_disable ? 0 : i_inst[31 : 25];
 
 assign R_imm    = 0;
-assign I_imm    = { {20{i_inst[31]}}, i_inst[31 : 20] };
-assign S_imm    = { {20{i_inst[31]}}, i_inst[31 : 25], i_inst[11 : 7] };
-assign B_imm    = { {20{i_inst[31]}}, i_inst[7], i_inst[30 : 25], i_inst[11 : 8], 1'b0 };
-assign U_imm    = { i_inst[31 : 12], 12'b0 };
-assign J_imm    = { {12{i_inst[31]}}, i_inst[19 : 12], i_inst[20], i_inst[30 : 21], 1'b0 };
-assign shamt    = i_inst[25 : 20];
-assign shamt_64 = {58'd0, shamt};
+assign I_imm    = i_disable ? 0 : 
+  { {20{i_inst[31]}}, i_inst[31 : 20] };
+assign S_imm    = i_disable ? 0 : 
+  { {20{i_inst[31]}}, i_inst[31 : 25], i_inst[11 : 7] };
+assign B_imm    = i_disable ? 0 : 
+  { {20{i_inst[31]}}, i_inst[7], i_inst[30 : 25], i_inst[11 : 8], 1'b0 };
+assign U_imm    = i_disable ? 0 : 
+  { i_inst[31 : 12], 12'b0 };
+assign J_imm    = i_disable ? 0 : 
+  { {12{i_inst[31]}}, i_inst[19 : 12], i_inst[20], i_inst[30 : 21], 1'b0 };
+assign shamt    = i_disable ? 0 : 
+  i_inst[25 : 20];
+assign shamt_64 = i_disable ? 0 : 
+  {58'd0, shamt};
 
-// i_inst-type
-
-// // 以后有机会再优化这部分组合逻辑
-// // (区分6种类型)
-// wire itype_R = rst ? 0 : (o_opcode == `OPCODE_ADD );
-// wire itype_I = rst ? 0 : (o_opcode == `OPCODE_JALR) || (o_opcode == `OPCODE_LB   ) || (o_opcode == `OPCODE_ADDI ) || (o_opcode == `OPCODE_FENCE) || (o_opcode == `OPCODE_ENV);
-// wire itype_U = rst ? 0 : (o_opcode == `OPCODE_LUI ) || (o_opcode == `OPCODE_AUIPC);
-// wire itype_S = rst ? 0 : (o_opcode == `OPCODE_SB  );
-// wire itype_B = rst ? 0 : (o_opcode == `OPCODE_BEQ );
-// wire itype_J = rst ? 0 : (o_opcode == `OPCODE_JAL );
-// // (转换为0~5的数字)
-// wire [2:0] itype_R_val = 0;
-// wire [2:0] itype_I_val = itype_I ? 1 : 0;
-// wire [2:0] itype_U_val = itype_U ? 2 : 0;
-// wire [2:0] itype_S_val = itype_S ? 3 : 0;
-// wire [2:0] itype_B_val = itype_B ? 4 : 0;
-// wire [2:0] itype_J_val = itype_J ? 5 : 0;
-// // wire [5:0] itype_sum = itype_R_val + itype_I_val + itype_U_val + itype_S_val + itype_B_val + itype_J_val;
-// // assign o_itype = itype_sum[2:0];
 
 // instruction type : R,I,S,B,U,J
 always@(*) begin
-  case (o_opcode)
-    `OPCODE_LUI   : o_itype = `INST_U_TYPE;
-    `OPCODE_AUIPC : o_itype = `INST_U_TYPE;
-    `OPCODE_JAL   : o_itype = `INST_J_TYPE;
-    `OPCODE_JALR  : o_itype = `INST_I_TYPE;
-    `OPCODE_BEQ   : o_itype = `INST_B_TYPE;
-    `OPCODE_LB    : o_itype = `INST_I_TYPE;
-    `OPCODE_SB    : o_itype = `INST_S_TYPE;
-    `OPCODE_ADDI  : o_itype = `INST_I_TYPE;
-    `OPCODE_ADD   : o_itype = `INST_R_TYPE;
-    `OPCODE_FENCE : o_itype = `INST_I_TYPE;
-    `OPCODE_ENV   : o_itype = `INST_I_TYPE;
-    `OPCODE_ADDIW : o_itype = `INST_I_TYPE;
-    `OPCODE_ADDW  : o_itype = `INST_R_TYPE;
-    default       : o_itype = 0;
-  endcase
+  if (i_disable) begin
+    o_itype = 0;
+  end
+  else begin
+    case (o_opcode)
+      `OPCODE_LUI   : o_itype = `INST_U_TYPE;
+      `OPCODE_AUIPC : o_itype = `INST_U_TYPE;
+      `OPCODE_JAL   : o_itype = `INST_J_TYPE;
+      `OPCODE_JALR  : o_itype = `INST_I_TYPE;
+      `OPCODE_BEQ   : o_itype = `INST_B_TYPE;
+      `OPCODE_LB    : o_itype = `INST_I_TYPE;
+      `OPCODE_SB    : o_itype = `INST_S_TYPE;
+      `OPCODE_ADDI  : o_itype = `INST_I_TYPE;
+      `OPCODE_ADD   : o_itype = `INST_R_TYPE;
+      `OPCODE_FENCE : o_itype = `INST_I_TYPE;
+      `OPCODE_ENV   : o_itype = `INST_I_TYPE;
+      `OPCODE_ADDIW : o_itype = `INST_I_TYPE;
+      `OPCODE_ADDW  : o_itype = `INST_R_TYPE;
+      default       : o_itype = 0;
+    endcase
+  end
 end
 
 // 立即数的值
 reg [`BUS_32]imm0;
-always@(*) begin
+always @(*) begin
   case (o_itype)
     `INST_R_TYPE  : imm0 = R_imm;
     `INST_I_TYPE  : imm0 = I_imm;
@@ -125,100 +121,133 @@ assign imm = {{32{imm0[31]}}, imm0};
 
 // rs1读使能
 always @(*) begin
-  case (o_itype)
-    `INST_R_TYPE  : o_rs1_ren = 1;
-    `INST_I_TYPE  : o_rs1_ren = 1;
-    `INST_S_TYPE  : o_rs1_ren = 1;
-    `INST_B_TYPE  : o_rs1_ren = 1;
-    default       : o_rs1_ren = 0;
-  endcase
+  if (i_disable) begin
+    o_rs1_ren = 0;
+  end
+  else begin
+    case (o_itype)
+      `INST_R_TYPE  : o_rs1_ren = 1;
+      `INST_I_TYPE  : o_rs1_ren = 1;
+      `INST_S_TYPE  : o_rs1_ren = 1;
+      `INST_B_TYPE  : o_rs1_ren = 1;
+      default       : o_rs1_ren = 0;
+    endcase
+  end
 end
 
 // rs2读使能
 always @(*) begin
-  case (o_itype)
-    `INST_R_TYPE  : o_rs2_ren = 1;
-    `INST_S_TYPE  : o_rs2_ren = 1;
-    `INST_B_TYPE  : o_rs2_ren = 1;
-    default       : o_rs2_ren = 0;
-  endcase
+  if (i_disable) begin
+    o_rs2_ren = 0;
+  end
+  else begin
+    case (o_itype)
+      `INST_R_TYPE  : o_rs2_ren = 1;
+      `INST_S_TYPE  : o_rs2_ren = 1;
+      `INST_B_TYPE  : o_rs2_ren = 1;
+      default       : o_rs2_ren = 0;
+    endcase
+  end
 end
 
 // mem_ren
-assign o_memren = (o_opcode == `OPCODE_LB) ? 1 : 0;
+assign o_memren = i_disable ? 0 :
+  ((o_opcode == `OPCODE_LB) ? 1 : 0);
 
 // mem_addr
-assign o_memaddr = (o_memren | o_memwen) ? $signed(i_rs1_data) + $signed(imm) : 0;
+assign o_memaddr = i_disable ? 0 :
+  ((o_memren | o_memwen) ? $signed(i_rs1_data) + $signed(imm) : 0);
 
 // mem_wen
-assign o_memwen = (o_itype == `INST_S_TYPE) ? 1 : 0;
+assign o_memwen = i_disable ? 0 : 
+  ((o_itype == `INST_S_TYPE) ? 1 : 0);
 
 // mem_wdata
-assign o_memwdata = i_rs2_data;
+assign o_memwdata = i_disable ? 0 : i_rs2_data;
 
 // o_op1
 always @(*) begin
-  case (o_itype)
-    `INST_R_TYPE  : o_op1 = i_rs1_data;
-    `INST_B_TYPE  : o_op1 = i_rs1_data;
-    `INST_I_TYPE  : o_op1 = i_rs1_data;
-    `INST_J_TYPE  : o_op1 = i_pc + 4;
-    `INST_U_TYPE  : begin
-      if (o_opcode == `OPCODE_LUI)            o_op1 = imm;
-      else if (o_opcode == `OPCODE_AUIPC)     o_op1 = i_pc;
-      else                                  o_op1 = 0;
-    end
-    default       : o_op1 = 0;
-  endcase
+  if (i_disable) begin
+    o_op1 = 0;
+  end
+  else begin
+    case (o_itype)
+      `INST_R_TYPE  : o_op1 = i_rs1_data;
+      `INST_B_TYPE  : o_op1 = i_rs1_data;
+      `INST_I_TYPE  : o_op1 = i_rs1_data;
+      `INST_J_TYPE  : o_op1 = i_pc + 4;
+      `INST_U_TYPE  : begin
+        if (o_opcode == `OPCODE_LUI)            o_op1 = imm;
+        else if (o_opcode == `OPCODE_AUIPC)     o_op1 = i_pc;
+        else                                    o_op1 = 0;
+      end
+      default       : o_op1 = 0;
+    endcase
+  end
 end
 
 // o_op2
 always @(*) begin
-  case (o_itype)
-    `INST_R_TYPE  : o_op2 = i_rs2_data;
-    `INST_B_TYPE  : o_op2 = i_rs2_data;
-    `INST_I_TYPE  : begin
-      case (o_funct3)
-        `FUNCT3_SLLI  : o_op2 = shamt_64;
-        `FUNCT3_SRLI  : o_op2 = shamt_64;
-        default       : o_op2 = imm;
-      endcase
-    end
-    `INST_J_TYPE  : o_op2 = i_pc + imm;
-    `INST_U_TYPE  : begin
-      if (o_opcode == `OPCODE_AUIPC)   o_op2 = imm;
-      else                           o_op2 = 0;
-    end
-    default       : o_op2 = 0;
-  endcase
+  if (i_disable) begin
+    o_op2 = 0;
+  end
+  else begin
+    case (o_itype)
+      `INST_R_TYPE  : o_op2 = i_rs2_data;
+      `INST_B_TYPE  : o_op2 = i_rs2_data;
+      `INST_I_TYPE  : begin
+        case (o_funct3)
+          `FUNCT3_SLLI  : o_op2 = shamt_64;
+          `FUNCT3_SRLI  : o_op2 = shamt_64;
+          default       : o_op2 = imm;
+        endcase
+      end
+      `INST_J_TYPE  : o_op2 = i_pc + imm;
+      `INST_U_TYPE  : begin
+        if (o_opcode == `OPCODE_AUIPC)    o_op2 = imm;
+        else                              o_op2 = 0;
+      end
+      default       : o_op2 = 0;
+    endcase
+  end
 end
 
 // o_t1
 always @(*) begin
-  case (o_opcode)
-    `OPCODE_JALR  : o_t1 = i_pc + 4;
-    `OPCODE_BEQ   : o_t1 = i_pc + imm;
-    default       : o_t1 = 0;
-  endcase
+  if (i_disable) begin
+    o_t1 = 0;
+  end
+  else begin
+    case (o_opcode)
+      `OPCODE_JALR  : o_t1 = i_pc + 4;
+      `OPCODE_BEQ   : o_t1 = i_pc + imm;
+      default       : o_t1 = 0;
+    endcase
+  end
 end
 
 // ------------- csr -----------------
 
 // o_csr_op
 always @(*) begin
-  if (o_opcode == `OPCODE_CSR) begin
-    case (o_funct3)
-      `FUNCT3_CSRRW   : o_csr_op = 2'b01;
-      `FUNCT3_CSRRS   : o_csr_op = 2'b10;
-      `FUNCT3_CSRRC   : o_csr_op = 2'b11;
-      `FUNCT3_CSRRWI  : o_csr_op = 2'b01;
-      `FUNCT3_CSRRSI  : o_csr_op = 2'b11;
-      `FUNCT3_CSRRCI  : o_csr_op = 2'b11;
-      default         : o_csr_op = 0;
-    endcase
+  if (i_disable) begin
+    o_csr_op = 0;
   end
   else begin
-    o_csr_op = 0;
+    if (o_opcode == `OPCODE_CSR) begin
+      case (o_funct3)
+        `FUNCT3_CSRRW   : o_csr_op = 2'b01;
+        `FUNCT3_CSRRS   : o_csr_op = 2'b10;
+        `FUNCT3_CSRRC   : o_csr_op = 2'b11;
+        `FUNCT3_CSRRWI  : o_csr_op = 2'b01;
+        `FUNCT3_CSRRSI  : o_csr_op = 2'b11;
+        `FUNCT3_CSRRCI  : o_csr_op = 2'b11;
+        default         : o_csr_op = 0;
+      endcase
+    end
+    else begin
+      o_csr_op = 0;
+    end
   end
 end
 
