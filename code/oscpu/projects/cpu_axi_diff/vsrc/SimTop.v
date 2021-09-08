@@ -226,7 +226,7 @@ always @(posedge clock) begin
     if (cache_rw_hs) begin
       cache_rw_req <= 0;
       cnt <= 0;
-      cache_addr  <= cache_addr + 64'h20;
+      cache_addr  <= cache_addr + 64'h80;
     end
     else begin
       // 计数1000后发出请求
