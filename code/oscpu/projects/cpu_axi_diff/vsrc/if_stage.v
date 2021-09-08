@@ -29,25 +29,24 @@ module if_stage(
   output                      o_if_nocmt
 );
 
-
-ifU IfU(
-  .i_ena                      (1                          ),
-  .clk                        (clk                        ),
-  .rst                        (rst                        ),
-	.i_axi_ready                (i_if_axi_ready             ),
-  .i_axi_data_read            (i_if_axi_data_read         ),
-  .i_axi_resp                 (i_if_axi_resp              ),
-	.o_axi_valid                (o_if_axi_valid             ),
-  .o_axi_addr                 (o_if_axi_addr              ),
-  .o_axi_size                 (o_if_axi_size              ),
-  .i_pc_jmp                   (i_if_pc_jmp                ),
-  .i_pc_jmpaddr               (i_if_pc_jmpaddr            ),
-  .o_pc                       (o_if_pc                    ),
-  .o_pc_pred                  (o_if_pc_pred               ),
-  .o_inst                     (o_if_inst                  ),
-  .o_fetched                  (o_if_fetched_req           ),
-  .o_nocmt                    (o_if_nocmt                 )
-);
+// ifU IfU(
+//   .i_ena                      (1                          ),
+//   .clk                        (clk                        ),
+//   .rst                        (rst                        ),
+// 	.i_axi_ready                (i_if_axi_ready             ),
+//   .i_axi_data_read            (i_if_axi_data_read         ),
+//   .i_axi_resp                 (i_if_axi_resp              ),
+// 	.o_axi_valid                (o_if_axi_valid             ),
+//   .o_axi_addr                 (o_if_axi_addr              ),
+//   .o_axi_size                 (o_if_axi_size              ),
+//   .i_pc_jmp                   (i_if_pc_jmp                ),
+//   .i_pc_jmpaddr               (i_if_pc_jmpaddr            ),
+//   .o_pc                       (o_if_pc                    ),
+//   .o_pc_pred                  (o_if_pc_pred               ),
+//   .o_inst                     (o_if_inst                  ),
+//   .o_fetched                  (o_if_fetched_req           ),
+//   .o_nocmt                    (o_if_nocmt                 )
+// );
 
 // always @( posedge clk ) begin
 //   if (rst) begin

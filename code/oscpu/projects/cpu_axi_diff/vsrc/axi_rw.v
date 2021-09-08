@@ -60,12 +60,12 @@ module axi_rw # (
     input                               clock,
     input                               reset,
 
-	input                               rw_valid_i,
-	output                              rw_ready_o,
+	  input                               rw_valid_i,
+	  output                              rw_ready_o,
     input                               rw_req_i,
-    output reg [RW_DATA_WIDTH:0]        data_read_o,
-    input  [RW_DATA_WIDTH:0]            data_write_i,
-    input  [AXI_DATA_WIDTH:0]           rw_addr_i,
+    output reg [RW_DATA_WIDTH-1:0]      data_read_o,
+    input  [RW_DATA_WIDTH-1:0]          data_write_i,
+    input  [AXI_DATA_WIDTH-1:0]         rw_addr_i,
     input  [1:0]                        rw_size_i,
     output [1:0]                        rw_resp_o,
 
@@ -267,7 +267,7 @@ module axi_rw # (
     // ------------------Read Transaction------------------
 
     // Read address channel signals
-    assign axi_ar_valid_o   = r_state_addr;
+    assign axi_ar_valid_o   = r_state_addr & rw_valid_i;
     assign axi_ar_addr_o    = axi_addr;
     assign axi_ar_prot_o    = `AXI_PROT_UNPRIVILEGED_ACCESS | `AXI_PROT_SECURE_ACCESS | `AXI_PROT_DATA_ACCESS;
     assign axi_ar_id_o      = axi_id;

@@ -28,6 +28,7 @@
 `define BUS_16              15:0
 `define BUS_32              31:0
 `define BUS_64              63:0
+`define BUS_256             255:0
 `define BUS_RIDX            4:0                 // 寄存器索引的总线
 `define BUS_FUNCT3          2:0                 // funct3的总线
 `define BUS_FUNCT7          6:0                 // funct7的总线

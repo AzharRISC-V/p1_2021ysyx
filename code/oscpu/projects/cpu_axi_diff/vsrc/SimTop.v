@@ -206,14 +206,66 @@ module SimTop(
     wire [1:0] if_size;
     wire [1:0] if_resp;
 
+    
+// 演示，每隔一段时间，取出32字节的数据
+reg [`BUS_64] cnt;
+reg cache_rw_req;
+wire cache_rw_ack;
+
+wire cache_rw_hs = cache_rw_req & cache_rw_ack;
+reg [`BUS_64] cache_addr;
+
+always @(posedge clock) begin
+  if (reset) begin
+    cnt <= 0;
+    cache_rw_req <= 0;
+    cache_addr  <= `PC_START;
+  end
+  else begin
+    // 收到ack，则撤销请求，并且计时器清零
+    if (cache_rw_hs) begin
+      cache_rw_req <= 0;
+      cnt <= 0;
+      cache_addr  <= cache_addr + 64'h20;
+    end
+    else begin
+      // 计数1000后发出请求
+      cnt <= cnt + 1;
+      if (cnt > 1000) begin
+        cache_rw_req <= 1;
+      end
+    end
+  end
+end
+
+cache_rw Cache_rw(
+  .clk                        (clock                      ),
+  .rst                        (reset                      ),
+	.i_cache_rw_req             (cache_rw_req               ),
+	.o_cache_rw_ack             (cache_rw_ack               ),
+	.i_cache_rw_addr            (cache_addr                 ),
+	.o_cache_rw_ren             (                           ),
+	.o_cache_rw_wen             (                           ),
+	.o_cache_rw_wdata           (                           ),
+	.o_cache_rw_rdata           (                           ),
+
+  .i_cache_axi_ready          (if_ready             ),
+  .i_cache_axi_rdata          (if_data_read         ),
+  .i_cache_axi_resp           (if_resp              ),
+  .o_cache_axi_valid          (if_valid             ),
+  .o_cache_axi_addr           (if_addr              ),
+  .o_cache_axi_size           (if_size              )
+);
+
+
     cpu u_cpu(
         .clk                            (clock),
         .rst                            (reset),
 
-        .if_valid                       (if_valid),
+        .if_valid                       ( ),//if_valid),
         .if_ready                       (if_ready),
         .if_data_read                   (if_data_read),
-        .if_addr                        (if_addr),
+        .if_addr                        ( ),//if_addr),
         .if_size                        (if_size),
         .if_resp                        (if_resp)
     );
