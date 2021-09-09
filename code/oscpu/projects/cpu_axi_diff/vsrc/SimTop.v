@@ -163,15 +163,15 @@ axi_rw u_axi_rw (
     .clock                          (clock),
     .reset                          (reset),
 
-    .user_valid_i                   (user_axi_valid),
-    .user_ready_o                   (user_axi_ready),
-    .user_blks_i                    (user_axi_blks),
-    .user_req_i                     (user_axi_op),
-    .user_rdata_o                   (user_axi_rdata),
-    .user_wdata_i                   (user_axi_wdata),
-    .user_addr_i                    (user_axi_addr),
-    .user_size_i                    (user_axi_size),
-    .user_resp_o                    (user_axi_resp),
+    .user_ready_o                   (i_user_axi_ready),
+    .user_rdata_o                   (i_user_axi_rdata),
+    .user_req_i                     (o_user_axi_op),
+    .user_valid_i                   (o_user_axi_valid),
+    .user_wdata_i                   (o_user_axi_wdata),
+    .user_addr_i                    (o_user_axi_addr),
+    .user_size_i                    (o_user_axi_size),
+    .user_blks_i                    (o_user_axi_blks),
+    .user_resp_o                    (o_user_axi_resp),
 
     .axi_aw_ready_i                 (aw_ready),
     .axi_aw_valid_o                 (aw_valid),
@@ -224,58 +224,40 @@ axi_rw u_axi_rw (
 );
 
 
-// ========== CACHE访问接口示例 =================
+/////////////////////////////////////////////////
+// axi_rw 接口
+wire                          i_user_axi_ready;
+wire [511:0]                  i_user_axi_rdata;
+wire                          o_user_axi_op;
+wire                          o_user_axi_valid;
+wire [511:0]                  o_user_axi_wdata;
+wire [63:0]                   o_user_axi_addr;
+wire [1:0]                    o_user_axi_size;
+wire [7:0]                    o_user_axi_blks;
 
-// ====== cache_rw 主机端，请求传输数据 ===============
-wire                          i_cache_test_ack;         // 应答
-wire  [511 : 0]               i_cache_test_rdata;       // 已读出的数据
-reg                           o_cache_test_req;         // 请求
-reg   [63 : 0]                o_cache_test_addr;        // 存储器地址（字节为单位），64字节对齐，低6位为0。
-reg                           o_cache_test_op;          // 操作类型：0读取，1写入
-reg   [511 : 0]               o_cache_test_wdata;       // 要写入的数据
+wire [1:0]                    o_user_axi_resp;
 
-cache_test Cache_test(
-  .rst                        (reset                      ),
-  .clk                        (clock                      ),
-  .i_cache_test_ack           (i_cache_test_ack           ),
-  .i_cache_test_rdata         (i_cache_test_rdata         ),
-  .o_cache_test_req           (o_cache_test_req           ),
-  .o_cache_test_addr          (o_cache_test_addr          ),
-  .o_cache_test_op            (o_cache_test_op            ),
-  .o_cache_test_wdata         (o_cache_test_wdata         ) 
-);
-
-// ====== cache_rw 从机端，适配AXI接口 ===============
-wire [511:0]                  user_axi_rdata;
-wire [511:0]                  user_axi_wdata;
-wire                          user_axi_op;
-wire                          user_axi_valid;
-wire                          user_axi_ready;
-wire [63:0]                   user_axi_addr;
-wire [1:0]                    user_axi_size;
-wire [1:0]                    user_axi_resp;
-wire [7:0]                    user_axi_blks;
-
-cache_rw Cache_rw(
+/////////////////////////////////////////////////
+// cache_rw 测试
+cache_rw_test u_cache_rw_test(
   .clk                        (clock                      ),
   .rst                        (reset                      ),
-	.i_cache_rw_req             (o_cache_test_req           ),
-	.i_cache_rw_addr            (o_cache_test_addr          ),
-	.i_cache_rw_op              (o_cache_test_op            ),
-	.i_cache_rw_wdata           (o_cache_test_wdata         ),
-	.o_cache_rw_rdata           (i_cache_test_rdata         ),
-	.o_cache_rw_ack             (i_cache_test_ack           ),
-
-  .o_cache_axi_op             (user_axi_op                ),
-  .i_cache_axi_ready          (user_axi_ready             ),
-  .i_cache_axi_rdata          (user_axi_rdata             ),
-  .o_cache_axi_valid          (user_axi_valid             ),
-  .o_cache_axi_wdata          (user_axi_wdata             ),
-  .o_cache_axi_addr           (user_axi_addr              ),
-  .o_cache_axi_size           (user_axi_size              ),
-  .o_cache_axi_blks           (user_axi_blks              )
+  .i_cache_rw_axi_ready       (i_user_axi_ready           ),
+  .i_cache_rw_axi_rdata       (i_user_axi_rdata           ),
+  .o_cache_rw_axi_op          (o_user_axi_op              ),
+  .o_cache_rw_axi_valid       (o_user_axi_valid           ),
+  .o_cache_rw_axi_wdata       (o_user_axi_wdata           ),
+  .o_cache_rw_axi_addr        (o_user_axi_addr            ),
+  .o_cache_rw_axi_size        (o_user_axi_size            ),
+  .o_cache_rw_axi_blks        (o_user_axi_blks            )
 );
 
+/////////////////////////////////////////////////
+// cache 测试
+
+
+/////////////////////////////////////////////////
+// CPU核
 cpu u_cpu(
     .clk                            (clock),
     .rst                            (reset),
