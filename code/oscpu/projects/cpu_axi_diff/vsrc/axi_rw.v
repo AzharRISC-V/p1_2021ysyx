@@ -307,7 +307,7 @@ module axi_rw # (
                     axi_w_data_o <= user_wdata_i[i*AXI_DATA_WIDTH+:AXI_DATA_WIDTH];
                       // user_rdata_o[i*AXI_DATA_WIDTH+:AXI_DATA_WIDTH] <= axi_r_data_l;
                   end
-              end
+                end
             end
         end
     endgenerate
@@ -352,6 +352,9 @@ module axi_rw # (
                     else if (len == i) begin
                         user_rdata_o[i*AXI_DATA_WIDTH+:AXI_DATA_WIDTH] <= axi_r_data_l;
                     end
+                end
+                else begin
+                  user_rdata_o <= 0;
                 end
             end
         end
