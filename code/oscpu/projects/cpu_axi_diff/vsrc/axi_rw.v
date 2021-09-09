@@ -277,7 +277,6 @@ module axi_rw # (
     assign axi_aw_qos_o     = 4'h0;
 
     // Write data channel signals
-    // assign axi_w_valid_o    = w_state_write;
 
     // 由于 w_valid 使能之时需要同时送出 wdata，所以改用时序逻辑
     always @(posedge clock) begin
@@ -287,9 +286,9 @@ module axi_rw # (
       else begin
         if (w_state_write) begin
           if (!axi_w_valid_o) begin
-            axi_w_data_o  <= user_wdata_i[AXI_DATA_WIDTH-1:0];// 64'h01234567_89abcdef;// user_wdata_i[AXI_DATA_WIDTH-1:0];
+            axi_w_data_o  <= user_wdata_i[AXI_DATA_WIDTH-1:0];
+            axi_w_valid_o <= 1;
           end
-          axi_w_valid_o <= 1;
         end
         else if (w_state_resp) begin// (w_state_resp) begin
           axi_w_valid_o <= 0;
@@ -302,7 +301,6 @@ module axi_rw # (
 
     // Wreite response channel signals
     assign axi_b_ready_o    = w_state_resp;
-
 
     // wire [AXI_DATA_WIDTH-1:0] axi_w_data_l  = (axi_w_data_i & mask_l) >> aligned_offset_l;
     // wire [AXI_DATA_WIDTH-1:0] axi_w_data_h  = (axi_w_data_i & mask_h) << aligned_offset_h;
@@ -372,7 +370,7 @@ module axi_rw # (
                     end
                 end
                 else begin
-                  user_rdata_o <= 0;
+                  //user_rdata_o <= 0;
                 end
             end
         end
