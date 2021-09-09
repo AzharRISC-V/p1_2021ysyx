@@ -123,8 +123,8 @@ module axi_rw # (
 
     wire w_trans    = user_req_i == `REQ_WRITE;
     wire r_trans    = user_req_i == `REQ_READ;
-    wire w_valid    = user_valid_i & w_trans;
-    wire r_valid    = user_valid_i & r_trans;
+    wire w_valid    = user_valid_i & w_trans & (!rw_ready);
+    wire r_valid    = user_valid_i & r_trans & (!rw_ready);
 
     // handshake
     wire aw_hs      = axi_aw_ready_i & axi_aw_valid_o;
@@ -278,6 +278,12 @@ module axi_rw # (
 
     // Write data channel signals
     assign axi_w_valid_o    = w_state_write;
+    assign axi_w_last_o     = w_hs & (len == axi_len);
+    assign axi_w_strb_o     = 8'b1111_1111;     // 每个bit代表一个字节是否要写入
+
+    // Wreite response channel signals
+    assign axi_b_ready_o    = w_state_resp;
+
 
     // wire [AXI_DATA_WIDTH-1:0] axi_w_data_l  = (axi_w_data_i & mask_l) >> aligned_offset_l;
     // wire [AXI_DATA_WIDTH-1:0] axi_w_data_h  = (axi_w_data_i & mask_h) << aligned_offset_h;

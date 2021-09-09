@@ -134,6 +134,31 @@ module SimTop(
     assign r_id                                     = `AXI_TOP_INTERFACE(r_bits_id);
     assign r_user                                   = `AXI_TOP_INTERFACE(r_bits_user);
 
+    assign aw_ready                                 = `AXI_TOP_INTERFACE(aw_ready);
+    assign `AXI_TOP_INTERFACE(aw_valid)             = aw_valid;
+    assign `AXI_TOP_INTERFACE(aw_bits_addr)         = aw_addr;
+    assign `AXI_TOP_INTERFACE(aw_bits_prot)         = aw_prot;
+    assign `AXI_TOP_INTERFACE(aw_bits_id)           = aw_id;
+    assign `AXI_TOP_INTERFACE(aw_bits_user)         = aw_user;
+    assign `AXI_TOP_INTERFACE(aw_bits_len)          = aw_len;
+    assign `AXI_TOP_INTERFACE(aw_bits_size)         = aw_size;
+    assign `AXI_TOP_INTERFACE(aw_bits_burst)        = aw_burst;
+    assign `AXI_TOP_INTERFACE(aw_bits_lock)         = aw_lock;
+    assign `AXI_TOP_INTERFACE(aw_bits_cache)        = aw_cache;
+    assign `AXI_TOP_INTERFACE(aw_bits_qos)          = aw_qos;
+    
+    assign w_ready                                  = `AXI_TOP_INTERFACE(w_ready);
+    assign `AXI_TOP_INTERFACE(w_valid)              = w_valid;
+    assign `AXI_TOP_INTERFACE(w_bits_data)[0]       = w_data;
+    assign `AXI_TOP_INTERFACE(w_bits_strb)          = w_strb;
+    assign `AXI_TOP_INTERFACE(w_bits_last)          = w_last;
+
+    assign `AXI_TOP_INTERFACE(b_ready)              = b_ready;
+    assign b_valid                                  = `AXI_TOP_INTERFACE(b_valid);
+    assign b_resp                                   = `AXI_TOP_INTERFACE(b_bits_resp);
+    assign b_id                                     = `AXI_TOP_INTERFACE(b_bits_id);
+    assign b_user                                   = `AXI_TOP_INTERFACE(b_bits_user);
+
     axi_rw u_axi_rw (
         .clock                          (clock),
         .reset                          (reset),
@@ -202,7 +227,7 @@ wire [7:0] user_axi_blks = 7;
 wire axi_wen;
 wire user_axi_valid;
 wire user_axi_ready;
-wire user_axi_req = `REQ_READ;
+reg  user_axi_req;
 wire [511:0] user_axi_rdata;
 reg  [511:0] user_axi_wdata;
 wire [63:0] user_axi_addr;
@@ -215,33 +240,42 @@ reg [`BUS_64] cnt;
 reg cache_rw_req;
 wire cache_rw_ack;
 reg read_write;   // 0:read, 1:write
-wire cache_rw_hs = cache_rw_req & cache_rw_ack;
+wire cache_hs = cache_rw_req & cache_rw_ack;
+wire cache_hs_read = cache_hs & (user_axi_req == `REQ_READ);
+wire cache_hs_write = cache_hs & (user_axi_req == `REQ_WRITE);
+
 reg [`BUS_64] cache_addr;
 
 reg [511:0] reg_rand [0:3];
-assign reg_rand[0] = 512'h8c2078a707e5484d4765af4e5226ec818046a8874f66de44243344048c940a7d01dec34002e85dec9bb5df909d43c9b62b9b566d5c040a78196df530aeb93dad;
-assign reg_rand[1] = 512'h8427ded070f66aff829090a992d822f6d7477e69aae19c9bed2767d58bd2ca7a37ce99843039c999a3ecf039b77bee7dfbba330c20f7432f2acd9f1bc3a105fd;
-assign reg_rand[2] = 512'h6c4ea3ae19c5e79f1f8c4ac4d007725a00103055127d5e14f27d58b6664054f8946dd2c7cd1c01e0b3b6f42197d34c0fab0040188966ba425d5555922928817c;
-assign reg_rand[3] = 512'h1d8b9dca096d58007ecd5ced25bf4f2b2fd2f12acaefb8884aecb935bf9b02927a5b474b92e91310e7fe4114767f4695d5fa24cf90ea673bbb20a132d0aa6fed;
+//                        |                 |                 |                 |                 |                 |                 |                 |
+assign reg_rand[0] = 512'h8c2078a7_07e5484d_4765af4e_5226ec81_8046a887_4f66de44_24334404_8c940a7d_01dec340_02e85dec_9bb5df90_9d43c9b6_2b9b566d_5c040a78_196df530_aeb93dad;
+assign reg_rand[1] = 512'h8427ded0_70f66aff_829090a9_92d822f6_d7477e69_aae19c9b_ed2767d5_8bd2ca7a_37ce9984_3039c999_a3ecf039_b77bee7d_fbba330c_20f7432f_2acd9f1b_c3a105fd;
+assign reg_rand[2] = 512'h6c4ea3ae_19c5e79f_1f8c4ac4_d007725a_00103055_127d5e14_f27d58b6_664054f8_946dd2c7_cd1c01e0_b3b6f421_97d34c0f_ab004018_8966ba42_5d555592_2928817c;
+assign reg_rand[3] = 512'h1d8b9dca_096d5800_7ecd5ced_25bf4f2b_2fd2f12a_caefb888_4aecb935_bf9b0292_7a5b474b_92e91310_e7fe4114_767f4695_d5fa24cf_90ea673b_bb20a132_d0aa6fed;
 reg [1:0] reg_rand_idx;
 
 always @(posedge clock) begin
   if (reset) begin
     cnt <= 0;
-    cache_rw_req <= 0;
-    cache_addr  <= `PC_START;
-    read_write  <= 1;
+    cache_rw_req  <= 0;
+    cache_addr    <= `PC_START;
+    read_write    <= 1;
+    user_axi_req  <= `REQ_WRITE;// `REQ_READ;// `REQ_WRITE;
   end
   else begin
-    // 收到ack，则撤销请求，并且计时器清零
-    if (cache_rw_hs) begin
+    // 写入完毕
+    if (cache_hs_write) begin
       cache_rw_req <= 0;
       cnt <= 0;
-      cache_addr  <= cache_addr + 64'h40;
-      user_axi_wdata <= 0;
-      reg_rand_idx <= 0;
-      // 切换到下一组数据
-      reg_rand_idx <= reg_rand_idx + 1;
+      user_axi_req <= `REQ_READ;
+    end
+    // 读取完毕
+    else if (cache_hs_read) begin
+      cache_rw_req <= 0;
+      cnt <= 0;
+      user_axi_req <= `REQ_WRITE;
+      reg_rand_idx <= reg_rand_idx + 1;     // 数据偏移
+      cache_addr  <= cache_addr + 64'h40;   // 地址偏移
     end
     else begin
       // 计数1000后发出请求
