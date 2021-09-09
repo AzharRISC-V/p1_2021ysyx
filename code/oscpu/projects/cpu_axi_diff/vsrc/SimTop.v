@@ -138,15 +138,15 @@ module SimTop(
         .clock                          (clock),
         .reset                          (reset),
 
-        .rw_valid_i                     (if_valid),
-        .rw_ready_o                     (if_ready),
-        .rw_blks                        (if_blks),
-        .rw_req_i                       (req),
-        .data_read_o                    (if_data_read),
-        .data_write_i                   (if_data_write),
-        .rw_addr_i                      (if_addr),
-        .rw_size_i                      (if_size),
-        .rw_resp_o                      (if_resp),
+        .user_valid_i                   (user_axi_valid),
+        .user_ready_o                   (user_axi_ready),
+        .user_blks_i                    (user_axi_blks),
+        .user_req_i                     (user_axi_req),
+        .user_rdata_o                   (user_axi_rdata),
+        .user_wdata_i                   (user_axi_wdata),
+        .user_addr_i                    (user_axi_addr),
+        .user_size_i                    (user_axi_size),
+        .user_resp_o                    (user_axi_resp),
 
         .axi_aw_ready_i                 (aw_ready),
         .axi_aw_valid_o                 (aw_valid),
@@ -198,31 +198,39 @@ module SimTop(
         .axi_r_user_i                   (r_user)
     );
 
-wire [7:0] if_blks = 7;
-wire if_wen;
-wire if_valid;
-wire if_ready;
-wire req = `REQ_READ;
-wire [511:0] if_data_read;
-wire [511:0] if_data_write;
-wire [63:0] if_addr;
-wire [1:0] if_size;
-wire [1:0] if_resp;
+wire [7:0] user_axi_blks = 7;
+wire axi_wen;
+wire user_axi_valid;
+wire user_axi_ready;
+wire user_axi_req = `REQ_READ;
+wire [511:0] user_axi_rdata;
+reg  [511:0] user_axi_wdata;
+wire [63:0] user_axi_addr;
+wire [1:0] user_axi_size;
+wire [1:0] user_axi_resp;
 
     
 // 演示，每隔一段时间，取出32字节的数据
 reg [`BUS_64] cnt;
 reg cache_rw_req;
 wire cache_rw_ack;
-
+reg read_write;   // 0:read, 1:write
 wire cache_rw_hs = cache_rw_req & cache_rw_ack;
 reg [`BUS_64] cache_addr;
+
+reg [511:0] reg_rand [0:3];
+assign reg_rand[0] = 512'h8c2078a707e5484d4765af4e5226ec818046a8874f66de44243344048c940a7d01dec34002e85dec9bb5df909d43c9b62b9b566d5c040a78196df530aeb93dad;
+assign reg_rand[1] = 512'h8427ded070f66aff829090a992d822f6d7477e69aae19c9bed2767d58bd2ca7a37ce99843039c999a3ecf039b77bee7dfbba330c20f7432f2acd9f1bc3a105fd;
+assign reg_rand[2] = 512'h6c4ea3ae19c5e79f1f8c4ac4d007725a00103055127d5e14f27d58b6664054f8946dd2c7cd1c01e0b3b6f42197d34c0fab0040188966ba425d5555922928817c;
+assign reg_rand[3] = 512'h1d8b9dca096d58007ecd5ced25bf4f2b2fd2f12acaefb8884aecb935bf9b02927a5b474b92e91310e7fe4114767f4695d5fa24cf90ea673bbb20a132d0aa6fed;
+reg [1:0] reg_rand_idx;
 
 always @(posedge clock) begin
   if (reset) begin
     cnt <= 0;
     cache_rw_req <= 0;
     cache_addr  <= `PC_START;
+    read_write  <= 1;
   end
   else begin
     // 收到ack，则撤销请求，并且计时器清零
@@ -230,16 +238,29 @@ always @(posedge clock) begin
       cache_rw_req <= 0;
       cnt <= 0;
       cache_addr  <= cache_addr + 64'h40;
+      user_axi_wdata <= 0;
+      reg_rand_idx <= 0;
+      // 切换到下一组数据
+      reg_rand_idx <= reg_rand_idx + 1;
     end
     else begin
       // 计数1000后发出请求
       cnt <= cnt + 1;
       if (cnt > 1000) begin
+        if (read_write) begin
+          // 准备数据
+          user_axi_wdata <= reg_rand[reg_rand_idx];
+        end
         cache_rw_req <= 1;
       end
     end
   end
 end
+
+wire cache_rw_ren;
+wire cache_rw_wen;
+wire [511:0] cache_rw_rdata;
+wire [511:0] cache_rw_wdata;
 
 cache_rw Cache_rw(
   .clk                        (clock                      ),
@@ -247,32 +268,32 @@ cache_rw Cache_rw(
 	.i_cache_rw_req             (cache_rw_req               ),
 	.o_cache_rw_ack             (cache_rw_ack               ),
 	.i_cache_rw_addr            (cache_addr                 ),
-	.o_cache_rw_ren             (                           ),
-	.o_cache_rw_wen             (                           ),
-	.o_cache_rw_wdata           (                           ),
-	.o_cache_rw_rdata           (                           ),
+	.o_cache_rw_ren             (cache_rw_ren               ),
+	.o_cache_rw_wen             (cache_rw_wen               ),
+	.o_cache_rw_wdata           (cache_rw_wdata             ),
+	.o_cache_rw_rdata           (cache_rw_rdata             ),
 
-  .i_cache_axi_wen            (if_wen               ),
-  .i_cache_axi_ready          (if_ready             ),
-  .i_cache_axi_rdata          (if_data_read         ),
-  .i_cache_axi_resp           (if_resp              ),
-  .o_cache_axi_valid          (if_valid             ),
-  .o_cache_axi_addr           (if_addr              ),
-  .o_cache_axi_size           (if_size              )
+  .i_cache_axi_wen            (axi_wen               ),
+  .i_cache_axi_ready          (user_axi_ready             ),
+  .i_cache_axi_rdata          (user_axi_rdata              ),
+  .i_cache_axi_resp           (user_axi_resp              ),
+  .o_cache_axi_valid          (user_axi_valid             ),
+  .o_cache_axi_addr           (user_axi_addr              ),
+  .o_cache_axi_size           (user_axi_size              )
 );
 
 
-    cpu u_cpu(
-        .clk                            (clock),
-        .rst                            (reset),
+cpu u_cpu(
+    .clk                            (clock),
+    .rst                            (reset),
 
-        .if_valid                       ( ),//if_valid),
-        .if_ready                       (if_ready),
-        .if_data_read                   (if_data_read),
-        .if_addr                        ( ),//if_addr),
-        .if_size                        (if_size),
-        .if_resp                        (if_resp)
-    );
+    .if_valid                       ( ),//user_axi_valid),
+    .if_ready                       ( ),
+    .if_rdata                       ( ),
+    .if_addr                        ( ),//user_axi_addr),
+    .if_size                        ( ),
+    .if_resp                        ( )
+);
 
 
 endmodule
