@@ -261,7 +261,7 @@ always @(posedge clock) begin
     cache_rw_req  <= 0;
     cache_addr    <= `PC_START;
     read_write    <= 1;
-    user_axi_req  <= `REQ_READ;// `REQ_READ;// `REQ_WRITE;
+    user_axi_req  <= `REQ_WRITE;// `REQ_READ;// `REQ_WRITE;
   end
   else begin
     // 写入完毕
@@ -274,7 +274,7 @@ always @(posedge clock) begin
     else if (cache_hs_read) begin
       cache_rw_req <= 0;
       cnt <= 0;
-      //user_axi_req <= `REQ_WRITE;
+      user_axi_req <= `REQ_WRITE;
       reg_rand_idx <= reg_rand_idx + 1;     // 数据偏移
       cache_addr  <= cache_addr + block_bytes;   // 地址偏移
     end

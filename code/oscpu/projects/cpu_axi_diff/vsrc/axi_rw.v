@@ -277,7 +277,26 @@ module axi_rw # (
     assign axi_aw_qos_o     = 4'h0;
 
     // Write data channel signals
-    assign axi_w_valid_o    = w_state_write;
+    // assign axi_w_valid_o    = w_state_write;
+
+    // 由于 w_valid 使能之时需要同时送出 wdata，所以改用时序逻辑
+    always @(posedge clock) begin
+      if (reset) begin
+        axi_w_valid_o <= 0;
+      end
+      else begin
+        if (w_state_write) begin
+          if (!axi_w_valid_o) begin
+            axi_w_data_o  <= user_wdata_i[AXI_DATA_WIDTH-1:0];// 64'h01234567_89abcdef;// user_wdata_i[AXI_DATA_WIDTH-1:0];
+          end
+          axi_w_valid_o <= 1;
+        end
+        else if (w_state_resp) begin// (w_state_resp) begin
+          axi_w_valid_o <= 0;
+        end
+      end
+    end
+
     assign axi_w_last_o     = w_hs & (len == axi_len);
     assign axi_w_strb_o     = 8'b1111_1111;     // 每个bit代表一个字节是否要写入
 
@@ -289,12 +308,11 @@ module axi_rw # (
     // wire [AXI_DATA_WIDTH-1:0] axi_w_data_h  = (axi_w_data_i & mask_h) << aligned_offset_h;
 
     generate
-        for (genvar i = 0; i < TRANS_LEN_MAX; i += 1) begin
+        for (genvar i = 0; i < TRANS_LEN_MAX - 1; i += 1) begin
             always @(posedge clock) begin
                 if (w_hs) begin
                   if (~aligned & overstep) begin
                       if (len[0]) begin
-                          // axi_w_data_o <= 
                           // user_rdata_o[AXI_DATA_WIDTH-1:0] <= user_rdata_o[AXI_DATA_WIDTH-1:0] | axi_r_data_h;
                           axi_w_data_o <= user_wdata_i[AXI_DATA_WIDTH-1:0];
                       end
@@ -304,8 +322,8 @@ module axi_rw # (
                       end
                   end
                   else if (len == i) begin
-                    axi_w_data_o <= user_wdata_i[i*AXI_DATA_WIDTH+:AXI_DATA_WIDTH];
-                      // user_rdata_o[i*AXI_DATA_WIDTH+:AXI_DATA_WIDTH] <= axi_r_data_l;
+                    // axi_w_data_o <= user_wdata_i[i*AXI_DATA_WIDTH+:AXI_DATA_WIDTH];
+                    axi_w_data_o <= user_wdata_i[(i+1)*AXI_DATA_WIDTH+:AXI_DATA_WIDTH];
                   end
                 end
             end
