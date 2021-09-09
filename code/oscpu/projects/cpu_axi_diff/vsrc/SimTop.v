@@ -140,9 +140,10 @@ module SimTop(
 
         .rw_valid_i                     (if_valid),
         .rw_ready_o                     (if_ready),
+        .rw_blks                        (if_blks),
         .rw_req_i                       (req),
         .data_read_o                    (if_data_read),
-        .data_write_i                   (data_write),
+        .data_write_i                   (if_data_write),
         .rw_addr_i                      (if_addr),
         .rw_size_i                      (if_size),
         .rw_resp_o                      (if_resp),
@@ -197,14 +198,16 @@ module SimTop(
         .axi_r_user_i                   (r_user)
     );
 
-    wire if_valid;
-    wire if_ready;
-    wire req = `REQ_READ;
-    wire [63:0] if_data_read;
-    wire [63:0] data_write;
-    wire [63:0] if_addr;
-    wire [1:0] if_size;
-    wire [1:0] if_resp;
+wire [7:0] if_blks = 7;
+wire if_wen;
+wire if_valid;
+wire if_ready;
+wire req = `REQ_READ;
+wire [511:0] if_data_read;
+wire [511:0] if_data_write;
+wire [63:0] if_addr;
+wire [1:0] if_size;
+wire [1:0] if_resp;
 
     
 // 演示，每隔一段时间，取出32字节的数据
@@ -226,7 +229,7 @@ always @(posedge clock) begin
     if (cache_rw_hs) begin
       cache_rw_req <= 0;
       cnt <= 0;
-      cache_addr  <= cache_addr + 64'h80;
+      cache_addr  <= cache_addr + 64'h40;
     end
     else begin
       // 计数1000后发出请求
@@ -249,6 +252,7 @@ cache_rw Cache_rw(
 	.o_cache_rw_wdata           (                           ),
 	.o_cache_rw_rdata           (                           ),
 
+  .i_cache_axi_wen            (if_wen               ),
   .i_cache_axi_ready          (if_ready             ),
   .i_cache_axi_rdata          (if_data_read         ),
   .i_cache_axi_resp           (if_resp              ),
