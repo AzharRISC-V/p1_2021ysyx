@@ -113,7 +113,7 @@ wire              d[0:1];             // 各路的 dirty bit
 wire              s[0:1];             // 各路的 seqence bit
 wire              hit[0:1];           // 各路是否命中
 wire              hit_any;            // 是否有任意一路命中？
-wire              hit_wayID;          // 命中了哪一路？
+reg               hit_wayID;          // 命中了哪一路？
 wire  [5 : 0]     info_tag_offset;    // 命中记录的tag偏移量
 wire  [5 : 0]     info_v_offset;      // 命中记录的v偏移量
 wire  [5 : 0]     info_d_offset;      // 命中记录的d偏移量
@@ -130,7 +130,17 @@ assign s[1]         = cache_info[mem_blkno][55];
 assign hit[0]       = v[0] && (tag[0] == mem_tag);
 assign hit[1]       = v[1] && (tag[1] == mem_tag);
 assign hit_any      = hit[0] | hit[1];
-assign hit_wayID    = hit[1];   // hit[1]==1则命中1，否则命中0。二选一
+
+// 命中策略：1.若命中1路（至多1路）则返回；2.都未命中，则选择s为0的
+always @(*) begin
+  if (hit[0] | hit[1]) begin
+    hit_wayID = hit[1]; // hit[1]==1则命中1，否则命中0。二选一
+  end
+  else begin
+    hit_wayID = (s[0] == 0 ? 0 : 1);
+  end
+end
+
 assign info_tag_offset  = hit_wayID ? 32 : 0;
 assign info_v_offset    = hit_wayID ? 53 : 21;
 assign info_d_offset    = hit_wayID ? 54 : 22;
@@ -261,17 +271,17 @@ always @(posedge clk) begin
   else begin
     case (state)
       STATE_IDLE:     begin;
-        o_cache_ack <= 0;
+        o_cache_ack <= 0;     // 撤销cache应答
       end
       STATE_READY:    begin
         o_cache_rw_req    <= 0;   // 撤销内部读写请求
         if (i_cache_op == `REQ_READ) begin
           o_cache_rdata  <= rdata_out;
-          o_cache_ack    <= 1;
+          o_cache_ack    <= 1;    // 发送cache应答
         end
       end
       STATE_LOAD:     begin
-        o_cache_rw_req    <= 1;
+        o_cache_rw_req    <= 1;   // 发送内部读写请求
         o_cache_rw_addr   <= addr_no_offset;
         o_cache_rw_op     <= `REQ_READ;
         if (hs_load) begin
