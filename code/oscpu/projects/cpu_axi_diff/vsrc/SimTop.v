@@ -237,9 +237,37 @@ wire [7:0]                    o_user_axi_blks;
 
 wire [1:0]                    o_user_axi_resp;
 
+// /////////////////////////////////////////////////
+
+// `define CACHE_RW_TEST 1
+
+`ifdef CACHE_RW_TEST
+
+  // cache_rw 测试
+  cache_rw_test u_cache_rw_test(
+    .clk                        (clock                      ),
+    .rst                        (reset                      ),
+    .i_cache_rw_axi_ready       (i_user_axi_ready           ),
+    .i_cache_rw_axi_rdata       (i_user_axi_rdata           ),
+    .o_cache_rw_axi_op          (o_user_axi_op              ),
+    .o_cache_rw_axi_valid       (o_user_axi_valid           ),
+    .o_cache_rw_axi_wdata       (o_user_axi_wdata           ),
+    .o_cache_rw_axi_addr        (o_user_axi_addr            ),
+    .o_cache_rw_axi_size        (o_user_axi_size            ),
+    .o_cache_rw_axi_blks        (o_user_axi_blks            )
+  );
+
+`endif
+
+
 /////////////////////////////////////////////////
-// cache_rw 测试
-cache_rw_test u_cache_rw_test(
+// cache 测试
+
+`define CACHE_TEST 1
+
+`ifdef CACHE_TEST
+
+cache_test u_cache_test(
   .clk                        (clock                      ),
   .rst                        (reset                      ),
   .i_cache_rw_axi_ready       (i_user_axi_ready           ),
@@ -252,9 +280,7 @@ cache_rw_test u_cache_rw_test(
   .o_cache_rw_axi_blks        (o_user_axi_blks            )
 );
 
-/////////////////////////////////////////////////
-// cache 测试
-
+`endif
 
 /////////////////////////////////////////////////
 // CPU核

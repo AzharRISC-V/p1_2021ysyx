@@ -7,24 +7,7 @@
 // 内部需要转换为AXI访问的多次读写。
 // 1. AXI数据宽度最多64bit，已确认。
 // 2. AXI burst len最多是8，这样一次最多传输64字节。
-/*
-  Cache Disign (2021.09.08, by ZhengpuShi):
-    [*] word_size = 32bit (4 bytes)             ----- 指令是32bit的
-    [*] block_size = 512bit (64 bytes)          ----- AXI总线burst最大传输8次*8字节=64字节
-    [*] offset index bits = 6 (2^6 = 64)        ----- 由块大小决定
-    [*] cache ways = 2way                       ----- 路数与块数的决定比较困难，至少2路，总容量受限于4KB（包括data、tag、v、d等字段）
-    [*] cache blocks per way = 16blocks         ----- 同上
-    [*] cache data bytes = 2 * 16 * 64B = 2KB   ----- 由总容量、路数、块数决定
-    [*] cache block index bits = 4 (2^4 = 16)   ----- 由块数决定
-    [*] main memory bytes = 2GB = 2^31          ----- 主存地址空间2GB
-    [*] bits_data = 512                         ----- 由块大小决定
-    [*] bits_tag = 31 - 4 - 6 = 21              ----- 主存位数 - cache块数的位数 - 块内位数
-    [*] bits_v = 1 (data valid)
-    [*] bits_d = 1 (data dirty, need to writeback when replace it out)
-    [*] bits_time = 2 (write time, for replace )
-    [*] cache bits = 16 * 2 * (2 + 1 + 1 + 21 + 512) = 17216
-    [*] cache bytes = 17216 / 8 = 2152
-*/
+
 `include "defines.v"
 
 module cache_rw(
