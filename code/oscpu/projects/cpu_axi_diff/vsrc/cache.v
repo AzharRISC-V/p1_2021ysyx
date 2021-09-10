@@ -67,22 +67,22 @@ module cache (
 );
 
 // ====== cache_rw 从机端，请求传输数据 ===============
-reg                                 i_cache_rw_req;    // 请求
-reg   [63 : 0]                      i_cache_rw_addr;   // 存储器地址（字节为单位），64字节对齐，低6位为0。
-reg                                 i_cache_rw_op;     // 操作类型：0读取，1写入
-reg   [511 : 0]                     i_cache_rw_wdata;  // 要写入的数据
-wire  [511 : 0]                     o_cache_rw_rdata;  // 已读出的数据
-wire                                o_cache_rw_ack;    // 应答
+reg                                 o_cache_rw_req;    // 请求
+reg   [63 : 0]                      o_cache_rw_addr;   // 存储器地址（字节为单位），64字节对齐，低6位为0。
+reg                                 o_cache_rw_op;     // 操作类型：0读取，1写入
+reg   [511 : 0]                     o_cache_rw_wdata;  // 要写入的数据
+wire  [511 : 0]                     i_cache_rw_rdata;  // 已读出的数据
+wire                                i_cache_rw_ack;    // 应答
 
 cache_rw Cache_rw(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
-	.i_cache_rw_req             (i_cache_rw_req             ),
-	.i_cache_rw_addr            (i_cache_rw_addr            ),
-	.i_cache_rw_op              (i_cache_rw_op              ),
-	.i_cache_rw_wdata           (i_cache_rw_wdata           ),
-	.o_cache_rw_rdata           (o_cache_rw_rdata           ),
-	.o_cache_rw_ack             (o_cache_rw_ack             ),
+	.i_cache_rw_req             (o_cache_rw_req             ),
+	.i_cache_rw_addr            (o_cache_rw_addr            ),
+	.i_cache_rw_op              (o_cache_rw_op              ),
+	.i_cache_rw_wdata           (o_cache_rw_wdata           ),
+	.o_cache_rw_rdata           (i_cache_rw_rdata           ),
+	.o_cache_rw_ack             (i_cache_rw_ack             ),
 
   .i_cache_rw_axi_ready       (i_cache_rw_axi_ready       ),
   .i_cache_rw_axi_rdata       (i_cache_rw_axi_rdata       ),
@@ -100,19 +100,24 @@ reg   [127: 0]    cache_data [0:127];
 reg   [63 : 0]    cache_info [0:15];
 
 // 物理地址解码
+wire  [63: 0]     addr_no_offset = {33'd0, i_cache_addr[30:6], 6'd0};   // 去掉offset后的对齐的地址
 wire  [63: 0]     mem_addr = {33'd0, i_cache_addr[30:0]};
 wire  [5 : 0]     mem_offset = mem_addr[5:0];
 wire  [3 : 0]     mem_blkno = mem_addr[9:6];
 wire  [20: 0]     mem_tag = mem_addr[30:10];
 
 // cache_info解码
-wire  [20: 0]     tag[0:1];     // 各路的 tag
-wire              v[0:1];       // 各路的 valid bit
-wire              d[0:1];       // 各路的 dirty bit
-wire              s[0:1];       // 各路的 seqence bit
-wire              hit[0:1];     // 各路是否命中
-wire              hit_any;      // 是否有任意一路命中？
-wire              hit_wayID;    // 命中了哪一路？
+wire  [20: 0]     tag[0:1];           // 各路的 tag
+wire              v[0:1];             // 各路的 valid bit
+wire              d[0:1];             // 各路的 dirty bit
+wire              s[0:1];             // 各路的 seqence bit
+wire              hit[0:1];           // 各路是否命中
+wire              hit_any;            // 是否有任意一路命中？
+wire              hit_wayID;          // 命中了哪一路？
+wire  [5 : 0]     info_tag_offset;    // 命中记录的tag偏移量
+wire  [5 : 0]     info_v_offset;      // 命中记录的v偏移量
+wire  [5 : 0]     info_d_offset;      // 命中记录的d偏移量
+wire  [5 : 0]     info_s_offset;      // 命中记录的s偏移量
 
 assign tag[0]       = cache_info[mem_blkno][20:0];
 assign v[0]         = cache_info[mem_blkno][21];
@@ -126,16 +131,23 @@ assign hit[0]       = v[0] && (tag[0] == mem_tag);
 assign hit[1]       = v[1] && (tag[1] == mem_tag);
 assign hit_any      = hit[0] | hit[1];
 assign hit_wayID    = hit[1];   // hit[1]==1则命中1，否则命中0。二选一
+assign info_tag_offset  = hit_wayID ? 32 : 0;
+assign info_v_offset    = hit_wayID ? 53 : 21;
+assign info_d_offset    = hit_wayID ? 54 : 22;
+assign info_s_offset    = hit_wayID ? 55 : 23;
 
 // cache_data解码
 wire  [6 : 0]     data_idx0[0:1];         // 数据所在的索引（ 0~15字节）
 wire  [6 : 0]     data_idx1[0:1];         // 数据所在的索引（16~31字节）
 wire  [6 : 0]     data_idx2[0:1];         // 数据所在的索引（32~47字节）
 wire  [6 : 0]     data_idx3[0:1];         // 数据所在的索引（48~63字节）
-wire  [511: 0]    rdata_blk_pool[0:1];    // 读取的数据块的每一路
+wire  [6 : 0]     data_idx0_hit;          // 数据所在的索引（ 0~15字节）已选中的
+wire  [6 : 0]     data_idx1_hit;          // 数据所在的索引（16~31字节）已选中的
+wire  [6 : 0]     data_idx2_hit;          // 数据所在的索引（32~47字节）已选中的
+wire  [6 : 0]     data_idx3_hit;          // 数据所在的索引（48~63字节）已选中的
 wire  [511: 0]    rdata_blk;              // 读取的数据块内容
 wire  [8 : 0]     rdata_unit_start_bit;   // 读取的数据单元的起始位(0~511)
-wire  [63: 0]     rdata_unit;             // 读取的数据单元
+wire  [63: 0]     rdata_unit;             // 读取的数据单元内容
 reg   [63: 0]     rdata_out;              // 根据用户需求的尺寸输出数据        
 
 assign data_idx0[0]  = {3'd0, mem_blkno} << 3;
@@ -146,19 +158,16 @@ assign data_idx0[1]  = {3'd0, mem_blkno} << 3 | 7'd4;
 assign data_idx1[1]  = {3'd0, mem_blkno} << 3 | 7'd5;
 assign data_idx2[1]  = {3'd0, mem_blkno} << 3 | 7'd6;
 assign data_idx3[1]  = {3'd0, mem_blkno} << 3 | 7'd7;
-assign rdata_blk_pool[0] = {
-  cache_data[data_idx3[0]],
-  cache_data[data_idx2[0]],
-  cache_data[data_idx1[0]],
-  cache_data[data_idx0[0]]
+assign data_idx0_hit = data_idx0[hit_wayID];
+assign data_idx1_hit = data_idx1[hit_wayID];
+assign data_idx2_hit = data_idx2[hit_wayID];
+assign data_idx3_hit = data_idx3[hit_wayID];
+assign rdata_blk = {
+  cache_data[data_idx3_hit],
+  cache_data[data_idx2_hit],
+  cache_data[data_idx1_hit],
+  cache_data[data_idx0_hit]
 };
-assign rdata_blk_pool[1] = {
-  cache_data[data_idx3[1]],
-  cache_data[data_idx2[1]],
-  cache_data[data_idx1[1]],
-  cache_data[data_idx0[1]]
-};
-assign rdata_blk = rdata_blk_pool[hit_wayID];
 assign rdata_unit_start_bit = {mem_offset, 3'b0};
 assign rdata_unit = rdata_blk[rdata_unit_start_bit+:64];
 
@@ -180,12 +189,16 @@ end
 // 测试数据
 always @(posedge clk) begin
   if (rst) begin
-    $readmemh("cache_test1.txt", cache_data);
+    //$readmemh("cache_test1.txt", cache_data);
   end
 end
-wire [127:0] s1 = cache_data[0];
-wire [127:0] s2 = cache_data[1];
-wire [127:0] s3 = cache_data[2];
+// 观察点
+wire [127:0] data_preview[0:15];
+generate
+  for (genvar i = 0; i < 16; i += 1) begin
+    assign data_preview[i] = cache_data[i];    
+  end
+endgenerate
 
 // 状态机
 //  英文名称     中文名称       含义
@@ -215,7 +228,7 @@ always @(posedge clk) begin
             end
           end
           STATE_READY:  begin
-            if (hs) begin
+            if (hs_cache) begin
               state <= STATE_IDLE;
             end 
           end
@@ -223,6 +236,9 @@ always @(posedge clk) begin
             
           end
           STATE_LOAD:   begin
+            if (hs_load) begin
+              state <= STATE_READY;
+            end
             
           end
           default: ;
@@ -231,9 +247,11 @@ always @(posedge clk) begin
 end
 
 
-wire hs = i_cache_req & o_cache_ack;
-wire hs_read  = hs & (i_cache_op == `REQ_READ);
-wire hs_write = hs & (i_cache_op == `REQ_WRITE);
+wire hs_cache = i_cache_req & o_cache_ack;
+wire hs_cache_read  = hs_cache & (i_cache_op == `REQ_READ);
+wire hs_cache_write = hs_cache & (i_cache_op == `REQ_WRITE);
+
+wire hs_load = o_cache_rw_req & i_cache_rw_ack;
 
 // 处理用户请求
 always @(posedge clk) begin
@@ -246,9 +264,28 @@ always @(posedge clk) begin
         o_cache_ack <= 0;
       end
       STATE_READY:    begin
+        o_cache_rw_req    <= 0;   // 撤销内部读写请求
         if (i_cache_op == `REQ_READ) begin
           o_cache_rdata  <= rdata_out;
-          o_cache_ack <= 1;
+          o_cache_ack    <= 1;
+        end
+      end
+      STATE_LOAD:     begin
+        o_cache_rw_req    <= 1;
+        o_cache_rw_addr   <= addr_no_offset;
+        o_cache_rw_op     <= `REQ_READ;
+        if (hs_load) begin
+          // cache保存数据
+          cache_data[data_idx3_hit] <= i_cache_rw_rdata[384+:128];
+          cache_data[data_idx2_hit] <= i_cache_rw_rdata[256+:128];
+          cache_data[data_idx1_hit] <= i_cache_rw_rdata[128+:128];
+          cache_data[data_idx0_hit] <= i_cache_rw_rdata[  0+:128];
+          // cache更新记录
+          cache_info[mem_blkno][info_tag_offset+:21]  <= mem_tag; // tag
+          cache_info[mem_blkno][info_v_offset]        <= 1;       // 有效位
+          cache_info[mem_blkno][info_d_offset]        <= 0;       // 脏位
+          cache_info[mem_blkno][23] <= cache_info[mem_blkno][55]; // sequence 翻转
+          cache_info[mem_blkno][55] <= cache_info[mem_blkno][23];
         end
       end
       default:;
@@ -256,48 +293,18 @@ always @(posedge clk) begin
   end
 end
 
-// cache信息管理
-always @(posedge clk) begin
-  if (rst) begin
-    // cache_info[0] = 64'h00800000_00000000;    // way1 s=1
-    cache_info[0] = 64'h00A00000_00000000;    // way1 s=1 v=1
+// cache_info初始化
+generate
+  for (genvar i = 0; i < 16; i += 1) begin
 
-    // cache_info[0] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
-    // cache_info[1] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
-    // cache_info[2] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
-    // cache_info[3] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
-    // cache_info[4] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
-    // cache_info[5] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
-    // cache_info[6] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
-    // cache_info[7] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
-    // cache_info[8] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
-    // cache_info[9] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
-    // cache_info[10] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
-    // cache_info[11] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
-    // cache_info[12] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
-    // cache_info[13] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
-    // cache_info[14] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
-    // cache_info[15] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
-  end
-  else begin
-    // 1. 读取流程：
-    // 是否命中？
-    // 若命中，则取出数据
-    // 若不命中，则先调入数据，再取出数据
-    // 2. 写入流程：
-    // 是否命中？
-    // 若命中，则写入数据
-    // 若不命中，则先调入数据，再写入数据
-    // 3. 调出流程
-    // 若无效，则不需要调出
-    // 若脏，则先写入主存，再调出
-    // 若不脏，则修改v，修改s
-    // 4. 调入流程
-    // 调入数据时，需要先调出数据
-    // 从主存读入数据，再修改v
-  end
-end
+    always @(posedge clk) begin
+      if (rst) begin
+        assign cache_info[i] = 64'h00800000_00000000;   // s1=1, s0=0
+      end
+    end
 
+  end
+endgenerate
 
 
 endmodule
