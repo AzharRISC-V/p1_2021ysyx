@@ -162,7 +162,6 @@ assign rdata_blk = rdata_blk_pool[hit_wayID];
 assign rdata_unit_start_bit = {mem_offset, 3'b0};
 assign rdata_unit = rdata_blk[rdata_unit_start_bit+:64];
 
-// 输出数据
 always @(*) begin
   if (rst) begin
     rdata_out = 0;
@@ -189,8 +188,48 @@ wire [127:0] s2 = cache_data[1];
 wire [127:0] s3 = cache_data[2];
 
 // 状态机
-// Idle   空闲
-// 
+//  英文名称     中文名称       含义
+//  IDLE        空闲          无活动
+//  READY       就绪          命中，则直接读写。读写完毕回到IDLE。
+//  WB          写回          不命中并选择脏的数据块，则需要写回。写回完毕跳转到LOADDATA
+//  LOAD        读取          不命中并选择不脏的数据块，则需要读入新数据。读取完毕跳转到READY
+
+parameter [1:0] STATE_IDLE = 2'b00, STATE_READY = 2'b01, STATE_WB = 2'b10, STATE_LOAD = 2'b11;
+
+reg [1:0] state;
+wire state_idle = state == STATE_IDLE;
+wire state_ready = state == STATE_READY;
+wire state_wb = state == STATE_WB;
+wire state_load = state == STATE_LOAD;
+
+always @(posedge clk) begin
+    if (rst) begin
+        state <= STATE_IDLE;
+    end
+    else begin
+      case (state)
+          STATE_IDLE:   begin
+            if (i_cache_req) begin
+              if (hit_any)  state <= STATE_READY;
+              else          state <= STATE_LOAD;
+            end
+          end
+          STATE_READY:  begin
+            if (hs) begin
+              state <= STATE_IDLE;
+            end 
+          end
+          STATE_WB:     begin
+            
+          end
+          STATE_LOAD:   begin
+            
+          end
+          default: ;
+      endcase
+    end
+end
+
 
 wire hs = i_cache_req & o_cache_ack;
 wire hs_read  = hs & (i_cache_op == `REQ_READ);
@@ -202,25 +241,43 @@ always @(posedge clk) begin
     o_cache_ack <= 0;
   end
   else begin
-    if (i_cache_req) begin
-      if (i_cache_op == `REQ_READ) begin
-        o_cache_rdata  <= rdata_out;// rdata[63:0];// 64'h01234567_89ABCDEF;
-        o_cache_ack <= 1;
+    case (state)
+      STATE_IDLE:     begin;
+        o_cache_ack <= 0;
       end
-      else begin
-        
+      STATE_READY:    begin
+        if (i_cache_op == `REQ_READ) begin
+          o_cache_rdata  <= rdata_out;
+          o_cache_ack <= 1;
+        end
       end
-    end
-    else begin
-      o_cache_ack <= 0;
-    end
+      default:;
+    endcase
   end
 end
 
-// cache数据管理
+// cache信息管理
 always @(posedge clk) begin
   if (rst) begin
-    cache_info[0] = 64'h00800000_00000000;    // way1 s=1
+    // cache_info[0] = 64'h00800000_00000000;    // way1 s=1
+    cache_info[0] = 64'h00A00000_00000000;    // way1 s=1 v=1
+
+    // cache_info[0] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
+    // cache_info[1] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
+    // cache_info[2] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
+    // cache_info[3] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
+    // cache_info[4] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
+    // cache_info[5] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
+    // cache_info[6] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
+    // cache_info[7] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
+    // cache_info[8] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
+    // cache_info[9] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
+    // cache_info[10] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
+    // cache_info[11] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
+    // cache_info[12] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
+    // cache_info[13] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
+    // cache_info[14] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
+    // cache_info[15] = 64'h00A00001_00200002;      // s1=1 v1=1 tag1=1, v0=1, tag0=2 
   end
   else begin
     // 1. 读取流程：

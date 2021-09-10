@@ -54,7 +54,7 @@ always @(posedge clk) begin
     cnt <= 0;
     o_cache_req     <= 0;
     o_cache_size    <= `SIZE_D;
-    o_cache_addr    <= `PC_START;
+    o_cache_addr    <= 64'h8000_0000;// 64'h8000_0400;// `PC_START;
     o_cache_op      <= `REQ_READ;// `REQ_WRITE;
     o_cache_wdata   <= 0;
   end
