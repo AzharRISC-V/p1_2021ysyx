@@ -181,6 +181,7 @@ assign rdata_blk = {
 assign rdata_unit_start_bit = {mem_offset, 3'b0};
 assign rdata_unit = rdata_blk[rdata_unit_start_bit+:64];
 
+// 读取数据
 always @(*) begin
   if (rst) begin
     rdata_out = 0;
@@ -210,6 +211,7 @@ generate
   end
 endgenerate
 
+
 // 状态机
 //  英文名称     中文名称       含义
 //  IDLE        空闲          无活动
@@ -233,35 +235,36 @@ always @(posedge clk) begin
       case (state)
           STATE_IDLE:   begin
             if (i_cache_req) begin
-              if (hit_any)  state <= STATE_READY;
-              else          state <= STATE_LOAD;
+              if (hit_any)          state <= STATE_READY;
+              else begin
+                if (d[hit_wayID])   state <= STATE_WB;
+                else                state <= STATE_LOAD;
+              end
             end
           end
+          
           STATE_READY:  begin
             if (hs_cache) begin
+              o_cache_rw_req    <= 0;   // 撤销内部读写请求
               state <= STATE_IDLE;
-            end 
-          end
-          STATE_WB:     begin
-            
-          end
-          STATE_LOAD:   begin
-            if (hs_load) begin
-              state <= STATE_READY;
             end
-            
           end
+
+          STATE_WB:     begin
+            if (hs_cache_rw) begin
+              o_cache_rw_req    <= 0;   // 撤销内部读写请求
+              state <= STATE_LOAD;
+            end
+          end
+
+          STATE_LOAD:     if (hs_cache_rw)  state <= STATE_READY;
           default: ;
       endcase
     end
 end
 
-
 wire hs_cache = i_cache_req & o_cache_ack;
-wire hs_cache_read  = hs_cache & (i_cache_op == `REQ_READ);
-wire hs_cache_write = hs_cache & (i_cache_op == `REQ_WRITE);
-
-wire hs_load = o_cache_rw_req & i_cache_rw_ack;
+wire hs_cache_rw = o_cache_rw_req & i_cache_rw_ack;
 
 // 处理用户请求
 always @(posedge clk) begin
@@ -274,18 +277,36 @@ always @(posedge clk) begin
         o_cache_ack <= 0;     // 撤销cache应答
       end
       STATE_READY:    begin
-        o_cache_rw_req    <= 0;   // 撤销内部读写请求
         if (i_cache_op == `REQ_READ) begin
           o_cache_rdata  <= rdata_out;
           o_cache_ack    <= 1;    // 发送cache应答
         end
+        else begin
+          // cache更新数据
+          // case (i_cache_size)
+          //   `SIZE_B:    rdata_out = {56'd0, rdata_unit[7:0]};
+          //   `SIZE_H:    rdata_out = {48'd0, rdata_unit[15:0]};
+          //   `SIZE_W:    rdata_out = {32'd0, rdata_unit[31:0]};
+          //   `SIZE_D:    rdata_out = rdata_unit;
+          //   default:    rdata_out = 0;
+          // endcase
+          // cache_data[data_idx3_hit] <= i_cache_rw_rdata[384+:128];
+          // cache_data[data_idx2_hit] <= i_cache_rw_rdata[256+:128];
+          // cache_data[data_idx1_hit] <= i_cache_rw_rdata[128+:128];
+          // cache_data[data_idx0_hit] <= i_cache_rw_rdata[  0+:128];
+          // cache更新记录
+          cache_info[mem_blkno][info_d_offset]  <= 1;
+        end
       end
+
       STATE_LOAD:     begin
-        o_cache_rw_req    <= 1;   // 发送内部读写请求
+        // 发送内部读请求
+        o_cache_rw_req    <= 1;
         o_cache_rw_addr   <= addr_no_offset;
         o_cache_rw_op     <= `REQ_READ;
-        if (hs_load) begin
-          // cache保存数据
+        // cache更新
+        if (hs_cache_rw) begin
+          // cache更新数据
           cache_data[data_idx3_hit] <= i_cache_rw_rdata[384+:128];
           cache_data[data_idx2_hit] <= i_cache_rw_rdata[256+:128];
           cache_data[data_idx1_hit] <= i_cache_rw_rdata[128+:128];
@@ -298,6 +319,22 @@ always @(posedge clk) begin
           cache_info[mem_blkno][55] <= cache_info[mem_blkno][23];
         end
       end
+
+      STATE_WB:       begin
+        // 发送内部写请求
+        o_cache_rw_req    <= 1;
+        o_cache_rw_addr   <= addr_no_offset;
+        o_cache_rw_op     <= `REQ_WRITE;
+        o_cache_rw_wdata  <= rdata_blk;
+        // cache更新
+        if (hs_cache_rw) begin
+          // cache更新记录
+          cache_info[mem_blkno][info_tag_offset+:21]  <= 0;       // tag
+          cache_info[mem_blkno][info_v_offset]        <= 0;       // 有效位
+          cache_info[mem_blkno][info_d_offset]        <= 0;       // 脏位
+        end
+      end
+
       default:;
     endcase
   end
