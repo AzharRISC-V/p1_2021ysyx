@@ -74,7 +74,7 @@ always @(posedge clk) begin
       // reg_rand_idx     <= reg_rand_idx + 1;              // 数据偏移
       o_cache_addr     <= o_cache_addr + 64'h8;    // 地址偏移
 
-      if (o_cache_addr >= 64'h8000_0038) begin
+      if (o_cache_addr >= 64'h8000_03FF) begin
         o_cache_addr <= 64'h8000_0000;
       end
     end
