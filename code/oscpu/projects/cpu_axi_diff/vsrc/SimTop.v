@@ -239,7 +239,7 @@ wire [1:0]                    o_user_axi_resp;
 
 // /////////////////////////////////////////////////
 
-`define CACHE_RW_TEST 1
+// `define CACHE_RW_TEST 1
 
 `ifdef CACHE_RW_TEST
 
@@ -263,7 +263,7 @@ wire [1:0]                    o_user_axi_resp;
 /////////////////////////////////////////////////
 // cache 测试
 
-// `define CACHE_TEST 1
+`define CACHE_TEST 1
 
 `ifdef CACHE_TEST
 

@@ -39,6 +39,7 @@ assign reg_rand[5] = 64'h9bb5df90_9d43c9b6;
 assign reg_rand[6] = 64'h2b9b566d_5c040a78;
 assign reg_rand[7] = 64'h196df530_aeb93dad;
 reg [2:0] reg_rand_idx;
+assign o_cache_wdata = reg_rand[reg_rand_idx];
 
 // 指示读出的数据是否与写入的一致
 wire equal_flag = o_cache_wdata == i_cache_rdata;
@@ -55,8 +56,8 @@ always @(posedge clk) begin
     o_cache_req     <= 0;
     o_cache_size    <= `SIZE_D;
     o_cache_addr    <= 64'h8000_0000;// 64'h8000_0400;// `PC_START;
-    o_cache_op      <= `REQ_READ;// `REQ_WRITE;
-    o_cache_wdata   <= 0;
+    o_cache_op      <= `REQ_WRITE;// `REQ_READ;// `REQ_WRITE;
+    reg_rand_idx    <= 0;
   end
   else begin
     // 写入完毕
@@ -72,16 +73,17 @@ always @(posedge clk) begin
       // o_cache_op       <= `REQ_WRITE;
       // reg_rand_idx     <= reg_rand_idx + 1;              // 数据偏移
       o_cache_addr     <= o_cache_addr + 64'h8;    // 地址偏移
+
+      if (o_cache_addr >= 64'h8000_0038) begin
+        o_cache_addr <= 64'h8000_0000;
+      end
     end
     else begin
+      // if (!(i_cache_ack | o_cache_req)) begin    // 测试连续请求，也是可以的。
       // 计数1000后发出请求
       cnt <= cnt + 1;
       if (cnt >= 10) begin
         o_cache_req <= 1;
-        // 准备要写入的数据
-        if (o_cache_op == `REQ_WRITE) begin
-          o_cache_wdata    <= reg_rand[reg_rand_idx];
-        end
       end
     end
   end
