@@ -202,11 +202,11 @@ assign wayID_select = hit_any ? wayID_hit : wayID_smax;
 
 // =============== Cache Data 缓存数据 ===============
 
-reg                           cachedata_cen[`BUS_WAYS];         // RAM 使能，低电平有效
-reg                           cachedata_wen[`BUS_WAYS];         // RAM 写使能，低电平有效
-reg   [5  : 0]                cachedata_addr[`BUS_WAYS];        // RAM 地址
-reg   [127: 0]                cachedata_wdata[`BUS_WAYS];       // RAM 写入数据
-wire  [127: 0]                cachedata_rdata[`BUS_WAYS];       // RAM 读出数据
+reg                           cachedata_cen[`BUS_WAYS];               // RAM 使能，低电平有效
+reg                           cachedata_wen[`BUS_WAYS];               // RAM 写使能，低电平有效
+reg   [5  : 0]                cachedata_addr[`BUS_WAYS];              // RAM 地址
+reg   [127: 0]                cachedata_wdata[`BUS_WAYS];             // RAM 写入数据
+wire  [127: 0]                cachedata_rdata[`BUS_WAYS];             // RAM 读出数据
 
 // RAM instantiate
 generate
@@ -248,8 +248,8 @@ wire  [5 : 0]       w0_addr;          // 数据所在的索引（ 0~15字节）
 // wire  [6 : 0]     data_idx3;          // 数据所在的索引（48~63字节）
 // wire  [511: 0]    rdata_blk;              // 读取的数据块内容
 // wire  [8 : 0]       rdata_unit_start_bit;   // 读取的数据单元的起始位(0~127)
-wire  [127: 0]      rdata_unit;             // 读取的数据单元内容
-reg   [63: 0]       rdata_out;              // 根据用户需求的尺寸输出数据   
+reg   [127: 0]      rdata_line;             // 读取一行数据
+reg   [63: 0]       rdata_out;              // 输出的数据   
 
 
 
@@ -266,19 +266,19 @@ reg   [63: 0]       rdata_out;              // 根据用户需求的尺寸输出
 //   cache_data[data_idx0]
 // };
 // assign rdata_unit_start_bit = {mem_offset, 3'b0};
-assign rdata_unit = cachedata_rdata[wayID_select];
+// assign rdata_line = cachedata_rdata[wayID_select];
 
-// 读取数据
+// 返回用户数据
 always @(*) begin
   if (rst) begin
     rdata_out = 0;
   end
   else begin
     case (i_cache_size)
-      // `SIZE_B:    rdata_out = {56'd0, rdata_unit[7:0]};
-      // `SIZE_H:    rdata_out = {48'd0, rdata_unit[15:0]};
-      // `SIZE_W:    rdata_out = {32'd0, rdata_unit[31:0]};
-      `SIZE_D:    rdata_out = rdata_unit[c_offset_bits[wayID_select]+:64];
+      // `SIZE_B:    rdata_out = {56'd0, rdata_line[7:0]};
+      // `SIZE_H:    rdata_out = {48'd0, rdata_line[15:0]};
+      // `SIZE_W:    rdata_out = {32'd0, rdata_line[31:0]};
+      `SIZE_D:    rdata_out = rdata_line[c_offset_bits[wayID_select]+:64];
       default:    rdata_out = 0;
     endcase
   end
@@ -382,12 +382,14 @@ reg   [2:0]   ram_op_cnt;           // RAM操作计数器(0~3表示1~4次)
 wire  [8:0]   ram_op_offset_bits;   // RAM操作的偏移位数
 wire          hs_cache;             // cache操作 握手
 wire          hs_cache_rw;          // cache_rw操作 握手
-wire          hs_ram;               // ram操作 握手
+wire          hs_ram;               // ram操作 握手（完成4行读写）
+wire          hs_ramline;           // ram操作 握手（完成指定1行读写）
 
 assign ram_op_offset_bits = {7'd0, ram_op_cnt[1:0]} << 7;
 assign hs_cache = i_cache_req & o_cache_ack;
 assign hs_cache_rw = o_cache_rw_req & i_cache_rw_ack;
 assign hs_ram = ram_op_cnt == 3'd4;
+assign hs_ramline = ram_op_cnt == 3'd1;
 
 // 处理用户请求
 always @(posedge clk) begin
@@ -402,16 +404,37 @@ always @(posedge clk) begin
 
       STATE_READY: begin
         if (i_cache_op == `REQ_READ) begin
-          o_cache_rdata <= rdata_out;
-          o_cache_ack <= 1;
+          // 读取RAM
+          if (!hs_ramline) begin
+            cachedata_addr[wayID_select] <= c_lineno[wayID_select];
+            rdata_line <= cachedata_rdata[wayID_select];
+            ram_op_cnt <= ram_op_cnt + 1;
+          end
+          else begin
+            ram_op_cnt <= 0;
+            o_cache_rdata <= rdata_out;
+            o_cache_ack <= 1;
+          end
         end
         else begin
+          // 写入RAM
+          if (!hs_ramline) begin
+            cachedata_addr[wayID_select] <= c_lineno[wayID_select];
+            // cachedata_wdata
+            // rdata_line <= cachedata_rdata[wayID_select];
+            ram_op_cnt <= ram_op_cnt + 1;
+          end
+          else begin
+            ram_op_cnt <= 0;
+            // o_cache_rdata <= rdata_out;
+            o_cache_ack <= 1;
+          end
           // cache更新数据
           // case (i_cache_size)
-          //   `SIZE_B:    rdata_out = {56'd0, rdata_unit[7:0]};
-          //   `SIZE_H:    rdata_out = {48'd0, rdata_unit[15:0]};
-          //   `SIZE_W:    rdata_out = {32'd0, rdata_unit[31:0]};
-            // `SIZE_D:    rdata_out = rdata_unit;
+          //   `SIZE_B:    rdata_out = {56'd0, rdata_line[7:0]};
+          //   `SIZE_H:    rdata_out = {48'd0, rdata_line[15:0]};
+          //   `SIZE_W:    rdata_out = {32'd0, rdata_line[31:0]};
+            // `SIZE_D:    rdata_out = rdata_line;
             // default:    rdata_out = 0;
           // endcase
           // cache_data[data_idx3_hit] <= i_cache_rw_rdata[384+:128];
@@ -420,7 +443,6 @@ always @(posedge clk) begin
           // cache_data[data_idx0_hit] <= i_cache_rw_rdata[  0+:128];
           // cache更新记录
           // cache_info[mem_blkno][info_d_offset]  <= 1;
-          o_cache_ack <= 1;
         end
       end
 
