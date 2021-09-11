@@ -49,6 +49,7 @@ reg cache_req_his[2];
 
 // axi请求开始
 wire  axi_start    = i_cache_rw_req & cache_req_his[0] & (!cache_req_his[1]);
+wire  axi_start2   = i_cache_rw_req & !cache_req_his[0];// & (!cache_req_his[1]);
 
 // 传输起始地址，64字节对齐
 assign o_cache_rw_axi_addr = i_cache_rw_addr & (~64'h3F);
@@ -75,7 +76,7 @@ always @( posedge clk ) begin
     end
     else begin
       // 触发采样
-      if (axi_start) begin
+      if (axi_start2) begin
         o_cache_rw_axi_valid <= 1;
         // o_cache_rw_rdata  <= 0;
       end
