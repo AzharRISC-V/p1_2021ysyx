@@ -110,14 +110,14 @@ cache_rw Cache_rw(
 
 // =============== 物理地址解码 ===============
 
-wire  [63: 0]                 addr_no_offset;             // 输入地址（字节，64字节对齐）
+wire  [63: 0]                 addr_blk_aligned_bytes;     // 输入地址按块对齐的地址(按字节)（64字节对齐，低6位为0）
 wire  [63: 0]                 mem_addr;                   // mem相对地址，减去0x8000_0000
 wire  [3 : 0]                 mem_blkno;                  // mem块号，0~15
-wire  [5 : 0]                 mem_offset_bytes;           // mem字节偏移量，0~63
-wire  [8 : 0]                 mem_offset_bits;            // mem位偏移量，0~511
+wire  [5 : 0]                 mem_offset_bytes;           // mem块内偏移(按字节)，0~63
+wire  [8 : 0]                 mem_offset_bits;            // mem块内偏移(按位)，0~511
 wire  [20: 0]                 mem_tag;                    // mem标记，21位
 
-assign addr_no_offset = {33'd0, i_cache_addr[30:6], 6'd0};
+assign addr_blk_aligned_bytes = {33'd0, i_cache_addr[30:6], 6'd0};
 assign mem_addr = {33'd0, i_cache_addr[30:0]};
 assign mem_offset_bytes = mem_addr[5:0];
 assign mem_offset_bits = {3'b0, mem_addr[5:0]} << 3;
@@ -127,23 +127,25 @@ assign mem_tag = mem_addr[30:10];
 
 // =============== Cache Info 缓存信息 ===============
 
-wire  [5 : 0]                 tag_pos;                            // tag位置(0~31)
-wire  [5 : 0]                 v_pos;                              // v位置(0~31)
-wire  [5 : 0]                 d_pos;                              // d位置(0~31)
-wire  [5 : 0]                 s_pos;                              // s位置(0~31)
-reg   [24 : 0]                cache_info[`BUS_WAYS][`BUS_ROWS];   // 缓存信息
-wire  [5 : 0]                 cline_no[`BUS_WAYS];                // cache行号(0~63)
-wire  [6 : 0]                 cline_offset_bits[`BUS_WAYS];       // cache行内偏移量bit(0~127)
-wire  [20: 0]                 tag[`BUS_WAYS];                     // tag 内容
-wire                          v[`BUS_WAYS];                       // valid bit 内容
-wire                          d[`BUS_WAYS];                       // dirty bit 内容
-wire  [1 : 0]                 s[`BUS_WAYS];                       // seqence bit 内容
+wire  [5 : 0]                 c_v_pos;                            // cache的v位置(0~31)
+wire  [5 : 0]                 c_d_pos;                            // cache的d位置(0~31)
+wire  [5 : 0]                 c_s_pos;                            // cache的s位置(0~31)
+wire  [5 : 0]                 c_tag_pos;                          // cache的tag位置(0~31)
+reg   [24 : 0]                cache_info[`BUS_WAYS][`BUS_ROWS];   // cache信息块（64行）
+wire  [3 : 0]                 c_blkno[`BUS_WAYS];                 // cache块号(0~15)
+wire  [5 : 0]                 c_lineno[`BUS_WAYS];                // cache行号(0~63)
+wire  [6 : 0]                 c_offset_bits[`BUS_WAYS];           // cache行内偏移(按字节)(0~127)
+wire  [6 : 0]                 c_offset_bits[`BUS_WAYS];           // cache行内偏移(按位)(0~127)
+wire                          c_v[`BUS_WAYS];                     // cache valid bit 有效位，1位有效
+wire                          c_d[`BUS_WAYS];                     // cache dirty bit 脏位，1为脏
+wire  [1 : 0]                 c_s[`BUS_WAYS];                     // cache seqence bit 顺序位，越大越需要先被替换走
+wire  [20: 0]                 c_tag[`BUS_WAYS];                   // cache标记
 
 
-assign tag_pos = 0;
-assign v_pos = 21;
-assign d_pos = 22;
-assign s_pos = 23;
+assign c_tag_pos = 0;
+assign c_v_pos = 21;
+assign c_d_pos = 22;
+assign c_s_pos = 23;
 
 // cache_info
 generate
@@ -159,21 +161,22 @@ generate
   end
 endgenerate
 
-// cline_no, cline_offset_bits, tag, v, d, s
+// c_lineno, c_offset_bits, c_tag, c_v, c_d, c_s
 generate
   for (genvar way = 0; way < `WAYS; way += 1) begin
     parameter [1:0] w = way;
-    assign cline_no[w] = ({2'b0, mem_blkno} << 2) | (mem_offset_bytes >> 2);
-    assign cline_offset_bits[w] = mem_offset_bits[6:0];
-    assign tag[w]   = cache_info[w][mem_blkno][20:0];
-    assign v[w]     = cache_info[w][mem_blkno][21];
-    assign d[w]     = cache_info[w][mem_blkno][22];
-    assign s[w]     = cache_info[w][mem_blkno][24:23];
+    assign c_blkno[w] = mem_blkno;
+    assign c_lineno[w] = ({2'b0, mem_blkno} << 2) | (mem_offset_bytes >> 2);
+    assign c_offset_bits[w] = mem_offset_bits[6:0];
+    assign c_tag[w]   = cache_info[w][mem_blkno][20:0];
+    assign c_v[w]     = cache_info[w][mem_blkno][21];
+    assign c_d[w]     = cache_info[w][mem_blkno][22];
+    assign c_s[w]     = cache_info[w][mem_blkno][24:23];
   end
 endgenerate
 
 
-// =============== 命中判定 ===============
+// =============== cache选中 ===============
 
 wire                          hit[`BUS_WAYS];     // 各路是否命中
 wire                          hit_any;            // 是否有任意一路命中？
@@ -186,14 +189,14 @@ generate
   for (genvar way = 0; way < `WAYS; way += 1) begin
     parameter [1:0] w = way;
     for (genvar r = 0; r < `ROWS; r += 1) begin
-      assign hit[w] = v[w] && (tag[w] == mem_tag);
+      assign hit[w] = c_v[w] && (c_tag[w] == mem_tag);
     end
   end
 endgenerate
 
 assign hit_any = hit[0] | hit[1] | hit[2] | hit[3];
 assign wayID_hit = (hit[1] ? 1 : 0) | (hit[2] ? 2 : 0) | (hit[3] ? 3 : 0);
-assign wayID_smax = (s[1] == 3 ? 1 : 0) | (s[2] == 3 ? 2 : 0) | (s[3] == 3 ? 3 : 0);
+assign wayID_smax = (c_s[1] == 3 ? 1 : 0) | (c_s[2] == 3 ? 2 : 0) | (c_s[3] == 3 ? 3 : 0);
 assign wayID_select = hit_any ? wayID_hit : wayID_smax;
 
 
@@ -233,7 +236,7 @@ generate
   end
 endgenerate
 
-wire [5:0] s5 = cline_no[3] | {4'd0, ram_op_cnt[1:0]};
+wire [5:0] s5 = c_lineno[3] | {4'd0, ram_op_cnt[1:0]};
 
 // =============== 读写数据 ===============
 
@@ -275,7 +278,7 @@ always @(*) begin
       // `SIZE_B:    rdata_out = {56'd0, rdata_unit[7:0]};
       // `SIZE_H:    rdata_out = {48'd0, rdata_unit[15:0]};
       // `SIZE_W:    rdata_out = {32'd0, rdata_unit[31:0]};
-      `SIZE_D:    rdata_out = rdata_unit[cline_offset_bits[wayID_select]+:64];
+      `SIZE_D:    rdata_out = rdata_unit[c_offset_bits[wayID_select]+:64];
       default:    rdata_out = 0;
     endcase
   end
@@ -329,7 +332,7 @@ always @(posedge clk) begin
             if (i_cache_req) begin
               if (hit_any)            state <= STATE_READY;
               else begin
-                if (d[wayID_select])  state <= STATE_STORE_FROM_RAM;
+                if (c_d[wayID_select])  state <= STATE_STORE_FROM_RAM;
                 else                  state <= STATE_LOAD_FROM_BUS;
               end
             end
@@ -424,7 +427,7 @@ always @(posedge clk) begin
       STATE_LOAD_FROM_BUS: begin
         // 发送内部读请求
         o_cache_rw_req <= 1;
-        o_cache_rw_addr <= addr_no_offset;
+        o_cache_rw_addr <= addr_blk_aligned_bytes;
         o_cache_rw_op <= `REQ_READ;
         ram_op_cnt <= 0;
         // cache更新
@@ -436,7 +439,7 @@ always @(posedge clk) begin
           // cache_data[data_idx1_hit] <= i_cache_rw_rdata[128+:128];
           // cache_data[data_idx0_hit] <= i_cache_rw_rdata[  0+:128];
           // // cache更新记录
-          // cache_info[mem_blkno][info_tag_offset+:21]  <= mem_tag; // tag
+          // cache_info[mem_blkno][info_tag_offset+:21]  <= mem_tag; // c_tag
           // cache_info[mem_blkno][info_v_offset]        <= 1;       // 有效位
           // cache_info[mem_blkno][info_d_offset]        <= 0;       // 脏位
           // cache_info[mem_blkno][23] <= cache_info[mem_blkno][55]; // sequence 翻转
@@ -449,13 +452,13 @@ always @(posedge clk) begin
         // cachedata_wdata[hit_wayID][127:64] <= 64'h00112233_44556677 << ram_op_cnt;
         if (!hs_ram) begin
           cachedata_wen[wayID_select] <= 0;
-          cachedata_addr[wayID_select] <= cline_no[wayID_select] | {3'd0, ram_op_cnt};
+          cachedata_addr[wayID_select] <= c_lineno[wayID_select] | {3'd0, ram_op_cnt};
           cachedata_wdata[wayID_select] <= i_cache_rw_rdata[ram_op_offset_bits+:128];// (ram_op_cnt) << 7 +:128];
           ram_op_cnt <= ram_op_cnt + 1;
         end
         else begin
           cachedata_wen[wayID_select] <= 1;
-          cachedata_addr[wayID_select] <= cline_no[wayID_select];
+          cachedata_addr[wayID_select] <= c_lineno[wayID_select];
           ram_op_cnt <= 0;
         end
       end
@@ -466,13 +469,13 @@ always @(posedge clk) begin
       STATE_STORE_TO_BUS: begin
         // 发送内部写请求
         o_cache_rw_req <= 1;
-        o_cache_rw_addr <= addr_no_offset;
+        o_cache_rw_addr <= addr_blk_aligned_bytes;
         o_cache_rw_op <= `REQ_WRITE;
         // o_cache_rw_wdata  <= rdata_blk;
         // // cache更新
         // if (hs_cache_rw) begin
         //   // cache更新记录
-        //   cache_info[mem_blkno][info_tag_offset+:21]  <= 0;       // tag
+        //   cache_info[mem_blkno][info_tag_offset+:21]  <= 0;       // c_tag
         //   cache_info[mem_blkno][info_v_offset]        <= 0;       // 有效位
         //   cache_info[mem_blkno][info_d_offset]        <= 0;       // 脏位
         // end
