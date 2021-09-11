@@ -41,12 +41,12 @@
         共4路                            -- 2bit
         每路又分16行                      -- 4bit
         每行25bit，从高位到低位，2bit顺序，1bit脏位，1bit有效位，21bit主存标记
-      4. 跨页访问
-        可能产生的跨页，需要处理第二块cache区域
-        1. byte访问不会产生跨页
-        2. half访问，可能产生1字节的跨页
-        3. word访问，可能产生1~3字节的跨页
-        4. dword访问，可能产生1~7字节的跨页
+      4. 跨行、跨页访问
+        可能产生跨行、跨页，使用更高层的调用方式，产生两次cache调用。
+        1>. byte访问不会产生跨页
+        2>. half访问，可能产生1字节的跨页
+        3>. word访问，可能产生1~3字节的跨页
+        4>. dword访问，可能产生1~7字节的跨页
 */
 
 `include "defines.v"
@@ -206,18 +206,20 @@ reg                           cachedata_cen[`BUS_WAYS];               // RAM 使
 reg                           cachedata_wen[`BUS_WAYS];               // RAM 写使能，低电平有效
 reg   [5  : 0]                cachedata_addr[`BUS_WAYS];              // RAM 地址
 reg   [127: 0]                cachedata_wdata[`BUS_WAYS];             // RAM 写入数据
+reg   [127: 0]                cachedata_wmask[`BUS_WAYS];             // RAM 写入掩码
 wire  [127: 0]                cachedata_rdata[`BUS_WAYS];             // RAM 读出数据
 
 // RAM instantiate
 generate
   for (genvar way = 0; way < `WAYS; way += 1) begin: gen_cache_data
     parameter [1:0] w = way;
-    S011HD1P_X32Y2D128  cache_data(
+    S011HD1P_X32Y2D128_BW  cache_data(
       .CLK                        (clk                  ),
       .CEN                        (cachedata_cen[w]     ),
       .WEN                        (cachedata_wen[w]     ),
       .A                          (cachedata_addr[w]    ),
       .D                          (cachedata_wdata[w]   ),
+      .BWEN                       (cachedata_wmask[w]   ),
       .Q                          (cachedata_rdata[w]   )
     );
   end
@@ -420,7 +422,16 @@ always @(posedge clk) begin
           // 写入RAM
           if (!hs_ramline) begin
             cachedata_addr[wayID_select] <= c_lineno[wayID_select];
-            // cachedata_wdata
+            
+            // case (i_cache_size)
+            //   // `SIZE_B:    rdata_out = {56'd0, rdata_line[7:0]};
+            //   // `SIZE_H:    rdata_out = {48'd0, rdata_line[15:0]};
+            //   // `SIZE_W:    rdata_out = {32'd0, rdata_line[31:0]};
+            //   `SIZE_D:    rdata_out = rdata_line[c_offset_bits[wayID_select]+:64];
+            //   default:    rdata_out = 0;
+            // endcase
+            // // cachedata_wdata
+            // cachedata_wmask[wayID_select] <= ~1;
             // rdata_line <= cachedata_rdata[wayID_select];
             ram_op_cnt <= ram_op_cnt + 1;
           end
@@ -476,6 +487,7 @@ always @(posedge clk) begin
           cachedata_wen[wayID_select] <= 0;
           cachedata_addr[wayID_select] <= c_lineno[wayID_select] | {3'd0, ram_op_cnt};
           cachedata_wdata[wayID_select] <= i_cache_rw_rdata[ram_op_offset_bits+:128];// (ram_op_cnt) << 7 +:128];
+          cachedata_wmask[wayID_select] <= ~1;
           ram_op_cnt <= ram_op_cnt + 1;
         end
         else begin
