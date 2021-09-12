@@ -54,8 +54,8 @@ always @(posedge clk) begin
   if (rst) begin
     cnt <= 0;
     o_cache_req     <= 0;
-    o_cache_bytes   <= 3;// 7;
-    o_cache_addr    <= 64'h8000_0000;// 64'h8000_0400;// `PC_START;
+    o_cache_bytes   <= 7;
+    o_cache_addr    <= 64'h8000_003D;// 64'h8000_0400;// `PC_START;
     o_cache_op      <= `REQ_WRITE;// `REQ_READ;// `REQ_WRITE;
     reg_rand_idx    <= 0;
   end
@@ -93,16 +93,16 @@ always @(posedge clk) begin
   end
 end
 
-cache Cache(
+cache_top Cache_top(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
-	.i_cache_addr               (o_cache_addr               ),
-	.i_cache_wdata              (o_cache_wdata              ),
-	.i_cache_bytes              (o_cache_bytes              ),
-	.i_cache_op                 (o_cache_op                 ),
-	.i_cache_req                (o_cache_req                ),
-	.o_cache_rdata              (i_cache_rdata              ),
-	.o_cache_ack                (i_cache_ack                ),
+	.i_cache_top_addr           (o_cache_addr               ),
+	.i_cache_top_wdata          (o_cache_wdata              ),
+	.i_cache_top_bytes          (o_cache_bytes              ),
+	.i_cache_top_op             (o_cache_op                 ),
+	.i_cache_top_req            (o_cache_req                ),
+	.o_cache_top_rdata          (i_cache_rdata              ),
+	.o_cache_top_ack            (i_cache_ack                ),
 
   .i_cache_rw_axi_ready       (i_cache_rw_axi_ready       ),
   .i_cache_rw_axi_rdata       (i_cache_rw_axi_rdata       ),
