@@ -23,6 +23,7 @@ module cache_test(
 reg   [63 : 0]                o_cache_addr;        // 存储器地址（字节为单位），64字节对齐，低6位为0。
 reg   [63 : 0]                o_cache_wdata;       // 要写入的数据
 reg   [1  : 0]                o_cache_size;        // 数据大小
+reg   [2  : 0]                o_cache_bytes;       // 字节数
 reg                           o_cache_op;          // 操作类型：0读取，1写入
 reg                           o_cache_req;         // 请求
 wire  [63 : 0]                i_cache_rdata;       // 已读出的数据
@@ -55,8 +56,9 @@ always @(posedge clk) begin
     cnt <= 0;
     o_cache_req     <= 0;
     o_cache_size    <= `SIZE_D;
+    o_cache_bytes   <= 7;
     o_cache_addr    <= 64'h8000_0000;// 64'h8000_0400;// `PC_START;
-    o_cache_op      <= `REQ_WRITE;// `REQ_READ;// `REQ_WRITE;
+    o_cache_op      <= `REQ_READ;// `REQ_READ;// `REQ_WRITE;
     reg_rand_idx    <= 0;
   end
   else begin
@@ -70,11 +72,15 @@ always @(posedge clk) begin
     else if (hs_read) begin
       o_cache_req      <= 0;
       cnt              <= 0;
-      // o_cache_op       <= `REQ_WRITE;
-      // reg_rand_idx     <= reg_rand_idx + 1;              // 数据偏移
+
+      if (o_cache_addr >= 64'h8000_0200) begin
+        //o_cache_op       <= `REQ_WRITE;
+      end
+
+      reg_rand_idx     <= reg_rand_idx + 1;              // 数据偏移
       o_cache_addr     <= o_cache_addr + 64'h8;    // 地址偏移
 
-      if (o_cache_addr >= 64'h8000_03FF) begin
+      if (o_cache_addr >= 64'h8000_00F8) begin
         o_cache_addr <= 64'h8000_0000;
       end
     end
@@ -94,7 +100,8 @@ cache Cache(
   .rst                        (rst                        ),
 	.i_cache_addr               (o_cache_addr               ),
 	.i_cache_wdata              (o_cache_wdata              ),
-	.i_cache_size               (o_cache_size               ),
+	// .i_cache_size               (o_cache_size               ),
+	.i_cache_bytes              (o_cache_bytes              ),
 	.i_cache_op                 (o_cache_op                 ),
 	.i_cache_req                (o_cache_req                ),
 	.o_cache_rdata              (i_cache_rdata              ),

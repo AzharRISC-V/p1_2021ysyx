@@ -10,8 +10,8 @@ parameter Add_Width = 6;
 
 output  reg [Bits-1:0]      Q;
 input                   CLK;
-input                   CEN;
-input                   WEN;
+input                   CEN;        // 低电平有效
+input                   WEN;        // 低电平有效
 input   [Add_Width-1:0] A;
 input   [Bits-1:0]      D;
 

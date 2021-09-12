@@ -11,9 +11,9 @@ parameter Wen_Width = 128;
 
 output reg [Bits-1:0] Q;
 input                 CLK;
-input                 CEN;
-input                 WEN;
-input [Wen_Width-1:0] BWEN;
+input                 CEN;        // 低电平有效
+input                 WEN;        // 低电平有效
+input [Wen_Width-1:0] BWEN;       // 低电平有效
 input [Add_Width-1:0] A;
 input [Bits-1:0]      D;
 
