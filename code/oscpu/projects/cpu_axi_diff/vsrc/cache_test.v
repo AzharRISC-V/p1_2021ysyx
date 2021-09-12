@@ -54,9 +54,9 @@ always @(posedge clk) begin
   if (rst) begin
     cnt <= 0;
     o_cache_req     <= 0;
-    o_cache_bytes   <= 7;
+    o_cache_bytes   <= 3;
     o_cache_addr    <= 64'h8000_0000;//3D;// 64'h8000_0400;// `PC_START;
-    o_cache_op      <= `REQ_READ;// `REQ_READ;// `REQ_WRITE;
+    o_cache_op      <= `REQ_WRITE;// `REQ_READ;// `REQ_WRITE;
     reg_rand_idx    <= 0;
   end
   else begin
@@ -65,6 +65,7 @@ always @(posedge clk) begin
       o_cache_req      <= 0;
       cnt              <= 0;
       o_cache_op       <= `REQ_READ;
+      o_cache_bytes <= 7;
     end
     // 读取完毕
     else if (hs_read) begin
@@ -82,7 +83,8 @@ always @(posedge clk) begin
         " ", i_cache_rdata[56+:8]);
 
       // if (o_cache_addr >= 64'h8000_0200) begin
-        // o_cache_op       <= `REQ_WRITE;
+        o_cache_bytes <= 3;
+        o_cache_op       <= `REQ_WRITE;
       // end
 
       reg_rand_idx     <= reg_rand_idx + 1;              // 数据偏移
