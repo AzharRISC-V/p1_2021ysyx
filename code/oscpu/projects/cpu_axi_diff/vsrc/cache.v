@@ -113,7 +113,7 @@ cache_rw Cache_rw(
 // =============== 物理地址解码 ===============
 
 wire  [63: 0]                 user_blk_aligned_bytes;     // 用户地址的按块对齐地址(按字节)（64字节对齐，低6位为0）
-reg   [63: 0]                 user_wmask;                 // 用户数据的写入掩码，由bytes决定
+reg   [63: 0]                 user_wmask;                 // 用户数据的写入掩码，由bytes决定，电平与底层RAM模型保持一致
 wire  [63: 0]                 mem_addr;                   // mem相对地址，减去0x8000_0000
 wire  [3 : 0]                 mem_blkno;                  // mem块号，0~15
 wire  [5 : 0]                 mem_offset_bytes;           // mem块内偏移(按字节)，0~63
@@ -124,14 +124,14 @@ assign user_blk_aligned_bytes = {33'd0, i_cache_addr[30:6], 6'd0};
 
 always @(*) begin
   case (i_cache_bytes)
-    0:    user_wmask = 64'hFF;
-    1:    user_wmask = 64'hFFFF;
-    2:    user_wmask = 64'hFFFF_FF;
-    3:    user_wmask = 64'hFFFF_FFFF;
-    4:    user_wmask = 64'hFFFF_FFFF_FF;
-    5:    user_wmask = 64'hFFFF_FFFF_FFFF;
-    6:    user_wmask = 64'hFFFF_FFFF_FFFF_FF;
-    7:    user_wmask = 64'hFFFF_FFFF_FFFF_FFFF;
+    0:    user_wmask = {{56{!CHIP_DATA_WMASK_EN}}, { 8{CHIP_DATA_WMASK_EN}}};// 64'hFF;
+    1:    user_wmask = {{48{!CHIP_DATA_WMASK_EN}}, {16{CHIP_DATA_WMASK_EN}}};// 64'hFFFF;
+    2:    user_wmask = {{40{!CHIP_DATA_WMASK_EN}}, {24{CHIP_DATA_WMASK_EN}}};// 64'hFFFF_FF;
+    3:    user_wmask = {{32{!CHIP_DATA_WMASK_EN}}, {32{CHIP_DATA_WMASK_EN}}};// 64'hFFFF_FFFF;
+    4:    user_wmask = {{24{!CHIP_DATA_WMASK_EN}}, {40{CHIP_DATA_WMASK_EN}}};// 64'hFFFF_FFFF_FF;
+    5:    user_wmask = {{16{!CHIP_DATA_WMASK_EN}}, {48{CHIP_DATA_WMASK_EN}}};// 64'hFFFF_FFFF_FFFF;
+    6:    user_wmask = {{ 8{!CHIP_DATA_WMASK_EN}}, {56{CHIP_DATA_WMASK_EN}}};// 64'hFFFF_FFFF_FFFF_FF;
+    7:    user_wmask = {{ 0{!CHIP_DATA_WMASK_EN}}, {64{CHIP_DATA_WMASK_EN}}};// 64'hFFFF_FFFF_FFFF_FFFF;
     default: user_wmask = 0;
   endcase
 end
@@ -161,9 +161,8 @@ assign c_blkno = mem_blkno;
 assign c_lineno = mem_addr[9:4];
 assign c_offset_bytes = mem_offset_bits[6:3]; 
 assign c_offset_bits = mem_offset_bits[6:0];
-assign c_wmask = {64'd0, user_wmask} << c_offset_bits;
+assign c_wmask = {{64{!CHIP_DATA_WMASK_EN}}, user_wmask} << c_offset_bits;
 assign c_wdata = {64'd0, i_cache_wdata} << c_offset_bits;
-
 
 wire  [4 : 0]                 c_v_pos;                            // cache的v位置(0~24)
 wire  [4 : 0]                 c_d_pos;                            // cache的d位置(0~24)
@@ -193,8 +192,6 @@ generate
     end
   end
 endgenerate
-
-
 
 // c_tag, c_v, c_d, c_s
 generate
@@ -276,69 +273,7 @@ generate
 endgenerate
 
 
-// =============== 读写数据 ===============
-
-wire  [5 : 0]       w0_addr;          // 数据所在的索引（ 0~15字节）
-
-// wire  [6 : 0]     data_idx0;          // 数据所在的索引（ 0~15字节）
-// wire  [6 : 0]     data_idx1;          // 数据所在的索引（16~31字节）
-// wire  [6 : 0]     data_idx2;          // 数据所在的索引（32~47字节）
-// wire  [6 : 0]     data_idx3;          // 数据所在的索引（48~63字节）
-// wire  [511: 0]    rdata_blk;              // 读取的数据块内容
-// wire  [8 : 0]       rdata_unit_start_bit;   // 读取的数据单元的起始位(0~127)
-reg   [127: 0]      rdata_line;             // 读取一行数据
-reg   [63: 0]       rdata_out;              // 输出的数据   
-
-
-
-// cache_data解码     
-
-// assign data_idx0  = {3'd0, mem_blkno} << 3 | 7'd0;
-// assign data_idx1  = {3'd0, mem_blkno} << 3 | 7'd1;
-// assign data_idx2  = {3'd0, mem_blkno} << 3 | 7'd2;
-// assign data_idx3  = {3'd0, mem_blkno} << 3 | 7'd3;
-// assign rdata_blk = {
-//   chip_data[data_idx3],
-//   chip_data[data_idx2],
-//   chip_data[data_idx1],
-//   chip_data[data_idx0]
-// };
-// assign rdata_unit_start_bit = {mem_offset, 3'b0};
-assign rdata_line = chip_data_rdata[wayID_select];
-assign rdata_out = rdata_line[c_offset_bits +:64] & user_wmask;
-
-// // 返回用户数据
-// always @(*) begin
-//   if (rst) begin
-//     rdata_out = 0;
-//   end
-//   else begin
-//     case (i_cache_bytes)
-//       // `SIZE_B:    rdata_out = {56'd0, rdata_line[7:0]};
-//       // `SIZE_H:    rdata_out = {48'd0, rdata_line[15:0]};
-//       // `SIZE_W:    rdata_out = {32'd0, rdata_line[31:0]};
-//       `SIZE_D:    rdata_out = rdata_line[c_offset_bits[wayID_select]+:64];
-//       default:    rdata_out = 0;
-//     endcase
-//   end
-// end
-
-// 测试数据
-always @(posedge clk) begin
-  if (rst) begin
-    //$readmemh("cache_test1.txt", chip_data);
-  end
-end
-// 观察点
-// wire [127:0] data_preview[0:15];
-// generate
-//   for (genvar i = 0; i < 16; i += 1) begin
-//     assign data_preview[i] = chip_data[i];    
-//   end
-// endgenerate
-
-
-// 状态机
+// =============== 状态机 ===============
 //  英文名称          中文名称             含义
 //  IDLE            空闲                 无活动。有用户请求则进入 READY / STORE_FROM_RAM / LOAD_FROM_BUS 这三种情况
 //  READY           就绪                  命中，则直接读写。读写完毕回到IDLE。
@@ -413,20 +348,26 @@ always @(posedge clk) begin
     end
 end
 
-reg   [2:0]   ram_op_cnt;           // RAM操作计数器(0~3表示1~4次)
-wire  [8:0]   ram_op_offset_bits;   // RAM操作的偏移位数
-wire          hs_cache;             // cache操作 握手
-wire          hs_cache_rw;          // cache_rw操作 握手
-wire          hs_ram;               // ram操作 握手（完成4行读写）
-wire          hs_ramline;           // ram操作 握手（完成指定1行读写）
+
+// =============== 处理用户请求 ===============
+
+reg   [2:0]         ram_op_cnt;           // RAM操作计数器(0~3表示1~4次)
+wire  [8:0]         ram_op_offset_bits;   // RAM操作的偏移位数
+wire                hs_cache;             // cache操作 握手
+wire                hs_cache_rw;          // cache_rw操作 握手
+wire                hs_ram;               // ram操作 握手（完成4行读写）
+wire                hs_ramline;           // ram操作 握手（完成指定1行读写）
+reg   [127: 0]      rdata_line;             // 读取一行数据
+reg   [63: 0]       rdata_out;              // 输出的数据   
 
 assign ram_op_offset_bits = {7'd0, ram_op_cnt[1:0]} << 7;
 assign hs_cache = i_cache_req & o_cache_ack;
 assign hs_cache_rw = o_cache_rw_req & i_cache_rw_ack;
 assign hs_ram = ram_op_cnt == 3'd4;
 assign hs_ramline = ram_op_cnt == 3'd3;
+assign rdata_line = chip_data_rdata[wayID_select];
+assign rdata_out = rdata_line[c_offset_bits +:64] & ~user_wmask;  // 注意掩码的电平是否要取反
 
-// 处理用户请求
 always @(posedge clk) begin
   if (rst) begin
     o_cache_ack <= 0;
@@ -444,11 +385,9 @@ always @(posedge clk) begin
             if (!hs_ramline) begin
               chip_data_cen[wayID_select] <= CHIP_DATA_CEN;
               chip_data_addr[wayID_select] <= c_lineno;
-              // rdata_line <= chip_data_rdata[wayID_select];
               ram_op_cnt <= ram_op_cnt + 1;
             end
             else begin
-              // ram_op_cnt <= 0;
               chip_data_cen[wayID_select] <= !CHIP_DATA_CEN;
               o_cache_rdata <= rdata_out;
               o_cache_ack <= 1;
@@ -467,7 +406,6 @@ always @(posedge clk) begin
             else begin
               chip_data_cen[wayID_select] <= !CHIP_DATA_CEN;
               chip_data_wen[wayID_select] <= !CHIP_DATA_WEN;
-              // ram_op_cnt <= 0;
               o_cache_ack <= 1;
             end
             // cache更新数据
@@ -496,23 +434,8 @@ always @(posedge clk) begin
         o_cache_rw_req <= 1;
         o_cache_rw_addr <= user_blk_aligned_bytes;
         o_cache_rw_op <= `REQ_READ;
-        ram_op_cnt <= 0;
-        // cache更新
         if (hs_cache_rw) begin
           o_cache_rw_req <= 0;
-          c_batch_lineno_step <= 0;   // 行号步进值清零
-          // cache更新数据
-          // cache_wdata
-          // chip_data[data_idx3_hit] <= i_cache_rw_rdata[384+:128];
-          // chip_data[data_idx2_hit] <= i_cache_rw_rdata[256+:128];
-          // chip_data[data_idx1_hit] <= i_cache_rw_rdata[128+:128];
-          // chip_data[data_idx0_hit] <= i_cache_rw_rdata[  0+:128];
-          // // cache更新记录
-          // cache_info[mem_blkno][info_tag_offset+:21]  <= mem_tag; // c_tag
-          // cache_info[mem_blkno][info_v_offset]        <= 1;       // 有效位
-          // cache_info[mem_blkno][info_d_offset]        <= 0;       // 脏位
-          // cache_info[mem_blkno][23] <= cache_info[mem_blkno][55]; // sequence 翻转
-          // cache_info[mem_blkno][55] <= cache_info[mem_blkno][23];
         end
       end
 
@@ -521,12 +444,13 @@ always @(posedge clk) begin
         if (!hs_ram) begin
           ram_op_cnt <= ram_op_cnt + 1;
           c_batch_lineno_step <= c_batch_lineno_step + 1;     // 行号步进值递增
+          // 写入cache数据一行
           chip_data_cen[wayID_select] <= CHIP_DATA_CEN;
           chip_data_wen[wayID_select] <= CHIP_DATA_WEN;
           chip_data_addr[wayID_select] <= c_batch_lineno_cur;
           chip_data_wdata[wayID_select] <= i_cache_rw_rdata[{{7'd0,c_batch_lineno_step} << 7}+:128];   // 128的倍数
           chip_data_wmask[wayID_select] <= {128{CHIP_DATA_WMASK_EN}};
-          // 更新cache记录的 tag,v,d 位
+          // 更新cache记录一行的 tag,v,d 位
           cache_info[wayID_select][c_batch_lineno_cur][c_tag_pos+:21]  <= mem_tag; // c_tag
           cache_info[wayID_select][c_batch_lineno_cur][c_v_pos]        <= 1;       // 有效位
           cache_info[wayID_select][c_batch_lineno_cur][c_d_pos]        <= 0;       // 脏位
@@ -535,7 +459,7 @@ always @(posedge clk) begin
           ram_op_cnt <= 0;
           chip_data_cen[wayID_select] <= !CHIP_DATA_CEN;
           chip_data_wen[wayID_select] <= !CHIP_DATA_WEN;
-          // 更新cache记录的 s 位
+          // 更新cache记录四行的 s 位
           cache_info[0][c_batch_lineno_start | 0][c_s_pos+:2] <= cache_info[0][c_batch_lineno_start | 0][c_s_pos+:2] + 1;
           cache_info[1][c_batch_lineno_start | 1][c_s_pos+:2] <= cache_info[1][c_batch_lineno_start | 1][c_s_pos+:2] + 1;
           cache_info[2][c_batch_lineno_start | 2][c_s_pos+:2] <= cache_info[2][c_batch_lineno_start | 2][c_s_pos+:2] + 1;
@@ -566,6 +490,7 @@ always @(posedge clk) begin
   end
 end
 
+// =============== 临时观察点 ===============
 wire [127:0] s1 = i_cache_rw_rdata[0  +:128];
 wire [127:0] s2 = i_cache_rw_rdata[128+:128];
 wire [127:0] s3 = i_cache_rw_rdata[256+:128];
