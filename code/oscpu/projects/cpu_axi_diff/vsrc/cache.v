@@ -61,13 +61,12 @@ module cache (
   input   wire                clk,
   input   wire                rst,
   input   wire  [`BUS_64]     i_cache_addr,               // 地址
-  input   reg   [`BUS_64]     i_cache_wdata,              // 写入的数据
-  // input   reg   [1 : 0]       i_cache_size,               // 操作数大小: 00:byte, 01:half, 10:word, 11:dword
-  input   reg   [2 : 0]       i_cache_bytes,              // 操作的字节数: 0~7表示1~8字节
-	input                       i_cache_op,                 // 操作: 0:read, 1:write
-	input                       i_cache_req,                // 请求
+  input   wire  [`BUS_64]     i_cache_wdata,              // 写入的数据
+  input   wire  [2 : 0]       i_cache_bytes,              // 操作的字节数: 0~7表示1~8字节
+	input   wire                i_cache_op,                 // 操作: 0:read, 1:write
+	input   wire                i_cache_req,                // 请求
   output  reg   [`BUS_64]     o_cache_rdata,              // 读出的数据
-	output                      o_cache_ack,                // 应答
+	output  reg                 o_cache_ack,                // 应答
 
   // cache_rw 接口
   input   wire  [511:0]       i_cache_rw_axi_rdata,

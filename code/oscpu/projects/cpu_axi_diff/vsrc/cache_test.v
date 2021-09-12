@@ -55,8 +55,8 @@ always @(posedge clk) begin
     cnt <= 0;
     o_cache_req     <= 0;
     o_cache_bytes   <= 7;
-    o_cache_addr    <= 64'h8000_003D;// 64'h8000_0400;// `PC_START;
-    o_cache_op      <= `REQ_WRITE;// `REQ_READ;// `REQ_WRITE;
+    o_cache_addr    <= 64'h8000_0000;//3D;// 64'h8000_0400;// `PC_START;
+    o_cache_op      <= `REQ_READ;// `REQ_READ;// `REQ_WRITE;
     reg_rand_idx    <= 0;
   end
   else begin
@@ -71,14 +71,24 @@ always @(posedge clk) begin
       o_cache_req      <= 0;
       cnt              <= 0;
 
+      $displayh("a:", o_cache_addr, ", d:",
+        " ", i_cache_rdata[ 0+:8],
+        " ", i_cache_rdata[ 8+:8],
+        " ", i_cache_rdata[16+:8],
+        " ", i_cache_rdata[24+:8],
+        " ", i_cache_rdata[32+:8],
+        " ", i_cache_rdata[40+:8],
+        " ", i_cache_rdata[48+:8],
+        " ", i_cache_rdata[56+:8]);
+
       // if (o_cache_addr >= 64'h8000_0200) begin
         // o_cache_op       <= `REQ_WRITE;
       // end
 
       reg_rand_idx     <= reg_rand_idx + 1;              // 数据偏移
-      o_cache_addr     <= o_cache_addr + 64'h2;    // 地址偏移
+      o_cache_addr     <= o_cache_addr + 64'h8;    // 地址偏移
 
-      if (o_cache_addr >= 64'h8000_00F8) begin
+      if (o_cache_addr >= 64'h8000_0100) begin
         o_cache_addr <= 64'h8000_0000;
       end
     end
@@ -86,7 +96,7 @@ always @(posedge clk) begin
       // if (!(i_cache_ack | o_cache_req)) begin    // 测试连续请求，也是可以的。
       // 计数1000后发出请求
       cnt <= cnt + 1;
-      if (cnt >= 10) begin
+      if (cnt >= 5) begin
         o_cache_req <= 1;
       end
     end
