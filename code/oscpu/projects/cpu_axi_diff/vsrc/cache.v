@@ -163,20 +163,23 @@ assign c_offset_bits = mem_offset_bits[6:0];
 assign c_wmask = {{64{!CHIP_DATA_WMASK_EN}}, user_wmask} << c_offset_bits;
 assign c_wdata = {64'd0, i_cache_wdata} << c_offset_bits;
 
-wire  [4 : 0]                 c_v_pos;                            // cache的v位置(0~24)
-wire  [4 : 0]                 c_d_pos;                            // cache的d位置(0~24)
-wire  [4 : 0]                 c_s_pos;                            // cache的s位置(0~24)
-wire  [4 : 0]                 c_tag_pos;                          // cache的tag位置(0~24)
+`define c_tag_BUS             20:0          // cache的tag所在的总线 
+`define c_v_BUS               21            // cache的v所在的总线 
+`define c_d_BUS               22            // cache的d所在的总线 
+`define c_s_BUS               24:23         // cache的s所在的总线 
+
+// parameter [4 : 0] c_tag_POS = 0;    // cache的tag起始位置
+// parameter [4 : 0] c_tag_LEN = 21;   // cache的tag长度
+// parameter [4 : 0] c_v_POS = 21;     // cache的v起始位置
+// parameter [4 : 0] c_d_POS = 22;     // cache的d起始位置
+// parameter [4 : 0] c_s_POS = 23;     // cache的s起始位置
+// parameter [4 : 0] c_s_LEN = 2;      // cache的s长度
+
 reg   [24 : 0]                cache_info[`BUS_WAYS][0:63];        // cache信息块（64行）
 wire                          c_v[`BUS_WAYS];                     // cache valid bit 有效位，1位有效
 wire                          c_d[`BUS_WAYS];                     // cache dirty bit 脏位，1为脏
 wire  [1 : 0]                 c_s[`BUS_WAYS];                     // cache seqence bit 顺序位，越大越需要先被替换走
 wire  [20: 0]                 c_tag[`BUS_WAYS];                   // cache标记
-
-assign c_tag_pos = 0;
-assign c_v_pos = 21;
-assign c_d_pos = 22;
-assign c_s_pos = 23;
 
 // cache_info
 generate
@@ -196,10 +199,10 @@ endgenerate
 generate
   for (genvar way = 0; way < `WAYS; way += 1) begin
     parameter [1:0] w = way;
-    assign c_tag[w]   = cache_info[w][c_lineno][20:0];
-    assign c_v[w]     = cache_info[w][c_lineno][21];
-    assign c_d[w]     = cache_info[w][c_lineno][22];
-    assign c_s[w]     = cache_info[w][c_lineno][24:23];
+    assign c_tag[w]   = cache_info[w][c_lineno][`c_tag_BUS];
+    assign c_v[w]     = cache_info[w][c_lineno][`c_v_BUS];
+    assign c_d[w]     = cache_info[w][c_lineno][`c_d_BUS];
+    assign c_s[w]     = cache_info[w][c_lineno][`c_s_BUS];
   end
 endgenerate
 
@@ -407,20 +410,8 @@ always @(posedge clk) begin
               chip_data_wen[wayID_select] <= !CHIP_DATA_WEN;
               o_cache_ack <= 1;
             end
-            // cache更新数据
-            // case (i_cache_size)
-            //   `SIZE_B:    rdata_out = {56'd0, rdata_line[7:0]};
-            //   `SIZE_H:    rdata_out = {48'd0, rdata_line[15:0]};
-            //   `SIZE_W:    rdata_out = {32'd0, rdata_line[31:0]};
-              // `SIZE_D:    rdata_out = rdata_line;
-              // default:    rdata_out = 0;
-            // endcase
-            // chip_data[data_idx3_hit] <= i_cache_rw_rdata[384+:128];
-            // chip_data[data_idx2_hit] <= i_cache_rw_rdata[256+:128];
-            // chip_data[data_idx1_hit] <= i_cache_rw_rdata[128+:128];
-            // chip_data[data_idx0_hit] <= i_cache_rw_rdata[  0+:128];
             // cache更新记录
-            // cache_info[mem_blkno][info_d_offset]  <= 1;
+            cache_info[wayID_select][c_lineno][`c_d_BUS]  <= 1;
           end
         end
         else begin
@@ -450,19 +441,19 @@ always @(posedge clk) begin
           chip_data_wdata[wayID_select] <= i_cache_rw_rdata[{{7'd0,c_batch_lineno_step} << 7}+:128];   // 128的倍数
           chip_data_wmask[wayID_select] <= {128{CHIP_DATA_WMASK_EN}};
           // 更新cache记录一行的 tag,v,d 位
-          cache_info[wayID_select][c_batch_lineno_cur][c_tag_pos+:21]  <= mem_tag; // c_tag
-          cache_info[wayID_select][c_batch_lineno_cur][c_v_pos]        <= 1;       // 有效位
-          cache_info[wayID_select][c_batch_lineno_cur][c_d_pos]        <= 0;       // 脏位
+          cache_info[wayID_select][c_batch_lineno_cur][`c_tag_BUS]      <= mem_tag; // c_tag
+          cache_info[wayID_select][c_batch_lineno_cur][`c_v_BUS]        <= 1;       // 有效位
+          cache_info[wayID_select][c_batch_lineno_cur][`c_d_BUS]        <= 0;       // 脏位
+          // 更新cache记录四行的 s 位，循环移动
+          cache_info[0][c_batch_lineno_cur | 0][`c_s_BUS] <= cache_info[1][c_batch_lineno_start | 0][`c_s_BUS];
+          cache_info[1][c_batch_lineno_cur | 0][`c_s_BUS] <= cache_info[2][c_batch_lineno_start | 0][`c_s_BUS];
+          cache_info[2][c_batch_lineno_cur | 0][`c_s_BUS] <= cache_info[3][c_batch_lineno_start | 0][`c_s_BUS];
+          cache_info[3][c_batch_lineno_cur | 0][`c_s_BUS] <= cache_info[0][c_batch_lineno_start | 0][`c_s_BUS];
         end
         else begin
           ram_op_cnt <= 0;
           chip_data_cen[wayID_select] <= !CHIP_DATA_CEN;
           chip_data_wen[wayID_select] <= !CHIP_DATA_WEN;
-          // 更新cache记录四行的 s 位
-          cache_info[0][c_batch_lineno_start | 0][c_s_pos+:2] <= cache_info[0][c_batch_lineno_start | 0][c_s_pos+:2] + 1;
-          cache_info[1][c_batch_lineno_start | 1][c_s_pos+:2] <= cache_info[1][c_batch_lineno_start | 1][c_s_pos+:2] + 1;
-          cache_info[2][c_batch_lineno_start | 2][c_s_pos+:2] <= cache_info[2][c_batch_lineno_start | 2][c_s_pos+:2] + 1;
-          cache_info[3][c_batch_lineno_start | 3][c_s_pos+:2] <= cache_info[3][c_batch_lineno_start | 3][c_s_pos+:2] + 1;
         end
       end
 

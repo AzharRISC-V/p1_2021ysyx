@@ -93,7 +93,7 @@ assign o_cache_addr = (index == 0) ? addr[0] : addr[1];
 assign o_cache_bytes = (index == 0) ? bytes[0] : bytes[1];
 assign o_cache_wdata = (index == 0) ? wdata[0] : wdata[1];
 
-reg [1:0]   index;      // 操作的序号：0,1表示两个阶段；其余无效
+reg   index;      // 操作的序号：0,1表示两个阶段
 always @(posedge clk) begin
   if (rst) begin
     index <= 0;
@@ -101,7 +101,7 @@ always @(posedge clk) begin
   end
   else begin
     // 发现用户请求
-    if (i_cache_top_req) begin
+    if (i_cache_top_req & !o_cache_top_ack) begin
       // 第一次请求
       if (index == 0) begin
         // 发出请求
@@ -117,7 +117,6 @@ always @(posedge clk) begin
             index <= 1;
           end
           else begin
-            index <= 3;
             o_cache_top_rdata <= i_cache_rdata;
             o_cache_top_ack <= 1;
           end
@@ -135,7 +134,6 @@ always @(posedge clk) begin
           o_cache_top_rdata <= rdata[0] + (i_cache_rdata << ((bytes[0] + 1) << 3));
           o_cache_req <= 0;
           o_cache_top_ack <= 1;
-          index <= 3;
         end
       end
     end
