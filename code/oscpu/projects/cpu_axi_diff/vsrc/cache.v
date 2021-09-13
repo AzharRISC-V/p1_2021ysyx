@@ -53,7 +53,7 @@
 `include "defines.v"
 
 `define WAYS        4         // 路数
-`define ROWS        16        // 行数
+`define ROWS        64        // 行数
 `define BUS_WAYS    0:3       // 各路的总线。4路
 `define BUS_ROWS    0:15      // 各行的总线。16行
 
@@ -445,10 +445,10 @@ always @(posedge clk) begin
           cache_info[wayID_select][c_batch_lineno_cur][`c_v_BUS]        <= 1;       // 有效位
           cache_info[wayID_select][c_batch_lineno_cur][`c_d_BUS]        <= 0;       // 脏位
           // 更新cache记录四行的 s 位，循环移动
-          cache_info[0][c_batch_lineno_cur | 0][`c_s_BUS] <= cache_info[1][c_batch_lineno_start | 0][`c_s_BUS];
-          cache_info[1][c_batch_lineno_cur | 0][`c_s_BUS] <= cache_info[2][c_batch_lineno_start | 0][`c_s_BUS];
-          cache_info[2][c_batch_lineno_cur | 0][`c_s_BUS] <= cache_info[3][c_batch_lineno_start | 0][`c_s_BUS];
-          cache_info[3][c_batch_lineno_cur | 0][`c_s_BUS] <= cache_info[0][c_batch_lineno_start | 0][`c_s_BUS];
+          cache_info[0][c_batch_lineno_cur | 0][`c_s_BUS] <= cache_info[1][c_batch_lineno_cur | 0][`c_s_BUS];
+          cache_info[1][c_batch_lineno_cur | 0][`c_s_BUS] <= cache_info[2][c_batch_lineno_cur | 0][`c_s_BUS];
+          cache_info[2][c_batch_lineno_cur | 0][`c_s_BUS] <= cache_info[3][c_batch_lineno_cur | 0][`c_s_BUS];
+          cache_info[3][c_batch_lineno_cur | 0][`c_s_BUS] <= cache_info[0][c_batch_lineno_cur | 0][`c_s_BUS];
         end
         else begin
           ram_op_cnt <= 0;
