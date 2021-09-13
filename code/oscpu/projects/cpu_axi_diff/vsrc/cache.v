@@ -22,7 +22,7 @@
     [*] bits_mem_tag = 31 - 4 - 6 = 21          -- 主存标记，由主存大小、cache块数、块大小决定
     [*] bits_v = 1 (data valid)                 -- 为1表示有效
     [*] bits_d = 1 (data dirty)                 -- 为1表示脏数据，在替换时需要写入主存
-    [*] bits_s = 2 (sequence)                   -- FIFO策略：初始化各路分别为0,1,2,3；替换时换掉为3的一路；并将顺序加1。
+    [*] bits_s = 2 (sequence)                   -- FIFO策略：初始化各路分别为0,1,2,3；替换时换掉为0的一路；并将顺序循环移动。
     [-] --- CACHE STORAGE，分两块存储，数据与标记。 
     [*] cache_data_bits = 4 * (16 * 512) = 32Kbit = 4KB
     [*] cache_info_bits = 4 * (16 * (2 + 1 + 1 + 21)) = 1600bit = 200B 
@@ -211,7 +211,7 @@ endgenerate
 
 wire                          hit[`BUS_WAYS];     // 各路是否命中
 wire                          hit_any;            // 是否有任意一路命中？
-wire [1:0]                    wayID_smax;         // s最大的是哪一路？
+wire [1:0]                    wayID_smin;         // s最小的是哪一路？
 wire [1:0]                    wayID_hit;          // 已命中的是哪一路（至多有一路命中） 
 wire [1:0]                    wayID_select;       // 选择了哪一路？方法：若命中则就是命中的那一路；否则选择smax所在的那一路
 
@@ -227,8 +227,8 @@ endgenerate
 
 assign hit_any = hit[0] | hit[1] | hit[2] | hit[3];
 assign wayID_hit = (hit[1] ? 1 : 0) | (hit[2] ? 2 : 0) | (hit[3] ? 3 : 0);
-assign wayID_smax = (c_s[1] == 3 ? 1 : 0) | (c_s[2] == 3 ? 2 : 0) | (c_s[3] == 3 ? 3 : 0);
-assign wayID_select = hit_any ? wayID_hit : wayID_smax;
+assign wayID_smin = (c_s[1] == 0 ? 1 : 0) | (c_s[2] == 0 ? 2 : 0) | (c_s[3] == 0 ? 3 : 0);
+assign wayID_select = hit_any ? wayID_hit : wayID_smin;
 
 
 // =============== Cache Data 缓存数据 ===============
@@ -445,10 +445,10 @@ always @(posedge clk) begin
           cache_info[wayID_select][c_batch_lineno_cur][`c_v_BUS]        <= 1;       // 有效位
           cache_info[wayID_select][c_batch_lineno_cur][`c_d_BUS]        <= 0;       // 脏位
           // 更新cache记录四行的 s 位，循环移动
-          cache_info[0][c_batch_lineno_cur | 0][`c_s_BUS] <= cache_info[1][c_batch_lineno_cur | 0][`c_s_BUS];
-          cache_info[1][c_batch_lineno_cur | 0][`c_s_BUS] <= cache_info[2][c_batch_lineno_cur | 0][`c_s_BUS];
-          cache_info[2][c_batch_lineno_cur | 0][`c_s_BUS] <= cache_info[3][c_batch_lineno_cur | 0][`c_s_BUS];
-          cache_info[3][c_batch_lineno_cur | 0][`c_s_BUS] <= cache_info[0][c_batch_lineno_cur | 0][`c_s_BUS];
+          cache_info[3][c_batch_lineno_cur][`c_s_BUS] <= cache_info[2][c_batch_lineno_cur][`c_s_BUS];
+          cache_info[2][c_batch_lineno_cur][`c_s_BUS] <= cache_info[1][c_batch_lineno_cur][`c_s_BUS];
+          cache_info[1][c_batch_lineno_cur][`c_s_BUS] <= cache_info[0][c_batch_lineno_cur][`c_s_BUS];
+          cache_info[0][c_batch_lineno_cur][`c_s_BUS] <= cache_info[3][c_batch_lineno_cur][`c_s_BUS];
         end
         else begin
           ram_op_cnt <= 0;
