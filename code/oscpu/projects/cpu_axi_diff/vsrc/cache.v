@@ -78,35 +78,6 @@ module cache (
   output  wire  [7:0]         o_cache_rw_axi_blks
 );
 
-// =============== cache_rw 从机端，请求传输数据 ===============
-
-reg                           o_cache_rw_req;             // 请求
-reg   [63 : 0]                o_cache_rw_addr;            // 存储器地址（字节为单位），64字节对齐，低6位为0。
-reg                           o_cache_rw_op;              // 操作类型：0读取，1写入
-reg   [511 : 0]               o_cache_rw_wdata;           // 要写入的数据
-wire  [511 : 0]               i_cache_rw_rdata;           // 已读出的数据
-wire                          i_cache_rw_ack;             // 应答
-
-cache_rw Cache_rw(
-  .clk                        (clk                        ),
-  .rst                        (rst                        ),
-	.i_cache_rw_req             (o_cache_rw_req             ),
-	.i_cache_rw_addr            (o_cache_rw_addr            ),
-	.i_cache_rw_op              (o_cache_rw_op              ),
-	.i_cache_rw_wdata           (o_cache_rw_wdata           ),
-	.o_cache_rw_rdata           (i_cache_rw_rdata           ),
-	.o_cache_rw_ack             (i_cache_rw_ack             ),
-
-  .i_cache_rw_axi_ready       (i_cache_rw_axi_ready       ),
-  .i_cache_rw_axi_rdata       (i_cache_rw_axi_rdata       ),
-  .o_cache_rw_axi_op          (o_cache_rw_axi_op          ),
-  .o_cache_rw_axi_valid       (o_cache_rw_axi_valid       ),
-  .o_cache_rw_axi_wdata       (o_cache_rw_axi_wdata       ),
-  .o_cache_rw_axi_addr        (o_cache_rw_axi_addr        ),
-  .o_cache_rw_axi_size        (o_cache_rw_axi_size        ),
-  .o_cache_rw_axi_blks        (o_cache_rw_axi_blks        )
-);
-
 
 // =============== 物理地址解码 ===============
 
@@ -142,16 +113,11 @@ assign mem_tag = i_cache_addr[26:10];
 // =============== Cache Info 缓存信息 ===============
 
 wire  [5 : 0]                 c_data_lineno;                      // cache数据行号(0~63)
-reg   [1 : 0]                 c_batch_lineno_step;                // cache整块操作的行号步进值（批量更新4行时使用）（0~3）
-wire  [5 : 0]                 c_batch_lineno_start;               // cache整块操作的行号起始值（批量更新4行时使用）(0~63)
-wire  [5 : 0]                 c_batch_lineno_cur;                 // cache整块操作的行号当前值（批量更新4行时使用）(0~63)
 wire  [3 : 0]                 c_offset_bytes;                     // cache行内偏移(按字节)(0~15)
 wire  [6 : 0]                 c_offset_bits;                      // cache行内偏移(按位)(0~127)
 wire  [127:0]                 c_wdata;                            // cache行要写入的数据
 wire  [127:0]                 c_wmask;                            // cache行要写入的掩码
 
-assign c_batch_lineno_start = {{2'd0, mem_blkno} << 2};
-assign c_batch_lineno_cur   = {{2'd0, mem_blkno} << 2} | {4'd0, c_batch_lineno_step};
 assign c_data_lineno = i_cache_addr[9:4];
 assign c_offset_bytes = mem_offset_bits[6:3]; 
 assign c_offset_bits = mem_offset_bits[6:0];
@@ -308,7 +274,7 @@ always @(posedge clk) begin
           end
 
           STATE_STORE_FROM_RAM:     begin
-            if (hs_ram) begin
+            if (hs_ramread) begin
               state <= STATE_STORE_TO_BUS;
             end
           end
@@ -326,7 +292,7 @@ always @(posedge clk) begin
           end
 
           STATE_LOAD_TO_RAM: begin
-            if (hs_ram) begin
+            if (hs_ramwrite) begin
               state <= STATE_READY;
             end
           end
@@ -339,19 +305,22 @@ end
 
 // =============== 处理用户请求 ===============
 
-reg   [2:0]         ram_op_cnt;           // RAM操作计数器(0~3表示1~4次)
-wire  [8:0]         ram_op_offset_bits;   // RAM操作的偏移位数
-wire                hs_cache;             // cache操作 握手
-wire                hs_cache_rw;          // cache_rw操作 握手
-wire                hs_ram;               // ram操作 握手（完成4行读写）
-wire                hs_ramline;           // ram操作 握手（完成指定1行读写）
-reg   [127: 0]      rdata_line;             // 读取一行数据
-reg   [63: 0]       rdata_out;              // 输出的数据   
+reg   [2:0]         ram_op_cnt;                 // RAM操作计数器(0~3表示1~4次，剩余的位数用于大于4的计数)
+wire  [8:0]         ram_op_offset_128;          // RAM操作的128位偏移量（延迟2个时钟周期后输出）
+wire                hs_cache;                   // cache操作 握手
+wire                hs_cache_rw;                // cache_rw操作 握手
+wire                hs_ramwrite;                // ram操作 握手（完成4行写入）
+wire                hs_ramread;                 // ram操作 握手（完成4行读取）
+wire                hs_ramline;                 // ram操作 握手（完成指定1行读写）
+reg   [127: 0]      rdata_line;                 // 读取一行数据
+reg   [63: 0]       rdata_out;                  // 输出的数据
+reg                 ram_rdata_save;             // 是否暂存RAM读出的数据至AXI的写入寄存器
 
-assign ram_op_offset_bits = {7'd0, ram_op_cnt[1:0]} << 7;
+assign ram_op_offset_128 = ({6'd0, ram_op_cnt} - 2) << 7;
 assign hs_cache = i_cache_req & o_cache_ack;
 assign hs_cache_rw = o_cache_rw_req & i_cache_rw_ack;
-assign hs_ram = ram_op_cnt == 3'd4;
+assign hs_ramwrite = ram_op_cnt == 3'd4;
+assign hs_ramread = ram_op_cnt == 3'd6;
 assign hs_ramline = ram_op_cnt == 3'd3;
 assign rdata_line = chip_data_rdata[wayID_select];
 assign rdata_out = rdata_line[c_offset_bits +:64] & user_wmask;
@@ -417,14 +386,13 @@ always @(posedge clk) begin
 
       STATE_LOAD_TO_RAM: begin
         // 写入RAM一个块
-        if (!hs_ram) begin
+        if (!hs_ramwrite) begin
           ram_op_cnt <= ram_op_cnt + 1;
-          c_batch_lineno_step <= c_batch_lineno_step + 1;     // 行号步进值递增
           // 写入cache数据一行
           chip_data_cen[wayID_select] <= CHIP_DATA_CEN;
           chip_data_wen[wayID_select] <= CHIP_DATA_WEN;
-          chip_data_addr[wayID_select] <= c_batch_lineno_cur;
-          chip_data_wdata[wayID_select] <= i_cache_rw_rdata[{{7'd0,c_batch_lineno_step} << 7}+:128];   // 128的倍数
+          chip_data_addr[wayID_select] <= {{2'd0, mem_blkno} << 2} | {4'd0, ram_op_cnt[1:0]};
+          chip_data_wdata[wayID_select] <= i_cache_rw_rdata[{{7'd0,ram_op_cnt[1:0]} << 7}+:128];   // 128的倍数
           chip_data_wmask[wayID_select] <= {128{CHIP_DATA_WMASK_EN}};
         end
         else begin
@@ -445,19 +413,23 @@ always @(posedge clk) begin
 
       STATE_STORE_FROM_RAM: begin
         // 读取RAM一个块
-        if (!hs_ram) begin
+        if (!hs_ramread) begin
           ram_op_cnt <= ram_op_cnt + 1;
-          c_batch_lineno_step <= c_batch_lineno_step + 1;     // 行号步进值递增
-          // 读取cache数据一行
-          chip_data_cen[wayID_select] <= CHIP_DATA_CEN;
-          chip_data_addr[wayID_select] <= c_batch_lineno_cur;
-          // i_cache_rw_rdata[{{7'd0,c_batch_lineno_step} << 7}+:128] <= chip_data_wdata[wayID_select];   // 128的倍数
-          // 更新cache记录一行的 d 位。注意：这里简化了逻辑，应当是写入主存后再更新d位，但现在默认后续写入主存是一定会成功的。
-          cache_info[wayID_select][mem_blkno][`c_d_BUS]        <= 0;       // 脏位
+          // RAM控制信号在前4个周期有效
+          if (ram_op_cnt <= 3) begin
+            chip_data_cen[wayID_select] <= CHIP_DATA_CEN;
+            chip_data_addr[wayID_select] <= {{2'd0, mem_blkno} << 2} | {4'd0, ram_op_cnt[1:0]};
+          end
+          // 延迟2个周期后保存RAM读出的数据
+          if (ram_op_cnt >= 2) begin
+            o_cache_rw_wdata[ram_op_offset_128+:128] <= chip_data_rdata[wayID_select];   // 128的倍数
+          end
         end
         else begin
           ram_op_cnt <= 0;
           chip_data_cen[wayID_select] <= !CHIP_DATA_CEN;
+          // 更新cache记录一行的 d 位。
+          cache_info[wayID_select][mem_blkno][`c_d_BUS]        <= 0;       // 脏位
         end
       end
 
@@ -466,9 +438,9 @@ always @(posedge clk) begin
         o_cache_rw_req <= 1;
         o_cache_rw_addr <= {32'd0, 1'b1, 4'b0, c_tag[wayID_select], 10'd0 };
         o_cache_rw_op <= `REQ_WRITE;
-        // o_cache_rw_wdata  <= rdata_blk;
 
         if (hs_cache_rw) begin
+          o_cache_rw_wdata <= 0;
           o_cache_rw_req <= 0;
         end
       end
@@ -478,11 +450,34 @@ always @(posedge clk) begin
   end
 end
 
-// =============== 临时观察点 ===============
-wire [127:0] s1 = i_cache_rw_rdata[0  +:128];
-wire [127:0] s2 = i_cache_rw_rdata[128+:128];
-wire [127:0] s3 = i_cache_rw_rdata[256+:128];
-wire [127:0] s4 = i_cache_rw_rdata[384+:128];
+// =============== cache_rw 从机端，请求传输数据 ===============
+
+reg                           o_cache_rw_req;             // 请求
+reg   [63 : 0]                o_cache_rw_addr;            // 存储器地址（字节为单位），64字节对齐，低6位为0。
+reg                           o_cache_rw_op;              // 操作类型：0读取，1写入
+reg   [511 : 0]               o_cache_rw_wdata;           // 要写入的数据
+wire  [511 : 0]               i_cache_rw_rdata;           // 已读出的数据
+wire                          i_cache_rw_ack;             // 应答
+
+cache_rw Cache_rw(
+  .clk                        (clk                        ),
+  .rst                        (rst                        ),
+	.i_cache_rw_req             (o_cache_rw_req             ),
+	.i_cache_rw_addr            (o_cache_rw_addr            ),
+	.i_cache_rw_op              (o_cache_rw_op              ),
+	.i_cache_rw_wdata           (o_cache_rw_wdata           ),
+	.o_cache_rw_rdata           (i_cache_rw_rdata           ),
+	.o_cache_rw_ack             (i_cache_rw_ack             ),
+
+  .i_cache_rw_axi_ready       (i_cache_rw_axi_ready       ),
+  .i_cache_rw_axi_rdata       (i_cache_rw_axi_rdata       ),
+  .o_cache_rw_axi_op          (o_cache_rw_axi_op          ),
+  .o_cache_rw_axi_valid       (o_cache_rw_axi_valid       ),
+  .o_cache_rw_axi_wdata       (o_cache_rw_axi_wdata       ),
+  .o_cache_rw_axi_addr        (o_cache_rw_axi_addr        ),
+  .o_cache_rw_axi_size        (o_cache_rw_axi_size        ),
+  .o_cache_rw_axi_blks        (o_cache_rw_axi_blks        )
+);
 
 
 endmodule
