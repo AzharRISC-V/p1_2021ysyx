@@ -49,8 +49,6 @@ wire hs = o_cache_req & i_cache_ack;
 wire hs_read  = hs & (o_cache_op == `REQ_READ);
 wire hs_write = hs & (o_cache_op == `REQ_WRITE);
 
-reg f1;
-reg f2;
 // 演示：延时；写入64字节；延时；读取64字节；。。。
 always @(posedge clk) begin
   if (rst) begin
@@ -58,24 +56,29 @@ always @(posedge clk) begin
     o_cache_req     <= 0;
     o_cache_bytes   <= 7;
     o_cache_addr    <= 64'h8000_0000;//3D;// 64'h8000_0400;// `PC_START;
-    o_cache_wdata  <= 64'h01234567_0000_0000 | (o_cache_addr + 64'h0);
-    o_cache_op      <= `REQ_WRITE;// `REQ_READ;// `REQ_WRITE;
+    o_cache_wdata   <= 64'h01234567_0000_0000 | 64'h8000_0000;
+    o_cache_op      <= `REQ_READ;// `REQ_READ;// `REQ_WRITE;
     reg_rand_idx    <= 0;
-    f1 <= 0;
-    f2 <= 0;
   end
   else begin
     // 写入完毕
     if (hs_write) begin
-      o_cache_req      <= 0;
-      cnt              <= 0;
-      o_cache_op       <= `REQ_READ;
+      o_cache_req     <= 0;
+      cnt             <= 0;
+      o_cache_op      <= `REQ_READ;
+      o_cache_addr    <= o_cache_addr + 64'h8;    // 地址偏移
+      o_cache_wdata   <= 64'h01234567_0000_0000 | (o_cache_addr + 64'h8);
+
+      if (o_cache_addr >= 64'h8000_11F8) begin
+        o_cache_addr    <= 64'h8000_0000;
+      end
 
     end
     // 读取完毕
     else if (hs_read) begin
-      o_cache_req      <= 0;
-      cnt              <= 0;
+      o_cache_req     <= 0;
+      cnt             <= 0;
+      o_cache_op      <= `REQ_WRITE;
 
       // $displayh("a:", o_cache_addr, ", d:",
       //   " ", i_cache_rdata[ 0+:8],
@@ -86,25 +89,6 @@ always @(posedge clk) begin
       //   " ", i_cache_rdata[40+:8],
       //   " ", i_cache_rdata[48+:8],
       //   " ", i_cache_rdata[56+:8]);
-
-      if (o_cache_addr < 64'h8000_03F8) begin
-        if (!f1) begin
-          o_cache_wdata    <= 64'h01234567_0000_0000 | (o_cache_addr + 64'h8);
-          o_cache_op       <= `REQ_WRITE;
-        end
-        o_cache_addr     <= o_cache_addr + 64'h8;    // 地址偏移
-      end
-      else begin
-        if (!f2) begin
-          f2 <= 1;
-          o_cache_addr <= 64'h8000_0000;
-        end
-        else begin
-          o_cache_addr     <= o_cache_addr + 64'h8;    // 地址偏移
-        end
-        f1 <= 1;
-      end
-
       reg_rand_idx     <= reg_rand_idx + 1;              // 数据偏移
 
     end

@@ -11,7 +11,7 @@
     [*] block_size = 512bit (64 bytes)          -- 块大小，AXI总线burst最大传输8次*8字节=64字节
     [*] offset index bits = 6 (2^6 = 64)        -- 由块大小决定
     [*] cache bytes max = 4KB * 2               -- ICache/DCache各4KB
-    [*] main memory bytes = 2GB = 2^31          -- 主存地址空间2GB
+    [*] main memory bytes = 128MB = 2^27        -- 主存地址空间0~(128M-1)，將原地址減去0x8000_0000
     [*] raw-memory width = 128bit               -- 后端决定
     [*] raw-memory depth = 64                   -- 后端决定
     [-] --- CACHE CONFIG，4路16组
@@ -19,16 +19,16 @@
     [*] cache blocks per way = 16blocks         -- 8/16/32/...
     [*] cache block index bits = 4 (2^4 = 16)   -- 由块数决定
     [*] cache data bytes = 2 * 16 * 64B = 2KB   -- 由路数、块数、块大小决定
-    [*] bits_mem_tag = 31 - 4 - 6 = 21          -- 主存标记，由主存大小、cache块数、块大小决定
+    [*] bits_mem_tag = 27 - 4 - 6 = 17          -- 主存标记，由主存大小、cache块数、块大小决定
     [*] bits_v = 1 (data valid)                 -- 为1表示有效
     [*] bits_d = 1 (data dirty)                 -- 为1表示脏数据，在替换时需要写入主存
     [*] bits_s = 2 (sequence)                   -- FIFO策略：初始化各路分别为0,1,2,3；替换时换掉为0的一路；并将顺序循环移动。
     [-] --- CACHE STORAGE，分两块存储，数据与标记。 
     [*] cache_data_bits = 4 * (16 * 512) = 32Kbit = 4KB
-    [*] cache_info_bits = 4 * (16 * (2 + 1 + 1 + 21)) = 1600bit = 200B 
+    [*] cache_info_bits = 4 * (16 * (2 + 1 + 1 + 17)) = 1344bit = 168B 
     [*] --- ADDRESS TRANSFORM
-      1. 主存地址 31bit：
-        以字节为单位；共2^31个单元；只保留低31位；低6位是块内偏移；接着4位是块号；接着21位是tag
+      1. 主存地址 27bit：
+        以字节为单位；共2^27个单元；只保留低27位；低6位是块内偏移；接着4位是块号；接着17位是tag
       2. 主存数据 8/16/32/64bit
         可以有多种访问方式
       3. cache_data地址:
@@ -40,7 +40,7 @@
       3. cache_info地址：
         共4路                            -- 2bit
         每路又分16行                      -- 4bit
-        每行25bit，从高位到低位，2bit顺序，1bit脏位，1bit有效位，21bit主存标记
+        每行21bit，从高位到低位，2bit顺序，1bit脏位，1bit有效位，17bit主存标记
       4. 支持不对齐访问，需要处理跨行、跨页访问
         可能产生跨行、跨页，使用更高层的调用方式，产生两次cache调用。
         1>. byte访问不会产生跨页
@@ -53,9 +53,8 @@
 `include "defines.v"
 
 `define WAYS        4         // 路数
-`define ROWS        64        // 行数
+`define BLKS        16        // 块数
 `define BUS_WAYS    0:3       // 各路的总线。4路
-`define BUS_ROWS    0:15      // 各行的总线。16行
 
 module cache (
   input   wire                clk,
@@ -113,13 +112,12 @@ cache_rw Cache_rw(
 
 wire  [63: 0]                 user_blk_aligned_bytes;     // 用户地址的按块对齐地址(按字节)（64字节对齐，低6位为0）
 reg   [63: 0]                 user_wmask;                 // 用户数据的写入掩码，由bytes决定，高电平有效
-wire  [63: 0]                 mem_addr;                   // mem相对地址，减去0x8000_0000
 wire  [3 : 0]                 mem_blkno;                  // mem块号，0~15
 wire  [5 : 0]                 mem_offset_bytes;           // mem块内偏移(按字节)，0~63
 wire  [8 : 0]                 mem_offset_bits;            // mem块内偏移(按位)，0~511
-wire  [20: 0]                 mem_tag;                    // mem标记，21位
+wire  [16: 0]                 mem_tag;                    // mem标记
 
-assign user_blk_aligned_bytes = {33'd0, i_cache_addr[30:6], 6'd0};
+assign user_blk_aligned_bytes = {32'd0, i_cache_addr[31:6], 6'd0};
 
 always @(*) begin
   case (i_cache_bytes)
@@ -135,17 +133,15 @@ always @(*) begin
   endcase
 end
 
-assign mem_addr = {33'd0, i_cache_addr[30:0]};
-assign mem_offset_bytes = mem_addr[5:0];
-assign mem_offset_bits = {3'b0, mem_addr[5:0]} << 3;
-assign mem_blkno = mem_addr[9:6];
-assign mem_tag = mem_addr[30:10];
+assign mem_offset_bytes = i_cache_addr[5:0];
+assign mem_offset_bits = {3'b0, i_cache_addr[5:0]} << 3;
+assign mem_blkno = i_cache_addr[9:6];
+assign mem_tag = i_cache_addr[26:10];
 
 
 // =============== Cache Info 缓存信息 ===============
 
-wire  [3 : 0]                 c_blkno;                            // cache块号(0~15)
-wire  [5 : 0]                 c_lineno;                           // cache行号(0~63)
+wire  [5 : 0]                 c_data_lineno;                      // cache数据行号(0~63)
 reg   [1 : 0]                 c_batch_lineno_step;                // cache整块操作的行号步进值（批量更新4行时使用）（0~3）
 wire  [5 : 0]                 c_batch_lineno_start;               // cache整块操作的行号起始值（批量更新4行时使用）(0~63)
 wire  [5 : 0]                 c_batch_lineno_cur;                 // cache整块操作的行号当前值（批量更新4行时使用）(0~63)
@@ -154,41 +150,33 @@ wire  [6 : 0]                 c_offset_bits;                      // cache行内
 wire  [127:0]                 c_wdata;                            // cache行要写入的数据
 wire  [127:0]                 c_wmask;                            // cache行要写入的掩码
 
-assign c_batch_lineno_start = {{2'd0, c_blkno} << 2};
-assign c_batch_lineno_cur   = {{2'd0, c_blkno} << 2} | {4'd0, c_batch_lineno_step};
-assign c_blkno = mem_blkno;
-assign c_lineno = mem_addr[9:4];
+assign c_batch_lineno_start = {{2'd0, mem_blkno} << 2};
+assign c_batch_lineno_cur   = {{2'd0, mem_blkno} << 2} | {4'd0, c_batch_lineno_step};
+assign c_data_lineno = i_cache_addr[9:4];
 assign c_offset_bytes = mem_offset_bits[6:3]; 
 assign c_offset_bits = mem_offset_bits[6:0];
 assign c_wmask = {64'd0, user_wmask} << c_offset_bits;
 assign c_wdata = {64'd0, i_cache_wdata} << c_offset_bits;
 
-`define c_tag_BUS             20:0          // cache的tag所在的总线 
-`define c_v_BUS               21            // cache的v所在的总线 
-`define c_d_BUS               22            // cache的d所在的总线 
-`define c_s_BUS               24:23         // cache的s所在的总线 
+`define c_tag_BUS             16:0          // cache的tag所在的总线 
+`define c_v_BUS               17            // cache的v所在的总线 
+`define c_d_BUS               18            // cache的d所在的总线 
+`define c_s_BUS               20:19         // cache的s所在的总线
 
-// parameter [4 : 0] c_tag_POS = 0;    // cache的tag起始位置
-// parameter [4 : 0] c_tag_LEN = 21;   // cache的tag长度
-// parameter [4 : 0] c_v_POS = 21;     // cache的v起始位置
-// parameter [4 : 0] c_d_POS = 22;     // cache的d起始位置
-// parameter [4 : 0] c_s_POS = 23;     // cache的s起始位置
-// parameter [4 : 0] c_s_LEN = 2;      // cache的s长度
-
-reg   [24 : 0]                cache_info[`BUS_WAYS][0:63];        // cache信息块（64行）
+reg   [20 : 0]                cache_info[`BUS_WAYS][0:`BLKS-1];   // cache信息块
 wire                          c_v[`BUS_WAYS];                     // cache valid bit 有效位，1位有效
 wire                          c_d[`BUS_WAYS];                     // cache dirty bit 脏位，1为脏
 wire  [1 : 0]                 c_s[`BUS_WAYS];                     // cache seqence bit 顺序位，越大越需要先被替换走
-wire  [20: 0]                 c_tag[`BUS_WAYS];                   // cache标记
+wire  [16: 0]                 c_tag[`BUS_WAYS];                   // cache标记
 
 // cache_info
 generate
   for (genvar way = 0; way < `WAYS; way += 1) begin
     parameter [1:0] w = way;
-    for (genvar r = 0; r < `ROWS; r += 1) begin
+    for (genvar i = 0; i < `BLKS; i += 1) begin
       always @(posedge clk) begin
         if (rst) begin
-          assign cache_info[w][r] = {w, 1'b0, 1'b0, 21'b0};
+          assign cache_info[w][i] = {w, 1'b0, 1'b0, 17'b0};
         end
       end
     end
@@ -199,10 +187,10 @@ endgenerate
 generate
   for (genvar way = 0; way < `WAYS; way += 1) begin
     parameter [1:0] w = way;
-    assign c_tag[w]   = cache_info[w][c_lineno][`c_tag_BUS];
-    assign c_v[w]     = cache_info[w][c_lineno][`c_v_BUS];
-    assign c_d[w]     = cache_info[w][c_lineno][`c_d_BUS];
-    assign c_s[w]     = cache_info[w][c_lineno][`c_s_BUS];
+    assign c_tag[w]   = cache_info[w][mem_blkno][`c_tag_BUS];
+    assign c_v[w]     = cache_info[w][mem_blkno][`c_v_BUS];
+    assign c_d[w]     = cache_info[w][mem_blkno][`c_d_BUS];
+    assign c_s[w]     = cache_info[w][mem_blkno][`c_s_BUS];
   end
 endgenerate
 
@@ -219,9 +207,7 @@ wire [1:0]                    wayID_select;       // 选择了哪一路？方法
 generate
   for (genvar way = 0; way < `WAYS; way += 1) begin
     parameter [1:0] w = way;
-    for (genvar r = 0; r < `ROWS; r += 1) begin
-      assign hit[w] = c_v[w] && (c_tag[w] == mem_tag);
-    end
+    assign hit[w] = c_v[w] && (c_tag[w] == mem_tag);
   end
 endgenerate
 
@@ -386,7 +372,7 @@ always @(posedge clk) begin
             // 读取RAM一个单元
             if (!hs_ramline) begin
               chip_data_cen[wayID_select] <= CHIP_DATA_CEN;
-              chip_data_addr[wayID_select] <= c_lineno;
+              chip_data_addr[wayID_select] <= c_data_lineno;
               ram_op_cnt <= ram_op_cnt + 1;
             end
             else begin
@@ -400,7 +386,7 @@ always @(posedge clk) begin
             if (!hs_ramline) begin
               chip_data_cen[wayID_select] <= CHIP_DATA_CEN;
               chip_data_wen[wayID_select] <= CHIP_DATA_WEN;
-              chip_data_addr[wayID_select] <= c_lineno;
+              chip_data_addr[wayID_select] <= c_data_lineno;
               chip_data_wdata[wayID_select] <= c_wdata;
               chip_data_wmask[wayID_select] <= ~c_wmask;  // 芯片的写入掩码低电平有效，需要取反
               ram_op_cnt <= ram_op_cnt + 1;
@@ -411,7 +397,7 @@ always @(posedge clk) begin
               o_cache_ack <= 1;
             end
             // cache更新记录
-            cache_info[wayID_select][c_lineno][`c_d_BUS]  <= 1;
+            cache_info[wayID_select][mem_blkno][`c_d_BUS]  <= 1;
           end
         end
         else begin
@@ -440,20 +426,20 @@ always @(posedge clk) begin
           chip_data_addr[wayID_select] <= c_batch_lineno_cur;
           chip_data_wdata[wayID_select] <= i_cache_rw_rdata[{{7'd0,c_batch_lineno_step} << 7}+:128];   // 128的倍数
           chip_data_wmask[wayID_select] <= {128{CHIP_DATA_WMASK_EN}};
-          // 更新cache记录一行的 tag,v,d 位
-          cache_info[wayID_select][c_batch_lineno_cur][`c_tag_BUS]      <= mem_tag; // c_tag
-          cache_info[wayID_select][c_batch_lineno_cur][`c_v_BUS]        <= 1;       // 有效位
-          cache_info[wayID_select][c_batch_lineno_cur][`c_d_BUS]        <= 0;       // 脏位
-          // 更新cache记录四行的 s 位，循环移动
-          cache_info[3][c_batch_lineno_cur][`c_s_BUS] <= cache_info[2][c_batch_lineno_cur][`c_s_BUS];
-          cache_info[2][c_batch_lineno_cur][`c_s_BUS] <= cache_info[1][c_batch_lineno_cur][`c_s_BUS];
-          cache_info[1][c_batch_lineno_cur][`c_s_BUS] <= cache_info[0][c_batch_lineno_cur][`c_s_BUS];
-          cache_info[0][c_batch_lineno_cur][`c_s_BUS] <= cache_info[3][c_batch_lineno_cur][`c_s_BUS];
         end
         else begin
           ram_op_cnt <= 0;
           chip_data_cen[wayID_select] <= !CHIP_DATA_CEN;
           chip_data_wen[wayID_select] <= !CHIP_DATA_WEN;
+          // 更新cache记录一行的 tag,v,d 位
+          cache_info[wayID_select][mem_blkno][`c_tag_BUS]      <= mem_tag; // c_tag
+          cache_info[wayID_select][mem_blkno][`c_v_BUS]        <= 1;       // 有效位
+          cache_info[wayID_select][mem_blkno][`c_d_BUS]        <= 0;       // 脏位
+          // 更新cache记录四行的 s 位，循环移动
+          cache_info[3][mem_blkno][`c_s_BUS] <= cache_info[2][mem_blkno][`c_s_BUS];
+          cache_info[2][mem_blkno][`c_s_BUS] <= cache_info[1][mem_blkno][`c_s_BUS];
+          cache_info[1][mem_blkno][`c_s_BUS] <= cache_info[0][mem_blkno][`c_s_BUS];
+          cache_info[0][mem_blkno][`c_s_BUS] <= cache_info[3][mem_blkno][`c_s_BUS];
         end
       end
 
@@ -467,7 +453,7 @@ always @(posedge clk) begin
           chip_data_addr[wayID_select] <= c_batch_lineno_cur;
           // i_cache_rw_rdata[{{7'd0,c_batch_lineno_step} << 7}+:128] <= chip_data_wdata[wayID_select];   // 128的倍数
           // 更新cache记录一行的 d 位。注意：这里简化了逻辑，应当是写入主存后再更新d位，但现在默认后续写入主存是一定会成功的。
-          cache_info[wayID_select][c_batch_lineno_cur][`c_d_BUS]        <= 0;       // 脏位
+          cache_info[wayID_select][mem_blkno][`c_d_BUS]        <= 0;       // 脏位
         end
         else begin
           ram_op_cnt <= 0;
@@ -478,7 +464,7 @@ always @(posedge clk) begin
       STATE_STORE_TO_BUS: begin
         // 写入主存一个块
         o_cache_rw_req <= 1;
-        o_cache_rw_addr <= user_blk_aligned_bytes;
+        o_cache_rw_addr <= {32'd0, 1'b1, 4'b0, c_tag[wayID_select], 10'd0 };
         o_cache_rw_op <= `REQ_WRITE;
         // o_cache_rw_wdata  <= rdata_blk;
 
