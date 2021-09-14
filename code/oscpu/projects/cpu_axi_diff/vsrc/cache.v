@@ -112,7 +112,7 @@ cache_rw Cache_rw(
 // =============== 物理地址解码 ===============
 
 wire  [63: 0]                 user_blk_aligned_bytes;     // 用户地址的按块对齐地址(按字节)（64字节对齐，低6位为0）
-reg   [63: 0]                 user_wmask;                 // 用户数据的写入掩码，由bytes决定，电平与底层RAM模型保持一致
+reg   [63: 0]                 user_wmask;                 // 用户数据的写入掩码，由bytes决定，高电平有效
 wire  [63: 0]                 mem_addr;                   // mem相对地址，减去0x8000_0000
 wire  [3 : 0]                 mem_blkno;                  // mem块号，0~15
 wire  [5 : 0]                 mem_offset_bytes;           // mem块内偏移(按字节)，0~63
@@ -123,14 +123,14 @@ assign user_blk_aligned_bytes = {33'd0, i_cache_addr[30:6], 6'd0};
 
 always @(*) begin
   case (i_cache_bytes)
-    0:    user_wmask = {{56{!CHIP_DATA_WMASK_EN}}, { 8{CHIP_DATA_WMASK_EN}}};// 64'hFF;
-    1:    user_wmask = {{48{!CHIP_DATA_WMASK_EN}}, {16{CHIP_DATA_WMASK_EN}}};// 64'hFFFF;
-    2:    user_wmask = {{40{!CHIP_DATA_WMASK_EN}}, {24{CHIP_DATA_WMASK_EN}}};// 64'hFFFF_FF;
-    3:    user_wmask = {{32{!CHIP_DATA_WMASK_EN}}, {32{CHIP_DATA_WMASK_EN}}};// 64'hFFFF_FFFF;
-    4:    user_wmask = {{24{!CHIP_DATA_WMASK_EN}}, {40{CHIP_DATA_WMASK_EN}}};// 64'hFFFF_FFFF_FF;
-    5:    user_wmask = {{16{!CHIP_DATA_WMASK_EN}}, {48{CHIP_DATA_WMASK_EN}}};// 64'hFFFF_FFFF_FFFF;
-    6:    user_wmask = {{ 8{!CHIP_DATA_WMASK_EN}}, {56{CHIP_DATA_WMASK_EN}}};// 64'hFFFF_FFFF_FFFF_FF;
-    7:    user_wmask = {{ 0{!CHIP_DATA_WMASK_EN}}, {64{CHIP_DATA_WMASK_EN}}};// 64'hFFFF_FFFF_FFFF_FFFF;
+    0:    user_wmask = 64'hFF;
+    1:    user_wmask = 64'hFFFF;
+    2:    user_wmask = 64'hFFFF_FF;
+    3:    user_wmask = 64'hFFFF_FFFF;
+    4:    user_wmask = 64'hFFFF_FFFF_FF;
+    5:    user_wmask = 64'hFFFF_FFFF_FFFF;
+    6:    user_wmask = 64'hFFFF_FFFF_FFFF_FF;
+    7:    user_wmask = 64'hFFFF_FFFF_FFFF_FFFF;
     default: user_wmask = 0;
   endcase
 end
@@ -160,7 +160,7 @@ assign c_blkno = mem_blkno;
 assign c_lineno = mem_addr[9:4];
 assign c_offset_bytes = mem_offset_bits[6:3]; 
 assign c_offset_bits = mem_offset_bits[6:0];
-assign c_wmask = {{64{!CHIP_DATA_WMASK_EN}}, user_wmask} << c_offset_bits;
+assign c_wmask = {64'd0, user_wmask} << c_offset_bits;
 assign c_wdata = {64'd0, i_cache_wdata} << c_offset_bits;
 
 `define c_tag_BUS             20:0          // cache的tag所在的总线 
@@ -322,7 +322,7 @@ always @(posedge clk) begin
           end
 
           STATE_STORE_FROM_RAM:     begin
-            if (hs_cache_rw) begin
+            if (hs_ram) begin
               state <= STATE_STORE_TO_BUS;
             end
           end
@@ -368,7 +368,7 @@ assign hs_cache_rw = o_cache_rw_req & i_cache_rw_ack;
 assign hs_ram = ram_op_cnt == 3'd4;
 assign hs_ramline = ram_op_cnt == 3'd3;
 assign rdata_line = chip_data_rdata[wayID_select];
-assign rdata_out = rdata_line[c_offset_bits +:64] & ~user_wmask;  // 注意掩码的电平是否要取反
+assign rdata_out = rdata_line[c_offset_bits +:64] & user_wmask;
 
 always @(posedge clk) begin
   if (rst) begin
@@ -402,7 +402,7 @@ always @(posedge clk) begin
               chip_data_wen[wayID_select] <= CHIP_DATA_WEN;
               chip_data_addr[wayID_select] <= c_lineno;
               chip_data_wdata[wayID_select] <= c_wdata;
-              chip_data_wmask[wayID_select] <= c_wmask;
+              chip_data_wmask[wayID_select] <= ~c_wmask;  // 芯片的写入掩码低电平有效，需要取反
               ram_op_cnt <= ram_op_cnt + 1;
             end
             else begin
@@ -458,21 +458,33 @@ always @(posedge clk) begin
       end
 
       STATE_STORE_FROM_RAM: begin
+        // 读取RAM一个块
+        if (!hs_ram) begin
+          ram_op_cnt <= ram_op_cnt + 1;
+          c_batch_lineno_step <= c_batch_lineno_step + 1;     // 行号步进值递增
+          // 读取cache数据一行
+          chip_data_cen[wayID_select] <= CHIP_DATA_CEN;
+          chip_data_addr[wayID_select] <= c_batch_lineno_cur;
+          // i_cache_rw_rdata[{{7'd0,c_batch_lineno_step} << 7}+:128] <= chip_data_wdata[wayID_select];   // 128的倍数
+          // 更新cache记录一行的 d 位。注意：这里简化了逻辑，应当是写入主存后再更新d位，但现在默认后续写入主存是一定会成功的。
+          cache_info[wayID_select][c_batch_lineno_cur][`c_d_BUS]        <= 0;       // 脏位
+        end
+        else begin
+          ram_op_cnt <= 0;
+          chip_data_cen[wayID_select] <= !CHIP_DATA_CEN;
+        end
       end
 
       STATE_STORE_TO_BUS: begin
-        // 发送内部写请求
+        // 写入主存一个块
         o_cache_rw_req <= 1;
         o_cache_rw_addr <= user_blk_aligned_bytes;
         o_cache_rw_op <= `REQ_WRITE;
         // o_cache_rw_wdata  <= rdata_blk;
-        // // cache更新
-        // if (hs_cache_rw) begin
-        //   // cache更新记录
-        //   cache_info[mem_blkno][info_tag_offset+:21]  <= 0;       // c_tag
-        //   cache_info[mem_blkno][info_v_offset]        <= 0;       // 有效位
-        //   cache_info[mem_blkno][info_d_offset]        <= 0;       // 脏位
-        // end
+
+        if (hs_cache_rw) begin
+          o_cache_rw_req <= 0;
+        end
       end
 
       default:;
