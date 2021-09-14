@@ -3,7 +3,7 @@
 
 // Writeback Interface
 
-`include "defines.v"
+`include "../defines.v"
 
 module wb_stage(
   input   wire                clk,

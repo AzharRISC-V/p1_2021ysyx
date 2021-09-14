@@ -3,7 +3,7 @@
 
 // Commit Interface (for difftest)
 
-`include "defines.v"
+`include "../defines.v"
 
 module cmt_stage(
   input   wire                clk,

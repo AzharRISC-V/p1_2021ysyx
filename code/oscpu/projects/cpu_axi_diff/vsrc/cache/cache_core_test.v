@@ -9,7 +9,7 @@ module cache_core_test(
   input   wire                      clk,
   input   wire                      rst,
 
-  // cache_axi 接口
+  // AXI interface
   input   wire  [511:0]             i_axi_io_rdata,
   input   wire                      i_axi_io_ready,
   output  wire                      o_axi_io_valid,

@@ -3,7 +3,7 @@
 
 // Instruction Decode Unit, 组合逻辑电路
 
-`include "defines.v"
+`include "../defines.v"
 
 module idU(
   input   wire                i_ena,

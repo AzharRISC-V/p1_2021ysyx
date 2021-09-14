@@ -3,7 +3,7 @@
 
 // Writeback Unit, 组合逻辑电路
 
-`include "defines.v"
+`include "../defines.v"
 
 /*
   rd 有两处写入，这里做一个简单的处理

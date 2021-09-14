@@ -1,5 +1,5 @@
 
-`include "defines.v"
+`include "../defines.v"
 
 module S011HD1P_X32Y2D128_BW(
     Q, CLK, CEN, WEN, BWEN, A, D

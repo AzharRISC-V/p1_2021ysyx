@@ -3,7 +3,7 @@
 
 // Fetch Interface
 
-`include "defines.v"
+`include "../defines.v"
 
 module if_stage(
   input   wire                clk,
@@ -13,12 +13,10 @@ module if_stage(
 
   ///////////////////////////////////////////////
   // AXI interface for Fetch
-	input                       i_if_axi_ready,
-  input         [`BUS_64]     i_if_axi_data_read,
-  input         [1:0]         i_if_axi_resp,
-	output reg                  o_if_axi_valid,
-  output reg    [`BUS_64]     o_if_axi_addr,
-  output        [1:0]         o_if_axi_size,
+	input                       i_if_bus_ack,
+  input         [`BUS_64]     i_if_bus_rdata,
+	output reg                  o_if_bus_req,
+  output reg    [`BUS_64]     o_if_bus_addr,
   
   ///////////////////////////////////////////////
   input   wire                i_if_pc_jmp,
@@ -29,24 +27,22 @@ module if_stage(
   output                      o_if_nocmt
 );
 
-// ifU IfU(
-//   .i_ena                      (1                          ),
-//   .clk                        (clk                        ),
-//   .rst                        (rst                        ),
-// 	.i_axi_ready                (i_if_axi_ready             ),
-//   .i_axi_data_read            (i_if_axi_data_read         ),
-//   .i_axi_resp                 (i_if_axi_resp              ),
-// 	.o_axi_valid                (o_if_axi_valid             ),
-//   .o_axi_addr                 (o_if_axi_addr              ),
-//   .o_axi_size                 (o_if_axi_size              ),
-//   .i_pc_jmp                   (i_if_pc_jmp                ),
-//   .i_pc_jmpaddr               (i_if_pc_jmpaddr            ),
-//   .o_pc                       (o_if_pc                    ),
-//   .o_pc_pred                  (o_if_pc_pred               ),
-//   .o_inst                     (o_if_inst                  ),
-//   .o_fetched                  (o_if_fetched_req           ),
-//   .o_nocmt                    (o_if_nocmt                 )
-// );
+ifU IfU(
+  .i_ena                      (1                          ),
+  .clk                        (clk                        ),
+  .rst                        (rst                        ),
+	.i_bus_ack                  (i_if_bus_ack               ),
+  .i_bus_rdata                (i_if_bus_rdata             ),
+	.o_bus_req                  (o_if_bus_req               ),
+  .o_bus_addr                 (o_if_bus_addr              ),
+  .i_pc_jmp                   (i_if_pc_jmp                ),
+  .i_pc_jmpaddr               (i_if_pc_jmpaddr            ),
+  .o_pc                       (o_if_pc                    ),
+  .o_pc_pred                  (o_if_pc_pred               ),
+  .o_inst                     (o_if_inst                  ),
+  .o_fetched                  (o_if_fetched_req           ),
+  .o_nocmt                    (o_if_nocmt                 )
+);
 
 // always @( posedge clk ) begin
 //   if (rst) begin

@@ -237,11 +237,12 @@ wire [7:0]                    o_user_axi_blks;
 
 wire [1:0]                    o_user_axi_resp;
 
+
 // /////////////////////////////////////////////////
 
-// `define CACHE_RW_TEST 1
+// `define CACHE_AXI_TEST 1
 
-`ifdef CACHE_RW_TEST
+`ifdef CACHE_AXI_TEST
 
   // cache_rw 测试
   cache_axi_test Cache_axi_test(
@@ -261,9 +262,8 @@ wire [1:0]                    o_user_axi_resp;
 
 
 /////////////////////////////////////////////////
-// cache 测试
 
-`define CACHE_TEST 1
+// `define CACHE_TEST 1
 
 `ifdef CACHE_TEST
 
@@ -282,18 +282,20 @@ cache_core_test Cache_core_test(
 
 `endif
 
+
 /////////////////////////////////////////////////
 // CPU核
 cpu u_cpu(
-    .clk                            (clock),
-    .rst                            (reset),
-
-    .if_valid                       ( ),//cache_axi_valid),
-    .if_ready                       ( ),
-    .if_rdata                       ( ),
-    .if_addr                        ( ),//cache_axi_addr),
-    .if_size                        ( ),
-    .if_resp                        ( )
+  .clk                        (clock                      ),
+  .rst                        (reset                      ),
+  .i_axi_io_ready             (i_user_axi_ready           ),
+  .i_axi_io_rdata             (i_user_axi_rdata           ),
+  .o_axi_io_op                (o_user_axi_op              ),
+  .o_axi_io_valid             (o_user_axi_valid           ),
+  .o_axi_io_wdata             (o_user_axi_wdata           ),
+  .o_axi_io_addr              (o_user_axi_addr            ),
+  .o_axi_io_size              (o_user_axi_size            ),
+  .o_axi_io_blks              (o_user_axi_blks            )
 );
 
 

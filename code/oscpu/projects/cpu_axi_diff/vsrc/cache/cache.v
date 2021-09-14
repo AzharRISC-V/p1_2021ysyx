@@ -2,51 +2,85 @@
 // ZhengpuShi
 
 // Cache Interface
-// 对ICache和DCache的统一入口
+// 对ICache和DCache的统一
 
-// module cache(
-//     input                     clk,
-//     input                     rst,
-//     input                     if_ready,
-//     input  [63:0]             if_rdata,
-//     input  [1:0]              if_resp,
-//     output                    if_valid,
-//     output [63:0]             if_addr,
-//     output [1:0]              if_size,
+`include "../defines.v"
+
+module cache(
+    input                     clk,
+    input                     rst,
     
-//     // cache_axi 接口
-//     input   wire  [511:0]             i_cache_rw_axi_rdata,
-//     input   wire                      i_cache_rw_axi_ready,
-//     output  wire                      o_cache_rw_axi_valid,
-//     output  wire                      o_cache_rw_axi_op,
-//     output  wire  [511:0]             o_cache_rw_axi_wdata,
-//     output  wire  [63:0]              o_cache_rw_axi_addr,
-//     output  wire  [1:0]               o_cache_rw_axi_size,
-//     output  wire  [7:0]               o_cache_rw_axi_blks
-// );
+    // ICache
+    input   wire              i_icache_req,
+    input   wire  [63:0]      i_icache_addr,
+    output  wire              o_icache_ack,
+    output  wire  [31:0]      o_icache_rdata,
+
+    // DCache
+    input   wire              i_dcache_req,
+    input   wire  [63:0]      i_dcache_addr,
+    input   wire              i_dcache_op,
+    input   wire  [3 :0]      i_dcache_bytes,
+    input   wire  [63:0]      i_dcache_wdata,
+    output  wire              o_dcache_ack,
+    output  wire  [63:0]      o_dcache_rdata,
+    
+    // AXI interface
+    input   wire  [511:0]     i_axi_io_rdata,
+    input   wire              i_axi_io_ready,
+    output  wire              o_axi_io_valid,
+    output  wire              o_axi_io_op,
+    output  wire  [511:0]     o_axi_io_wdata,
+    output  wire  [63:0]      o_axi_io_addr,
+    output  wire  [1:0]       o_axi_io_size,
+    output  wire  [7:0]       o_axi_io_blks
+);
 
 
+wire [63:0] icache_rdata;
+assign o_icache_rdata = icache_rdata[31:0];
 
-// cache_core ICache(
-//   .clk                        (clk                        ),
-//   .rst                        (rst                        ),
-// 	.i_cache_top_addr           (o_cache_addr               ),
-// 	.i_cache_top_wdata          (o_cache_wdata              ),
-// 	.i_cache_top_bytes          (o_cache_bytes              ),
-// 	.i_cache_top_op             (o_cache_op                 ),
-// 	.i_cache_top_req            (o_cache_req                ),
-// 	.o_cache_top_rdata          (i_cache_rdata              ),
-// 	.o_cache_top_ack            (i_cache_ack                ),
+cache_core ICache(
+  .clk                        (clk                        ),
+  .rst                        (rst                        ),
+	.i_cache_core_addr          (i_icache_addr              ),
+	.i_cache_core_wdata         (                           ),
+	.i_cache_core_bytes         (3                          ),
+	.i_cache_core_op            (`REQ_READ                  ),
+	.i_cache_core_req           (i_icache_req               ),
+	.o_cache_core_rdata         (icache_rdata               ),
+	.o_cache_core_ack           (o_icache_ack               ),
 
-//   .i_cache_rw_axi_ready       (i_cache_rw_axi_ready       ),
-//   .i_cache_rw_axi_rdata       (i_cache_rw_axi_rdata       ),
-//   .o_cache_rw_axi_op          (o_cache_rw_axi_op          ),
-//   .o_cache_rw_axi_valid       (o_cache_rw_axi_valid       ),
-//   .o_cache_rw_axi_wdata       (o_cache_rw_axi_wdata       ),
-//   .o_cache_rw_axi_addr        (o_cache_rw_axi_addr        ),
-//   .o_cache_rw_axi_size        (o_cache_rw_axi_size        ),
-//   .o_cache_rw_axi_blks        (o_cache_rw_axi_blks        )
-// );
+  .i_axi_io_ready             (i_axi_io_ready             ),
+  .i_axi_io_rdata             (i_axi_io_rdata             ),
+  .o_axi_io_op                (o_axi_io_op                ),
+  .o_axi_io_valid             (o_axi_io_valid             ),
+  .o_axi_io_wdata             (o_axi_io_wdata             ),
+  .o_axi_io_addr              (o_axi_io_addr              ),
+  .o_axi_io_size              (o_axi_io_size              ),
+  .o_axi_io_blks              (o_axi_io_blks              )
+);
 
 
-// endmodule
+cache_core DCache(
+  .clk                        (clk                        ),
+  .rst                        (rst                        ),
+	.i_cache_core_addr          (i_icache_addr              ),
+	.i_cache_core_wdata         (                           ),
+	.i_cache_core_bytes         (3                          ),
+	.i_cache_core_op            (`REQ_READ                  ),
+	.i_cache_core_req           (i_icache_req               ),
+	.o_cache_core_rdata         (icache_rdata               ),
+	.o_cache_core_ack           (o_icache_ack               ),
+
+  .i_axi_io_ready             (i_axi_io_ready             ),
+  .i_axi_io_rdata             (i_axi_io_rdata             ),
+  .o_axi_io_op                (o_axi_io_op                ),
+  .o_axi_io_valid             (o_axi_io_valid             ),
+  .o_axi_io_wdata             (o_axi_io_wdata             ),
+  .o_axi_io_addr              (o_axi_io_addr              ),
+  .o_axi_io_size              (o_axi_io_size              ),
+  .o_axi_io_blks              (o_axi_io_blks              )
+);
+
+endmodule

@@ -18,7 +18,7 @@ module cache_core (
   output  reg   [`BUS_64]     o_cache_core_rdata,         // 读出的数据
 	output  reg                 o_cache_core_ack,           // 应答
 
-  // cache_rw 接口
+  // AXI interface
   input   wire  [511:0]       i_axi_io_rdata,
   input   wire                i_axi_io_ready,
   output  wire                o_axi_io_valid,

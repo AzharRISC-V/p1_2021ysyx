@@ -1,6 +1,6 @@
 // ZhengpuShi
 
-`include "defines.v"
+`include "../defines.v"
 
 
 // 内存读取控制器，将1字节访问转换为8字节对齐的一次或两次访问

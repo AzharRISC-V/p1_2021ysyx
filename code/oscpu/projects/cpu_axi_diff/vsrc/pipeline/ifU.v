@@ -3,7 +3,7 @@
 
 // Fetch Unit
 
-`include "defines.v"
+`include "../defines.v"
 
 module ifU(
   input   wire                i_ena,
@@ -12,12 +12,10 @@ module ifU(
 
   /////////////////////////////////////////////////////////
   // AXI interface for Fetch
-	input                       i_axi_ready,
-  input         [`BUS_64]     i_axi_data_read,
-  input         [1:0]         i_axi_resp,
-	output reg                  o_axi_valid,
-  output reg    [`BUS_64]     o_axi_addr,
-  output        [1:0]         o_axi_size,
+	input                       i_bus_ack,
+  input         [`BUS_64]     i_bus_rdata,
+	output reg                  o_bus_req,
+  output reg    [`BUS_64]     o_bus_addr,
   
   /////////////////////////////////////////////////////////
   input   wire                i_pc_jmp,
@@ -32,14 +30,14 @@ module ifU(
 
 wire i_disable = !i_ena;
 
-assign o_axi_valid = 1'b1;
+assign o_bus_req = 1'b1;
 
-wire handshake_done = o_axi_valid & i_axi_ready;
+wire handshake_done = o_bus_req & i_bus_ack;
 
 // fetch an instruction
 always @( posedge clk ) begin
   if (rst) begin
-    o_axi_addr              <= `PC_START;
+    o_bus_addr              <= `PC_START;
     o_pc                    <= 0;
     o_pc_pred               <= 0;
     o_nocmt                 <= 0;
@@ -54,10 +52,10 @@ always @( posedge clk ) begin
         o_fetched               <= 0;
       end
       else begin
-        o_axi_addr              <= o_axi_addr + 4;
-        o_pc                    <= o_axi_addr;
-        o_pc_pred               <= o_axi_addr + 4;
-        o_inst                  <= i_axi_data_read[31:0];
+        o_bus_addr              <= o_bus_addr + 4;
+        o_pc                    <= o_bus_addr;
+        o_pc_pred               <= o_bus_addr + 4;
+        o_inst                  <= i_bus_rdata[31:0];
         o_nocmt                 <= 0;
         o_fetched               <= 1;
       end
@@ -65,7 +63,7 @@ always @( posedge clk ) begin
     // 冲刷流水线：将nop指令放入总线，并且不提交这条指令到difftest
     else if (flush_en) begin
       flush_en                <= 0;
-      o_axi_addr              <= i_pc_jmpaddr;
+      o_bus_addr              <= i_pc_jmpaddr;
       o_pc                    <= i_pc_jmpaddr;
       o_pc_pred               <= i_pc_jmpaddr + 4;
       o_inst                  <= `INST_NOP;
@@ -83,7 +81,7 @@ always @( posedge clk ) begin
 end
 
 // 顺序计算得出的pc值，用于同jump时的地址对比，若不同则需要冲刷流水线
-assign o_axi_size = `SIZE_D;// `SIZE_W;
+// assign o_axi_size = `SIZE_D;// `SIZE_W;
 
 // 是否冲刷流水线
 reg      flush_en;

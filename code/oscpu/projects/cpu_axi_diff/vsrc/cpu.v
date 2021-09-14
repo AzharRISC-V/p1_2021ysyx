@@ -4,14 +4,18 @@
 `include "defines.v"
 
 module cpu(
-    input                     clk,
-    input                     rst,
-    input                     if_ready,
-    input  [63:0]             if_rdata,
-    input  [1:0]              if_resp,
-    output                    if_valid,
-    output [63:0]             if_addr,
-    output [1:0]              if_size
+  input                       clk,
+  input                       rst,
+
+  // AXI interface
+  input   wire  [511:0]       i_axi_io_rdata,
+  input   wire                i_axi_io_ready,
+  output  wire                o_axi_io_valid,
+  output  wire                o_axi_io_op,
+  output  wire  [511:0]       o_axi_io_wdata,
+  output  wire  [63:0]        o_axi_io_addr,
+  output  wire  [1:0]         o_axi_io_size,
+  output  wire  [7:0]         o_axi_io_blks
 );
 
 // handshake between five stages
@@ -130,18 +134,62 @@ assign o_csr_rd_wen  = o_id_csrop != 2'b00;
 assign o_csr_rd_wdata = (o_id_csrop == 2'b00) ? 0 : o_csr_rdata;
 
 /////////////////////////////////////////////////
+
+wire                          o_icache_req;
+wire  [63:0]                  o_icache_addr;
+reg                           i_icache_ack;
+reg   [31:0]                  i_icache_rdata;
+wire                          o_dcache_req;
+wire  [63:0]                  o_dcache_addr;
+wire                          o_dcache_op;
+wire  [3 :0]                  o_dcache_bytes;
+wire  [63:0]                  o_dcache_wdata;
+reg                           i_dcache_ack;
+reg   [63:0]                  i_dcache_rdata;
+
+assign o_icache_req = 1;
+
+cache Cache (
+  .clk                        (clk                        ),
+  .rst                        (rst                        ),
+
+    // ICache
+  .i_icache_req               (o_icache_req               ),
+  .i_icache_addr              (o_icache_addr              ),
+  .o_icache_ack               (i_icache_ack               ),
+  .o_icache_rdata             (i_icache_rdata             ),
+
+    // DCache
+  .i_dcache_req               (o_dcache_req               ),
+  .i_dcache_addr              (o_dcache_addr              ),
+  .i_dcache_op                (o_dcache_op                ),
+  .i_dcache_bytes             (o_dcache_bytes             ),
+  .i_dcache_wdata             (o_dcache_wdata             ),
+  .o_dcache_ack               (i_dcache_ack               ),
+  .o_dcache_rdata             (i_dcache_rdata             ),
+
+  .i_axi_io_ready             (i_axi_io_ready             ),
+  .i_axi_io_rdata             (i_axi_io_rdata             ),
+  .o_axi_io_op                (o_axi_io_op                ),
+  .o_axi_io_valid             (o_axi_io_valid             ),
+  .o_axi_io_wdata             (o_axi_io_wdata             ),
+  .o_axi_io_addr              (o_axi_io_addr              ),
+  .o_axi_io_size              (o_axi_io_size              ),
+  .o_axi_io_blks              (o_axi_io_blks              )
+);
+
+
+/////////////////////////////////////////////////
 // Stages
 if_stage If_stage(
   .rst                        (rst                        ),
   .clk                        (clk                        ),
   .o_if_fetched_req           (fetched_req                ),
   .i_if_fetched_ack           (fetched_ack                ),
-  .o_if_axi_valid             (if_valid                   ),
-  .i_if_axi_ready             (if_ready                   ),
-  .i_if_axi_data_read         (if_rdata               ),
-  .o_if_axi_addr              (if_addr                    ),
-  .o_if_axi_size              (if_size                    ),
-  .i_if_axi_resp              (if_resp                    ),
+  .o_if_bus_req               (o_icache_req               ),
+  .i_if_bus_ack               (i_icache_ack               ),
+  .i_if_bus_rdata             (i_icache_rdata             ),
+  .o_if_bus_addr              (o_icache_addr              ),
   .i_if_pc_jmp                (o_ex_pc_jmp                ),
   .i_if_pc_jmpaddr            (o_ex_pc_jmpaddr            ),
   .o_if_pc                    (o_if_pc                    ),

@@ -3,7 +3,7 @@
 
 // Instruction Decode Interface
 
-`include "defines.v"
+`include "../defines.v"
 
 module id_stage(
   input   wire                clk,

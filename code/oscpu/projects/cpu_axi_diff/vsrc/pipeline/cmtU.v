@@ -3,7 +3,7 @@
 
 // Commit Unit (for difftest)
 
-`include "defines.v"
+`include "../defines.v"
 
 module cmtU(
   input   wire                clk,

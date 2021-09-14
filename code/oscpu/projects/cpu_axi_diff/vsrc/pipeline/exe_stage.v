@@ -3,7 +3,7 @@
 
 // Execute Interface
 
-`include "defines.v"
+`include "../defines.v"
 
 module exe_stage(
   input   wire                rst,
