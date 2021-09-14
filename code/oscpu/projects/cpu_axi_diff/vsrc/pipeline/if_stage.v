@@ -44,18 +44,4 @@ ifU IfU(
   .o_nocmt                    (o_if_nocmt                 )
 );
 
-// always @( posedge clk ) begin
-//   if (rst) begin
-//     o_if_fetched_req          <= 0;
-//   end
-//   else begin
-//     if (o_fetched) begin
-//       o_if_fetched_req        <= 1;
-//     end
-//     else if (i_if_fetched_ack) begin
-//       o_if_fetched_req        <= 0; 
-//     end
-//   end
-// end
-
 endmodule
