@@ -1,7 +1,8 @@
 
 // ZhengpuShi
 
-// Cache ReadWrite Unit
+// Cache AXI Unit
+// Cache的AXI通信模块。
 // 通过AXI更新Cache数据的，根据Cache的设计而定制的AXI访问控制
 // 对外接口：访问64字节（=512bit），包括读、写
 // 内部需要转换为AXI访问的多次读写。
@@ -10,7 +11,7 @@
 
 `include "defines.v"
 
-module cache_rw(
+module cache_axi(
   input   wire                      clk,
   input   wire                      rst,
 	input                             i_cache_rw_req,         // 请求读写

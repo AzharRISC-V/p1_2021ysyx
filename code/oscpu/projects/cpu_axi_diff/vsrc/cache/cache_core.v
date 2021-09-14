@@ -1,13 +1,13 @@
 
 // ZhengpuShi
 
-// Cache Top Unit
-// 为处理64字节不对齐访问而设计的Cache之上的模块。
-// 将可能不对齐的访问转换为1~2次cache访问。
+// Cache Core Unit
+// 支持不对齐访问的Cache核心模块
+// 封装了 cache_basic，将不对齐的访问转换为1~2次cache访问。
 
 `include "defines.v"
 
-module cache_top (
+module cache_core (
   input   wire                clk,
   input   wire                rst,
   input   wire  [`BUS_64]     i_cache_top_addr,           // 地址
@@ -41,7 +41,7 @@ reg                           i_cache_ack;         // 应答
 
 assign o_cache_op = i_cache_top_op;
 
-cache Cache(
+cache_basic Cache_basic(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
 	.i_cache_addr               (o_cache_addr               ),

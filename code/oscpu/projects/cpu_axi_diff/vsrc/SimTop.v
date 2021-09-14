@@ -244,7 +244,7 @@ wire [1:0]                    o_user_axi_resp;
 `ifdef CACHE_RW_TEST
 
   // cache_rw 测试
-  cache_rw_test u_cache_rw_test(
+  cache_axi_test Cache_axi_test(
     .clk                        (clock                      ),
     .rst                        (reset                      ),
     .i_cache_rw_axi_ready       (i_user_axi_ready           ),
@@ -267,7 +267,7 @@ wire [1:0]                    o_user_axi_resp;
 
 `ifdef CACHE_TEST
 
-cache_test u_cache_test(
+cache_core_test Cache_core_test(
   .clk                        (clock                      ),
   .rst                        (reset                      ),
   .i_cache_rw_axi_ready       (i_user_axi_ready           ),

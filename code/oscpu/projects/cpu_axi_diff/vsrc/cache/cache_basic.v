@@ -1,8 +1,8 @@
 
 // ZhengpuShi
 
-// Cache Unit
-// ICache,DCache都可以用这个模块，虽然ICache不需要写，更简化。
+// Cache Basic Unit
+// 仅支持对齐访问的Cache基本单元
 
 /*
   Cache Disign (2021.09.08, by ZhengpuShi):
@@ -56,7 +56,7 @@
 `define BLKS        16        // 块数
 `define BUS_WAYS    0:3       // 各路的总线。4路
 
-module cache (
+module cache_basic (
   input   wire                clk,
   input   wire                rst,
   input   wire  [`BUS_64]     i_cache_addr,               // 地址
@@ -459,7 +459,7 @@ reg   [511 : 0]               o_cache_rw_wdata;           // 要写入的数据
 wire  [511 : 0]               i_cache_rw_rdata;           // 已读出的数据
 wire                          i_cache_rw_ack;             // 应答
 
-cache_rw Cache_rw(
+cache_axi Cache_axi(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
 	.i_cache_rw_req             (o_cache_rw_req             ),

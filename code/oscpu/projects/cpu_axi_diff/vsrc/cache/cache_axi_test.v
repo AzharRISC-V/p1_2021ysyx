@@ -82,7 +82,7 @@ always @(posedge clk) begin
   end
 end
 
-cache_rw Cache_rw(
+cache_axi Cache_axi(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
 	.i_cache_rw_req             (o_cache_rw_req             ),

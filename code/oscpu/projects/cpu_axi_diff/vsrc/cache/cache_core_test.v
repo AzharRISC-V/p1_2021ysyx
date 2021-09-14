@@ -1,11 +1,11 @@
 
 // ZhengpuShi
 
-// cache Test Interface
+// cache_core Test Interface
 
 `include "defines.v"
 
-module cache_test(
+module cache_core_test(
   input   wire                      clk,
   input   wire                      rst,
 
@@ -112,7 +112,7 @@ always @(posedge clk) begin
   end
 end
 
-cache_top Cache_top(
+cache_core Cache_core(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
 	.i_cache_top_addr           (o_cache_addr               ),
