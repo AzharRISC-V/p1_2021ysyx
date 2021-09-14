@@ -436,7 +436,7 @@ always @(posedge clk) begin
       STATE_STORE_TO_BUS: begin
         // 写入主存一个块
         o_cache_rw_req <= 1;
-        o_cache_rw_addr <= {32'd0, 1'b1, 4'b0, c_tag[wayID_select], 10'd0 };
+        o_cache_rw_addr <= {32'd0, 1'b1, 4'b0, c_tag[wayID_select], mem_blkno, 6'd0 };
         o_cache_rw_op <= `REQ_WRITE;
 
         if (hs_cache_rw) begin

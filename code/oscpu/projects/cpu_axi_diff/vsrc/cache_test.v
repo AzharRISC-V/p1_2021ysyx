@@ -50,6 +50,7 @@ wire hs_read  = hs & (o_cache_op == `REQ_READ);
 wire hs_write = hs & (o_cache_op == `REQ_WRITE);
 
 // 演示：延时；写入64字节；延时；读取64字节；。。。
+reg f1;
 always @(posedge clk) begin
   if (rst) begin
     cnt <= 0;
@@ -59,6 +60,7 @@ always @(posedge clk) begin
     o_cache_wdata   <= 64'h01234567_0000_0000 | 64'h8000_0000;
     o_cache_op      <= `REQ_READ;// `REQ_READ;// `REQ_WRITE;
     reg_rand_idx    <= 0;
+    f1 <= 0;
   end
   else begin
     // 写入完毕
@@ -71,6 +73,8 @@ always @(posedge clk) begin
 
       if (o_cache_addr >= 64'h8000_11F8) begin
         o_cache_addr    <= 64'h8000_0000;
+        // 第一轮读写完毕后，记录该标志
+        f1 <= 1;
       end
 
     end
@@ -78,7 +82,12 @@ always @(posedge clk) begin
     else if (hs_read) begin
       o_cache_req     <= 0;
       cnt             <= 0;
-      o_cache_op      <= `REQ_WRITE;
+      if (!f1) begin
+        o_cache_op      <= `REQ_WRITE;
+      end
+      else begin
+        o_cache_addr    <= o_cache_addr + 64'h8;    // 地址偏移
+      end
 
       // $displayh("a:", o_cache_addr, ", d:",
       //   " ", i_cache_rdata[ 0+:8],
