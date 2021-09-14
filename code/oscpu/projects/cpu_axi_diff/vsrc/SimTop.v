@@ -247,14 +247,14 @@ wire [1:0]                    o_user_axi_resp;
   cache_axi_test Cache_axi_test(
     .clk                        (clock                      ),
     .rst                        (reset                      ),
-    .i_cache_rw_axi_ready       (i_user_axi_ready           ),
-    .i_cache_rw_axi_rdata       (i_user_axi_rdata           ),
-    .o_cache_rw_axi_op          (o_user_axi_op              ),
-    .o_cache_rw_axi_valid       (o_user_axi_valid           ),
-    .o_cache_rw_axi_wdata       (o_user_axi_wdata           ),
-    .o_cache_rw_axi_addr        (o_user_axi_addr            ),
-    .o_cache_rw_axi_size        (o_user_axi_size            ),
-    .o_cache_rw_axi_blks        (o_user_axi_blks            )
+    .i_axi_io_ready             (i_user_axi_ready           ),
+    .i_axi_io_rdata             (i_user_axi_rdata           ),
+    .o_axi_io_op                (o_user_axi_op              ),
+    .o_axi_io_valid             (o_user_axi_valid           ),
+    .o_axi_io_wdata             (o_user_axi_wdata           ),
+    .o_axi_io_addr              (o_user_axi_addr            ),
+    .o_axi_io_size              (o_user_axi_size            ),
+    .o_axi_io_blks              (o_user_axi_blks            )
   );
 
 `endif
@@ -270,14 +270,14 @@ wire [1:0]                    o_user_axi_resp;
 cache_core_test Cache_core_test(
   .clk                        (clock                      ),
   .rst                        (reset                      ),
-  .i_cache_rw_axi_ready       (i_user_axi_ready           ),
-  .i_cache_rw_axi_rdata       (i_user_axi_rdata           ),
-  .o_cache_rw_axi_op          (o_user_axi_op              ),
-  .o_cache_rw_axi_valid       (o_user_axi_valid           ),
-  .o_cache_rw_axi_wdata       (o_user_axi_wdata           ),
-  .o_cache_rw_axi_addr        (o_user_axi_addr            ),
-  .o_cache_rw_axi_size        (o_user_axi_size            ),
-  .o_cache_rw_axi_blks        (o_user_axi_blks            )
+  .i_axi_io_ready             (i_user_axi_ready           ),
+  .i_axi_io_rdata             (i_user_axi_rdata           ),
+  .o_axi_io_op                (o_user_axi_op              ),
+  .o_axi_io_valid             (o_user_axi_valid           ),
+  .o_axi_io_wdata             (o_user_axi_wdata           ),
+  .o_axi_io_addr              (o_user_axi_addr            ),
+  .o_axi_io_size              (o_user_axi_size            ),
+  .o_axi_io_blks              (o_user_axi_blks            )
 );
 
 `endif
