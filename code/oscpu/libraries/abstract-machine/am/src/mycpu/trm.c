@@ -17,7 +17,7 @@ static const char mainargs[] = MAINARGS;
 void putch(char ch) {
   // char * s = ".word 0x00000007";
   // asm volatile (s);
-  asm volatile("mv a0, %0; .word 0x00000007" : : "r"(ch));
+  asm volatile("mv a0, %0; .word 0x0000007b" : : "r"(ch));
 }
 
 void halt(int code) {

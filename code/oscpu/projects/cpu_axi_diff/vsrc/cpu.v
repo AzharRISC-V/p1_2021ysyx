@@ -18,6 +18,29 @@ module cpu(
   output  wire  [7:0]         o_axi_io_blks
 );
 
+
+// Special Instruction: putch a0
+wire                          putch_wen;
+wire [7 : 0]                  putch_wdata;
+assign putch_wen              = o_if_inst == 32'h7b;
+assign putch_wdata            = (!putch_wen) ? 0 : (o_reg_regs[10][7:0]); 
+putch Putch(
+  .clk                (clk              ),
+  .rst                (rst              ),
+  .wen                (putch_wen        ),
+  .wdata              (putch_wdata      ) 
+);
+
+// always @(posedge clock) begin
+//   if (inst == 7) begin
+//     $write("%c", regs[10][7:0]);
+//   end
+// end
+// assign io_uart_out_valid = putch_wen;
+// assign io_uart_out_ch = putch_wdata;
+
+
+
 // handshake between five stages
 wire                          fetched_req;
 wire                          fetched_ack;

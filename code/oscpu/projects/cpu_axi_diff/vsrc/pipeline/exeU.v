@@ -26,26 +26,6 @@ module exeU(
 
 wire i_disable = !i_ena;
 
-
-// Special Instruction: putch a0
-// wire                          putch_wen;
-// wire [7 : 0]                  putch_wdata;
-// assign putch_wen              = if_inst_o == 32'h7b;
-// assign putch_wdata            = (!putch_wen) ? 0 : (regs[10][7:0]); 
-// putch Putch(
-//   .clk                (clock            ),
-//   .rst                (reset            ),
-//   .wen                (putch_wen        ),
-//   .wdata              (putch_wdata      ) 
-// );
-// always @(posedge clock) begin
-//   if (inst == 7) begin
-//     $write("%c", regs[10][7:0]);
-//   end
-// end
-// assign io_uart_out_valid = putch_wen;
-// assign io_uart_out_ch = putch_wdata;
-
 // o_rd_wen
 always @(*) begin
   if (i_disable) begin
