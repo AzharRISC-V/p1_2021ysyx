@@ -346,7 +346,7 @@ always @(posedge clk) begin
             end
             else begin
               chip_data_cen[wayID_select] <= !CHIP_DATA_CEN;
-              o_cache_basic_rdata <= rdata_out;
+              o_cache_basic_rdata <= rdata_out; // ToDo: 在跳转指令时，这一步可以用组合电路实现，更早得到新的数据
               o_cache_basic_ack <= 1;
             end
           end

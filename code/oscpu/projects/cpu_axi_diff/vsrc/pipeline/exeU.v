@@ -171,9 +171,6 @@ always @(*) begin
   end
 end
 
-// 跳转指令，并且跳转目标与预测目标不同时，冲刷流水线
-// assign o_jump_flush_req = o_pc_jmp ? (o_pc_jmpaddr != pc_pred_i) : 0;
-// assign o_jump_flush_pc = o_jump_flush_req ? o_pc_jmpaddr : pc_pred_i; 
 
 // o_memren
 assign o_memren = i_disable ? 0 : i_memren;
