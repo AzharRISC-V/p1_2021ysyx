@@ -41,6 +41,7 @@ module id_stage(
   output  wire  [`BUS_64]     o_id_op2,
   output  wire  [`BUS_64]     o_id_t1,
   output  wire  [`BUS_64]     o_id_pc_pred,
+  output  wire  [1:0]         o_id_memaction,
   output  wire                o_id_nocmt,
   output  wire                o_id_skipcmt
 );
@@ -49,7 +50,7 @@ module id_stage(
 assign o_id_fetched_ack = 1'b1;
 
 wire fetched_hs = i_id_fetched_req & o_id_fetched_ack;
-
+wire decoded_hs = i_id_decoded_ack & o_id_decoded_req;
 
 // 是否使能组合逻辑单元部件
 reg                           i_ena;
@@ -83,7 +84,7 @@ always @(posedge clk) begin
       o_id_decoded_req    <= 1;
       i_ena               <= 1;
     end
-    else if (i_id_decoded_ack) begin
+    else if (decoded_hs) begin
       o_id_decoded_req    <= 0;
       i_ena               <= 0;
     end
@@ -126,6 +127,7 @@ idU IdU(
   .o_csr_wdata                (o_id_csr_wdata             ),
   .i_csr_rdata                (i_id_csr_rdata             ),
   .o_pc_pred                  (o_id_pc_pred               ),
+  .o_memaction                (o_id_memaction             ),
   .o_skipcmt                  (o_id_skipcmt               )
 );
 

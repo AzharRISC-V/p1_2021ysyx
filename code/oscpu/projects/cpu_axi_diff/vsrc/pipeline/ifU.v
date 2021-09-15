@@ -18,6 +18,7 @@ module ifU(
   output reg    [`BUS_64]     o_bus_addr,
   
   /////////////////////////////////////////////////////////
+  input                       i_writebacked_req,    // 是否写回阶段完成
   input   wire                i_pc_jmp,
   input   wire  [`BUS_64]     i_pc_jmpaddr,
   output  reg   [`BUS_64]     o_pc,
@@ -30,22 +31,46 @@ module ifU(
 
 wire i_disable = !i_ena;
 
-assign o_bus_req = 1'b1;
+// o_bus_req
+always @(posedge clk) begin
+  if (rst) begin
+    o_bus_req <= 1;
+  end
+  else begin
+    // 停止信号
+    if (handshake_done) begin
+      // 若要求再次取指，则这次不要停止
+      if (fetch_again) begin
+        fetch_again <= 0;
+      end
+      else begin
+        o_bus_req <= 0;
+      end
+    end
+    // 启动信号
+    else if (i_writebacked_req) begin
+      o_bus_req <= 1;
+    end
+  end
+end
 
 wire handshake_done = o_bus_req & i_bus_ack;
 
-// 忽略下一条取指
-reg           ignore_next_inst;
-reg [`BUS_64] saved_pc_jmpaddr;
+// 跳转指令处理
+reg           ignore_next_inst;     // 忽略下一条取指
+reg [`BUS_64] saved_pc_jmpaddr;     // 记忆的pc跳转指令
+reg           fetch_again;          // 再次取指
 
 always @(posedge clk) begin
   if (rst) begin
     ignore_next_inst <= 0;
     saved_pc_jmpaddr <= 0;
+    fetch_again <= 0;
   end
   else begin
     if (i_pc_jmp & (i_pc_jmpaddr != o_pc_pred)) begin
       ignore_next_inst <= 1;
+      fetch_again <= 1;
       saved_pc_jmpaddr <= i_pc_jmpaddr;
     end
   end

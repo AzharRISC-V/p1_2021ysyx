@@ -74,6 +74,7 @@ wire                          o_id_nocmt;
 wire                          o_id_skipcmt;
 wire  [`BUS_64]               o_id_pc;
 wire  [`BUS_32]               o_id_inst;
+wire  [1:0]                   o_id_memaction;
 
 // exe_stage
 // exe_stage -> mem_stage
@@ -92,6 +93,7 @@ wire                          o_ex_rd_wen;
 wire  [`BUS_64]               o_ex_rd_wdata;
 wire                          o_ex_nocmt;
 wire                          o_ex_skipcmt;
+wire  [1:0]                   o_ex_memaction;
 
 // mem_stage
 // mem_stage -> wb_stage
@@ -114,6 +116,10 @@ wire                          o_wb_skipcmt;
 wire  [`BUS_RIDX]             o_wb_rd;
 reg                           o_wb_rd_wen;
 wire  [`BUS_64]               o_wb_rd_wdata;
+
+// cmt_stage
+// cmt_stage -> if_stage
+wire                          o_cmt_could_fetch;
 
 // regfile
 // regfile -> id_stage
@@ -147,7 +153,6 @@ wire  [63:0]                  o_dcache_wdata;
 reg                           i_dcache_ack;
 reg   [63:0]                  i_dcache_rdata;
 
-assign o_icache_req = 1;
 
 cache Cache (
   .clk                        (clk                        ),
@@ -184,6 +189,7 @@ cache Cache (
 if_stage If_stage(
   .rst                        (rst                        ),
   .clk                        (clk                        ),
+  .i_if_writebacked_req       (writebacked_req            ),
   .o_if_fetched_req           (fetched_req                ),
   .i_if_fetched_ack           (fetched_ack                ),
   .o_if_bus_req               (o_icache_req               ),
@@ -234,6 +240,7 @@ id_stage Id_stage(
   .o_id_csr_wdata             (o_id_csrwdata              ),
   .i_id_csr_rdata             (o_csr_rdata                ),
   .o_id_pc_pred               (o_id_pc_pred               ),
+  .o_id_memaction             (o_id_memaction             ),
   .o_id_nocmt                 (o_id_nocmt                 ),
   .o_id_skipcmt               (o_id_skipcmt               )
 );
@@ -254,27 +261,33 @@ exe_stage Exe_stage(
   .i_ex_op2                   (o_id_op2                   ),
   .i_ex_t1                    (o_id_t1                    ),
   .i_ex_pc_pred               (o_id_pc_pred               ),
+  .i_ex_memaddr               (o_id_memaddr               ),
   .i_ex_memren                (o_id_memren                ),
   .i_ex_memwen                (o_id_memwen                ),
   .i_ex_rd                    (o_id_rd                    ),
   .i_ex_nocmt                 (o_id_nocmt                 ),
   .i_ex_skipcmt               (o_id_skipcmt               ),
+  .i_ex_memaction             (o_id_memaction             ),
   .o_ex_pc                    (o_ex_pc                    ),
+  .o_ex_funct3                (o_ex_funct3                ),
   .o_ex_inst                  (o_ex_inst                  ),
   .o_ex_pc_jmp                (o_ex_pc_jmp                ),
   .o_ex_pc_jmpaddr            (o_ex_pc_jmpaddr            ),
   .o_ex_rd                    (o_ex_rd                    ),
   .o_ex_rd_wen                (o_ex_rd_wen                ),
   .o_ex_rd_wdata              (o_ex_rd_wdata              ),
+  .o_ex_memaddr               (o_ex_memaddr               ),
   .o_ex_memren                (o_ex_memren                ),
   .o_ex_memwen                (o_ex_memwen                ),
   .o_ex_nocmt                 (o_ex_nocmt                 ),
+  .o_ex_memaction             (o_ex_memaction             ),
   .o_ex_skipcmt               (o_ex_skipcmt               )
 );
 
 mem_stage Mem_stage(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
+  .i_mem_memaction            (o_ex_memaction             ),
   .i_mem_executed_req         (executed_req               ),
   .o_mem_executed_ack         (executed_ack               ),
   .o_mem_memoryed_req         (memoryed_req               ),
@@ -298,7 +311,15 @@ mem_stage Mem_stage(
   .o_mem_inst                 (o_mem_inst                 ),
   .o_mem_rdata                (o_mem_rdata                ),
   .o_mem_nocmt                (o_mem_nocmt                ),
-  .o_mem_skipcmt              (o_mem_skipcmt              )
+  .o_mem_skipcmt              (o_mem_skipcmt              ),
+
+  .o_dcache_req               (o_dcache_req               ),
+  .o_dcache_addr              (o_dcache_addr              ),
+  .o_dcache_op                (o_dcache_op                ),
+  .o_dcache_bytes             (o_dcache_bytes             ),
+  .o_dcache_wdata             (o_dcache_wdata             ),
+  .i_dcache_ack               (i_dcache_ack               ),
+  .i_dcache_rdata             (i_dcache_rdata             )
 );
 
 wb_stage Wb_stage(

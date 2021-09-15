@@ -8,15 +8,16 @@
 module if_stage(
   input   wire                clk,
   input   wire                rst,
-  output reg                  o_if_fetched_req,
-  input  reg                  i_if_fetched_ack,
+  input                       i_if_writebacked_req,
+  output  reg                 o_if_fetched_req,
+  input   reg                 i_if_fetched_ack,
 
   ///////////////////////////////////////////////
   // AXI interface for Fetch
 	input                       i_if_bus_ack,
   input         [`BUS_64]     i_if_bus_rdata,
-	output reg                  o_if_bus_req,
-  output reg    [`BUS_64]     o_if_bus_addr,
+	output                      o_if_bus_req,
+  output        [`BUS_64]     o_if_bus_addr,
   
   ///////////////////////////////////////////////
   input   wire                i_if_pc_jmp,
@@ -35,6 +36,7 @@ ifU IfU(
   .i_bus_rdata                (i_if_bus_rdata             ),
 	.o_bus_req                  (o_if_bus_req               ),
   .o_bus_addr                 (o_if_bus_addr              ),
+  .i_writebacked_req          (i_if_writebacked_req       ),
   .i_pc_jmp                   (i_if_pc_jmp                ),
   .i_pc_jmpaddr               (i_if_pc_jmpaddr            ),
   .o_pc                       (o_if_pc                    ),

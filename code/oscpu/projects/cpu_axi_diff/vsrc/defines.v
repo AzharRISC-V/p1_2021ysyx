@@ -21,6 +21,11 @@
 `define RISCV_PRIV_MODE_S   1
 `define RISCV_PRIV_MODE_M   3
 
+// mem_stage三种类型的动作
+`define MEM_ACTION_NONE     0     // 普通指令，不访存
+`define MEM_ACTION_LOAD     1     // load指令，数据要写入 rd
+`define MEM_ACTION_STORE    2     // store指令，存入数据
+
 
 `define CLOCKS_PER_SECOND   64'd240_0000        // 每秒的clock数，约240万
 

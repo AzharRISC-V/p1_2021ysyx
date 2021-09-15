@@ -33,6 +33,7 @@ module idU(
   output  wire  [`BUS_64]     o_op2,
   output  wire  [`BUS_64]     o_t1,
   output  wire  [`BUS_64]     o_pc_pred,
+  output  wire  [1:0]         o_memaction,
   output  wire                o_skipcmt
 );
 
@@ -274,6 +275,20 @@ always@(*) begin
   end
   else begin
     o_csr_wdata = 0;
+  end
+end
+
+// memaction
+always@(*) begin
+  if (i_disable) begin
+    o_memaction = `MEM_ACTION_NONE;
+  end
+  else begin
+    case (o_opcode)
+      `OPCODE_LB    : o_memaction = `MEM_ACTION_LOAD;
+      `OPCODE_SB    : o_memaction = `MEM_ACTION_STORE;
+      default       : o_memaction = `MEM_ACTION_NONE;
+    endcase
   end
 end
 

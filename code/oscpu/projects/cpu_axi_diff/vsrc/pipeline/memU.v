@@ -9,13 +9,27 @@
 module memU(
   input   wire                i_ena,
   input   wire                clk,
+  input   wire  [1:0]         i_memaction,
   input   wire                rst,
   input   wire  [`BUS_64]     i_addr,
   input   wire                i_ren,
   input   wire  [`BUS_FUNCT3] i_funct3,
   input   wire                i_wen,
   input   wire  [`BUS_64]     i_wdata,
-  output  wire  [`BUS_64]     o_rdata
+  output  wire  [`BUS_64]     o_rdata,
+  input   reg                 i_executed_req,   // execute是否活动
+  output  reg                 o_memoryed_req,   // 发出 已访存就绪 的请求
+  input   reg                 i_memoryed_ack,
+
+  ///////////////////////////////////////////////
+  // DCache interface
+  output  wire                o_dcache_req,
+  output  wire  [63:0]        o_dcache_addr,
+  output  wire                o_dcache_op,
+  output  wire  [3 :0]        o_dcache_bytes,
+  output  wire  [63:0]        o_dcache_wdata,
+  input   wire                i_dcache_ack,
+  input   wire  [63:0]        i_dcache_rdata
 );
 
 
@@ -41,18 +55,66 @@ wire   [`BUS_64] mem_rdata;
 
 wire mem_read_ok;
 
-// 访问内存，将1字节访问转换为8字节对齐的一次或两次访问
-// mem_access Mem_access(
-//   .i_ena                      (i_ena                      ),
-//   .clk                        (clk                        ),
-//   .i_ren                      (i_ren & is_mem             ),
-//   .i_addr                     (addr_0                     ),
-//   .i_funct3                   (funct3_0                   ),
-//   .o_rdata                    (mem_rdata                  ),
-//   .i_wdata                    (i_wdata                    ),
-//   .i_wen                      (i_wen & is_mem             )
-// );
+reg [2:0] dcache_bytes;
+always @(*) begin
+  case (i_funct3[1:0])
+    2'b00   : dcache_bytes = 0; // byte
+    2'b01   : dcache_bytes = 1; // half
+    2'b10   : dcache_bytes = 3; // word
+    2'b11   : dcache_bytes = 7; // dword
+    default : dcache_bytes = 0;
+  endcase
+end
 
+
+wire hs_dcache = o_dcache_req & i_dcache_ack;
+
+reg wait_finish;  // 是否等待访存完毕？
+
+always @(posedge clk) begin
+  if (rst) begin
+    wait_finish    <= 0;
+    o_memoryed_req <= 0;
+  end
+  else begin
+    if (i_executed_req) begin
+      if (i_memaction == `MEM_ACTION_NONE) begin
+        o_memoryed_req    <= 1;
+      end
+      else if (i_memaction == `MEM_ACTION_LOAD) begin
+        o_dcache_req      <= 1;
+        o_dcache_op       <= i_ren ? `REQ_READ : `REQ_WRITE;
+        o_dcache_addr     <= i_addr;
+        o_dcache_bytes    <= dcache_bytes;
+        o_dcache_wdata    <= i_ren ? 0 : i_wdata;
+        wait_finish       <= 1;
+      end
+      else if (i_memaction == `MEM_ACTION_STORE) begin
+        o_dcache_req      <= 1;
+        o_dcache_op       <= i_ren ? `REQ_READ : `REQ_WRITE;
+        o_dcache_addr     <= i_addr;
+        o_dcache_bytes    <= dcache_bytes;
+        o_dcache_wdata    <= i_ren ? 0 : i_wdata;
+        wait_finish       <= 1;
+      end
+    end
+    else begin
+      // 等待访存完毕
+      if (wait_finish && hs_dcache) begin
+        wait_finish       <= 0;
+        o_dcache_req      <= 0;
+        o_memoryed_req    <= 1;
+      end
+      // 清除req信号
+      else if (i_memoryed_ack) begin
+        o_memoryed_req    <= 0;
+      end
+    end
+  end
+end
+
+
+// 访问外设
 wire   [`BUS_64] dev_rdata;
 
 wire  dev_read_ok;
@@ -67,6 +129,6 @@ devices Devices(
 );
 
 
-assign o_rdata = (!en) ? 0 : (is_mem ? mem_rdata : dev_rdata);
+assign o_rdata = i_dcache_rdata;// is_mem ? i_dcache_rdata : dev_rdata;
 
 endmodule
