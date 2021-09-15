@@ -5,6 +5,9 @@
 
 int main() {
 
+  // asm volatile("j 0");  // 原地跳转，但编译器不支持
+  // asm volatile(".word 0x0000006f"); // 原地跳转
+
   asm volatile("addi a0,zero,1");   // "li a0,1"
   asm volatile("addi a0,zero,2");
   asm volatile("addi a0,zero,3");
