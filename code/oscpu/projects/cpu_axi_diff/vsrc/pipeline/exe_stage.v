@@ -39,6 +39,8 @@ module exe_stage(
   output  reg   [`BUS_64]     o_ex_memaddr,
   output  reg                 o_ex_memren,
   output  reg                 o_ex_memwen,
+  output  wire  [`BUS_64]     o_ex_op1,
+  output  wire  [`BUS_64]     o_ex_op2,
   output  wire                o_ex_nocmt,
   output  wire                o_ex_skipcmt,
   output  wire  [1:0]         o_ex_memaction
@@ -126,6 +128,8 @@ assign o_ex_pc      = i_disable ? 0 : tmp_i_ex_pc;
 assign o_ex_funct3  = i_disable ? 0 : tmp_i_ex_funct3;
 assign o_ex_inst    = i_disable ? 0 : tmp_i_ex_inst;
 assign o_ex_rd      = i_disable ? 0 : tmp_i_ex_rd;
+assign o_ex_op1     = i_disable ? 0 : tmp_i_ex_op1;
+assign o_ex_op2     = i_disable ? 0 : tmp_i_ex_op2;
 assign o_ex_nocmt   = i_disable ? 0 : tmp_i_ex_nocmt;
 assign o_ex_skipcmt = i_disable ? 0 : tmp_i_ex_skipcmt;
 assign o_ex_memaction = i_disable ? 0 : tmp_i_ex_memaction;

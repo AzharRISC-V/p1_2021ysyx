@@ -91,6 +91,8 @@ wire  [`BUS_64]               o_ex_pc_jmpaddr;
 wire  [`BUS_RIDX]             o_ex_rd;
 wire                          o_ex_rd_wen;
 wire  [`BUS_64]               o_ex_rd_wdata;
+wire  [`BUS_64]               o_ex_op1;
+wire  [`BUS_64]               o_ex_op2;
 wire                          o_ex_nocmt;
 wire                          o_ex_skipcmt;
 wire  [1:0]                   o_ex_memaction;
@@ -276,6 +278,8 @@ exe_stage Exe_stage(
   .o_ex_rd                    (o_ex_rd                    ),
   .o_ex_rd_wen                (o_ex_rd_wen                ),
   .o_ex_rd_wdata              (o_ex_rd_wdata              ),
+  .o_ex_op1                   (o_ex_op1                   ),
+  .o_ex_op2                   (o_ex_op2                   ),
   .o_ex_memaddr               (o_ex_memaddr               ),
   .o_ex_memren                (o_ex_memren                ),
   .o_ex_memwen                (o_ex_memwen                ),
@@ -299,6 +303,8 @@ mem_stage Mem_stage(
   .i_mem_wen                  (o_ex_memwen                ),
   .i_mem_wdata                (o_ex_memwdata              ),
   .i_mem_funct3               (o_ex_funct3                ),
+  .i_mem_op1                  (o_ex_op1                   ),
+  .i_mem_op2                  (o_ex_op2                   ),
   .i_mem_rd                   (o_ex_rd                    ),
   .i_mem_rd_wen               (o_ex_rd_wen                ),
   .i_mem_rd_wdata             (o_ex_rd_wdata              ),

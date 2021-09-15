@@ -207,6 +207,7 @@ always @(*) begin
         if (o_opcode == `OPCODE_AUIPC)    o_op2 = imm;
         else                              o_op2 = 0;
       end
+      `INST_S_TYPE  : o_op2 = i_rs2_data;
       default       : o_op2 = 0;
     endcase
   end

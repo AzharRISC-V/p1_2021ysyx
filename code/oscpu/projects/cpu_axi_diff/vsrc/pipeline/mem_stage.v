@@ -25,6 +25,8 @@ module mem_stage(
   input   wire  [`BUS_64]     i_mem_rd_wdata,
   input   wire                i_mem_nocmt,
   input   wire                i_mem_skipcmt,
+  input   wire  [`BUS_64]     i_mem_op1,
+  input   wire  [`BUS_64]     i_mem_op2,
   output  wire  [`BUS_RIDX]   o_mem_rd,
   output  wire                o_mem_rd_wen,
   output  wire  [`BUS_64]     o_mem_rd_wdata,
@@ -67,6 +69,8 @@ reg   [`BUS_64]               tmp_i_mem_wdata;
 reg   [`BUS_RIDX]             tmp_i_mem_rd;
 reg                           tmp_i_mem_rd_wen;
 reg   [`BUS_64]               tmp_i_mem_rd_wdata;
+reg   [`BUS_64]               tmp_i_mem_op1;
+reg   [`BUS_64]               tmp_i_mem_op2;
 reg                           tmp_i_mem_nocmt;
 reg                           tmp_i_mem_skipcmt;
 reg   [1:0]                   tmp_i_mem_memaction;
@@ -85,6 +89,8 @@ always @(posedge clk) begin
       tmp_i_mem_rd,
       tmp_i_mem_rd_wen,
       tmp_i_mem_rd_wdata,
+      tmp_i_mem_op1,
+      tmp_i_mem_op2,
       tmp_i_mem_nocmt,
       tmp_i_mem_skipcmt,
       tmp_i_mem_memaction
@@ -103,6 +109,8 @@ always @(posedge clk) begin
       tmp_i_mem_funct3          <= i_mem_funct3;
       tmp_i_mem_wen             <= i_mem_wen;
       tmp_i_mem_wdata           <= i_mem_wdata;
+      tmp_i_mem_op1             <= i_mem_op1;
+      tmp_i_mem_op2             <= i_mem_op2;
       tmp_i_mem_rd              <= i_mem_rd;
       tmp_i_mem_rd_wen          <= i_mem_rd_wen;
       tmp_i_mem_rd_wdata        <= i_mem_rd_wdata;
@@ -143,9 +151,6 @@ always @(*) begin
           default       : o_mem_rd_wdata = 0;
         endcase
       end
-      `MEM_ACTION_STORE: begin
-        o_mem_rd_wdata = tmp_i_mem_rd_wdata;
-      end
       default: begin
         o_mem_rd_wdata = tmp_i_mem_rd_wdata;
       end
@@ -153,10 +158,28 @@ always @(*) begin
   end
 end
 
+// rd_wdata
+always @(*) begin
+  if (i_mem_memaction == `MEM_ACTION_STORE) begin
+    case (i_mem_funct3)
+      `FUNCT3_SB    : mem_wdata = {56'd0, i_mem_op2[7:0]};
+      `FUNCT3_SH    : mem_wdata = {48'd0, i_mem_op2[15:0]};
+      `FUNCT3_SW    : mem_wdata = {32'd0, i_mem_op2[31:0]};
+      `FUNCT3_SD    : mem_wdata = i_mem_op2[63:0];
+      default       : mem_wdata = 0;
+    endcase
+  end
+  else begin
+    mem_wdata = 0;
+  end
+end
+
 assign o_mem_nocmt        = i_disable ? 0 : tmp_i_mem_nocmt;
 assign o_mem_skipcmt      = i_disable ? 0 : tmp_i_mem_skipcmt;
 
 wire [63:0] mem_rdata;
+reg  [63:0] mem_wdata;
+
 memU MemU(
   .i_ena                      (i_ena                      ),
   .clk                        (clk                        ),
@@ -166,7 +189,7 @@ memU MemU(
   .i_ren                      (i_mem_ren              ),
   .i_funct3                   (i_mem_funct3           ),
   .i_wen                      (i_mem_wen              ),
-  .i_wdata                    (i_mem_wdata            ),
+  .i_wdata                    (mem_wdata              ),
   .o_rdata                    (mem_rdata                  ),
   .i_executed_req             (i_mem_executed_req         ),
   .o_memoryed_req             (o_mem_memoryed_req         ),

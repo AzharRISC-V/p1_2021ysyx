@@ -83,18 +83,17 @@ always @(posedge clk) begin
       end
       else if (i_memaction == `MEM_ACTION_LOAD) begin
         o_dcache_req      <= 1;
-        o_dcache_op       <= i_ren ? `REQ_READ : `REQ_WRITE;
+        o_dcache_op       <= `REQ_READ;
         o_dcache_addr     <= i_addr;
         o_dcache_bytes    <= dcache_bytes;
-        o_dcache_wdata    <= i_ren ? 0 : i_wdata;
         wait_finish       <= 1;
       end
       else if (i_memaction == `MEM_ACTION_STORE) begin
         o_dcache_req      <= 1;
-        o_dcache_op       <= i_ren ? `REQ_READ : `REQ_WRITE;
+        o_dcache_op       <= `REQ_WRITE;
         o_dcache_addr     <= i_addr;
         o_dcache_bytes    <= dcache_bytes;
-        o_dcache_wdata    <= i_ren ? 0 : i_wdata;
+        o_dcache_wdata    <= i_wdata;
         wait_finish       <= 1;
       end
     end
