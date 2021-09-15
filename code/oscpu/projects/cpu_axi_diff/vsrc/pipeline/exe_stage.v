@@ -132,7 +132,7 @@ assign o_ex_memaction = i_disable ? 0 : tmp_i_ex_memaction;
 
 
 // o_memaddr
-assign o_ex_memaddr = i_disable ? 0 : i_ex_memaddr;
+assign o_ex_memaddr = i_disable ? 0 : tmp_i_ex_memaddr;
 
 exeU ExeU(
   .i_ena                      (i_ena                      ),
@@ -142,7 +142,6 @@ exeU ExeU(
   .i_op1                      (tmp_i_ex_op1               ),
   .i_op2                      (tmp_i_ex_op2               ),
   .i_t1                       (tmp_i_ex_t1                ),
-  .i_memaddr                  (tmp_i_ex_memaddr           ),
   .i_memren                   (tmp_i_ex_memren            ),
   .i_memwen                   (tmp_i_ex_memwen            ),
   .i_pc_pred                  (i_ex_pc_pred               ),
@@ -150,7 +149,6 @@ exeU ExeU(
   .o_pc_jmpaddr               (o_ex_pc_jmpaddr            ),
   .o_rd_wen                   (o_ex_rd_wen                ),
   .o_rd_data                  (o_ex_rd_wdata              ),
-  .o_memaddr                  (o_ex_memaddr               ),
   .o_memren                   (o_ex_memren                ),
   .o_memwen                   (o_ex_memwen                )
 );
