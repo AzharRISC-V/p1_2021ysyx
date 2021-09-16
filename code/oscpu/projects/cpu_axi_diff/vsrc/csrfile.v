@@ -7,11 +7,6 @@ module csrfile(
 
   // 读写CSR
   input   wire  [11 : 0]    i_csr_addr,
-  // 操作码 [1:0]
-  // 00    none
-  // 01    read and write
-  // 10    read and set
-  // 11    read and clear
   input   wire  [1 : 0]     i_csr_op,
   input   wire  [`BUS_64]   i_csr_wdata,
   output  reg   [`BUS_64]   o_csr_rdata,
@@ -54,10 +49,10 @@ begin
   end
   else begin
     case (i_csr_op)
-      2'b01     : begin o_csr_rdata = csrs[csr_idx]; csrs[csr_idx] = i_csr_wdata; end
-      2'b10     : begin o_csr_rdata = csrs[csr_idx]; csrs[csr_idx] = csrs[csr_idx] | i_csr_wdata; end
-      2'b11     : begin o_csr_rdata = csrs[csr_idx]; csrs[csr_idx] = csrs[csr_idx] & (~i_csr_wdata); end
-      default   : ;
+      `CSROP_READ_WRITE     : begin o_csr_rdata = csrs[csr_idx]; csrs[csr_idx] = i_csr_wdata; end
+      `CSROP_READ_SET       : begin o_csr_rdata = csrs[csr_idx]; csrs[csr_idx] = csrs[csr_idx] | i_csr_wdata; end
+      `CSROP_READ_CLEAR     : begin o_csr_rdata = csrs[csr_idx]; csrs[csr_idx] = csrs[csr_idx] & (~i_csr_wdata); end
+      default               : begin o_csr_rdata = 0; end
     endcase
   end
 end

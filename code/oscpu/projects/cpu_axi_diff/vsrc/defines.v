@@ -179,6 +179,11 @@
 `define FUNCT3_SRLW         3'b101
 `define FUNCT3_SRAW         3'b101
 
+// CSR Operation
+`define CSROP_NONE          2'b00     // none
+`define CSROP_READ_WRITE    2'b01     // read and write
+`define CSROP_READ_SET      2'b10     // read and set
+`define CSROP_READ_CLEAR    2'b11     // read and clear
 
 // Devices
 `define DEV_BASEADDR        64'h00000000_20000000

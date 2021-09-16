@@ -222,6 +222,7 @@ always @(*) begin
     case (o_opcode)
       `OPCODE_JALR  : o_t1 = i_pc + 4;
       `OPCODE_BEQ   : o_t1 = i_pc + imm;
+      `OPCODE_CSR   : o_t1 = i_csr_rdata;
       default       : o_t1 = 0;
     endcase
   end
@@ -232,28 +233,25 @@ end
 // o_csr_op
 always @(*) begin
   if (i_disable) begin
-    o_csr_op = 0;
+    o_csr_op = `CSROP_NONE;
   end
   else begin
     if (o_opcode == `OPCODE_CSR) begin
       case (o_funct3)
-        `FUNCT3_CSRRW   : o_csr_op = 2'b01;
-        `FUNCT3_CSRRS   : o_csr_op = 2'b10;
-        `FUNCT3_CSRRC   : o_csr_op = 2'b11;
-        `FUNCT3_CSRRWI  : o_csr_op = 2'b01;
-        `FUNCT3_CSRRSI  : o_csr_op = 2'b11;
-        `FUNCT3_CSRRCI  : o_csr_op = 2'b11;
-        default         : o_csr_op = 0;
+        `FUNCT3_CSRRW   : o_csr_op = `CSROP_READ_WRITE;
+        `FUNCT3_CSRRS   : o_csr_op = `CSROP_READ_SET;
+        `FUNCT3_CSRRC   : o_csr_op = `CSROP_READ_CLEAR;
+        `FUNCT3_CSRRWI  : o_csr_op = `CSROP_READ_WRITE;
+        `FUNCT3_CSRRSI  : o_csr_op = `CSROP_READ_SET;
+        `FUNCT3_CSRRCI  : o_csr_op = `CSROP_READ_CLEAR;
+        default         : o_csr_op = `CSROP_NONE;
       endcase
     end
     else begin
-      o_csr_op = 0;
+      o_csr_op = `CSROP_NONE;
     end
   end
 end
-
-// csr_inactive
-wire csr_inactive = o_csr_op == 2'b00;
 
 // o_csr_addr
 assign o_csr_addr = i_inst[31 : 20];

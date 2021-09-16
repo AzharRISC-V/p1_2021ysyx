@@ -1,0 +1,14 @@
+1. am-kernels/tests/am-tests中的 rtc-test
+编译 make mainargs=t
+代号参考如下：
+  Usage: make run mainargs=*
+    H: display this help message
+    a: audio test
+    d: scan devices
+    h: hello
+    i: interrupt/yield test
+    k: readkey test
+    m: multiprocessor test
+    p: x86 virtual memory test
+    t: real-time clock test
+    v: display test
