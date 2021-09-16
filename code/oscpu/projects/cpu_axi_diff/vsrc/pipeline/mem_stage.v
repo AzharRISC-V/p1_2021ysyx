@@ -132,47 +132,49 @@ assign o_mem_pc           = i_disable ? 0 : tmp_i_mem_pc;
 assign o_mem_inst         = i_disable ? 0 : tmp_i_mem_inst;
 assign o_mem_rd           = i_disable ? 0 : tmp_i_mem_rd;
 assign o_mem_rd_wen       = i_disable ? 0 : tmp_i_mem_rd_wen;
-// rd_wdata
-always @(*) begin
-  if (i_disable) begin
-    o_mem_rd_wdata = 0;
-  end
-  else begin
-    case (tmp_i_mem_memaction)
-      `MEM_ACTION_LOAD: begin
-        case (tmp_i_mem_funct3)
-          `FUNCT3_LB    : o_mem_rd_wdata = {{57{mem_rdata[7]}}, mem_rdata[6:0]} ;
-          `FUNCT3_LH    : o_mem_rd_wdata = {{49{mem_rdata[15]}}, mem_rdata[14:0]};
-          `FUNCT3_LW    : o_mem_rd_wdata = {{33{mem_rdata[31]}}, mem_rdata[30:0]};
-          `FUNCT3_LD    : o_mem_rd_wdata = mem_rdata[63:0];
-          `FUNCT3_LBU   : o_mem_rd_wdata = {56'd0, mem_rdata[7:0]};
-          `FUNCT3_LHU   : o_mem_rd_wdata = {48'd0, mem_rdata[15:0]};
-          `FUNCT3_LWU   : o_mem_rd_wdata = {32'd0, mem_rdata[31:0]};
-          default       : o_mem_rd_wdata = 0;
-        endcase
-      end
-      default: begin
-        o_mem_rd_wdata = tmp_i_mem_rd_wdata;
-      end
-    endcase
-  end
-end
+assign o_mem_rd_wdata     = i_disable ? 0 : tmp_i_mem_rd_wdata;
 
-// rd_wdata
-always @(*) begin
-  if (i_mem_memaction == `MEM_ACTION_STORE) begin
-    case (i_mem_funct3)
-      `FUNCT3_SB    : mem_wdata = {56'd0, i_mem_op2[7:0]};
-      `FUNCT3_SH    : mem_wdata = {48'd0, i_mem_op2[15:0]};
-      `FUNCT3_SW    : mem_wdata = {32'd0, i_mem_op2[31:0]};
-      `FUNCT3_SD    : mem_wdata = i_mem_op2[63:0];
-      default       : mem_wdata = 0;
-    endcase
-  end
-  else begin
-    mem_wdata = 0;
-  end
-end
+// // rd_wdata
+// always @(*) begin
+//   if (i_disable) begin
+//     o_mem_rd_wdata = 0;
+//   end
+//   else begin
+//     case (tmp_i_mem_memaction)
+//       `MEM_ACTION_LOAD: begin
+//         case (tmp_i_mem_funct3)
+//           `FUNCT3_LB    : o_mem_rd_wdata = {{57{mem_rdata[7]}}, mem_rdata[6:0]} ;
+//           `FUNCT3_LH    : o_mem_rd_wdata = {{49{mem_rdata[15]}}, mem_rdata[14:0]};
+//           `FUNCT3_LW    : o_mem_rd_wdata = {{33{mem_rdata[31]}}, mem_rdata[30:0]};
+//           `FUNCT3_LD    : o_mem_rd_wdata = mem_rdata[63:0];
+//           `FUNCT3_LBU   : o_mem_rd_wdata = {56'd0, mem_rdata[7:0]};
+//           `FUNCT3_LHU   : o_mem_rd_wdata = {48'd0, mem_rdata[15:0]};
+//           `FUNCT3_LWU   : o_mem_rd_wdata = {32'd0, mem_rdata[31:0]};
+//           default       : o_mem_rd_wdata = 0;
+//         endcase
+//       end
+//       default: begin
+//         o_mem_rd_wdata = tmp_i_mem_rd_wdata;
+//       end
+//     endcase
+//   end
+// end
+
+// // rd_wdata
+// always @(*) begin
+//   if (i_mem_memaction == `MEM_ACTION_STORE) begin
+//     case (i_mem_funct3)
+//       `FUNCT3_SB    : mem_wdata = {56'd0, i_mem_op2[7:0]};
+//       `FUNCT3_SH    : mem_wdata = {48'd0, i_mem_op2[15:0]};
+//       `FUNCT3_SW    : mem_wdata = {32'd0, i_mem_op2[31:0]};
+//       `FUNCT3_SD    : mem_wdata = i_mem_op2[63:0];
+//       default       : mem_wdata = 0;
+//     endcase
+//   end
+//   else begin
+//     mem_wdata = 0;
+//   end
+// end
 
 assign o_mem_nocmt        = i_disable ? 0 : tmp_i_mem_nocmt;
 assign o_mem_skipcmt      = i_disable ? 0 : tmp_i_mem_skipcmt;

@@ -83,10 +83,13 @@ always @(posedge clk) begin
   end
 end
 
-assign o_wb_pc      = i_disable ? 0 : tmp_i_wb_pc;
-assign o_wb_inst    = i_disable ? 0 : tmp_i_wb_inst;
-assign o_wb_nocmt   = i_disable ? 0 : tmp_i_wb_nocmt;
-assign o_wb_skipcmt = i_disable ? 0 : tmp_i_wb_skipcmt;
+assign o_wb_pc        = i_disable ? 0 : tmp_i_wb_pc;
+assign o_wb_inst      = i_disable ? 0 : tmp_i_wb_inst;
+assign o_wb_nocmt     = i_disable ? 0 : tmp_i_wb_nocmt;
+assign o_wb_skipcmt   = i_disable ? 0 : tmp_i_wb_skipcmt;
+assign o_wb_rd        = i_disable ? 0 : tmp_i_wb_rd;
+assign o_wb_rd_wen    = i_disable ? 0 : tmp_i_wb_rd_wen;
+assign o_wb_rd_wdata  = i_disable ? 0 : tmp_i_wb_rd_wdata;
 
 wbU WbU(
   .i_ena                      (i_ena                      ),
@@ -95,9 +98,9 @@ wbU WbU(
   .i_rd                       (tmp_i_wb_rd                ),
   .i_rd_wen                   (tmp_i_wb_rd_wen            ),
   .i_rd_wdata                 (tmp_i_wb_rd_wdata          ),
-  .o_rd                       (o_wb_rd                    ),
-  .o_rd_wen                   (o_wb_rd_wen                ),
-  .o_rd_wdata                 (o_wb_rd_wdata              )
+  .o_rd                       (                     ),
+  .o_rd_wen                   (                 ),
+  .o_rd_wdata                 (               )
 );
 
 endmodule

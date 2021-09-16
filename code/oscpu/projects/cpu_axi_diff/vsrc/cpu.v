@@ -75,13 +75,16 @@ wire                          o_id_rs1_ren;
 wire  [`BUS_RIDX]             o_id_rs1;
 wire                          o_id_rs2_ren;
 wire  [`BUS_RIDX]             o_id_rs2;
-wire  [`BUS_RIDX]             o_id_rd;
 // id_stage -> csrfile
 wire  [11 : 0]                o_id_csraddr;
 wire  [1 : 0]                 o_id_csrop;
 wire  [11 : 0]                o_id_csrwaddr;
 wire  [`BUS_64]               o_id_csrwdata;
 // id_stage -> exe_stage
+wire  [`BUS_RIDX]             o_id_rd;
+wire                          o_id_rd_wen;
+wire  [4 : 0]                 o_id_inst_type;
+wire  [7 : 0]                 o_id_inst_opcode;
 wire  [2 : 0]                 o_id_itype;
 wire  [`BUS_OPCODE]           o_id_opcode;
 wire  [`BUS_FUNCT3]           o_id_funct3;
@@ -243,12 +246,15 @@ id_stage Id_stage(
   .i_id_nocmt                 (o_if_nocmt                 ),
   .o_id_pc                    (o_id_pc                    ),
   .i_id_pc_pred               (o_if_pc_pred               ),
+  .o_id_inst_type             (o_id_inst_type             ),
+  .o_id_inst_opcode           (o_id_inst_opcode           ),
   .o_id_inst                  (o_id_inst                  ),
   .o_id_rs1_ren               (o_id_rs1_ren               ),
   .o_id_rs1                   (o_id_rs1                   ),
   .o_id_rs2_ren               (o_id_rs2_ren               ),
   .o_id_rs2                   (o_id_rs2                   ),
   .o_id_rd                    (o_id_rd                    ),
+  .o_id_rd_wen                (o_id_rd_wen                ),
   .o_id_memaddr               (o_id_memaddr               ),
   .o_id_memren                (o_id_memren                ),
   .o_id_memwen                (o_id_memwen                ),
@@ -276,6 +282,8 @@ exe_stage Exe_stage(
   .i_ex_decoded_req           (decoded_req                ),
   .o_ex_decoded_ack           (decoded_ack                ),
   .o_ex_executed_req          (executed_req               ),
+  .i_ex_inst_type             (o_id_inst_type             ),
+  .i_ex_inst_opcode           (o_id_inst_opcode           ),
   .i_ex_pc                    (o_id_pc                    ),
   .i_ex_inst                  (o_id_inst                  ),
   .i_ex_executed_ack          (executed_ack               ),
@@ -290,6 +298,7 @@ exe_stage Exe_stage(
   .i_ex_memren                (o_id_memren                ),
   .i_ex_memwen                (o_id_memwen                ),
   .i_ex_rd                    (o_id_rd                    ),
+  .i_ex_rd_wen                (o_id_rd_wen                ),
   .i_ex_nocmt                 (o_id_nocmt                 ),
   .i_ex_skipcmt               (o_id_skipcmt               ),
   .i_ex_memaction             (o_id_memaction             ),

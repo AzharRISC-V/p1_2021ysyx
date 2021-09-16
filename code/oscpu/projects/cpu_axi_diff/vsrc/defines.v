@@ -91,7 +91,9 @@
 `define INST_EBREAK         32'h0010_0073   // ebreak 指令
 
 // 自定义的指令码
-`define INST_ADD            8'h11
+`define INST_ADD            8'b0001_0001
+`define INST_SUB            8'h11
+
 
 // inst-type
 `define INST_R_TYPE         3'b001

@@ -33,27 +33,27 @@ module memU(
 );
 
 
-wire i_disable = !i_ena;
+// wire i_disable = !i_ena;
 
-// If access memory?
-wire  is_mem;
-// If access device?
-wire  is_device;
+// // If access memory?
+// wire  is_mem;
+// // If access device?
+// wire  is_device;
 
-assign is_mem = i_disable ? 0 : (i_addr & ~(64'hFFFFFFF)) == 64'h80000000;
-assign is_device = i_disable ? 0 : (i_addr & ~(64'hFFF)) == 64'h20000000;
+// assign is_mem = i_disable ? 0 : (i_addr & ~(64'hFFFFFFF)) == 64'h80000000;
+// assign is_device = i_disable ? 0 : (i_addr & ~(64'hFFF)) == 64'h20000000;
 
-wire            en;
-wire  [`BUS_64] addr_0;
-wire  [2 : 0]   funct3_0;
+// wire            en;
+// wire  [`BUS_64] addr_0;
+// wire  [2 : 0]   funct3_0;
 
-assign en        = i_disable ? 0 : i_ren | i_wen;
-assign addr_0    = i_disable ? 0 : (!en) ? 0 : i_addr;
-assign funct3_0  = i_disable ? 0 : (!en) ? 0 : i_funct3;
+// assign en        = i_disable ? 0 : i_ren | i_wen;
+// assign addr_0    = i_disable ? 0 : (!en) ? 0 : i_addr;
+// assign funct3_0  = i_disable ? 0 : (!en) ? 0 : i_funct3;
 
-wire   [`BUS_64] mem_rdata;
+// wire   [`BUS_64] mem_rdata;
 
-wire mem_read_ok;
+// wire mem_read_ok;
 
 reg [2:0] dcache_bytes;
 always @(*) begin
@@ -113,21 +113,21 @@ always @(posedge clk) begin
 end
 
 
-// 访问外设
-wire   [`BUS_64] dev_rdata;
+// // 访问外设
+// wire   [`BUS_64] dev_rdata;
 
-wire  dev_read_ok;
+// wire  dev_read_ok;
 
-devices Devices(
-  .clk                        (clk                        ),
-  .rst                        (rst                        ),
-  .ren                        (i_ren & is_device          ),
-  .raddr                      (addr_0                     ),
-  .rdata                      (dev_rdata                  ),
-  .read_ok                    (dev_read_ok                )  
-);
+// devices Devices(
+//   .clk                        (clk                        ),
+//   .rst                        (rst                        ),
+//   .ren                        (i_ren & is_device          ),
+//   .raddr                      (addr_0                     ),
+//   .rdata                      (dev_rdata                  ),
+//   .read_ok                    (dev_read_ok                )  
+// );
 
 
-assign o_rdata = i_dcache_rdata;// is_mem ? i_dcache_rdata : dev_rdata;
+// assign o_rdata = i_dcache_rdata;// is_mem ? i_dcache_rdata : dev_rdata;
 
 endmodule
