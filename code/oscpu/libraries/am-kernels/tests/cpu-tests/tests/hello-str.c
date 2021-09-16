@@ -13,18 +13,6 @@ void mydl(uint64_t tm) {
 
 int main() {
 
-  for (int i = 0; i < 100; i++) {
-    //printf("%d\n", i);
-    putch('a' + (i%10));
-    mydl(10000);
-    if ((i + 1) % 10 == 0) {
-      putch('\n');
-    }
-  }
-  putch('\n');
-
-  putch('b');
-  putch('c');
   printf("===TEST Started!\n");
 
 	sprintf(buf, "%s", "Hello world!\n");
@@ -35,6 +23,19 @@ int main() {
 
 	sprintf(buf, "%d + %d = %d\n", 2, 10, 12);
 	check(strcmp(buf, "2 + 10 = 12\n") == 0);
+
+
+  for (int i = 0; i < 100; i++) {
+    //printf("%d\n", i);
+    putch('a' + (i%10));
+    mydl(1000);
+    if ((i + 1) % 10 == 0) {
+      putch('\n');
+    }
+  }
+  putch('\n');
+  putch('b');
+  putch('c');
 
   printf("===TEST Finished!\n");
 
