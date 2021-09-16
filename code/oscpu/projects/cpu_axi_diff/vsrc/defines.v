@@ -87,12 +87,69 @@
 
 // 已编码的指令
 `define INST_NOP            32'h0000_0013   // addi x0,x0,0
-`define INST_ECALL          32'h0000_0073   // ecall 指令
-`define INST_EBREAK         32'h0010_0073   // ebreak 指令
 
 // 自定义的指令码
-`define INST_ADD            8'b0001_0001
-`define INST_SUB            8'h11
+`define INST_LUI            8'b0000_0001    // d1
+`define INST_AUIPC          8'b0000_0010    //
+`define INST_JAL            8'b0000_0011    //
+`define INST_JALR           8'b0000_0100    // 
+`define INST_BEQ            8'b0000_0101    //
+`define INST_BNE            8'b0000_0110    //
+`define INST_BLT            8'b0000_0111    //
+`define INST_BGE            8'b0000_1000    //
+`define INST_BLTU           8'b0000_1001    //
+`define INST_BGEU           8'b0000_1010    //
+`define INST_LB             8'b0000_1011    //
+`define INST_LH             8'b0000_1100    //
+`define INST_LW             8'b0000_1101    //
+`define INST_LBU            8'b0000_1110    //
+`define INST_LHU            8'b0000_1111    // 
+`define INST_SB             8'b0001_0000    //
+`define INST_SH             8'b0001_0001    //
+`define INST_SW             8'b0001_0010    //
+`define INST_ADDI           8'b0001_0011    //
+`define INST_SLTI           8'b0001_0100    //
+`define INST_SLTIU          8'b0001_0101    //
+`define INST_XORI           8'b0001_0110    //
+`define INST_ORI            8'b0001_0111    //
+`define INST_ANDI           8'b0001_1000    //
+`define INST_SLLI           8'b0001_1001    //
+`define INST_SRLI           8'b0001_1010    //
+`define INST_SRAI           8'b0001_1011    //
+`define INST_ADD            8'b0001_1100    //
+`define INST_SUB            8'b0001_1101    //
+`define INST_SLL            8'b0001_1110    //
+`define INST_SLT            8'b0001_1111    //
+`define INST_SLTU           8'b0010_0000    //
+`define INST_XOR            8'b0010_0001    //
+`define INST_SRL            8'b0010_0010    //
+`define INST_SRA            8'b0010_0011    //
+`define INST_OR             8'b0010_0100    //
+`define INST_AND            8'b0010_0101    //
+`define INST_FENCE          8'b0010_0110    //
+`define INST_FENCEI         8'b0010_0111    //
+`define INST_ECALL          8'b0010_1000    //
+`define INST_EBREAK         8'b0010_1001    //
+`define INST_CSRRW          8'b0010_1010    //
+`define INST_CSRRS          8'b0010_1011    //
+`define INST_CSRRC          8'b0010_1100    //
+`define INST_CSRRWI         8'b0010_1101    //
+`define INST_CSRRSI         8'b0010_1110    //
+`define INST_CSRRCI         8'b0010_1111    // d47 = h2F
+
+`define INST_LWU            8'b0011_0000    //
+`define INST_LD             8'b0011_0001    //
+`define INST_SD             8'b0011_0010    //
+`define INST_ADDIW          8'b0011_0011    //
+`define INST_SLLIW          8'b0011_0100    //
+`define INST_SRLIW          8'b0011_0101    //
+`define INST_SRAIW          8'b0011_0110    //
+`define INST_ADDW           8'b0011_0111    //
+`define INST_SUBW           8'b0011_1000    //
+`define INST_SLLW           8'b0011_1001    //
+`define INST_SRLW           8'b0011_1010    //
+`define INST_SRAW           8'b0011_1011    //
+
 
 
 // inst-type
