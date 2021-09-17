@@ -19,14 +19,6 @@ module idU(
   output  wire  [`BUS_RIDX]   o_rs2,
   output  wire  [`BUS_RIDX]   o_rd,
   output  wire                o_rd_wen,
-  output  wire                o_memren,
-  output  wire  [`BUS_64]     o_memaddr,
-  output  wire                o_memwen,
-  output  wire  [`BUS_64]     o_memwdata,
-  output  reg   [11 : 0]      o_csr_addr,
-  output  reg   [1 : 0]       o_csr_op,
-  output  reg   [`BUS_64]     o_csr_wdata,
-  input   reg   [`BUS_64]     i_csr_rdata,
   output  wire  [4 : 0]       o_inst_type,
   output  wire  [7 : 0]       o_inst_opcode,
   output  wire  [2 : 0]       o_itype,
@@ -37,7 +29,6 @@ module idU(
   output  wire  [`BUS_64]     o_op2,
   output  wire  [`BUS_64]     o_op3,
   output  wire  [`BUS_64]     o_pc_pred,
-  output  wire  [1:0]         o_memaction,
   output  wire                o_skipcmt
 );
 
@@ -238,8 +229,8 @@ assign o_rs1      = ( rst == 1'b1 ) ? 0 : ((inst_type_R | inst_type_I | inst_typ
 assign o_rs2_ren  = ( rst == 1'b1 ) ? 0 : ( inst_type_R | inst_type_S | inst_type_B);
 assign o_rs2      = ( rst == 1'b1 ) ? 0 : ((inst_type_R | inst_type_S | inst_type_B) ? rs2 : 0 );
 
-assign o_rd_wen   = ( rst == 1'b1 ) ? 0 : ( inst_type_R | inst_type_I | inst_type_U | inst_type_J);
-assign o_rd       = ( rst == 1'b1 ) ? 0 : ((inst_type_R | inst_type_I | inst_type_U | inst_type_J) ? rd  : 0 );
+assign o_rd_wen   = ( rst == 1'b1 ) ? 0 : ( inst_type_R | inst_type_I | inst_type_U | inst_type_J | inst_type_CSRI);
+assign o_rd       = ( rst == 1'b1 ) ? 0 : ((inst_type_R | inst_type_I | inst_type_U | inst_type_J | inst_type_CSRI) ? rd  : 0 );
 
 always @(*) begin
   if (rst == 1'b1) begin
@@ -254,6 +245,9 @@ always @(*) begin
     end
     else if (inst_type_J) begin
       o_op1 = i_pc;
+    end
+    else if (inst_type_CSRI) begin
+      o_op1 = {59'd0, rs1};
     end
     else begin
       o_op1 = 0;
@@ -567,54 +561,6 @@ end
 //   end
 // end
 
-// // ------------- csr -----------------
-
-// // o_csr_op
-// always @(*) begin
-//   if (i_disable) begin
-//     o_csr_op = `CSROP_NONE;
-//   end
-//   else begin
-//     if (o_opcode == `OPCODE_CSR) begin
-//       case (o_funct3)
-//         `FUNCT3_CSRRW   : o_csr_op = `CSROP_READ_WRITE;
-//         `FUNCT3_CSRRS   : o_csr_op = `CSROP_READ_SET;
-//         `FUNCT3_CSRRC   : o_csr_op = `CSROP_READ_CLEAR;
-//         `FUNCT3_CSRRWI  : o_csr_op = `CSROP_READ_WRITE;
-//         `FUNCT3_CSRRSI  : o_csr_op = `CSROP_READ_SET;
-//         `FUNCT3_CSRRCI  : o_csr_op = `CSROP_READ_CLEAR;
-//         default         : o_csr_op = `CSROP_NONE;
-//       endcase
-//     end
-//     else begin
-//       o_csr_op = `CSROP_NONE;
-//     end
-//   end
-// end
-
-// // o_csr_addr
-// assign o_csr_addr = i_inst[31 : 20];
-
-// // csr_zimm
-// wire [`BUS_64] csr_zimm = {{60{i_inst[19]}}, i_inst[18:15]};
-
-// // o_csr_wdata
-// always@(*) begin
-//   if (o_opcode == `OPCODE_CSR) begin
-//     case (o_funct3)
-//       `FUNCT3_CSRRW   : o_csr_wdata = i_rs1_data;
-//       `FUNCT3_CSRRS   : o_csr_wdata = i_rs1_data;
-//       `FUNCT3_CSRRC   : o_csr_wdata = i_rs1_data;
-//       `FUNCT3_CSRRWI  : o_csr_wdata = csr_zimm;
-//       `FUNCT3_CSRRSI  : o_csr_wdata = csr_zimm;
-//       `FUNCT3_CSRRCI  : o_csr_wdata = csr_zimm;
-//       default         : o_csr_wdata = 0;
-//     endcase
-//   end
-//   else begin
-//     o_csr_wdata = 0;
-//   end
-// end
 
 // // memaction
 // always@(*) begin

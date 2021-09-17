@@ -17,14 +17,15 @@ module exeU(
   input   wire  [`BUS_64]     i_op2,
   input   wire  [`BUS_64]     i_op3,
   input   wire  [`BUS_64]     i_pc_pred,
-  input                       i_memren,
-  input                       i_memwen,
+  input   reg   [`BUS_64]     i_csr_rdata,
+  output  reg   [11 : 0]      o_csr_addr,
+  output  reg                 o_csr_ren,
+  output  reg                 o_csr_wen,
+  output  reg   [`BUS_64]     o_csr_wdata,
   output  reg                 o_pc_jmp,
   output  reg   [`BUS_64]     o_pc_jmpaddr,
   output  wire                o_rd_wen,
-  output  wire  [`BUS_64]     o_rd_data,
-  output                      o_memren,
-  output                      o_memwen
+  output  wire  [`BUS_64]     o_rd_data
 );
 
 
@@ -78,6 +79,12 @@ begin
     `INST_AUIPC   : begin o_rd_data = i_op1 + i_op2; end
     `INST_JAL     : begin o_rd_data = i_op1 + i_op2; end
     `INST_JALR    : begin o_rd_data = i_op3; end
+    `INST_CSRRW   : begin o_rd_data = i_csr_rdata; end
+    `INST_CSRRS   : begin o_rd_data = i_csr_rdata; end
+    `INST_CSRRC   : begin o_rd_data = i_csr_rdata; end
+    `INST_CSRRWI  : begin o_rd_data = i_csr_rdata; end
+    `INST_CSRRSI  : begin o_rd_data = i_csr_rdata; end
+    `INST_CSRRCI  : begin o_rd_data = i_csr_rdata; end
 	  default       : begin o_rd_data = `ZERO_WORD; end
 	endcase
   end
@@ -119,6 +126,36 @@ always @(*) begin
       `INST_BLTU  : begin o_pc_jmpaddr = i_op3; end
       `INST_BGEU  : begin o_pc_jmpaddr = i_op3; end
       default     : begin o_pc_jmpaddr = 0; end
+    endcase
+  end
+end
+
+
+
+// ------------- csr -----------------
+
+wire inst_csr = 
+  (i_inst_opcode == `INST_CSRRW ) | (i_inst_opcode == `INST_CSRRS ) | 
+  (i_inst_opcode == `INST_CSRRC ) | (i_inst_opcode == `INST_CSRRWI) | 
+  (i_inst_opcode == `INST_CSRRSI) | (i_inst_opcode == `INST_CSRRCI) ;
+
+assign o_csr_ren = (rst == 1'b1) ? 0 : inst_csr;
+assign o_csr_wen = (rst == 1'b1) ? 0 : inst_csr;
+assign o_csr_addr = (rst == 1'b1) ? 0 : (inst_csr ? i_op2[11:0] : 0);
+
+always @(*) begin
+  if (rst == 1'b1) begin
+    o_csr_wdata = 0;
+  end
+  else begin
+    case (i_inst_opcode)
+      `INST_CSRRW   : o_csr_wdata = i_op1;
+      `INST_CSRRS   : o_csr_wdata = i_op1 | i_csr_rdata;
+      `INST_CSRRC   : o_csr_wdata = i_op1 & (~i_csr_rdata);
+      `INST_CSRRWI  : o_csr_wdata = i_op1;
+      `INST_CSRRSI  : o_csr_wdata = i_op1 | i_csr_rdata;
+      `INST_CSRRCI  : o_csr_wdata = i_op1 & (~i_csr_rdata);
+      default       : o_csr_wdata = 0;
     endcase
   end
 end

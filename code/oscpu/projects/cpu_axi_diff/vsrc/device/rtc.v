@@ -25,7 +25,7 @@ reg   [5 : 0]   second      ;   // 2^6-1=63
 wire  [`BUS_64] rtc_val = {21'b0, year, month, day, hour, minute, second};
 
 // rtc simulate
-always @(negedge clk) begin
+always @(posedge clk) begin
   if (rst) begin
     year = 2021;
     month = 1;

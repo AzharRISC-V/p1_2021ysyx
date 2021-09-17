@@ -12,14 +12,8 @@ module mem_stage(
   output  reg                 o_mem_executed_ack,
   output  reg                 o_mem_memoryed_req,
   input   reg                 i_mem_memoryed_ack,
-  input   wire  [1:0]         i_mem_memaction,
   input   wire  [`BUS_64]     i_mem_pc,
   input   wire  [`BUS_32]     i_mem_inst,
-  input   wire  [`BUS_64]     i_mem_addr,
-  input   wire                i_mem_ren,
-  input   wire  [`BUS_FUNCT3] i_mem_funct3,
-  input   wire                i_mem_wen,
-  input   wire  [`BUS_64]     i_mem_wdata,
   input   wire  [`BUS_RIDX]   i_mem_rd,
   input   wire                i_mem_rd_wen,
   input   wire  [`BUS_64]     i_mem_rd_wdata,
@@ -35,7 +29,6 @@ module mem_stage(
   output  wire  [`BUS_64]     o_mem_rd_wdata,
   output  wire  [`BUS_64]     o_mem_pc,
   output  wire  [`BUS_32]     o_mem_inst,
-  output  wire  [`BUS_64]     o_mem_rdata,
   output  wire                o_mem_nocmt,
   output  wire                o_mem_skipcmt,
 
@@ -56,6 +49,59 @@ assign o_mem_executed_ack = 1'b1;
 wire executed_hs = i_mem_executed_req & o_mem_executed_ack;
 wire memoryed_hs = i_mem_memoryed_ack & o_mem_memoryed_req;
 
+wire                  ch_mem;         // If access memory?
+wire                  ch_mmio;        // If access device (mmio)?
+wire                  ch_none;        // If access nothing?
+wire                  memoryed_req_mem;
+wire                  memoryed_req_mmio;
+wire                  memoryed_req_none;
+wire   [`BUS_64]      rdata_mmio;    // readed data from main memory
+wire   [`BUS_64]      rdata_mem;    // readed data from mmio
+reg    [`BUS_64]      rdata;        // readed data from main memory or mmio
+
+wire start = i_mem_executed_req;
+
+
+assign ch_mem     = rst ? 0 : (mem_addr & ~(64'hFFFFFFF)) == 64'h80000000;
+assign ch_mmio    = rst ? 0 : (mem_addr & ~(64'hFFF)) == 64'h20000000;
+assign ch_none    = rst ? 0 : !(ch_mem | ch_mmio);
+
+wire ena_mem      = i_ena & (mem_ren | mem_wen) & ch_mem;
+wire ena_mmio     = i_ena & (mem_ren | mem_wen) & ch_mmio;
+wire ena_none     = i_ena & (!(mem_ren | mem_wen));
+
+// o_mem_memoryed_req
+always @(*) begin
+  if (rst) begin
+    o_mem_memoryed_req = 0;
+  end
+  else if (ch_mem) begin
+    o_mem_memoryed_req = memoryed_req_mem;
+  end
+  else if (ch_mmio) begin
+    o_mem_memoryed_req = memoryed_req_mmio;
+  end
+  else begin
+    o_mem_memoryed_req = memoryed_req_none;
+  end
+end
+
+// rdata
+always @(*) begin
+  if (rst) begin
+    rdata = 0;
+  end
+  else if (ch_mem) begin
+    rdata = rdata_mem;
+  end
+  else if (ch_mmio) begin
+    rdata = rdata_mmio;
+  end
+  else begin
+    rdata = 0;
+  end
+end
+
 // 是否使能组合逻辑单元部件
 reg                           i_ena;
 wire                          i_disable = !i_ena;
@@ -64,11 +110,6 @@ wire                          i_disable = !i_ena;
 reg                           tmp_i_mem_executed_req;
 reg   [`BUS_64]               tmp_i_mem_pc;
 reg   [`BUS_32]               tmp_i_mem_inst;
-reg   [`BUS_64]               tmp_i_mem_addr;
-reg                           tmp_i_mem_ren;
-reg   [`BUS_FUNCT3]           tmp_i_mem_funct3;
-reg                           tmp_i_mem_wen;
-reg   [`BUS_64]               tmp_i_mem_wdata;
 reg   [`BUS_RIDX]             tmp_i_mem_rd;
 reg                           tmp_i_mem_rd_wen;
 reg   [`BUS_64]               tmp_i_mem_rd_wdata;
@@ -79,19 +120,14 @@ reg   [`BUS_64]               tmp_i_mem_op2;
 reg   [`BUS_64]               tmp_i_mem_op3;
 reg                           tmp_i_mem_nocmt;
 reg                           tmp_i_mem_skipcmt;
-reg   [1:0]                   tmp_i_mem_memaction;
 
+// o_mem_memoryed_req
 always @(posedge clk) begin
   if (rst) begin
     {
       tmp_i_mem_executed_req,
       tmp_i_mem_pc,
       tmp_i_mem_inst,
-      tmp_i_mem_addr, 
-      tmp_i_mem_ren, 
-      tmp_i_mem_funct3, 
-      tmp_i_mem_wen, 
-      tmp_i_mem_wdata,
       tmp_i_mem_rd,
       tmp_i_mem_rd_wen,
       tmp_i_mem_rd_wdata,
@@ -101,8 +137,7 @@ always @(posedge clk) begin
       tmp_i_mem_op2,
       tmp_i_mem_op3,
       tmp_i_mem_nocmt,
-      tmp_i_mem_skipcmt,
-      tmp_i_mem_memaction
+      tmp_i_mem_skipcmt
     } <= 0;
 
     // o_mem_memoryed_req    <= 0;
@@ -113,11 +148,6 @@ always @(posedge clk) begin
       tmp_i_mem_executed_req    <= i_mem_executed_req;
       tmp_i_mem_pc              <= i_mem_pc;
       tmp_i_mem_inst            <= i_mem_inst;
-      tmp_i_mem_addr            <= i_mem_addr; 
-      tmp_i_mem_ren             <= i_mem_ren;
-      tmp_i_mem_funct3          <= i_mem_funct3;
-      tmp_i_mem_wen             <= i_mem_wen;
-      tmp_i_mem_wdata           <= i_mem_wdata;
       tmp_i_mem_op1             <= i_mem_op1;
       tmp_i_mem_op2             <= i_mem_op2;
       tmp_i_mem_op3             <= i_mem_op3;
@@ -128,13 +158,9 @@ always @(posedge clk) begin
       tmp_i_mem_rd_wdata        <= i_mem_rd_wdata;
       tmp_i_mem_nocmt           <= i_mem_nocmt;
       tmp_i_mem_skipcmt         <= i_mem_skipcmt;
-      tmp_i_mem_memaction       <= i_mem_memaction;
-
-      // o_mem_memoryed_req        <= 1;
       i_ena                     <= 1;
     end
-    else if (i_mem_memoryed_ack & o_mem_memoryed_req) begin
-      // o_mem_memoryed_req        <= 0;
+    else if (memoryed_hs) begin
       i_ena                     <= 0;
     end
   end
@@ -152,11 +178,11 @@ wire [63:0] mem_addr;
 reg  [2:0]  mem_bytes;
 reg         mem_ren;
 reg         mem_wen;
-wire [63:0] mem_rdata;
+wire [63:0] rdata_mem;
 reg  [63:0] mem_wdata;
 
 // addr
-assign mem_addr = i_mem_op1 + i_mem_op3;
+assign mem_addr = (!start) ? 0 : tmp_i_mem_op1 + tmp_i_mem_op3;
 
 // bytes
 always @(*) begin
@@ -206,7 +232,7 @@ always @(*) begin
     mem_wen = 0;
   end
   else begin
-    case (i_mem_inst_opcode)
+    case (tmp_i_mem_inst_opcode)
       `INST_SB  : begin mem_wen = 1; end
       `INST_SH  : begin mem_wen = 1; end
       `INST_SW  : begin mem_wen = 1; end
@@ -223,13 +249,13 @@ always @(*) begin
   end
   else begin
     case (tmp_i_mem_inst_opcode)
-      `INST_LB  : begin o_mem_rd_wdata = {{57{mem_rdata[7]}}, mem_rdata[6:0]} ; end
-      `INST_LBU : begin o_mem_rd_wdata = {56'd0, mem_rdata[7:0]}; end
-      `INST_LH  : begin o_mem_rd_wdata = {{49{mem_rdata[15]}}, mem_rdata[14:0]}; end
-      `INST_LHU : begin o_mem_rd_wdata = {48'd0, mem_rdata[15:0]}; end
-      `INST_LW  : begin o_mem_rd_wdata = {{33{mem_rdata[31]}}, mem_rdata[30:0]}; end
-      `INST_LWU : begin o_mem_rd_wdata = {32'd0, mem_rdata[31:0]}; end
-      `INST_LD  : begin o_mem_rd_wdata = mem_rdata[63:0]; end
+      `INST_LB  : begin o_mem_rd_wdata = {{57{rdata[7]}}, rdata[6:0]} ; end
+      `INST_LBU : begin o_mem_rd_wdata = {56'd0, rdata[7:0]}; end
+      `INST_LH  : begin o_mem_rd_wdata = {{49{rdata[15]}}, rdata[14:0]}; end
+      `INST_LHU : begin o_mem_rd_wdata = {48'd0, rdata[15:0]}; end
+      `INST_LW  : begin o_mem_rd_wdata = {{33{rdata[31]}}, rdata[30:0]}; end
+      `INST_LWU : begin o_mem_rd_wdata = {32'd0, rdata[31:0]}; end
+      `INST_LD  : begin o_mem_rd_wdata = rdata[63:0]; end
       default   : begin o_mem_rd_wdata = tmp_i_mem_rd_wdata; end
     endcase
   end
@@ -241,7 +267,7 @@ always @(*) begin
     mem_wen = 0;
   end
   else begin
-    case (i_mem_inst_opcode)
+    case (tmp_i_mem_inst_opcode)
       `INST_SB  : begin mem_wdata = {56'd0, i_mem_op2[7:0]}; end
       `INST_SH  : begin mem_wdata = {48'd0, i_mem_op2[15:0]}; end
       `INST_SW  : begin mem_wdata = {32'd0, i_mem_op2[31:0]}; end
@@ -251,36 +277,20 @@ always @(*) begin
   end
 end
 
-
-// // rd_wdata
-// always @(*) begin
-//   if (i_mem_memaction == `MEM_ACTION_STORE) begin
-//     case (i_mem_funct3)
-//       `FUNCT3_SB    : mem_wdata = {56'd0, i_mem_op2[7:0]};
-//       `FUNCT3_SH    : mem_wdata = {48'd0, i_mem_op2[15:0]};
-//       `FUNCT3_SW    : mem_wdata = {32'd0, i_mem_op2[31:0]};
-//       `FUNCT3_SD    : mem_wdata = i_mem_op2[63:0];
-//       default       : mem_wdata = 0;
-//     endcase
-//   end
-//   else begin
-//     mem_wdata = 0;
-//   end
-// end
-
+// 访问主存
 memU MemU(
-  .i_ena                      (i_ena                      ),
   .clk                        (clk                        ),
   .rst                        (rst                        ),
-  .i_addr                     (mem_addr             ),
-  .i_bytes                    (mem_bytes            ),
-  .i_ren                      (mem_ren              ),
-  .i_wen                      (mem_wen              ),
-  .i_wdata                    (mem_wdata              ),
-  .o_rdata                    (mem_rdata                  ),
-  .i_executed_req             (i_mem_executed_req         ),
-  .o_memoryed_req             (o_mem_memoryed_req         ),
-  .i_memoryed_ack             (i_mem_memoryed_ack         ),
+  .ena                        (ena_mem                    ),
+  .start                      (start                      ),
+  .ack                        (i_mem_memoryed_ack         ),
+  .req                        (memoryed_req_mem           ),
+  .i_addr                     (mem_addr                   ),
+  .i_bytes                    (mem_bytes                  ),
+  .i_ren                      (mem_ren                    ),
+  .i_wen                      (mem_wen                    ),
+  .i_wdata                    (mem_wdata                  ),
+  .o_rdata                    (rdata_mem                  ),
 
   .o_dcache_req               (o_dcache_req               ),
   .o_dcache_addr              (o_dcache_addr              ),
@@ -289,6 +299,29 @@ memU MemU(
   .o_dcache_wdata             (o_dcache_wdata             ),
   .i_dcache_ack               (i_dcache_ack               ),
   .i_dcache_rdata             (i_dcache_rdata             )
+);
+
+// 访问外设
+mem_mmio Mem_mmio(
+  .clk                        (clk                        ),
+  .rst                        (rst                        ),
+  .ena                        (ena_mmio                   ),
+  .start                      (start                      ),
+  .ack                        (i_mem_memoryed_ack         ),
+  .req                        (memoryed_req_mmio          ), 
+  .ren                        (mem_ren                    ),
+  .raddr                      (mem_addr                   ),
+  .rdata                      (rdata_mmio                 ) 
+);
+
+// 仅握手
+mem_nothing Mem_nothing(
+  .clk                        (clk                        ),
+  .rst                        (rst                        ),
+  .ena                        (                    ),
+  .start                      (i_mem_executed_req         ),
+  .ack                        (i_mem_memoryed_ack         ),
+  .req                        (memoryed_req_none          )
 );
 
 endmodule

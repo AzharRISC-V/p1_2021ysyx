@@ -26,14 +26,6 @@ module id_stage(
   output  wire  [`BUS_RIDX]   o_id_rs2,
   output  wire  [`BUS_RIDX]   o_id_rd,
   output  wire                o_id_rd_wen,
-  output  wire                o_id_memren,
-  output  wire  [`BUS_64]     o_id_memaddr,
-  output  wire                o_id_memwen,
-  output  wire  [`BUS_64]     o_id_memwdata,
-  output  reg   [11 : 0]      o_id_csr_addr,
-  output  reg   [1 : 0]       o_id_csr_op,
-  output  reg   [`BUS_64]     o_id_csr_wdata,
-  input   reg   [`BUS_64]     i_id_csr_rdata,
   output  wire  [4 : 0]       o_id_inst_type,
   output  wire  [7 : 0]       o_id_inst_opcode,
   output  wire  [2 : 0]       o_id_itype,
@@ -44,7 +36,6 @@ module id_stage(
   output  wire  [`BUS_64]     o_id_op2,
   output  wire  [`BUS_64]     o_id_op3,
   output  wire  [`BUS_64]     o_id_pc_pred,
-  output  wire  [1:0]         o_id_memaction,
   output  wire                o_id_nocmt,
   output  wire                o_id_skipcmt
 );
@@ -118,10 +109,6 @@ idU IdU(
   .o_rs2                      (o_id_rs2                   ),
   .o_rd                       (o_id_rd                    ),
   .o_rd_wen                   (o_id_rd_wen                ),
-  .o_memaddr                  (o_id_memaddr               ),
-  .o_memren                   (o_id_memren                ),
-  .o_memwen                   (o_id_memwen                ),
-  .o_memwdata                 (o_id_memwdata              ),
   .o_itype                    (o_id_itype                 ),
   .o_opcode                   (o_id_opcode                ),
   .o_funct3                   (o_id_funct3                ),
@@ -129,12 +116,7 @@ idU IdU(
   .o_op1                      (o_id_op1                   ),
   .o_op2                      (o_id_op2                   ),
   .o_op3                      (o_id_op3                   ),
-  .o_csr_addr                 (o_id_csr_addr              ),
-  .o_csr_op                   (o_id_csr_op                ),
-  .o_csr_wdata                (o_id_csr_wdata             ),
-  .i_csr_rdata                (i_id_csr_rdata             ),
   .o_pc_pred                  (o_id_pc_pred               ),
-  .o_memaction                (o_id_memaction             ),
   .o_skipcmt                  (o_id_skipcmt               )
 );
 
