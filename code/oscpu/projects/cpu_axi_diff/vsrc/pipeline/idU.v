@@ -78,8 +78,8 @@ wire inst_auipc   = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] &  opcode[
 wire inst_jal     =  opcode[6] &  opcode[5] & ~opcode[4] &  opcode[3] &  opcode[2];
 wire inst_jalr    =  opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] &  opcode[2] & ~func3[2] & ~func3[1] & ~func3[0];
 
-wire inst_beq     =  opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
-wire inst_bne     =  opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0];
+wire inst_beq     =  opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0];
+wire inst_bne     =  opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
 wire inst_blt     =  opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] & ~func3[0];
 wire inst_bge     =  opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0];
 wire inst_bltu    =  opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] &  func3[1] & ~func3[0];
@@ -218,6 +218,9 @@ assign inst_type_I    = ( rst == 1'b1 ) ? 0 :
     inst_srliw  | inst_sraiw  );
 assign inst_type_S    = ( rst == 1'b1 ) ? 0 : 
   ( inst_sb     | inst_sh     | inst_sw     | inst_sd     );
+assign inst_type_B    = ( rst == 1'b1 ) ? 0 : 
+  ( inst_beq    | inst_bne    | inst_blt    | inst_bge   | 
+    inst_bltu   | inst_bgeu   );
 assign inst_type_U    = ( rst == 1'b1 ) ? 0 : 
   ( inst_lui    | inst_auipc  );
 assign inst_type_J    = ( rst == 1'b1 ) ? 0 : 
@@ -245,7 +248,7 @@ always @(*) begin
       o_op1 = imm_U;
     end
     else if (inst_type_J) begin
-      o_op1 = imm_J;
+      o_op1 = i_pc + 4;
     end
     else begin
       o_op1 = 0;
@@ -321,6 +324,28 @@ end
 // end
 
 
+// o_t1
+always @(*) begin
+  if (rst == 1'b1) begin
+    o_t1 = 0;
+  end
+  else begin
+    if (inst_type_B) begin
+      o_t1 = i_pc + imm_B;
+    end
+    else if (inst_type_J) begin
+      o_t1 = i_pc + imm_J;
+    end
+    else begin
+      o_t1 = 0;
+    end
+    //   `OPCODE_JALR  : o_t1 = i_pc + 4;
+    //   `OPCODE_BEQ   : o_t1 = i_pc + imm_B;
+    //   `OPCODE_CSR   : o_t1 = i_csr_rdata;
+    //   default       : o_t1 = 0;
+    // endcase
+  end
+end
 
 // wire i_disable = !i_ena;
 

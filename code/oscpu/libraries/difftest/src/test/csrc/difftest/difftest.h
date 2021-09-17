@@ -243,8 +243,8 @@ public:
   }
 
 private:
-  const uint64_t firstCommit_limit = 5000;// 600;// 5000;
-  const uint64_t stuck_limit = 5000;// 600;// 5000;
+  const uint64_t firstCommit_limit = 1000;// 600;// 5000;
+  const uint64_t stuck_limit = 1000;// 600;// 5000;
 
   int id;
   difftest_core_state_t dut;

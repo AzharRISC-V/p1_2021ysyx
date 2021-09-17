@@ -28,11 +28,13 @@ module exeU(
 );
 
 
+wire i_disable = !i_ena;
+
 reg [`BUS_64] reg64_1;
 reg [`BUS_32] reg32_1;
 always@( * )
 begin
-  if( rst == 1'b1 )
+  if( i_disable )
   begin
     o_rd_data = `ZERO_WORD;
   end
@@ -41,23 +43,25 @@ begin
     case( i_inst_opcode )
 	  `INST_ADDI    : begin o_rd_data = i_op1 + i_op2;  end
 	  `INST_ADDIW   : begin reg64_1 = i_op1 + $signed(i_op2); o_rd_data = {{33{reg64_1[31]}}, reg64_1[30:0]}; end
-    `INST_SLL     : begin o_rd_data = i_op1 << i_op2[4:0]; end
+    `INST_SLLI    : begin o_rd_data = i_op1 << i_op2[4:0]; end
     `INST_LUI     : begin o_rd_data = i_op1; end
     `INST_AUIPC   : begin o_rd_data = i_op1 + i_op2; end
+    `INST_JAL     : begin o_rd_data = i_op1; end
 	  default       : begin o_rd_data = `ZERO_WORD; end
 	endcase
   end
 end
 
-// o_pc_jmp, o_pc_jmpaddr
+// o_pc_jmp
 always @(*) begin
-  if ( rst == 1'b1 ) begin
+  if ( i_disable ) begin
     o_pc_jmp = 0;
   end
   else begin
     case (i_inst_opcode)
       `INST_BNE   : begin o_pc_jmp = (i_op1 != i_op2) ? 1 : 0; end
-      default     : ;
+      `INST_JAL   : begin o_pc_jmp = 1; end
+      default     : begin o_pc_jmp = 0; end
     endcase
 
     // o_pc_jmpaddr = i_pc + ?
@@ -82,8 +86,40 @@ always @(*) begin
   end
 end
 
+// o_pc_jmpaddr
+always @(*) begin
+  if ( i_disable ) begin
+    o_pc_jmpaddr = 0;
+  end
+  else begin
+    case (i_inst_opcode)
+      `INST_JAL   : begin o_pc_jmpaddr = i_t1; end
+      `INST_BNE   : begin o_pc_jmpaddr = i_t1; end
+      default     : begin o_pc_jmpaddr = 0; end
+    endcase
 
-// wire i_disable = !i_ena;
+    // o_pc_jmpaddr = i_pc + ?
+
+    // case (i_opcode)
+    //   `OPCODE_JAL         : begin o_pc_jmp = 1; o_pc_jmpaddr = i_op2; end
+    //   `OPCODE_JALR        : begin o_pc_jmp = 1; o_pc_jmpaddr = (i_op1 + i_op2) & ~1; end
+    //   `OPCODE_BEQ         : begin 
+    //     case (i_funct3)
+    //       `FUNCT3_BEQ     : begin o_pc_jmp = (i_op1 == i_op2) ? 1 : 0; end
+    //       `FUNCT3_BNE     : begin o_pc_jmp = (i_op1 != i_op2) ? 1 : 0; end
+    //       `FUNCT3_BLT     : begin o_pc_jmp = ($signed(i_op1) < $signed(i_op2)) ? 1 : 0; end
+    //       `FUNCT3_BGE     : begin o_pc_jmp = ($signed(i_op1) >= $signed(i_op2)) ? 1 : 0; end
+    //       `FUNCT3_BLTU    : begin o_pc_jmp = (i_op1 < i_op2) ? 1 : 0; end
+    //       `FUNCT3_BGEU    : begin o_pc_jmp = (i_op1 >= i_op2) ? 1 : 0; end
+    //       default         : begin o_pc_jmp = 0; end
+    //     endcase
+    //     o_pc_jmpaddr = i_t1; 
+    //   end
+    //   default             : begin o_pc_jmp = 0; o_pc_jmpaddr = 0; end
+    // endcase
+  end
+end
+
 
 // // o_rd_wen
 // always @(*) begin
