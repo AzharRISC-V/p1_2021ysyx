@@ -141,6 +141,8 @@ wire inst_sllw    = ~opcode[6] &  opcode[5] &  opcode[4] &  opcode[3] & ~opcode[
 wire inst_srlw    = ~opcode[6] &  opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] & ~func7[5];
 wire inst_sraw    = ~opcode[6] &  opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] &  func7[5];
 
+wire inst_load    = inst_lb | inst_lbu | inst_lh | inst_lhu | inst_lw | inst_lwu | inst_ld;
+wire inst_store   = inst_sb | inst_sh | inst_sw | inst_sd;
 
 // arith inst: 10000; logic: 01000;
 // load-store: 00100; j: 00010;  sys: 000001
@@ -353,6 +355,9 @@ always @(*) begin
     else if (inst_type_I) begin
       if (inst_jalr) begin
         o_op3 = i_pc + 4;
+      end
+      else if (inst_load | inst_store) begin
+        o_op3 = i_rs2_data;
       end
       else begin
         o_op3 = 0;

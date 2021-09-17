@@ -9,11 +9,10 @@
 module memU(
   input   wire                i_ena,
   input   wire                clk,
-  input   wire  [1:0]         i_memaction,
   input   wire                rst,
   input   wire  [`BUS_64]     i_addr,
+  input   wire  [2:0]         i_bytes,
   input   wire                i_ren,
-  input   wire  [`BUS_FUNCT3] i_funct3,
   input   wire                i_wen,
   input   wire  [`BUS_64]     i_wdata,
   output  wire  [`BUS_64]     o_rdata,
@@ -55,18 +54,6 @@ module memU(
 
 // wire mem_read_ok;
 
-reg [2:0] dcache_bytes;
-always @(*) begin
-  case (i_funct3[1:0])
-    2'b00   : dcache_bytes = 0; // byte
-    2'b01   : dcache_bytes = 1; // half
-    2'b10   : dcache_bytes = 3; // word
-    2'b11   : dcache_bytes = 7; // dword
-    default : dcache_bytes = 0;
-  endcase
-end
-
-
 wire hs_dcache = o_dcache_req & i_dcache_ack;
 
 reg wait_finish;  // 是否等待访存完毕？
@@ -78,21 +65,21 @@ always @(posedge clk) begin
   end
   else begin
     if (i_executed_req) begin
-      if (i_memaction == `MEM_ACTION_NONE) begin
+      if (!(i_ren | i_wen)) begin
         o_memoryed_req    <= 1;
       end
-      else if (i_memaction == `MEM_ACTION_LOAD) begin
+      else if (i_ren) begin
         o_dcache_req      <= 1;
         o_dcache_op       <= `REQ_READ;
         o_dcache_addr     <= i_addr;
-        o_dcache_bytes    <= dcache_bytes;
+        o_dcache_bytes    <= i_bytes;
         wait_finish       <= 1;
       end
-      else if (i_memaction == `MEM_ACTION_STORE) begin
+      else if (i_wen) begin
         o_dcache_req      <= 1;
         o_dcache_op       <= `REQ_WRITE;
         o_dcache_addr     <= i_addr;
-        o_dcache_bytes    <= dcache_bytes;
+        o_dcache_bytes    <= i_bytes;
         o_dcache_wdata    <= i_wdata;
         wait_finish       <= 1;
       end
@@ -128,6 +115,6 @@ end
 // );
 
 
-// assign o_rdata = i_dcache_rdata;// is_mem ? i_dcache_rdata : dev_rdata;
+assign o_rdata = i_dcache_rdata;// is_mem ? i_dcache_rdata : dev_rdata;
 
 endmodule
