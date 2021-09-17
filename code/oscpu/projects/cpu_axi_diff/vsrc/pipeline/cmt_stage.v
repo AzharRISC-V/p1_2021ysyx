@@ -28,6 +28,12 @@ wire writebacked_hs = i_cmt_writebacked_req & o_cmt_writebacked_ack;
 wire i_cmtvalid = writebacked_hs & (!i_cmt_nocmt);
 
 // 跳过下一条提交
+wire cmt_skip = 
+  (i_cmt_inst == 32'h7b)                 // putch
+  ;
+  // | (o_opcode == `OPCODE_CSR)   
+  // | mem_addr_is_device
+  // ;
 
 cmtU CmtU(
   .clk                        (clk                        ),
@@ -38,7 +44,7 @@ cmtU CmtU(
   .i_pc                       (i_cmt_pc                   ),
   .i_inst                     (i_cmt_inst                 ),
   .i_cmtvalid                 (i_cmtvalid                 ),
-  .i_skipcmt                  (i_cmt_skipcmt              ),
+  .i_skipcmt                  (cmt_skip                   ),
   .i_regs                     (i_cmt_regs                 ),
   .i_csrs                     (i_cmt_csrs                 )
 );
