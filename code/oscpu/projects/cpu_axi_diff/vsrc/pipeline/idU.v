@@ -33,9 +33,9 @@ module idU(
   output  wire  [`BUS_OPCODE] o_opcode,
   output  wire  [`BUS_FUNCT3] o_funct3,
   output  wire  [`BUS_FUNCT7] o_funct7,
-  output  wire  [`BUS_64]     o_op1,      // 两个操作数
+  output  wire  [`BUS_64]     o_op1,
   output  wire  [`BUS_64]     o_op2,
-  output  wire  [`BUS_64]     o_t1,
+  output  wire  [`BUS_64]     o_op3,
   output  wire  [`BUS_64]     o_pc_pred,
   output  wire  [1:0]         o_memaction,
   output  wire                o_skipcmt
@@ -88,43 +88,31 @@ wire inst_bgeu    =  opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[
 wire inst_lb      = ~opcode[6] & ~opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0];
 wire inst_lh      = ~opcode[6] & ~opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
 wire inst_lw      = ~opcode[6] & ~opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] & ~func3[0];
-wire inst_ld      = ~opcode[6] & ~opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] &  func3[0];
-wire inst_lwu     = ~opcode[6] & ~opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] &  func3[1] & ~func3[0];
 wire inst_lbu     = ~opcode[6] & ~opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] & ~func3[0];
 wire inst_lhu     = ~opcode[6] & ~opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0];
 
 wire inst_sb      = ~opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0];
 wire inst_sh      = ~opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
 wire inst_sw      = ~opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] & ~func3[0];
-wire inst_sd      = ~opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] &  func3[0];
 
 wire inst_addi    = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0];
-wire inst_addiw   = ~opcode[6] & ~opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0];
 wire inst_slti    = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] & ~func3[0];
 wire inst_sltiu   = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] &  func3[0];
 wire inst_xori    = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] & ~func3[0];
 wire inst_ori     = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] &  func3[1] & ~func3[0];
 wire inst_andi    = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] &  func3[1] &  func3[0];
 wire inst_slli    = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
-wire inst_slliw   = ~opcode[6] & ~opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
-wire inst_srli    = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] &  func7[5];
-wire inst_srliw   = ~opcode[6] & ~opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0];
+wire inst_srli    = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] & ~func7[5];
 wire inst_srai    = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] &  func7[5];
-wire inst_sraiw   = ~opcode[6] & ~opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] &  func7[5];
 
 wire inst_add     = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0] & ~func7[5];
-wire inst_addw    = ~opcode[6] &  opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0] & ~func7[5];
 wire inst_sub     = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0] &  func7[5];
-wire inst_subw    = ~opcode[6] &  opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0] &  func7[5];
 wire inst_sll     = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
-wire inst_sllw    = ~opcode[6] &  opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
 wire inst_slt     = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] & ~func3[0];
 wire inst_sltu    = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] &  func3[0];
 wire inst_xor     = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] & ~func3[0];
-wire inst_srl     = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] &  func7[5];
-wire inst_srlw    = ~opcode[6] &  opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] &  func7[5];
-wire inst_sra     = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] & ~func7[5];
-wire inst_sraw    = ~opcode[6] &  opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] & func7[5];
+wire inst_srl     = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] & ~func7[5];
+wire inst_sra     = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] &  func7[5];
 wire inst_or      = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] &  func3[1] & ~func3[0];
 wire inst_and     = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] &  func3[1] &  func3[0];
 
@@ -139,6 +127,19 @@ wire inst_csrrc   =  opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[
 wire inst_csrrwi  =  opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0];
 wire inst_csrrsi  =  opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] &  func3[1] & ~func3[0];
 wire inst_csrrci  =  opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] &  func3[1] &  func3[0];
+
+wire inst_lwu     = ~opcode[6] & ~opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] &  func3[1] & ~func3[0];
+wire inst_ld      = ~opcode[6] & ~opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] &  func3[0];
+wire inst_sd      = ~opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] &  func3[0];
+wire inst_addiw   = ~opcode[6] & ~opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0];
+wire inst_slliw   = ~opcode[6] & ~opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
+wire inst_srliw   = ~opcode[6] & ~opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] & ~func7[5];
+wire inst_sraiw   = ~opcode[6] & ~opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] &  func7[5];
+wire inst_addw    = ~opcode[6] &  opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0] & ~func7[5];
+wire inst_subw    = ~opcode[6] &  opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0] &  func7[5];
+wire inst_sllw    = ~opcode[6] &  opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
+wire inst_srlw    = ~opcode[6] &  opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] & ~func7[5];
+wire inst_sraw    = ~opcode[6] &  opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] &  func7[5];
 
 
 // arith inst: 10000; logic: 01000;
@@ -168,14 +169,16 @@ assign inst_opcode[3] = (  rst == 1'b1 ) ? 0 :
     inst_andi   | inst_slli   | inst_srli   | inst_srai   | 
     inst_add    | inst_sub    | inst_sll    | inst_slt    | 
     inst_ecall  | inst_ebreak | inst_csrrw  | inst_csrrs  | 
-    inst_csrrc  | inst_csrrwi | inst_csrrsi | inst_csrrci );
+    inst_csrrc  | inst_csrrwi | inst_csrrsi | inst_csrrci |
+    inst_sllw   | inst_srlw   | inst_sraw   | inst_subw   );
 assign inst_opcode[2] = (  rst == 1'b1 ) ? 0 : 
   ( inst_jalr   | inst_beq    | inst_bne    | inst_blt    | 
     inst_lh     | inst_lw     | inst_lbu    | inst_lhu    | 
     inst_slti   | inst_sltiu  | inst_xori   | inst_ori    | 
     inst_add    | inst_sub    | inst_sll    | inst_slt    | 
     inst_or     | inst_and    | inst_fence  | inst_fencei | 
-    inst_csrrc  | inst_csrrwi | inst_csrrsi | inst_csrrci );
+    inst_csrrc  | inst_csrrwi | inst_csrrsi | inst_csrrci |
+    inst_slliw  | inst_srliw  | inst_sraiw  );
 assign inst_opcode[1] = (  rst == 1'b1 ) ? 0 : 
   ( inst_auipc  | inst_jal    | inst_bne    | inst_blt    | 
     inst_bgeu   | inst_lb     | inst_lbu    | inst_lhu    | 
@@ -248,7 +251,7 @@ always @(*) begin
       o_op1 = imm_U;
     end
     else if (inst_type_J) begin
-      o_op1 = i_pc + 4;
+      o_op1 = i_pc;
     end
     else begin
       o_op1 = 0;
@@ -286,8 +289,19 @@ always @(*) begin
     if (inst_type_R | inst_type_S | inst_type_B) begin
       o_op2 = i_rs2_data;
     end
+    else if (inst_type_J) begin
+      o_op2 = 4;
+    end
     else if (inst_type_I) begin
-      o_op2 = imm_I;
+      if (inst_slliw | inst_srai) begin
+        o_op2 = {58'd0, shamt};
+      end
+      else begin
+        o_op2 = imm_I;
+      end
+    end
+    else if (inst_type_U) begin
+      o_op2 = i_pc;
     end
     else begin
       o_op2 = 0;
@@ -324,25 +338,33 @@ end
 // end
 
 
-// o_t1
+// o_op3
 always @(*) begin
   if (rst == 1'b1) begin
-    o_t1 = 0;
+    o_op3 = 0;
   end
   else begin
     if (inst_type_B) begin
-      o_t1 = i_pc + imm_B;
+      o_op3 = i_pc + imm_B;
     end
     else if (inst_type_J) begin
-      o_t1 = i_pc + imm_J;
+      o_op3 = i_pc + imm_J;
+    end
+    else if (inst_type_I) begin
+      if (inst_jalr) begin
+        o_op3 = i_pc + 4;
+      end
+      else begin
+        o_op3 = 0;
+      end
     end
     else begin
-      o_t1 = 0;
+      o_op3 = 0;
     end
-    //   `OPCODE_JALR  : o_t1 = i_pc + 4;
-    //   `OPCODE_BEQ   : o_t1 = i_pc + imm_B;
-    //   `OPCODE_CSR   : o_t1 = i_csr_rdata;
-    //   default       : o_t1 = 0;
+    //   `OPCODE_JALR  : o_op3 = i_pc + 4;
+    //   `OPCODE_BEQ   : o_op3 = i_pc + imm_B;
+    //   `OPCODE_CSR   : o_op3 = i_csr_rdata;
+    //   default       : o_op3 = 0;
     // endcase
   end
 end
@@ -522,17 +544,17 @@ end
 //   end
 // end
 
-// // o_t1
+// // o_op3
 // always @(*) begin
 //   if (i_disable) begin
-//     o_t1 = 0;
+//     o_op3 = 0;
 //   end
 //   else begin
 //     case (o_opcode)
-//       `OPCODE_JALR  : o_t1 = i_pc + 4;
-//       `OPCODE_BEQ   : o_t1 = i_pc + imm;
-//       `OPCODE_CSR   : o_t1 = i_csr_rdata;
-//       default       : o_t1 = 0;
+//       `OPCODE_JALR  : o_op3 = i_pc + 4;
+//       `OPCODE_BEQ   : o_op3 = i_pc + imm;
+//       `OPCODE_CSR   : o_op3 = i_csr_rdata;
+//       default       : o_op3 = 0;
 //     endcase
 //   end
 // end

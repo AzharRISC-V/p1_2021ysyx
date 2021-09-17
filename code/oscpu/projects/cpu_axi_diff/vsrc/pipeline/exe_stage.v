@@ -21,7 +21,7 @@ module exe_stage(
   input   wire  [`BUS_FUNCT7] i_ex_funct7,
   input   wire  [`BUS_64]     i_ex_op1,
   input   wire  [`BUS_64]     i_ex_op2,
-  input   wire  [`BUS_64]     i_ex_t1,
+  input   wire  [`BUS_64]     i_ex_op3,
   input   wire  [`BUS_64]     i_ex_memaddr,
   input   wire                i_ex_memren,
   input   wire                i_ex_memwen,
@@ -68,7 +68,7 @@ reg   [2 : 0]                 tmp_i_ex_funct3;
 reg   [6 : 0]                 tmp_i_ex_funct7;
 reg   [`BUS_64]               tmp_i_ex_op1;
 reg   [`BUS_64]               tmp_i_ex_op2;
-reg   [`BUS_64]               tmp_i_ex_t1;
+reg   [`BUS_64]               tmp_i_ex_op3;
 reg   [`BUS_64]               tmp_i_ex_memaddr;
 reg                           tmp_i_ex_memren;
 reg                           tmp_i_ex_memwen;
@@ -90,7 +90,7 @@ always @(posedge clk) begin
       tmp_i_ex_funct7, 
       tmp_i_ex_op1, 
       tmp_i_ex_op2, 
-      tmp_i_ex_t1,
+      tmp_i_ex_op3,
       tmp_i_ex_memaddr,
       tmp_i_ex_memren,
       tmp_i_ex_memwen,
@@ -115,7 +115,7 @@ always @(posedge clk) begin
       tmp_i_ex_funct7   <= i_ex_funct7;
       tmp_i_ex_op1      <= i_ex_op1;
       tmp_i_ex_op2      <= i_ex_op2;
-      tmp_i_ex_t1       <= i_ex_t1;
+      tmp_i_ex_op3      <= i_ex_op3;
       tmp_i_ex_memaddr  <= i_ex_memaddr;
       tmp_i_ex_memren   <= i_ex_memren;
       tmp_i_ex_memwen   <= i_ex_memwen;
@@ -162,7 +162,7 @@ exeU ExeU(
   .i_funct7                   (tmp_i_ex_funct7            ),
   .i_op1                      (tmp_i_ex_op1               ),
   .i_op2                      (tmp_i_ex_op2               ),
-  .i_t1                       (tmp_i_ex_t1                ),
+  .i_op3                      (tmp_i_ex_op3               ),
   .i_memren                   (tmp_i_ex_memren            ),
   .i_memwen                   (tmp_i_ex_memwen            ),
   .i_pc_pred                  (i_ex_pc_pred               ),

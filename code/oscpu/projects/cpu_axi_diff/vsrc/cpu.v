@@ -91,11 +91,11 @@ wire  [`BUS_FUNCT3]           o_id_funct3;
 wire  [`BUS_FUNCT7]           o_id_funct7;
 wire  [`BUS_64]               o_id_op1;
 wire  [`BUS_64]               o_id_op2;
+wire  [`BUS_64]               o_id_op3;
 wire  [`BUS_64]               o_id_memaddr;
 wire                          o_id_memren;
 wire                          o_id_memwen;
 wire  [`BUS_64]               o_id_memwdata;
-wire  [`BUS_64]               o_id_t1;
 wire                          o_id_nocmt;
 wire                          o_id_skipcmt;
 wire  [`BUS_64]               o_id_pc;
@@ -265,7 +265,7 @@ id_stage Id_stage(
   .o_id_funct7                (o_id_funct7                ),
   .o_id_op1                   (o_id_op1                   ),
   .o_id_op2                   (o_id_op2                   ),
-  .o_id_t1                    (o_id_t1                    ),
+  .o_id_op3                   (o_id_op3                   ),
   .o_id_csr_addr              (o_id_csraddr               ),
   .o_id_csr_op                (o_id_csrop                 ),
   .o_id_csr_wdata             (o_id_csrwdata              ),
@@ -292,7 +292,7 @@ exe_stage Exe_stage(
   .i_ex_funct7                (o_id_funct7                ),
   .i_ex_op1                   (o_id_op1                   ),
   .i_ex_op2                   (o_id_op2                   ),
-  .i_ex_t1                    (o_id_t1                    ),
+  .i_ex_op3                   (o_id_op3                   ),
   .i_ex_pc_pred               (o_id_pc_pred               ),
   .i_ex_memaddr               (o_id_memaddr               ),
   .i_ex_memren                (o_id_memren                ),
