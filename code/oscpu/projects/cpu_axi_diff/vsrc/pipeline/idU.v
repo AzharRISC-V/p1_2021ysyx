@@ -352,12 +352,15 @@ always @(*) begin
     else if (inst_type_J) begin
       o_op3 = i_pc + imm_J;
     end
+    else if (inst_type_S) begin
+      o_op3 = imm_S;
+    end
     else if (inst_type_I) begin
       if (inst_jalr) begin
         o_op3 = i_pc + 4;
       end
       else if (inst_load | inst_store) begin
-        o_op3 = i_rs2_data;
+        o_op3 = imm_I;
       end
       else begin
         o_op3 = 0;
