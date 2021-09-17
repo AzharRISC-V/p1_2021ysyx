@@ -42,6 +42,7 @@ begin
   begin
     case( i_inst_opcode )
 	  `INST_ADDI    : begin o_rd_data = i_op1 + i_op2;  end
+	  `INST_ADD     : begin o_rd_data = i_op1 + i_op2;  end
 	  `INST_ADDIW   : begin reg64_1 = i_op1 + $signed(i_op2); o_rd_data = {{33{reg64_1[31]}}, reg64_1[30:0]}; end
     `INST_SLLI    : begin o_rd_data = i_op1 << i_op2[4:0]; end
     `INST_LUI     : begin o_rd_data = i_op1; end
