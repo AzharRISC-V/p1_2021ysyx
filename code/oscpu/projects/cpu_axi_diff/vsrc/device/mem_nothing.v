@@ -6,7 +6,6 @@ module mem_nothing(
   input   wire                clk,
   input   wire                rst,
 
-  input   wire                ena,
   input   wire                start,
   input   wire                ack,
   output  reg                 req

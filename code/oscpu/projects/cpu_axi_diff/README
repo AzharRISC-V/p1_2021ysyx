@@ -12,3 +12,6 @@
     p: x86 virtual memory test
     t: real-time clock test
     v: display test
+
+2. 握手信号设计
+ 需要区分两类信号，一类是需要保持的信号，一类是仅一个脉冲的通知信号。

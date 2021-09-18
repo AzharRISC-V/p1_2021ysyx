@@ -4,13 +4,11 @@
 // Memory Unit, 组合逻辑电路
 
 `include "../defines.v";
-`include "mem_access.v"
 
 module memU(
   input   wire                clk,
   input   wire                rst,
 
-  input   wire                ena,
   input   wire                start,
   input   wire                ack,
   output  reg                 req,
@@ -44,38 +42,33 @@ always @(posedge clk) begin
     req <= 0;
   end
   else begin
-    if (!ena) begin
-      req <= 0;
+    if (start) begin
+      if (i_ren) begin
+        o_dcache_req      <= 1;
+        o_dcache_op       <= `REQ_READ;
+        o_dcache_addr     <= i_addr;
+        o_dcache_bytes    <= i_bytes;
+        wait_finish       <= 1;
+      end
+      else if (i_wen) begin
+        o_dcache_req      <= 1;
+        o_dcache_op       <= `REQ_WRITE;
+        o_dcache_addr     <= i_addr;
+        o_dcache_bytes    <= i_bytes;
+        o_dcache_wdata    <= i_wdata;
+        wait_finish       <= 1;
+      end
     end
     else begin
-      if (start) begin
-        if (i_ren) begin
-          o_dcache_req      <= 1;
-          o_dcache_op       <= `REQ_READ;
-          o_dcache_addr     <= i_addr;
-          o_dcache_bytes    <= i_bytes;
-          wait_finish       <= 1;
-        end
-        else if (i_wen) begin
-          o_dcache_req      <= 1;
-          o_dcache_op       <= `REQ_WRITE;
-          o_dcache_addr     <= i_addr;
-          o_dcache_bytes    <= i_bytes;
-          o_dcache_wdata    <= i_wdata;
-          wait_finish       <= 1;
-        end
+      // 等待访存完毕
+      if (wait_finish && hs_dcache) begin
+        wait_finish       <= 0;
+        o_dcache_req      <= 0;
+        req    <= 1;
       end
-      else begin
-        // 等待访存完毕
-        if (wait_finish && hs_dcache) begin
-          wait_finish       <= 0;
-          o_dcache_req      <= 0;
-          req    <= 1;
-        end
-        // 清除req信号
-        else if (ack) begin
-          req    <= 0;
-        end
+      // 清除req信号
+      else if (ack) begin
+        req    <= 0;
       end
     end
   end

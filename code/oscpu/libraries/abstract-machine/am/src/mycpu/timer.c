@@ -35,7 +35,7 @@ void __am_timer_uptime2(AM_TIMER_UPTIME_T *uptime) {
 
 void __am_timer_rtc(AM_TIMER_RTC_T *rtc) {
 
-  uint64_t rtc_val = *((uint64_t *)0x20000100);
+  uint64_t rtc_val = *((volatile uint64_t *)0x20000100);
 
   rtc->second = (rtc_val >> 0) & 0x3F;
   rtc->minute = (rtc_val >> 6) & 0x3F;

@@ -49,36 +49,31 @@ assign o_mem_executed_ack = 1'b1;
 wire executed_hs = i_mem_executed_req & o_mem_executed_ack;
 wire memoryed_hs = i_mem_memoryed_ack & o_mem_memoryed_req;
 
-wire                  ch_mem;         // If access memory?
-wire                  ch_mmio;        // If access device (mmio)?
-wire                  ch_none;        // If access nothing?
+wire addr_is_mem = (mem_addr & ~(64'hFFFFFFF)) == 64'h80000000;
+wire addr_is_mmio = (mem_addr & ~(64'hFFF)) == 64'h20000000;
+
+// channel select, only valid in one pulse
+wire ch_mem   = addr_is_mem & (mem_ren | mem_wen);
+wire ch_mmio  = addr_is_mmio & (mem_ren | mem_wen);
+wire ch_none  = (!(addr_is_mem | addr_is_mmio)) | (!(mem_ren | mem_wen));
+
+// memoryed request for different slaves
 wire                  memoryed_req_mem;
 wire                  memoryed_req_mmio;
 wire                  memoryed_req_none;
-wire   [`BUS_64]      rdata_mmio;    // readed data from main memory
-wire   [`BUS_64]      rdata_mem;    // readed data from mmio
-reg    [`BUS_64]      rdata;        // readed data from main memory or mmio
-
-wire start = i_mem_executed_req;
-
-
-assign ch_mem     = rst ? 0 : (mem_addr & ~(64'hFFFFFFF)) == 64'h80000000;
-assign ch_mmio    = rst ? 0 : (mem_addr & ~(64'hFFF)) == 64'h20000000;
-assign ch_none    = rst ? 0 : !(ch_mem | ch_mmio);
-
-wire ena_mem      = i_ena & (mem_ren | mem_wen) & ch_mem;
-wire ena_mmio     = i_ena & (mem_ren | mem_wen) & ch_mmio;
-wire ena_none     = i_ena & (!(mem_ren | mem_wen));
+wire   [`BUS_64]      rdata_mem;      // readed data from mmio
+wire   [`BUS_64]      rdata_mmio;     // readed data from main memory
+reg    [`BUS_64]      rdata;          // readed data from main memory or mmio
 
 // o_mem_memoryed_req
 always @(*) begin
   if (rst) begin
     o_mem_memoryed_req = 0;
   end
-  else if (ch_mem) begin
+  else if (tmp_ch_mem) begin
     o_mem_memoryed_req = memoryed_req_mem;
   end
-  else if (ch_mmio) begin
+  else if (tmp_ch_mmio) begin
     o_mem_memoryed_req = memoryed_req_mmio;
   end
   else begin
@@ -91,20 +86,16 @@ always @(*) begin
   if (rst) begin
     rdata = 0;
   end
-  else if (ch_mem) begin
+  else if (tmp_ch_mem) begin
     rdata = rdata_mem;
   end
-  else if (ch_mmio) begin
+  else if (tmp_ch_mmio) begin
     rdata = rdata_mmio;
   end
   else begin
     rdata = 0;
   end
 end
-
-// 是否使能组合逻辑单元部件
-reg                           i_ena;
-wire                          i_disable = !i_ena;
 
 // 保存输入信息
 reg                           tmp_i_mem_executed_req;
@@ -120,6 +111,18 @@ reg   [`BUS_64]               tmp_i_mem_op2;
 reg   [`BUS_64]               tmp_i_mem_op3;
 reg                           tmp_i_mem_nocmt;
 reg                           tmp_i_mem_skipcmt;
+reg                           tmp_ch_mem;
+reg                           tmp_ch_mmio;
+reg                           tmp_ch_none;
+
+reg  [63:0] mem_addr;
+reg  [2:0]  mem_bytes;
+reg         mem_ren;
+reg         mem_wen;
+wire [63:0] rdata_mem;
+reg  [63:0] mem_wdata;
+
+
 
 // o_mem_memoryed_req
 always @(posedge clk) begin
@@ -137,11 +140,11 @@ always @(posedge clk) begin
       tmp_i_mem_op2,
       tmp_i_mem_op3,
       tmp_i_mem_nocmt,
-      tmp_i_mem_skipcmt
+      tmp_i_mem_skipcmt,
+      tmp_ch_mem,
+      tmp_ch_mmio,
+      tmp_ch_none
     } <= 0;
-
-    // o_mem_memoryed_req    <= 0;
-    i_ena                 <= 0;
   end
   else begin
     if (executed_hs) begin
@@ -158,33 +161,67 @@ always @(posedge clk) begin
       tmp_i_mem_rd_wdata        <= i_mem_rd_wdata;
       tmp_i_mem_nocmt           <= i_mem_nocmt;
       tmp_i_mem_skipcmt         <= i_mem_skipcmt;
-      i_ena                     <= 1;
+      tmp_ch_mem                <= ch_mem;
+      tmp_ch_mmio               <= ch_mmio;
+      tmp_ch_none               <= ch_none;
     end
     else if (memoryed_hs) begin
-      i_ena                     <= 0;
+      // 该通道号需要消除，不能留到下一个指令
+      tmp_ch_mem                <= 0;
+      tmp_ch_mmio               <= 0;
+      tmp_ch_none               <= 0;
     end
   end
 end
 
-assign o_mem_pc           = i_disable ? 0 : tmp_i_mem_pc;
-assign o_mem_inst         = i_disable ? 0 : tmp_i_mem_inst;
-assign o_mem_rd           = i_disable ? 0 : tmp_i_mem_rd;
-assign o_mem_rd_wen       = i_disable ? 0 : tmp_i_mem_rd_wen;
-assign o_mem_rd_wdata     = i_disable ? 0 : tmp_i_mem_rd_wdata;
-assign o_mem_nocmt        = i_disable ? 0 : tmp_i_mem_nocmt;
-assign o_mem_skipcmt      = i_disable ? 0 : tmp_i_mem_skipcmt;
+assign o_mem_pc           = tmp_i_mem_pc;
+assign o_mem_inst         = tmp_i_mem_inst;
+assign o_mem_rd           = tmp_i_mem_rd;
+assign o_mem_rd_wen       = tmp_i_mem_rd_wen;
+assign o_mem_rd_wdata     = tmp_i_mem_rd_wdata;
+assign o_mem_nocmt        = tmp_i_mem_nocmt;
+assign o_mem_skipcmt      = tmp_i_mem_skipcmt | tmp_ch_mmio;
 
-wire [63:0] mem_addr;
-reg  [2:0]  mem_bytes;
-reg         mem_ren;
-reg         mem_wen;
-wire [63:0] rdata_mem;
-reg  [63:0] mem_wdata;
 
-// addr
-assign mem_addr = (!start) ? 0 : tmp_i_mem_op1 + tmp_i_mem_op3;
+// ren, only valid at one pulse
+always @(*) begin
+  if ( rst == 1'b1) begin
+    mem_ren = 0;
+  end
+  else begin
+    case (i_mem_inst_opcode)
+      `INST_LB  : begin mem_ren = 1; end
+      `INST_LBU : begin mem_ren = 1; end
+      `INST_LH  : begin mem_ren = 1; end
+      `INST_LHU : begin mem_ren = 1; end 
+      `INST_LW  : begin mem_ren = 1; end
+      `INST_LWU : begin mem_ren = 1; end
+      `INST_LD  : begin mem_ren = 1; end
+      default   : begin mem_ren = 0; end
+    endcase
+  end
+end
 
-// bytes
+// wen, only valid at one pulse
+always @(*) begin
+  if ( rst == 1'b1) begin
+    mem_wen = 0;
+  end
+  else begin
+    case (i_mem_inst_opcode)
+      `INST_SB  : begin mem_wen = 1; end
+      `INST_SH  : begin mem_wen = 1; end
+      `INST_SW  : begin mem_wen = 1; end
+      `INST_SD  : begin mem_wen = 1; end
+      default   : begin mem_wen = 0; end
+    endcase
+  end
+end
+
+// addr, only valid at one pulse
+assign mem_addr = i_mem_op1 + i_mem_op3;
+
+// bytes, only valid at one pulse
 always @(*) begin
   if ( rst == 1'b1) begin
     mem_bytes = 0;
@@ -207,42 +244,23 @@ always @(*) begin
   end
 end
 
-// ren
+// wdata, only valid at one pulse
 always @(*) begin
   if ( rst == 1'b1) begin
-    mem_ren = 0;
+    mem_wdata = 0;
   end
   else begin
     case (i_mem_inst_opcode)
-      `INST_LB  : begin mem_ren = 1; end
-      `INST_LBU : begin mem_ren = 1; end
-      `INST_LH  : begin mem_ren = 1; end
-      `INST_LHU : begin mem_ren = 1; end 
-      `INST_LW  : begin mem_ren = 1; end
-      `INST_LWU : begin mem_ren = 1; end
-      `INST_LD  : begin mem_ren = 1; end
-      default   : begin mem_ren = 0; end
+      `INST_SB  : begin mem_wdata = {56'd0, i_mem_op2[7:0]}; end
+      `INST_SH  : begin mem_wdata = {48'd0, i_mem_op2[15:0]}; end
+      `INST_SW  : begin mem_wdata = {32'd0, i_mem_op2[31:0]}; end
+      `INST_SD  : begin mem_wdata = i_mem_op2[63:0]; end
+      default   : begin mem_wdata = 0; end
     endcase
   end
 end
 
-// wen
-always @(*) begin
-  if ( rst == 1'b1) begin
-    mem_wen = 0;
-  end
-  else begin
-    case (tmp_i_mem_inst_opcode)
-      `INST_SB  : begin mem_wen = 1; end
-      `INST_SH  : begin mem_wen = 1; end
-      `INST_SW  : begin mem_wen = 1; end
-      `INST_SD  : begin mem_wen = 1; end
-      default   : begin mem_wen = 0; end
-    endcase
-  end
-end
-
-// rdata
+// rdata, valid at several pulses
 always @(*) begin
   if ( rst == 1'b1) begin
     o_mem_rd_wdata = 0;
@@ -261,28 +279,11 @@ always @(*) begin
   end
 end
 
-// wdata
-always @(*) begin
-  if ( rst == 1'b1) begin
-    mem_wen = 0;
-  end
-  else begin
-    case (tmp_i_mem_inst_opcode)
-      `INST_SB  : begin mem_wdata = {56'd0, i_mem_op2[7:0]}; end
-      `INST_SH  : begin mem_wdata = {48'd0, i_mem_op2[15:0]}; end
-      `INST_SW  : begin mem_wdata = {32'd0, i_mem_op2[31:0]}; end
-      `INST_SD  : begin mem_wdata = i_mem_op2[63:0]; end
-      default   : begin mem_wen = 0; end
-    endcase
-  end
-end
-
 // 访问主存
 memU MemU(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
-  .ena                        (ena_mem                    ),
-  .start                      (start                      ),
+  .start                      (i_mem_executed_req & ch_mem ),
   .ack                        (i_mem_memoryed_ack         ),
   .req                        (memoryed_req_mem           ),
   .i_addr                     (mem_addr                   ),
@@ -305,8 +306,7 @@ memU MemU(
 mem_mmio Mem_mmio(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
-  .ena                        (ena_mmio                   ),
-  .start                      (start                      ),
+  .start                      (i_mem_executed_req & ch_mmio),
   .ack                        (i_mem_memoryed_ack         ),
   .req                        (memoryed_req_mmio          ), 
   .ren                        (mem_ren                    ),
@@ -318,8 +318,7 @@ mem_mmio Mem_mmio(
 mem_nothing Mem_nothing(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
-  .ena                        (                    ),
-  .start                      (i_mem_executed_req         ),
+  .start                      (i_mem_executed_req & ch_none),
   .ack                        (i_mem_memoryed_ack         ),
   .req                        (memoryed_req_none          )
 );

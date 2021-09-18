@@ -13,7 +13,6 @@ module id_stage(
   input   reg                 i_id_decoded_ack,
   output  reg                 o_id_decoded_req,
   input   wire  [`BUS_64]     i_id_pc,
-  input   wire  [`BUS_64]     i_id_pc_pred,
   input   wire  [`BUS_32]     i_id_inst,
   input   wire  [`BUS_64]     i_id_rs1_data,
   input   wire  [`BUS_64]     i_id_rs2_data,
@@ -28,14 +27,9 @@ module id_stage(
   output  wire                o_id_rd_wen,
   output  wire  [4 : 0]       o_id_inst_type,
   output  wire  [7 : 0]       o_id_inst_opcode,
-  output  wire  [2 : 0]       o_id_itype,
-  output  wire  [`BUS_OPCODE] o_id_opcode,
-  output  wire  [`BUS_FUNCT3] o_id_funct3,
-  output  wire  [`BUS_FUNCT7] o_id_funct7,
   output  wire  [`BUS_64]     o_id_op1,
   output  wire  [`BUS_64]     o_id_op2,
   output  wire  [`BUS_64]     o_id_op3,
-  output  wire  [`BUS_64]     o_id_pc_pred,
   output  wire                o_id_nocmt,
   output  wire                o_id_skipcmt
 );
@@ -71,7 +65,6 @@ always @(posedge clk) begin
   else begin
     if (fetched_hs) begin
       tmp_i_id_pc         <= i_id_pc;
-      tmp_i_id_pc_pred    <= i_id_pc_pred;
       tmp_i_id_inst       <= i_id_inst;
       tmp_i_id_nocmt      <= i_id_nocmt;
 
@@ -88,7 +81,6 @@ end
 wire i_disable = !i_ena;
 
 assign o_id_pc      = i_disable ? 0 : tmp_i_id_pc;
-assign o_id_pc_pred = i_disable ? 0 : tmp_i_id_pc_pred;
 assign o_id_inst    = i_disable ? 0 : tmp_i_id_inst;
 assign o_id_nocmt   = i_disable ? 0 : tmp_i_id_nocmt;
 
@@ -100,7 +92,6 @@ idU IdU(
   .i_rs1_data                 (i_id_rs1_data              ),
   .i_rs2_data                 (i_id_rs2_data              ),
   .i_pc                       (tmp_i_id_pc                ),
-  .i_pc_pred                  (tmp_i_id_pc_pred           ),
   .o_inst_type                (o_id_inst_type             ),
   .o_inst_opcode              (o_id_inst_opcode           ),
   .o_rs1_ren                  (o_id_rs1_ren               ),
@@ -109,14 +100,9 @@ idU IdU(
   .o_rs2                      (o_id_rs2                   ),
   .o_rd                       (o_id_rd                    ),
   .o_rd_wen                   (o_id_rd_wen                ),
-  .o_itype                    (o_id_itype                 ),
-  .o_opcode                   (o_id_opcode                ),
-  .o_funct3                   (o_id_funct3                ),
-  .o_funct7                   (o_id_funct7                ),
   .o_op1                      (o_id_op1                   ),
   .o_op2                      (o_id_op2                   ),
   .o_op3                      (o_id_op3                   ),
-  .o_pc_pred                  (o_id_pc_pred               ),
   .o_skipcmt                  (o_id_skipcmt               )
 );
 

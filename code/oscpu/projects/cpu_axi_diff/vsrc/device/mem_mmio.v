@@ -6,7 +6,6 @@ module mem_mmio(
   input   wire                clk,
   input   wire                rst,
 
-  input   wire                ena,
   input   wire                start,
   input   wire                ack,
   output  reg                 req,
@@ -34,23 +33,17 @@ always @(posedge clk) begin
     rdata <= 0;
   end
   else begin
-    if (!ena) begin
-      req <= 0;
-      rdata <= 0;
+    // set request
+    if (ren & start) begin
+      case (raddr)
+        `DEV_RTC      :   rdata <= rtc_rdata;
+        default       : ;
+      endcase
+      req <= 1;
     end
-    else begin
-      // set request
-      if (ren & start) begin
-        case (raddr)
-          `DEV_RTC      :   rdata <= rtc_rdata;
-          default       : ;
-        endcase
-        req <= 1;
-      end
-      // clear request
-      else if (ack) begin
-        req <= 0;
-      end
+    // clear request
+    else if (ack) begin
+      req <= 0;
     end
   end
 end

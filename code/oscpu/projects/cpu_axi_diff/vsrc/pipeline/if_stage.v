@@ -23,7 +23,6 @@ module if_stage(
   input   wire                i_if_pc_jmp,
   input   wire  [`BUS_64]     i_if_pc_jmpaddr,
   output  reg   [`BUS_64]     o_if_pc,
-  output  wire  [`BUS_64]     o_if_pc_pred,
   output  reg   [`BUS_32]     o_if_inst,
   output                      o_if_nocmt
 );
@@ -40,7 +39,6 @@ ifU IfU(
   .i_pc_jmp                   (i_if_pc_jmp                ),
   .i_pc_jmpaddr               (i_if_pc_jmpaddr            ),
   .o_pc                       (o_if_pc                    ),
-  .o_pc_pred                  (o_if_pc_pred               ),
   .o_inst                     (o_if_inst                  ),
   .o_fetched                  (o_if_fetched_req           ),
   .o_nocmt                    (o_if_nocmt                 )
