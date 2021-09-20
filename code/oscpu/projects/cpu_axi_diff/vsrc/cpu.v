@@ -24,18 +24,24 @@ wire                          putch_wen;
 wire [7 : 0]                  putch_wdata;
 assign putch_wen              = o_if_inst == 32'h7b;
 assign putch_wdata            = (!putch_wen) ? 0 : (o_reg_regs[10][7:0]); 
-putch Putch(
-  .clk                (clk              ),
-  .rst                (rst              ),
-  .wen                (putch_wen        ),
-  .wdata              (putch_wdata      ) 
-);
 
-// always @(posedge clock) begin
-//   if (inst == 7) begin
-//     $write("%c", regs[10][7:0]);
-//   end
-// end
+// 方式一：缓存一行后再$write打印。
+// putch Putch(
+//   .clk                (clk              ),
+//   .rst                (rst              ),
+//   .wen                (putch_wen        ),
+//   .wdata              (putch_wdata      ) 
+// );
+
+// 方式二：使用$write打印。
+always @(posedge clk) begin
+  if (o_if_inst == 32'h7b) begin
+    $write("%c", o_reg_regs[10][7:0]);
+    $fflush();
+  end
+end
+
+// 方式三：交给上层c++代码来打印
 // assign io_uart_out_valid = putch_wen;
 // assign io_uart_out_ch = putch_wdata;
 

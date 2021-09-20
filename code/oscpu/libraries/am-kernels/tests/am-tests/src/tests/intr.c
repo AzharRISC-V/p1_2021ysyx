@@ -1,18 +1,19 @@
 #include <amtest.h>
 
+#define CLINT_START 0x02000000
+#define CLINT_MTIMECMP (CLINT_START + 0x4000)
+
 Context *simple_trap(Event ev, Context *ctx) {
   switch(ev.event) {
     case EVENT_IRQ_TIMER:
-      printf("==AA\n");
-      putch('t'); break;
+      //*((uint64_t *)CLINT_MTIMECMP) += 7000000;
+      printf("t"); break;
     case EVENT_IRQ_IODEV:
-      printf("==BB\n");
-      putch('d'); break;
+      printf("d"); break;
     case EVENT_YIELD:
-      printf("==CC\n");
-      putch('y'); break;
+      printf("y"); break;
     default:
-      printf("==DD\n");
+      printf("N");
       break;
   }
   return ctx;
@@ -25,7 +26,7 @@ void hello_intr() {
   iset(1);
   while (1) {
     // for (volatile int i = 0; i < 10000000; i++) ;
-    for (volatile int i = 0; i < 100; i++) ;
+    for (volatile int i = 0; i < 10000; i++) ;
     yield();
   }
 }

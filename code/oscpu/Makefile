@@ -14,7 +14,7 @@ app:
 
 # run without dump
 run:
-	./build.sh -e $(PROJECT) -d -s -a "-i $(BIN).bin" -m "EMU_TRACE=1 $(PROJECT_AXI_FLAGS)"
+	./build.sh -e $(PROJECT) -d -s -a "-i $(BIN).bin" -m "$(PROJECT_AXI_FLAGS)"
 
 # run with dump
 dump:
