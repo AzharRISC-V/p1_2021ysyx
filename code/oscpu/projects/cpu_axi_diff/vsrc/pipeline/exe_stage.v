@@ -52,13 +52,19 @@ wire executed_hs = i_ex_executed_ack & o_ex_executed_req;
 wire exeU_skip_cmt;
 
 // 通道选择
-wire is_inst_exceptionU = (i_ex_inst_opcode == `INST_ECALL);
+wire is_inst_exceptionU = (i_ex_inst_opcode == `INST_ECALL) |
+  (i_ex_inst_opcode == `INST_MRET);
 
 reg o_ena_exeU;
 reg o_ena_exceptionU;
 
-wire exeU_req;
-wire exceptionU_req;
+wire            exeU_req;
+wire            exeU_pc_jmp;
+wire [`BUS_64]  exeU_pc_jmpaddr;
+
+wire            exceptionU_req;
+wire            exceptionU_pc_jmp;
+wire [`BUS_64]  exceptionU_pc_jmpaddr;
 
 
 // 保存输入信息
@@ -157,10 +163,13 @@ wire                 exceptionU_csr_ren;
 wire                 exceptionU_csr_wen;
 wire   [`BUS_64]     exceptionU_csr_wdata;
 
-assign o_ex_csr_addr  = rst ? 0 : (o_ena_exeU ? exeU_csr_addr   : exceptionU_csr_addr);
-assign o_ex_csr_ren   = rst ? 0 : (o_ena_exeU ? exeU_csr_ren    : exceptionU_csr_ren);
-assign o_ex_csr_wen   = rst ? 0 : (o_ena_exeU ? exeU_csr_wen    : exceptionU_csr_wen);
-assign o_ex_csr_wdata = rst ? 0 : (o_ena_exeU ? exeU_csr_wdata  : exceptionU_csr_wdata);
+
+assign o_ex_pc_jmp      = rst ? 0 : (o_ena_exeU ? exeU_pc_jmp     : exceptionU_pc_jmp);
+assign o_ex_pc_jmpaddr  = rst ? 0 : (o_ena_exeU ? exeU_pc_jmpaddr : exceptionU_pc_jmpaddr);
+assign o_ex_csr_addr    = rst ? 0 : (o_ena_exeU ? exeU_csr_addr   : exceptionU_csr_addr);
+assign o_ex_csr_ren     = rst ? 0 : (o_ena_exeU ? exeU_csr_ren    : exceptionU_csr_ren);
+assign o_ex_csr_wen     = rst ? 0 : (o_ena_exeU ? exeU_csr_wen    : exceptionU_csr_wen);
+assign o_ex_csr_wdata   = rst ? 0 : (o_ena_exeU ? exeU_csr_wdata  : exceptionU_csr_wdata);
 
 exeU ExeU(
   .rst                        (rst                        ),
@@ -178,8 +187,8 @@ exeU ExeU(
   .o_csr_ren                  (exeU_csr_ren               ),
   .o_csr_wen                  (exeU_csr_wen               ),
   .o_csr_wdata                (exeU_csr_wdata             ),
-  .o_pc_jmp                   (o_ex_pc_jmp                ),
-  .o_pc_jmpaddr               (o_ex_pc_jmpaddr            ),
+  .o_pc_jmp                   (exeU_pc_jmp                ),
+  .o_pc_jmpaddr               (exeU_pc_jmpaddr            ),
   .o_rd_wdata                 (o_ex_rd_wdata              ),
   .o_exeU_skip_cmt            (exeU_skip_cmt              )
 );
@@ -194,6 +203,8 @@ exceptionU ExceptionU(
   .i_inst_opcode              (tmp_i_ex_inst_opcode       ),
   .i_pc                       (tmp_i_ex_pc                ),
   .i_csr_rdata                (i_ex_csr_rdata             ),
+  .o_pc_jmp                   (exceptionU_pc_jmp          ),
+  .o_pc_jmpaddr               (exceptionU_pc_jmpaddr      ),
   .o_csr_addr                 (exceptionU_csr_addr        ),
   .o_csr_ren                  (exceptionU_csr_ren         ),
   .o_csr_wen                  (exceptionU_csr_wen         ),

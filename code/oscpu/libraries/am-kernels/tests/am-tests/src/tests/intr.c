@@ -3,12 +3,16 @@
 Context *simple_trap(Event ev, Context *ctx) {
   switch(ev.event) {
     case EVENT_IRQ_TIMER:
+      printf("==AA\n");
       putch('t'); break;
     case EVENT_IRQ_IODEV:
+      printf("==BB\n");
       putch('d'); break;
     case EVENT_YIELD:
+      printf("==CC\n");
       putch('y'); break;
     default:
+      printf("==DD\n");
       break;
   }
   return ctx;

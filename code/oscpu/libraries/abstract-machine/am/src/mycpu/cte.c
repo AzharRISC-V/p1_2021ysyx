@@ -7,7 +7,24 @@ Context* __am_irq_handle(Context *c) {
   if (user_handler) {
     Event ev = {0};
     switch (c->cause) {
-      default: ev.event = EVENT_ERROR; break;
+      case 0x800000000007: //!
+        ev.event = EVENT_IRQ_TIMER;
+        break;
+      case 11:
+        if (c->GPR1 == -1) {
+          ev.event = EVENT_YIELD;   // 环境调用异常
+          c->epc += 4;    // mepc要比保存之前的加4，因为保存时为ecall所在的pc，需要返回到下一条指令
+          // 为何不在一开始不赋值为 +4 的位置？因为riscv有规定出现异常时mepc为当前的（出现异常时的）pc
+          // 所以只能在软件上处理
+        }
+        else {
+          ev.event = EVENT_SYSCALL;
+        }
+        break;
+
+      default: 
+        ev.event = EVENT_ERROR; 
+        break;
     }
 
     c = user_handler(ev, c);

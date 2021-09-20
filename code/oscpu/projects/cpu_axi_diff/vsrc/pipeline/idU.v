@@ -103,8 +103,8 @@ wire inst_and     = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[
 
 wire inst_fence   = ~opcode[6] & ~opcode[5] & ~opcode[4] &  opcode[3] &  opcode[2] & ~func3[2] & ~func3[1] & ~func3[0];
 wire inst_fencei  = ~opcode[6] & ~opcode[5] & ~opcode[4] &  opcode[3] &  opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
-wire inst_ecall   =  opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0] & ~func7[0];
-wire inst_ebreak  =  opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0] &  func7[0];
+wire inst_ecall   =  opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0] & ~func7[4] & ~func7[3] & ~func7[0] & ~rs2[1];
+wire inst_ebreak  =  opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0] & ~func7[4] & ~func7[3] &  func7[0] & ~rs2[1];
 
 wire inst_csrrw   =  opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
 wire inst_csrrs   =  opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] & ~func3[0];
@@ -126,6 +126,8 @@ wire inst_sllw    = ~opcode[6] &  opcode[5] &  opcode[4] &  opcode[3] & ~opcode[
 wire inst_srlw    = ~opcode[6] &  opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] & ~func7[5];
 wire inst_sraw    = ~opcode[6] &  opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] &  func7[5];
 
+wire inst_mret    =  opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0] &  func7[4] &  func7[3] & ~func7[0] & rs2[1];
+
 wire inst_load    = inst_lb | inst_lbu | inst_lh | inst_lhu | inst_lw | inst_lwu | inst_ld;
 wire inst_store   = inst_sb | inst_sh | inst_sw | inst_sd;
 
@@ -141,7 +143,8 @@ assign inst_opcode[5] = (  rst == 1'b1 ) ? 0 :
     inst_csrrc  | inst_csrrwi | inst_csrrsi | inst_csrrci |
     inst_lwu    | inst_ld     | inst_sd     | inst_addiw  |
     inst_slliw  | inst_srliw  | inst_sraiw  | inst_addw   | 
-    inst_subw   | inst_sllw   | inst_srlw   | inst_sraw   );
+    inst_subw   | inst_sllw   | inst_srlw   | inst_sraw   |
+    inst_mret   );
 assign inst_opcode[4] = (  rst == 1'b1 ) ? 0 : 
   ( inst_sb     | inst_sh     | inst_sw     | inst_addi   | 
     inst_slti   | inst_sltiu  | inst_xori   | inst_ori    | 
@@ -149,7 +152,8 @@ assign inst_opcode[4] = (  rst == 1'b1 ) ? 0 :
     inst_add    | inst_sub    | inst_sll    | inst_slt    |
     inst_lwu    | inst_ld     | inst_sd     | inst_addiw  |
     inst_slliw  | inst_srliw  | inst_sraiw  | inst_addw   | 
-    inst_subw   | inst_sllw   | inst_srlw   | inst_sraw   );
+    inst_subw   | inst_sllw   | inst_srlw   | inst_sraw   |
+    inst_mret   );
 assign inst_opcode[3] = (  rst == 1'b1 ) ? 0 : 
   ( inst_bge    | inst_bltu   | inst_bgeu   | inst_lb     | 
     inst_lh     | inst_lw     | inst_lbu    | inst_lhu    | 
@@ -157,7 +161,8 @@ assign inst_opcode[3] = (  rst == 1'b1 ) ? 0 :
     inst_add    | inst_sub    | inst_sll    | inst_slt    | 
     inst_ecall  | inst_ebreak | inst_csrrw  | inst_csrrs  | 
     inst_csrrc  | inst_csrrwi | inst_csrrsi | inst_csrrci |
-    inst_sllw   | inst_srlw   | inst_sraw   | inst_subw   );
+    inst_sllw   | inst_srlw   | inst_sraw   | inst_subw   |
+    inst_mret   );
 assign inst_opcode[2] = (  rst == 1'b1 ) ? 0 : 
   ( inst_jalr   | inst_beq    | inst_bne    | inst_blt    | 
     inst_lh     | inst_lw     | inst_lbu    | inst_lhu    | 
@@ -165,7 +170,7 @@ assign inst_opcode[2] = (  rst == 1'b1 ) ? 0 :
     inst_add    | inst_sub    | inst_sll    | inst_slt    | 
     inst_or     | inst_and    | inst_fence  | inst_fencei | 
     inst_csrrc  | inst_csrrwi | inst_csrrsi | inst_csrrci |
-    inst_slliw  | inst_srliw  | inst_sraiw  );
+    inst_slliw  | inst_srliw  | inst_sraiw  | inst_mret   );
 assign inst_opcode[1] = (  rst == 1'b1 ) ? 0 : 
   ( inst_auipc  | inst_jal    | inst_bne    | inst_blt    | 
     inst_bgeu   | inst_lb     | inst_lbu    | inst_lhu    | 

@@ -159,6 +159,7 @@
 `define INST_SLLW           8'b0011_1001    //
 `define INST_SRLW           8'b0011_1010    //
 `define INST_SRAW           8'b0011_1011    //
+`define INST_MRET           8'b0011_1100    //
 
 
 
