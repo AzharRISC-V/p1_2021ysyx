@@ -55,6 +55,13 @@ always @(posedge clk) begin
         
         STATE_MEPC: begin
           if (step == 2) begin
+            state <= STATE_MCAUSE;
+            step <= 0;
+          end
+        end
+        
+        STATE_MCAUSE: begin
+          if (step == 2) begin
             state <= STATE_NULL;
             step <= 0;
             req <= 1;
@@ -85,6 +92,21 @@ always @(posedge clk) begin
             o_csr_addr      <=`CSR_ADR_MEPC; 
             o_csr_wen       <= 1; 
             o_csr_wdata     <= i_pc;
+            step            <= 1;
+          end
+          1:  begin
+            o_csr_wen       <= 0;
+            step            <= 2;
+          end
+          default: ;
+        endcase
+      end
+      STATE_MCAUSE: begin
+        case (step)
+          0:  begin 
+            o_csr_addr      <=`CSR_ADR_MCAUSE; 
+            o_csr_wen       <= 1; 
+            o_csr_wdata     <= 64'd11;
             step            <= 1;
           end
           1:  begin

@@ -132,7 +132,7 @@ DifftestCSRState DifftestCSRState(
   .stval              (0),
   .mtvec              (i_csrs[`CSR_IDX_MTVEC]),
   .stvec              (0),
-  .mcause             (0),
+  .mcause             (i_csrs[`CSR_IDX_MCAUSE]),
   .scause             (0),
   .satp               (0),
   .mip                (0),

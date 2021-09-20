@@ -54,14 +54,11 @@ end
 // csr写入
 always @(posedge clk) begin
   if (rst == 1'b1) begin
-    csrs[ 0]      <= 0;
-    csrs[ 1]      <= 64'h00000000_00001800;
-    csrs[ 2]      <= 0;
-    csrs[ 3]      <= 0;
-    csrs[ 4]      <= 0;
-    csrs[ 5]      <= 0;
-    csrs[ 6]      <= 0;
-    csrs[ 7]      <= 0;
+    csrs[`CSR_IDX_MCYCLE]   <= 0;
+    csrs[`CSR_IDX_MSTATUS]  <= 64'h00000000_00001800;
+    csrs[`CSR_IDX_MTVEC]    <= 0;
+    csrs[`CSR_IDX_MEPC]     <= 0;
+    csrs[`CSR_IDX_MCAUSE]   <= 0;
   end
   else begin
     if (i_csr_wen) begin
