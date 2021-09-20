@@ -11,6 +11,7 @@ module csrfile(
   input                     i_csr_wen,
   input   wire  [`BUS_64]   i_csr_wdata,
   output  reg   [`BUS_64]   o_csr_rdata,
+
   // difftest
   output  wire  [`BUS_64]   o_csrs[0 : 7]
 );
@@ -27,9 +28,12 @@ always @(*) begin
   end
   else begin
     case (i_csr_addr)
-      12'h300   : csr_idx = `CSR_IDX_MSTATUS;
-      12'hB00   : csr_idx = `CSR_IDX_MCYCLE;
-      default   : csr_idx = `CSR_IDX_NONE;
+      `CSR_ADR_MCYCLE   : csr_idx = `CSR_IDX_MCYCLE;
+      `CSR_ADR_MSTATUS  : csr_idx = `CSR_IDX_MSTATUS;
+      `CSR_ADR_MTVEC    : csr_idx = `CSR_IDX_MTVEC;
+      `CSR_ADR_MEPC     : csr_idx = `CSR_IDX_MEPC;
+      `CSR_ADR_MCAUSE   : csr_idx = `CSR_IDX_MCAUSE;
+      default           : csr_idx = `CSR_IDX_NONE;
     endcase
   end
 end
@@ -63,12 +67,6 @@ always @(posedge clk) begin
     if (i_csr_wen) begin
       csrs[csr_idx] = i_csr_wdata;
     end
-    // case (i_csr_op)
-    //   `CSROP_READ_WRITE     : begin o_csr_rdata = csrs[csr_idx]; csrs[csr_idx] = i_csr_wdata; end
-    //   `CSROP_READ_SET       : begin o_csr_rdata = csrs[csr_idx]; csrs[csr_idx] = csrs[csr_idx] | i_csr_wdata; end
-    //   `CSROP_READ_CLEAR     : begin o_csr_rdata = csrs[csr_idx]; csrs[csr_idx] = csrs[csr_idx] & (~i_csr_wdata); end
-    //   default               : begin o_csr_rdata = 0; end
-    // endcase
   end
 end
 

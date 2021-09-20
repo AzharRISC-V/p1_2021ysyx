@@ -51,9 +51,15 @@ wire executed_hs = i_ex_executed_ack & o_ex_executed_req;
 
 wire exeU_skip_cmt;
 
-// 是否使能组合逻辑单元部件
-reg                           i_ena;
-wire                          i_disable = !i_ena;
+// 通道选择
+wire is_inst_exceptionU = (i_ex_inst_opcode == `INST_ECALL);
+
+reg o_ena_exeU;
+reg o_ena_exceptionU;
+
+wire exeU_req;
+wire exceptionU_req;
+
 
 // 保存输入信息
 reg   [4 : 0]                 tmp_i_ex_inst_type;
@@ -85,9 +91,10 @@ always @(posedge clk) begin
     } <= 0;
 
     o_ex_executed_req   <= 0;
-    i_ena               <= 0;
+    o_ena_exceptionU    <= 0;
   end
   else begin
+    // 启动
     if (decoded_hs) begin
       tmp_i_ex_inst_type   <= i_ex_inst_type;
       tmp_i_ex_inst_opcode <= i_ex_inst_opcode;
@@ -101,16 +108,30 @@ always @(posedge clk) begin
       tmp_i_ex_nocmt    <= i_ex_nocmt;
       tmp_i_ex_skipcmt  <= i_ex_skipcmt;
 
-      o_ex_executed_req <= 1;
-      i_ena             <= 1;
+      // 通道选择
+      if (!is_inst_exceptionU) begin
+        o_ena_exeU        <= 1;
+        // exeU立即结束，请求信号置位
+        o_ex_executed_req <= 1;
+      end
+      else begin
+        o_ena_exceptionU  <= 1;
+      end
     end
+    // exeU或exceptionU收到应答，请求信号撤销
     else if (executed_hs) begin
-      i_ena             <= 0;
       o_ex_executed_req <= 0;
-      i_ena             <= 0;
+      o_ena_exeU        <= 0;
+      o_ena_exceptionU  <= 0;
+    end
+    // exceptionU结束，请求信号置位
+    else if (exceptionU_req) begin
+      o_ex_executed_req <= 1;
     end
   end
 end
+
+wire i_disable = rst | (!executed_hs);
 
 assign o_ex_pc            = i_disable ? 0 : tmp_i_ex_pc;
 assign o_ex_inst          = i_disable ? 0 : tmp_i_ex_inst;
@@ -126,23 +147,57 @@ assign o_ex_nocmt         = i_disable ? 0 : tmp_i_ex_nocmt;
 assign o_ex_skipcmt       = i_disable ? 0 : (tmp_i_ex_skipcmt | exeU_skip_cmt);
 
 
+wire   [11 : 0]      exeU_csr_addr;
+wire                 exeU_csr_ren;
+wire                 exeU_csr_wen;
+wire   [`BUS_64]     exeU_csr_wdata;
+wire   [`BUS_64]     exceptionU_csr_rdata;
+wire   [11 : 0]      exceptionU_csr_addr;
+wire                 exceptionU_csr_ren;
+wire                 exceptionU_csr_wen;
+wire   [`BUS_64]     exceptionU_csr_wdata;
+
+assign o_ex_csr_addr  = rst ? 0 : (o_ena_exeU ? exeU_csr_addr   : exceptionU_csr_addr);
+assign o_ex_csr_ren   = rst ? 0 : (o_ena_exeU ? exeU_csr_ren    : exceptionU_csr_ren);
+assign o_ex_csr_wen   = rst ? 0 : (o_ena_exeU ? exeU_csr_wen    : exceptionU_csr_wen);
+assign o_ex_csr_wdata = rst ? 0 : (o_ena_exeU ? exeU_csr_wdata  : exceptionU_csr_wdata);
+
 exeU ExeU(
   .rst                        (rst                        ),
-  .i_ena                      (i_ena                      ),
+  .clk                        (clk                        ),
+  .ena                        (o_ena_exeU                 ),
+  .ack                        (i_ex_executed_ack          ),
+  .req                        (exeU_req                   ),
   .i_inst_type                (tmp_i_ex_inst_type         ),
   .i_inst_opcode              (tmp_i_ex_inst_opcode       ),
   .i_op1                      (tmp_i_ex_op1               ),
   .i_op2                      (tmp_i_ex_op2               ),
   .i_op3                      (tmp_i_ex_op3               ),
   .i_csr_rdata                (i_ex_csr_rdata             ),
-  .o_csr_addr                 (o_ex_csr_addr              ),
-  .o_csr_ren                  (o_ex_csr_ren               ),
-  .o_csr_wen                  (o_ex_csr_wen               ),
-  .o_csr_wdata                (o_ex_csr_wdata             ),
+  .o_csr_addr                 (exeU_csr_addr              ),
+  .o_csr_ren                  (exeU_csr_ren               ),
+  .o_csr_wen                  (exeU_csr_wen               ),
+  .o_csr_wdata                (exeU_csr_wdata             ),
   .o_pc_jmp                   (o_ex_pc_jmp                ),
   .o_pc_jmpaddr               (o_ex_pc_jmpaddr            ),
   .o_rd_wdata                 (o_ex_rd_wdata              ),
   .o_exeU_skip_cmt            (exeU_skip_cmt              )
+);
+
+exceptionU ExceptionU(
+  .rst                        (rst                        ),
+  .clk                        (clk                        ),
+  .ena                        (o_ena_exceptionU & (!o_ex_executed_req)),
+  .ack                        (i_ex_executed_ack          ),
+  .req                        (exceptionU_req             ),
+  .i_inst_type                (tmp_i_ex_inst_type         ),
+  .i_inst_opcode              (tmp_i_ex_inst_opcode       ),
+  .i_pc                       (tmp_i_ex_pc                ),
+  .i_csr_rdata                (i_ex_csr_rdata             ),
+  .o_csr_addr                 (exceptionU_csr_addr        ),
+  .o_csr_ren                  (exceptionU_csr_ren         ),
+  .o_csr_wen                  (exceptionU_csr_wen         ),
+  .o_csr_wdata                (exceptionU_csr_wdata       )
 );
 
 endmodule

@@ -52,10 +52,20 @@
 // CSR
 `define BUS_CSR_ADDR        11 : 0          // CSR存储器地址
 
+// CSR addr
+`define CSR_ADR_MCYCLE      12'hB00
+`define CSR_ADR_MSTATUS     12'h300               // machine status register
+`define CSR_ADR_MTVEC       12'h305               // machine trap-handler base address
+`define CSR_ADR_MEPC        12'h341               // machine exception program counter
+`define CSR_ADR_MCAUSE      12'h342               // machine trap cause
+
 // CSR index in local memory
 `define CSR_IDX_NONE        0
-`define CSR_IDX_MSTATUS     1
-`define CSR_IDX_MCYCLE      2
+`define CSR_IDX_MCYCLE      1
+`define CSR_IDX_MSTATUS     2               // machine status register
+`define CSR_IDX_MTVEC       3               // machine trap-handler base address
+`define CSR_IDX_MEPC        4               // machine exception program counter
+`define CSR_IDX_MCAUSE      5               // machine trap cause
 
 // 寄存器配置
 `define REG_BITS            64              // 寄存器位数

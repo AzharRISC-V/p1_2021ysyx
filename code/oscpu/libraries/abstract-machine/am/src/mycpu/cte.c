@@ -34,6 +34,7 @@ Context *kcontext(Area kstack, void (*entry)(void *), void *arg) {
 }
 
 void yield() {
+  // ecall指令，通过引发环境调用异常来请求执行环境
   asm volatile("li a7, -1; ecall");
 }
 

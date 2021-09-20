@@ -7,7 +7,10 @@
 
 module exeU(
   input   wire                rst,
-  input   wire                i_ena,
+  input   wire                clk,
+  input   wire                ena,
+  input   wire                ack,
+  output  reg                 req,
   input   wire  [4 : 0]       i_inst_type,
   input   wire  [7 : 0]       i_inst_opcode,
   input   wire  [`BUS_64]     i_op1,
@@ -24,8 +27,22 @@ module exeU(
   output  reg                 o_exeU_skip_cmt    // 这里也会发现需要跳过提交的指令，比如 csr mcycle
 );
 
+always @(posedge clk) begin
+  if (rst) begin
+    req <= 0;
+  end
+  else begin
+    if (ena) begin
+      // 一个时钟周期即可完成
+      req <= 1;
+    end
+    else if (ack) begin
+      req <= 0;
+    end
+  end
+end
 
-wire i_disable = !i_ena;
+wire i_disable = !ena;
 
 reg [`BUS_64] reg64_1;
 reg [`BUS_32] reg32_1;
@@ -135,12 +152,12 @@ wire inst_csr =
   (i_inst_opcode == `INST_CSRRC ) | (i_inst_opcode == `INST_CSRRWI) | 
   (i_inst_opcode == `INST_CSRRSI) | (i_inst_opcode == `INST_CSRRCI) ;
 
-assign o_csr_ren = (rst == 1'b1) ? 0 : inst_csr;
-assign o_csr_wen = (rst == 1'b1) ? 0 : inst_csr;
-assign o_csr_addr = (rst == 1'b1) ? 0 : (inst_csr ? i_op2[11:0] : 0);
+assign o_csr_ren  = (i_disable) ? 0 : inst_csr;
+assign o_csr_wen  = (i_disable) ? 0 : inst_csr;
+assign o_csr_addr = (i_disable) ? 0 : (inst_csr ? i_op2[11:0] : 0);
 
 always @(*) begin
-  if (rst == 1'b1) begin
+  if (i_disable) begin
     o_csr_wdata = 0;
   end
   else begin
@@ -155,7 +172,6 @@ always @(*) begin
     endcase
   end
 end
-
 
 assign o_exeU_skip_cmt = (inst_csr && (o_csr_addr == 12'hB00));
 
