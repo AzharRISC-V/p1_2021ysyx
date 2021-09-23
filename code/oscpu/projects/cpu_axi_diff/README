@@ -19,6 +19,11 @@
 3. 接入Soc
 (1). 合并所有文件的命令
 $ cd vsrc
-$ cat defines.v axi_rw.v S011HD1P_X32Y2D128_BW.v cache_axi.v cache_basic.v cache_core.v cache.v putch.v rtc.v clint.v regfile.v csrfile.v if_stage.v ifU.v id_stage.v idU.v exe_stage.v exeU.v exceptionU.v mem_stage.v memU.v mem_mmio.v mem_nothing.v wb_stage.v wbU.v cmt_stage.v cmtU.v cpu.v SimTop.v > ysyx_20210544.v
+$ cat defines.v axi_rw.v S011HD1P_X32Y2D128_BW.v cache_axi.v cache_basic.v cache_core.v cache.v putch.v rtc.v clint.v regfile.v csrfile.v if_stage.v ifU.v id_stage.v idU.v exe_stage.v exeU.v exceptionU.v mem_stage.v memU.v mem_mmio.v mem_nothing.v wb_stage.v wbU.v cmt_stage.v cmtU.v cpu.v SimTop.v > ysyx_210544.v
 (2). 删除所有 `include 语句
-sed '/`include/d' ysyx_20210544.v -i
+sed '/`include/d' ysyx_210544.v -i
+(3). 为cpu内的所有模块添加 ysyx_210544_ 的前缀
+sed 's/module /module ysyx_210544_/g' ysyx_210544.v -i
+还需要手动解决实例化名称问题
+(4). 替换顶层模块名称
+sed 's/module ysyx_210544_SimTop/module ysyx_210544/g' ysyx_210544.v -i
