@@ -276,5 +276,5 @@
 // Machien time compare register
 // 当 mtime >= mtimecmp 时，产生计时器中断
 // mip的MTIP位置1。
-`define DEV_MTIMECMP_OFFSET 64'h0400
+`define DEV_MTIMECMP_OFFSET 64'h4000
 `define DEV_MTIMECMP        (`DEV_BASEADDR + `DEV_MTIMECMP_OFFSET)

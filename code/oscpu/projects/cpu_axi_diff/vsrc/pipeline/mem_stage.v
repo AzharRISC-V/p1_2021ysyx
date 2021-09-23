@@ -324,7 +324,9 @@ mem_mmio Mem_mmio(
   .ack                        (i_mem_memoryed_ack         ),
   .req                        (memoryed_req_mmio          ), 
   .ren                        (mem_ren                    ),
-  .raddr                      (mem_addr                   ),
+  .wen                        (mem_wen                    ),
+  .wdata                      (mem_wdata                  ),
+  .addr                       (mem_addr                   ),
   .rdata                      (rdata_mmio                 ),
   .o_clint_mtime_overflow     (o_mem_clint_mtime_overflow )
 );

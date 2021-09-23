@@ -15,32 +15,32 @@ module clint(
   output  wire                o_clint_mtime_overflow
 );
 
+reg   [7:0]       reg_mtime_cnt;
 reg   [`BUS_64]   reg_mtime;
 reg   [`BUS_64]   reg_mtimecmp;
+
 
 always @(posedge clk) begin
   if (rst) begin
     reg_mtime <= 0;
     reg_mtimecmp <= 5000;
-    o_clint_mtimecmp_rdata <= 0;
   end
   else begin
-    reg_mtime <= reg_mtime + 1;
-
-    if (reg_mtime > reg_mtimecmp + 2000) begin
-      reg_mtime <= reg_mtimecmp - 2000;
+    if (reg_mtime_cnt < 100) begin
+      reg_mtime_cnt <= reg_mtime_cnt + 1;
     end
     else begin
+      reg_mtime_cnt <= 0;
       reg_mtime <= reg_mtime + 1;
     end
 
-    if (i_clint_mtimecmp_ren) o_clint_mtimecmp_rdata <= reg_mtimecmp;
-    else                      o_clint_mtimecmp_rdata <= 0;
-      
-    if (i_clint_mtimecmp_wen) reg_mtimecmp <= i_clint_mtimecmp_wdata;
+    if (i_clint_mtimecmp_wen) begin
+      reg_mtimecmp <= i_clint_mtimecmp_wdata;
+    end
   end
 end
 
+assign o_clint_mtimecmp_rdata = (rst | !i_clint_mtimecmp_ren) ? 0 : reg_mtimecmp;
 assign o_clint_mtime_overflow = reg_mtime > reg_mtimecmp;
 
 
