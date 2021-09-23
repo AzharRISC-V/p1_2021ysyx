@@ -34,14 +34,10 @@ parameter [3:0] STATE_LEAVE_READ_MSTATUS      = 4'd6;   // machine status regist
 parameter [3:0] STATE_LEAVE_READ_MEPC         = 4'd7;   // machine exception program counter
 parameter [3:0] STATE_LEAVE_WRITE_MSTATUS     = 4'd8;   // machine status register
 
-parameter [63:0] MSTATUS_MPIE_MASK      = 64'h80;
-parameter [63:0] MSTATUS_MPP_MASK       = 64'h1800;
-
 reg [3:0] state;
 reg [1:0] step;
 // 在异常发生的第一个时钟周期就确定下来，因为有些输入信号只保持一个周期
 reg [63:0] exception_cause;     // 异常原因
-reg [63:0] exception_mstatus;   // 异常或中断时要设定的mstatus值
 
 wire hs = ack & req;
 
@@ -59,7 +55,6 @@ always @(posedge clk) begin
             if (i_inst_opcode == `INST_ECALL) begin
               state <= STATE_ENTER_WRITE_MEPC;
               exception_cause <= 64'd11;
-              exception_mstatus <= 64'h1800;
             end
             else if (i_inst_opcode == `INST_MRET) begin
               state <= STATE_LEAVE_READ_MSTATUS;
@@ -67,7 +62,6 @@ always @(posedge clk) begin
             else begin
               state <= STATE_ENTER_WRITE_MEPC;
               exception_cause <= 64'h80000000_00000007;
-              exception_mstatus <= 64'h1880;
             end
             step <= 0;
           end
@@ -226,7 +220,6 @@ always @(posedge clk) begin
           0:  begin 
             o_csr_addr      <=`CSR_ADR_MSTATUS; 
             o_csr_wen       <= 1; 
-            // o_csr_wdata     <= exception_mstatus;//64'h00000000_00001800;
             o_csr_wdata     <= {51'b0, 2'b11, 3'b000, csr_rdata_save2[3], 7'b0};
             step            <= 1;
           end
