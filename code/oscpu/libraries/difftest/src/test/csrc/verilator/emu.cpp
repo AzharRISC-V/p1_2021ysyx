@@ -122,7 +122,7 @@ inline EmuArgs parse_args(int argc, const char *argv[]) {
 
 Emulator::Emulator(int argc, const char *argv[]):
   dut_ptr(new VSimTop),
-  cycles(0), trapCode(STATE_RUNNING), maintime(0)
+  cycles(0), trapCode(STATE_RUNNING)
 {
   args = parse_args(argc, argv);
 
@@ -136,6 +136,11 @@ Emulator::Emulator(int argc, const char *argv[]):
   if (args.enable_jtag) { 
     jtag = new remote_bitbang_t(23334);
   }
+  // init core
+  reset_ncycles(10);
+
+  // init ram
+  init_ram(args.image);
 
 #if VM_TRACE == 1
   enable_waveform = args.enable_waveform && !args.enable_fork;
@@ -147,12 +152,6 @@ Emulator::Emulator(int argc, const char *argv[]):
     tfp->open(waveform_filename(now));	// Open the dump file
   }
 #endif
-
-  // init core
-  reset_ncycles(10);
-
-  // init ram
-  init_ram(args.image);
 
 #ifdef VM_SAVABLE
   if (args.snapshot_path != NULL) {
@@ -183,25 +182,14 @@ Emulator::~Emulator() {
 }
 
 inline void Emulator::reset_ncycles(size_t cycles) {
-  dut_ptr->reset = 1;
-
   for(int i = 0; i < cycles; i++) {
+    dut_ptr->reset = 1;
     dut_ptr->clock = 0;
     dut_ptr->eval();
-
-    if (enable_waveform) {
-      tfp->dump(maintime++); //cycle); 
-    }
-
     dut_ptr->clock = 1;
     dut_ptr->eval();
-
-    if (enable_waveform) {
-      tfp->dump(maintime++); //cycle); 
-    }
+    dut_ptr->reset = 0;
   }
-
-  dut_ptr->reset = 0;
 }
 
 inline void Emulator::single_cycle() {
@@ -214,10 +202,11 @@ inline void Emulator::single_cycle() {
   axi.aw.addr -= 0x80000000UL;
   axi.ar.addr -= 0x80000000UL;
   dramsim3_helper_rising(axi);
-
 #endif
 
-// by ZhengpuShi, 我认为上升下降都应该捕获波形
+  dut_ptr->clock = 1;
+  dut_ptr->eval();
+
 #if VM_TRACE == 1
   if (enable_waveform) {
     auto trap = difftest[0]->get_trap_event();
@@ -225,15 +214,9 @@ inline void Emulator::single_cycle() {
     uint64_t begin = dut_ptr->io_logCtrl_log_begin;
     uint64_t end   = dut_ptr->io_logCtrl_log_end;
     bool in_range  = (begin <= cycle) && (cycle <= end);
-    if (in_range) { 
-      tfp->dump(maintime++); //cycle); 
-    }
+    if (in_range) { tfp->dump(cycle); }
   }
-
 #endif
-
-  dut_ptr->clock = 1;
-  dut_ptr->eval();
 
 #ifdef WITH_DRAMSIM3
   axi_copy_from_dut_ptr(dut_ptr, axi);
@@ -241,19 +224,6 @@ inline void Emulator::single_cycle() {
   axi.ar.addr -= 0x80000000UL;
   dramsim3_helper_falling(axi);
   axi_set_dut_ptr(dut_ptr, axi);
-#endif
-
-#if VM_TRACE == 1
-  if (enable_waveform) {
-    auto trap = difftest[0]->get_trap_event();
-    uint64_t cycle = trap->cycleCnt;
-    uint64_t begin = dut_ptr->io_logCtrl_log_begin;
-    uint64_t end   = dut_ptr->io_logCtrl_log_end;
-    bool in_range  = (begin <= cycle) && (cycle <= end);
-    if (in_range) { 
-      tfp->dump(maintime++); //cycle); 
-    }
-  }
 #endif
 
   if (dut_ptr->io_uart_out_valid) {
@@ -473,12 +443,10 @@ uint64_t Emulator::execute(uint64_t max_cycle, uint64_t max_instr) {
 
 inline char* Emulator::timestamp_filename(time_t t, char *buf) {
   char buf_time[64];
-  //strftime(buf_time, sizeof(buf_time), "%F@%T", localtime(&t));
-  //strftime(buf_time, sizeof(buf_time), "%Y%m%d-%H%M%S", localtime(&t));
-  strftime(buf_time, sizeof(buf_time), "%Y%m%d", localtime(&t));
+  strftime(buf_time, sizeof(buf_time), "%F@%T", localtime(&t));
   char *noop_home = getenv("NOOP_HOME");
   assert(noop_home != NULL);
-  int len = snprintf(buf, 1024, "%s/build_vcd/%s", noop_home, buf_time);
+  int len = snprintf(buf, 1024, "%s/build/%s", noop_home, buf_time);
   return buf + len;
 }
 

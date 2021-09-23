@@ -111,10 +111,7 @@ private:
   uint64_t cycles;
   int trapCode;
 
-  uint64_t maintime;
-
   inline void reset_ncycles(size_t cycles);
-
   inline void single_cycle();
   void trigger_stat_dump();
   void display_trapinfo();
@@ -130,7 +127,7 @@ private:
 #endif
 
 public:
-  Emulator(int argc, const char *argv[]);
+Emulator(int argc, const char *argv[]);
   ~Emulator();
   uint64_t execute(uint64_t max_cycle, uint64_t max_instr);
   uint64_t get_cycles() const { return cycles; }

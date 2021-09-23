@@ -137,6 +137,28 @@ Enter the test cycle:
 ./build.sh -e chisel_cpu_diff -d -s -a "-i inst_diff.bin" -m "EMU_TRACE=1" -b
 ```
 
+### soc
+
+`projects/soc`目录下存放了接入`ysyxSoC`的示例程序。源码中只有一个占位符，能够通过编译但不能正常运行。
+
+要使用该框架，需要先按照 [ysyx SoC 的 readme](https://github.com/osCPU/ysyxsoc) 完成 `命名规范` 和 `CPU 内部修改` 两个步骤，得到 `ysyx_21xxxx.v`，随后放入 `projects/soc/vsrc/` 中。此后，执行下面的命令将会根据 `myinfo.txt` 中的 ID 自动 对代码进行规范检查、集成到 `soc` 并运行指定的程序。`ysyxSoC` 中附带的例程会被自动软连接至 `build` 目录下，仿真时可以快速使用。
+
+```bash
+./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal --trace' -a "-i ysyxSoC/flash/hello-flash.bin --dump-wave"
+```
+
+由于无法直接使用 `difftest` 框架，暂时只支持少量参数。
+```bash
+$ ./emu -h
+Usage: ./emu [OPTION...]
+
+  -i, --image=FILE           run with this image file
+      --dump-wave            dump waveform when log is enabled
+  -b, --log-begin=NUM        display log from NUM th cycle
+  -e, --log-end=NUM          stop display log at NUM th cycle
+  -h, --help                 print program help info
+```
+
 ## 查看波形
 
 在`oscpu`目录下使用命令可以通过`gtkwave`查看输出的波形，其中`xxx`表示例程名。

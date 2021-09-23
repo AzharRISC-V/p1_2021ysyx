@@ -395,7 +395,6 @@ int Difftest::check_timeout() {
   if (!has_commit && ticks > last_commit + firstCommit_limit) {
     eprintf("No instruction commits for %lu cycles of core %d. Please check the first instruction.\n",
       firstCommit_limit, id);
-    eprintf("ticks:%ld, last_commit:%ld\n", ticks, last_commit);
     eprintf("Note: The first instruction may lie in 0x10000000 which may executes and commits after 500 cycles.\n");
     eprintf("   Or the first instruction may lie in 0x80000000 which may executes and commits after 2000 cycles.\n");
     display();
@@ -404,7 +403,6 @@ int Difftest::check_timeout() {
 
   // check whether there're any commits in the last 5000 cycles
   if (has_commit && ticks > last_commit + stuck_limit) {
-    eprintf("ticks:%ld, last_commit:%ld\n", ticks, last_commit);
     eprintf("No instruction of core %d commits for %lu cycles, maybe get stuck\n"
         "(please also check whether a fence.i instruction requires more than %lu cycles to flush the icache)\n",
         id, stuck_limit, stuck_limit);

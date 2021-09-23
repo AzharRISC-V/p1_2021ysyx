@@ -21,7 +21,6 @@
 #define NUM_CORES 1
 #endif
 
-
 // emulated memory size (Byte)
 #define EMU_RAM_SIZE (256 * 1024 * 1024UL) // 256 MB
 // #define EMU_RAM_SIZE (8 * 1024 * 1024 * 1024UL) // 8 GB

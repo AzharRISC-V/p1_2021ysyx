@@ -24,10 +24,9 @@ SIM_TOP_V = $(BUILD_DIR)/$(SIM_TOP).v
 DIFF_SCALA_FILE = $(shell find ./src/main/scala -name '*.scala')
 SCALA_FILE = $(shell find $(DESIGN_DIR)/src/main/scala -name '*.scala')
 
-# (ignore Scala)
 # generate SimTop.v
-# $(SIM_TOP_V): $(DIFF_SCALA_FILE) $(SCALA_FILE)
-#	$(MAKE) -C $(DESIGN_DIR) sim-verilog
+$(SIM_TOP_V): $(DIFF_SCALA_FILE) $(SCALA_FILE)
+	$(MAKE) -C $(DESIGN_DIR) sim-verilog
 
 # co-simulation with DRAMsim3
 ifeq ($(WITH_DRAMSIM3),1)

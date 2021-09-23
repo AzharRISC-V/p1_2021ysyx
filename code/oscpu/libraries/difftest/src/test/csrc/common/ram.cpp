@@ -189,51 +189,26 @@ void ram_finish() {
 }
 
 
-// show_dbg 是否打印调试信息
-extern "C" uint64_t ram_read_helper(uint8_t show_dbg, uint8_t en, uint64_t rIdx) {
-  if (ram && en) {
-    if (rIdx >= EMU_RAM_SIZE / sizeof(uint64_t)) {
-      printf("ERROR: ram rIdx = 0x%lx out of bound!\n", rIdx);
-      // rIdx = rIdx % (EMU_RAM_SIZE / sizeof(uint64_t));
-      //assert(rIdx < EMU_RAM_SIZE / sizeof(uint64_t));
-      return 0;
-    } else {
-      pthread_mutex_lock(&ram_mutex);
-      uint64_t rdata = (en) ? ram[rIdx] : 0;
-      if (show_dbg) {
-        printf("    ram_read_helper : addr=" FMT_64_HEX " rdata=" FMT_64_HEX "\n", 
-          (0x80000000 + rIdx * 8), rdata);
-      }
-      pthread_mutex_unlock(&ram_mutex);
-      return rdata;
-    }
-  } else {
+extern "C" uint64_t ram_read_helper(uint8_t en, uint64_t rIdx) {
+  if (!ram)
     return 0;
+  if (en && rIdx >= EMU_RAM_SIZE / sizeof(uint64_t)) {
+    rIdx %= EMU_RAM_SIZE / sizeof(uint64_t);
   }
+  pthread_mutex_lock(&ram_mutex);
+  uint64_t rdata = (en) ? ram[rIdx] : 0;
+  pthread_mutex_unlock(&ram_mutex);
+  return rdata;
 }
 
-// show_dbg 是否打印调试信息
-extern "C" void ram_write_helper(uint8_t show_dbg, uint64_t wIdx, uint64_t wdata, uint64_t wmask, uint8_t wen) {
+extern "C" void ram_write_helper(uint64_t wIdx, uint64_t wdata, uint64_t wmask, uint8_t wen) {
   if (wen && ram) {
     if (wIdx >= EMU_RAM_SIZE / sizeof(uint64_t)) {
       printf("ERROR: ram wIdx = 0x%lx out of bound!\n", wIdx);
-      wIdx = wIdx % (EMU_RAM_SIZE / sizeof(uint64_t));
-      //assert(wIdx < EMU_RAM_SIZE / sizeof(uint64_t));
+      assert(wIdx < EMU_RAM_SIZE / sizeof(uint64_t));
     }
     pthread_mutex_lock(&ram_mutex);
-    if (show_dbg) {
-      printf("    ram_write_helper: addr=" FMT_64_HEX " wdata=" FMT_64_HEX " wmask=" FMT_64_HEX "\n", 
-        (0x80000000 + wIdx * 8), wdata, wmask);
-    }
-
-    volatile uint64_t data_old = ram[wIdx];
     ram[wIdx] = (ram[wIdx] & ~wmask) | (wdata & wmask);
-    volatile uint64_t data_new = ram[wIdx];
-
-    if (show_dbg) {
-      printf("      before=" FMT_64_HEX " after =" FMT_64_HEX "\n", data_old, data_new);
-    }
-
     pthread_mutex_unlock(&ram_mutex);
   }
 }
@@ -243,7 +218,7 @@ uint64_t pmem_read(uint64_t raddr) {
     printf("Warning: pmem_read only supports 64-bit aligned memory access\n");
   }
   raddr -= 0x80000000;
-  return ram_read_helper(0, 1, raddr / sizeof(uint64_t));
+  return ram_read_helper(1, raddr / sizeof(uint64_t));
 }
 
 void pmem_write(uint64_t waddr, uint64_t wdata) {
@@ -251,7 +226,7 @@ void pmem_write(uint64_t waddr, uint64_t wdata) {
     printf("Warning: pmem_write only supports 64-bit aligned memory access\n");
   }
   waddr -= 0x80000000;
-  return ram_write_helper(0, waddr / sizeof(uint64_t), wdata, -1UL, 1);
+  return ram_write_helper(waddr / sizeof(uint64_t), wdata, -1UL, 1);
 }
 
 #ifdef WITH_DRAMSIM3
