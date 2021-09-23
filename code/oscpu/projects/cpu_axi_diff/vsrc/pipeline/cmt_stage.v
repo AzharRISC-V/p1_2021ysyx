@@ -18,7 +18,7 @@ module cmt_stage(
   input   wire                i_cmt_nocmt,
   input   wire                i_cmt_skipcmt,
   input   wire [`BUS_64]      i_cmt_regs[0 : 31],
-  input   wire [`BUS_64]      i_cmt_csrs[0 :  7],
+  input   wire [`BUS_64]      i_cmt_csrs[0 : 15],
   input   reg  [`BUS_64]      i_cmt_clint_mip,
   input   wire [`BUS_32]      i_cmt_intrNo
 );

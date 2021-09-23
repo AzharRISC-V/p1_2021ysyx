@@ -14,7 +14,7 @@ module cmtU(
   input   wire [`BUS_64]      i_pc,
   input   wire [`BUS_32]      i_inst,
   input   wire [`BUS_64]      i_regs[0 : 31],
-  input   wire [`BUS_64]      i_csrs[0 :  7],
+  input   wire [`BUS_64]      i_csrs[0 : 15],
   input   reg  [`BUS_64]      i_clint_mip,
   input   wire [`BUS_32]      i_intrNo,
   input   wire                i_cmtvalid,
@@ -35,9 +35,11 @@ reg   [7:0]                   trap_code;
 reg   [`BUS_64]               cycleCnt;
 reg   [`BUS_64]               instrCnt;
 reg   [`BUS_64]               regs_diff [0 : 31];
-reg   [`BUS_64]               csrs_diff [0 : 7];
+reg   [`BUS_64]               csrs_diff [0 : 15];
 
 reg   [`BUS_64] instrCnt_inc = i_cmtvalid ? 1 : 0;
+
+wire  [`BUS_64] sstatus = i_csrs[`CSR_IDX_MSTATUS] & 64'h80000003_000DE122;
 
 always @(negedge clk) begin
   if (rst) begin
@@ -136,7 +138,7 @@ DifftestCSRState DifftestCSRState(
   .coreid             (0),
   .priviledgeMode     (`RISCV_PRIV_MODE_M),
   .mstatus            (i_csrs[`CSR_IDX_MSTATUS]),
-  .sstatus            (0),
+  .sstatus            (sstatus),
   .mepc               (i_csrs[`CSR_IDX_MEPC]),
   .sepc               (0),
   .mtval              (0),
@@ -148,7 +150,7 @@ DifftestCSRState DifftestCSRState(
   .satp               (0),
   .mip                (0),// i_csrs[`CSR_IDX_MIP]),// i_clint_mip),//i_csrs[`CSR_IDX_MIP]),
   .mie                (i_csrs[`CSR_IDX_MIE]),
-  .mscratch           (0),
+  .mscratch           (i_csrs[`CSR_IDX_MSCRATCH]),
   .sscratch           (0),
   .mideleg            (0),
   .medeleg            (0)

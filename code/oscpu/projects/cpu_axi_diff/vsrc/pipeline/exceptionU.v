@@ -193,7 +193,7 @@ always @(posedge clk) begin
           1:  begin
             o_csr_ren       <= 0;
             step            <= 2;
-            csr_rdata_save1 <= i_csr_rdata;
+            csr_rdata_save2 <= i_csr_rdata;
           end
           default: ;
         endcase
@@ -209,7 +209,7 @@ always @(posedge clk) begin
           1:  begin
             o_csr_ren       <= 0;
             step            <= 2;
-            csr_rdata_save2 <= i_csr_rdata;
+            csr_rdata_save1 <= i_csr_rdata;
           end
           default: ;
         endcase
@@ -220,14 +220,22 @@ always @(posedge clk) begin
           0:  begin 
             o_csr_addr      <=`CSR_ADR_MSTATUS; 
             o_csr_wen       <= 1; 
-            o_csr_wdata     <= {51'b0, 2'b11, 3'b000, csr_rdata_save2[3], 7'b0};
+            o_csr_wdata     <= {
+              csr_rdata_save1[63:13],
+              2'b11,                    // [12:11]: MPP, set to M-mode
+              csr_rdata_save1[10:8], 
+              csr_rdata_save1[3],       // [7]: MPIE, set with MIE
+              csr_rdata_save1[6:4], 
+              1'b0,                     // [3]: MIE, set 0
+              csr_rdata_save1[2:0]
+              };
             step            <= 1;
           end
           1:  begin
             o_csr_wen       <= 0;
             step            <= 2;
             o_pc_jmp        <= 1;
-            o_pc_jmpaddr    <= csr_rdata_save1;
+            o_pc_jmpaddr    <= csr_rdata_save2;
           end
           default: ;
         endcase
@@ -270,7 +278,15 @@ always @(posedge clk) begin
           0:  begin 
             o_csr_addr      <=`CSR_ADR_MSTATUS; 
             o_csr_wen       <= 1; 
-            o_csr_wdata     <= {56'b0, 1'b1, 3'b0, csr_rdata_save1[7], 3'b0};
+            o_csr_wdata     <= {
+              csr_rdata_save1[63:13],
+              2'b00,                    // [12:11]: MPP, set to U-mode
+              csr_rdata_save1[10:8], 
+              1'b1,                     // [7]: MPIE, set to 1
+              csr_rdata_save1[6:4], 
+              csr_rdata_save1[7],       // [3]: MIE, set with MPIE
+              csr_rdata_save1[2:0]
+              };
             step            <= 1;
           end
           1:  begin

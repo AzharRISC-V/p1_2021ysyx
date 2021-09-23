@@ -163,11 +163,11 @@ always @(*) begin
   else begin
     case (i_inst_opcode)
       `INST_CSRRW   : o_csr_wdata = i_op1;
-      `INST_CSRRS   : o_csr_wdata = i_op1 | i_csr_rdata;
-      `INST_CSRRC   : o_csr_wdata = i_op1 & (~i_csr_rdata);
+      `INST_CSRRS   : o_csr_wdata = i_csr_rdata | i_op1;
+      `INST_CSRRC   : o_csr_wdata = i_csr_rdata & (~i_op1);
       `INST_CSRRWI  : o_csr_wdata = i_op1;
-      `INST_CSRRSI  : o_csr_wdata = i_op1 | i_csr_rdata;
-      `INST_CSRRCI  : o_csr_wdata = i_op1 & (~i_csr_rdata);
+      `INST_CSRRSI  : o_csr_wdata = i_csr_rdata | i_op1;
+      `INST_CSRRCI  : o_csr_wdata = i_csr_rdata & (~i_op1);
       default       : o_csr_wdata = 0;
     endcase
   end

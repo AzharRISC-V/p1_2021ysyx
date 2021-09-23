@@ -57,19 +57,21 @@
 `define CSR_ADR_MSTATUS     12'h300         // machine status register
 `define CSR_ADR_MIE         12'h304         // machine interrupt-enable register
 `define CSR_ADR_MTVEC       12'h305         // machine trap-handler base address
+`define CSR_ADR_MSCRATCH    12'h340         // scratch register for machine trap handlers.
 `define CSR_ADR_MEPC        12'h341         // machine exception program counter
 `define CSR_ADR_MCAUSE      12'h342         // machine trap cause
 `define CSR_ADR_MIP         12'h344         // machine interrupt pending
 
 // CSR index in local memory
-`define CSR_IDX_NONE        0
-`define CSR_IDX_MCYCLE      1
-`define CSR_IDX_MSTATUS     2
-`define CSR_IDX_MIE         3
-`define CSR_IDX_MTVEC       4
-`define CSR_IDX_MEPC        5
-`define CSR_IDX_MCAUSE      6
-`define CSR_IDX_MIP         7
+`define CSR_IDX_NONE        4'd0
+`define CSR_IDX_MCYCLE      4'd1
+`define CSR_IDX_MSTATUS     4'd2
+`define CSR_IDX_MIE         4'd3
+`define CSR_IDX_MTVEC       4'd4
+`define CSR_IDX_MSCRATCH    4'd5
+`define CSR_IDX_MEPC        4'd6
+`define CSR_IDX_MCAUSE      4'd7
+`define CSR_IDX_MIP         4'd8
 
 // 寄存器配置
 `define REG_BITS            64              // 寄存器位数
@@ -164,94 +166,6 @@
 `define INST_SRLW           8'b0011_1010    //
 `define INST_SRAW           8'b0011_1011    //
 `define INST_MRET           8'b0011_1100    //
-
-
-
-// inst-type
-`define INST_R_TYPE         3'b001
-`define INST_I_TYPE         3'b010
-`define INST_S_TYPE         3'b011
-`define INST_B_TYPE         3'b100
-`define INST_U_TYPE         3'b101
-`define INST_J_TYPE         3'b110
-
-
-// opcode，用于指令译码
-// RV32I
-`define OPCODE_LUI          7'b0110111
-`define OPCODE_AUIPC        7'b0010111
-`define OPCODE_JAL          7'b1101111
-`define OPCODE_JALR         7'b1100111
-`define OPCODE_BEQ          7'b1100011
-`define OPCODE_LB           7'b0000011
-`define OPCODE_SB           7'b0100011
-`define OPCODE_ADDI         7'b0010011
-`define OPCODE_ADD          7'b0110011
-`define OPCODE_FENCE        7'b0001111      // 同步
-`define OPCODE_ENV          7'b1110011      // 环境
-`define OPCODE_CSR          7'b1110011
-// RV64I
-`define OPCODE_ADDIW        7'b0011011
-`define OPCODE_ADDW         7'b0111011
-
-// 某个opcode对应的 funct3，用于指令译码
-// 若还不能区分，手动判断 funct7
-
-// RV32I
-`define FUNCT3_BEQ          3'b000
-`define FUNCT3_BNE          3'b001
-`define FUNCT3_BLT          3'b100
-`define FUNCT3_BGE          3'b101
-`define FUNCT3_BLTU         3'b110
-`define FUNCT3_BGEU         3'b111
-`define FUNCT3_LB           3'b000
-`define FUNCT3_LH           3'b001
-`define FUNCT3_LW           3'b010
-`define FUNCT3_LBU          3'b100
-`define FUNCT3_LHU          3'b101
-`define FUNCT3_SB           3'b000
-`define FUNCT3_SH           3'b001
-`define FUNCT3_SW           3'b010
-`define FUNCT3_ADDI         3'b000
-`define FUNCT3_SLTI         3'b010
-`define FUNCT3_SLTIU        3'b011
-`define FUNCT3_XORI         3'b100
-`define FUNCT3_ORI          3'b110
-`define FUNCT3_ANDI         3'b111
-`define FUNCT3_SLLI         3'b001
-`define FUNCT3_SRLI         3'b101
-`define FUNCT3_SRAI         3'b101
-`define FUNCT3_ADD          3'b000
-`define FUNCT3_SUB          3'b000
-`define FUNCT3_SLL          3'b001
-`define FUNCT3_SLT          3'b010
-`define FUNCT3_SLTU         3'b011
-`define FUNCT3_XOR          3'b100
-`define FUNCT3_SRL          3'b101
-`define FUNCT3_SRA          3'b101
-`define FUNCT3_OR           3'b110
-`define FUNCT3_AND          3'b111
-`define FUNCT3_FENCE        3'b000
-`define FUNCT3_FENCEI       3'b001
-`define FUNCT3_CSRRW        3'b001
-`define FUNCT3_CSRRS        3'b010
-`define FUNCT3_CSRRC        3'b011
-`define FUNCT3_CSRRWI       3'b101
-`define FUNCT3_CSRRSI       3'b110
-`define FUNCT3_CSRRCI       3'b111
-// RV64I
-`define FUNCT3_LWU          3'b110
-`define FUNCT3_LD           3'b011
-`define FUNCT3_SD           3'b011
-`define FUNCT3_ADDIW        3'b000
-`define FUNCT3_SLLIW        3'b001
-`define FUNCT3_SRLIW        3'b101
-`define FUNCT3_SRAIW        3'b101
-`define FUNCT3_ADDW         3'b000
-`define FUNCT3_SUBW         3'b000
-`define FUNCT3_SLLW         3'b001
-`define FUNCT3_SRLW         3'b101
-`define FUNCT3_SRAW         3'b101
 
 // CSR Operation
 `define CSROP_NONE          2'b00     // none

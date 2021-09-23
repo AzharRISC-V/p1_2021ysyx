@@ -173,7 +173,7 @@ wire  [`BUS_64]               o_reg_regs[0 : 31];
 // csrfile -> ex_stage
 wire  [`BUS_64]               o_csr_rdata;
 // csrfile -> wb_stage
-wire  [`BUS_64]               o_csr_csrs[0 :  7];
+wire  [`BUS_64]               o_csr_csrs[0 :  15];
 
 // assign o_csr_rd_wen  = o_id_csrop != 2'b00;
 // assign o_csr_rd_wdata = (o_id_csrop == 2'b00) ? 0 : o_csr_rdata;
