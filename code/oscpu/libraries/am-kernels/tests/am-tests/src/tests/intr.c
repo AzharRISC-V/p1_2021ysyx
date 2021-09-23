@@ -34,7 +34,7 @@ void hello_intr() {
   //halt(0);
   while (1) {
     // for (volatile int i = 0; i < 10000000; i++) ;
-    for (volatile int i = 0; i < 100; i++) ;
-    //yield();
+    for (volatile int i = 0; i < 5; i++) ;
+    yield();
   }
 }

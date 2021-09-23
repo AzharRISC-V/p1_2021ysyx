@@ -9,10 +9,8 @@ module exceptionU(
   input   wire                rst,
   input   wire                clk,
   input   wire                ena,
-  input   wire                i_is_time_int_req,    // 是否为时钟中断？否则为环境调用异常
   input   wire                ack,
   output  reg                 req,
-  input   wire  [4 : 0]       i_inst_type,
   input   wire  [7 : 0]       i_inst_opcode,
   input   wire  [`BUS_64]     i_pc,
   output  reg                 o_pc_jmp,
@@ -24,21 +22,22 @@ module exceptionU(
   output  reg   [`BUS_64]     o_csr_wdata
 );
 
-parameter [2:0] STATE_NULL                    = 3'd0;
+parameter [3:0] STATE_NULL                    = 4'd0;
 // 异常或中断进入：ecall、定时器中断等
-parameter [2:0] STATE_ENTER_WRITE_MEPC        = 3'd1;   // machine exception program counter
-parameter [2:0] STATE_ENTER_WRITE_MCAUSE      = 3'd2;   // machine trap cause
-parameter [2:0] STATE_ENTER_READ_MTVEC        = 3'd3;   // machine trap-handler base address
-parameter [2:0] STATE_ENTER_WRITE_MSTATUS     = 3'd4;   // machine status register
+parameter [3:0] STATE_ENTER_WRITE_MEPC        = 4'd1;   // machine exception program counter
+parameter [3:0] STATE_ENTER_WRITE_MCAUSE      = 4'd2;   // machine trap cause
+parameter [3:0] STATE_ENTER_READ_MTVEC        = 4'd3;   // machine trap-handler base address
+parameter [3:0] STATE_ENTER_READ_MSTATUS      = 4'd4;   // machine status register
+parameter [3:0] STATE_ENTER_WRITE_MSTATUS     = 4'd5;   // machine status register
 // 异常或中断返回：mret
-parameter [2:0] STATE_LEAVE_READ_MSTATUS      = 3'd5;   // machine status register
-parameter [2:0] STATE_LEAVE_READ_MEPC         = 3'd6;   // machine exception program counter
-parameter [2:0] STATE_LEAVE_WRITE_MSTATUS     = 3'd7;   // machine status register
+parameter [3:0] STATE_LEAVE_READ_MSTATUS      = 4'd6;   // machine status register
+parameter [3:0] STATE_LEAVE_READ_MEPC         = 4'd7;   // machine exception program counter
+parameter [3:0] STATE_LEAVE_WRITE_MSTATUS     = 4'd8;   // machine status register
 
 parameter [63:0] MSTATUS_MPIE_MASK      = 64'h80;
 parameter [63:0] MSTATUS_MPP_MASK       = 64'h1800;
 
-reg [2:0] state;
+reg [3:0] state;
 reg [1:0] step;
 // 在异常发生的第一个时钟周期就确定下来，因为有些输入信号只保持一个周期
 reg [63:0] exception_cause;     // 异常原因
@@ -62,13 +61,13 @@ always @(posedge clk) begin
               exception_cause <= 64'd11;
               exception_mstatus <= 64'h1800;
             end
-            else if (i_is_time_int_req) begin
+            else if (i_inst_opcode == `INST_MRET) begin
+              state <= STATE_LEAVE_READ_MSTATUS;
+            end
+            else begin
               state <= STATE_ENTER_WRITE_MEPC;
               exception_cause <= 64'h80000000_00000007;
               exception_mstatus <= 64'h1880;
-            end
-            else if (i_inst_opcode == `INST_MRET) begin
-              state <= STATE_LEAVE_READ_MSTATUS;
             end
             step <= 0;
           end
@@ -89,6 +88,13 @@ always @(posedge clk) begin
         end
         
         STATE_ENTER_READ_MTVEC: begin
+          if (step == 2) begin
+            state <= STATE_ENTER_READ_MSTATUS;
+            step <= 0;
+          end
+        end
+        
+        STATE_ENTER_READ_MSTATUS: begin
           if (step == 2) begin
             state <= STATE_ENTER_WRITE_MSTATUS;
             step <= 0;
@@ -199,12 +205,29 @@ always @(posedge clk) begin
         endcase
       end
       
+      STATE_ENTER_READ_MSTATUS: begin
+        case (step)
+          0:  begin 
+            o_csr_addr      <=`CSR_ADR_MSTATUS; 
+            o_csr_ren       <= 1; 
+            step            <= 1;
+          end
+          1:  begin
+            o_csr_ren       <= 0;
+            step            <= 2;
+            csr_rdata_save2 <= i_csr_rdata;
+          end
+          default: ;
+        endcase
+      end
+      
       STATE_ENTER_WRITE_MSTATUS: begin
         case (step)
           0:  begin 
             o_csr_addr      <=`CSR_ADR_MSTATUS; 
             o_csr_wen       <= 1; 
-            o_csr_wdata     <= exception_mstatus;//64'h00000000_00001800;
+            // o_csr_wdata     <= exception_mstatus;//64'h00000000_00001800;
+            o_csr_wdata     <= {51'b0, 2'b11, 3'b000, csr_rdata_save2[3], 7'b0};
             step            <= 1;
           end
           1:  begin

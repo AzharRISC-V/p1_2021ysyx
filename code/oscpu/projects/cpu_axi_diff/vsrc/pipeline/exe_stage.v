@@ -164,8 +164,8 @@ assign o_ex_op2           = i_disable ? 0 : tmp_i_ex_op2;
 assign o_ex_op3           = i_disable ? 0 : tmp_i_ex_op3;
 assign o_ex_inst_type     = i_disable ? 0 : tmp_i_ex_inst_type;
 assign o_ex_inst_opcode   = i_disable ? 0 : tmp_i_ex_inst_opcode;
-assign o_ex_rd            = i_disable ? 0 : tmp_i_ex_rd;
-assign o_ex_rd_wen        = i_disable ? 0 : tmp_i_ex_rd_wen;
+assign o_ex_rd            = i_disable ? 0 : (!o_ena_exeU ? 0 : tmp_i_ex_rd);
+assign o_ex_rd_wen        = i_disable ? 0 : (!o_ena_exeU ? 0 : tmp_i_ex_rd_wen);
 assign o_ex_nocmt         = i_disable ? 0 : tmp_i_ex_nocmt;
 assign o_ex_skipcmt       = i_disable ? 0 : (tmp_i_ex_skipcmt | exeU_skip_cmt);
 
@@ -214,11 +214,9 @@ exceptionU ExceptionU(
   .rst                        (rst                        ),
   .clk                        (clk                        ),
   .ena                        (o_ena_exceptionU & (!o_ex_executed_req)),
-  .i_is_time_int_req          (is_time_int_req            ),
   .ack                        (i_ex_executed_ack          ),
   .req                        (exceptionU_req             ),
-  .i_inst_type                (tmp_i_ex_inst_type         ),
-  .i_inst_opcode              (tmp_i_ex_inst_opcode       ),
+  .i_inst_opcode              (i_ex_inst_opcode           ),
   .i_pc                       (tmp_i_ex_pc                ),
   .i_csr_rdata                (i_ex_csr_rdata             ),
   .o_pc_jmp                   (exceptionU_pc_jmp          ),
