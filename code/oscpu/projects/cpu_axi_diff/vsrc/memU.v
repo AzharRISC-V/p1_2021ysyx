@@ -3,7 +3,7 @@
 
 // Memory Unit, 组合逻辑电路
 
-`include "defines.v";
+`include "defines.v"
 
 module memU(
   input   wire                clk,

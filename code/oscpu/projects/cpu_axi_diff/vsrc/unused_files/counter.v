@@ -1,8 +1,6 @@
 
 // ZhengpuShi
 
-`include "defines.v"
-
 module counter(
   input   wire              clk,
   input   wire              rst,

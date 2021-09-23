@@ -1,7 +1,10 @@
+
 // ZhengpuShi
 
 // Latch
-// ----------------------------------------------
+
+`include "defines.v"
+
 module basic_latch # (
   parameter DW = 32
 ) (

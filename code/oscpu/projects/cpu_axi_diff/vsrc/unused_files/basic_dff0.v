@@ -1,7 +1,10 @@
+
 // ZhengpuShi
 
 // D Flip Flop (DFF) with default value 0
-// ----------------------------------------------
+
+`include "defines.v"
+
 module basic_dff0 # (
   parameter DW = 32
 ) (

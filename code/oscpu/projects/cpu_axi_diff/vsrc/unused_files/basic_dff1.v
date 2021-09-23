@@ -1,7 +1,10 @@
+
 // ZhengpuShi
 
 // DFF with default value 1
-// ----------------------------------------------
+
+`include "defines.v"
+
 module basic_dff0 # (
   parameter DW = 32
 ) (

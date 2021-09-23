@@ -1,5 +1,7 @@
+
 // ZhengpuShi
 
+// Simple RTC module
 
 `include "defines.v"
 
@@ -9,8 +11,6 @@ module rtc(
 
   input   wire              ren,
   output  [`BUS_64]         rdata
-  // input   wire              wen,
-  // input   wire              wdata
 );
 
 reg   [`BUS_64] clk_cnt     ;   // 内部计时器，用于控制秒的变化

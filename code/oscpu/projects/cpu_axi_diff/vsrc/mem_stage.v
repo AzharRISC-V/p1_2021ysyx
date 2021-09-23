@@ -1,9 +1,9 @@
 
-// Zhengpu Shi
+// ZhengpuShi
 
 // Memory Interface
 
-`include "defines.v";
+`include "defines.v"
 
 module mem_stage(
   input   wire                clk,

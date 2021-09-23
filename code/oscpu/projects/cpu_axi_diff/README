@@ -15,3 +15,7 @@
 
 2. 握手信号设计
  需要区分两类信号，一类是需要保持的信号，一类是仅一个脉冲的通知信号。
+
+3. 合并所有文件的命令
+$ cd vsrc
+$ cat defines.v axi_rw.v S011HD1P_X32Y2D128_BW.v cache_axi.v cache_basic.v cache_core.v cache.v putch.v rtc.v clint.v regfile.v csrfile.v if_stage.v ifU.v id_stage.v idU.v exe_stage.v exeU.v exceptionU.v mem_stage.v memU.v mem_mmio.v mem_nothing.v wb_stage.v wbU.v cmt_stage.v cmtU.v cpu.v SimTop.v > ysyx_20210544.v

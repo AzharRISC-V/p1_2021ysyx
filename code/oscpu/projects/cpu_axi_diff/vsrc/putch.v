@@ -1,9 +1,9 @@
+
 // ZhengpuShi
 
+// 带有缓冲区的 putch 改进版，在收到 \n 时输出，否则存入缓冲区
+
 `include "defines.v"
-/*
-  带有缓冲区的 putch 改进版，在收到 \n 时输出，否则存入缓冲区
-*/
 
 module putch(
   input   wire                  clk,
