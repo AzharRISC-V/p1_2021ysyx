@@ -18,7 +18,9 @@ module cmt_stage(
   input   wire                i_cmt_nocmt,
   input   wire                i_cmt_skipcmt,
   input   wire [`BUS_64]      i_cmt_regs[0 : 31],
-  input   wire [`BUS_64]      i_cmt_csrs[0 :  7]
+  input   wire [`BUS_64]      i_cmt_csrs[0 :  7],
+  input   reg  [`BUS_64]      i_cmt_clint_mip,
+  input   wire [`BUS_32]      i_cmt_intrNo
 );
 
 assign o_cmt_writebacked_ack = 1'b1;
@@ -38,7 +40,9 @@ cmtU CmtU(
   .i_cmtvalid                 (i_cmtvalid                 ),
   .i_skipcmt                  (i_cmt_skipcmt              ),
   .i_regs                     (i_cmt_regs                 ),
-  .i_csrs                     (i_cmt_csrs                 )
+  .i_csrs                     (i_cmt_csrs                 ),
+  .i_clint_mip                (i_cmt_clint_mip            ),
+  .i_intrNo                   (i_cmt_intrNo               )
 );
 
 endmodule

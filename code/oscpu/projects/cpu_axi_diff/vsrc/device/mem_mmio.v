@@ -11,7 +11,8 @@ module mem_mmio(
   output  reg                 req,
   input   wire                ren,
   input   wire [`BUS_64]      raddr,
-  output  reg  [`BUS_64]      rdata
+  output  reg  [`BUS_64]      rdata,
+  output  wire                o_clint_mtime_overflow
 );
 
 // rtc设备
@@ -27,17 +28,38 @@ rtc Rtc(
   .rdata              (rtc_rdata        )
 );
 
+reg                           o_clint_mtimecmp_ren;
+reg  [`BUS_64]                i_clint_mtimecmp_rdata;
+reg                           o_clint_mtimecmp_wen;
+reg  [`BUS_64]                o_clint_mtimecmp_wdata;
+
+assign o_clint_mtimecmp_ren = (rst | !ren) ? 0 : raddr == `DEV_MTIMECMP;
+
+// CLINT (Core Local Interrupt Controller)
+clint Clint(
+  .clk                        (clk                        ),
+  .rst                        (rst                        ),
+  .i_clint_mtimecmp_ren       (o_clint_mtimecmp_ren       ),
+  .o_clint_mtimecmp_rdata     (i_clint_mtimecmp_rdata     ),
+  .i_clint_mtimecmp_wen       (o_clint_mtimecmp_wen       ),
+  .i_clint_mtimecmp_wdata     (o_clint_mtimecmp_wdata     ),
+  .o_clint_mtime_overflow     (o_clint_mtime_overflow     )
+);
+
 always @(posedge clk) begin
   if (rst) begin
     req <= 0;
     rdata <= 0;
+    o_clint_mtimecmp_wen <= 0;
+    o_clint_mtimecmp_wdata <= 0;
   end
   else begin
     // set request
     if (ren & start) begin
       case (raddr)
-        `DEV_RTC      :   rdata <= rtc_rdata;
-        default       : ;
+        `DEV_RTC        : rdata <= rtc_rdata;
+        `DEV_MTIMECMP   : rdata <= i_clint_mtimecmp_rdata;
+        default         : ;
       endcase
       req <= 1;
     end

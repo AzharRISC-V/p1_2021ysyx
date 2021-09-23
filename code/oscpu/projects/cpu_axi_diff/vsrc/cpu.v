@@ -126,6 +126,9 @@ wire  [`BUS_64]               o_ex_op3;
 wire                          o_ex_nocmt;
 wire                          o_ex_skipcmt;
 wire  [1:0]                   o_ex_memaction;
+wire  [`BUS_64]               o_ex_clint_mip;
+wire  [`BUS_32]               o_ex_intrNo;
+
 // ex_stage -> csrfile
 wire  [11 : 0]                o_ex_csr_addr;
 wire                          o_ex_csr_ren;
@@ -143,6 +146,8 @@ wire                          o_mem_rd_wen;
 wire  [`BUS_64]               o_mem_rd_wdata;
 wire                          o_mem_nocmt;
 wire                          o_mem_skipcmt;
+wire  [`BUS_64]               o_mem_clint_mip;
+wire  [`BUS_32]               o_mem_intrNo;
 
 // wb_stage
 // wb_stage -> cmt_stage
@@ -150,14 +155,12 @@ wire  [`BUS_64]               o_wb_pc;
 wire  [`BUS_32]               o_wb_inst;
 wire                          o_wb_nocmt;
 wire                          o_wb_skipcmt;
+wire  [`BUS_64]               o_wb_clint_mip;
+wire  [`BUS_32]               o_wb_intrNo;
 // wb_stage -> regfile
 wire  [`BUS_RIDX]             o_wb_rd;
 reg                           o_wb_rd_wen;
 wire  [`BUS_64]               o_wb_rd_wdata;
-
-// cmt_stage
-// cmt_stage -> if_stage
-wire                          o_cmt_could_fetch;
 
 // regfile
 // regfile -> id_stage
@@ -174,6 +177,12 @@ wire  [`BUS_64]               o_csr_csrs[0 :  7];
 
 // assign o_csr_rd_wen  = o_id_csrop != 2'b00;
 // assign o_csr_rd_wdata = (o_id_csrop == 2'b00) ? 0 : o_csr_rdata;
+
+// clint
+wire                          o_clint_mstatus_mie;
+wire                          o_clint_mie_mtie;
+wire                          o_clint_mtime_overflow;
+wire  [`BUS_64]               o_clint_mip;
 
 /////////////////////////////////////////////////
 
@@ -286,6 +295,11 @@ exe_stage Exe_stage(
   .i_ex_rd_wen                (o_id_rd_wen                ),
   .i_ex_nocmt                 (o_id_nocmt                 ),
   .i_ex_skipcmt               (o_id_skipcmt               ),
+  .i_ex_clint_mstatus_mie     (o_clint_mstatus_mie        ),
+  .i_ex_clint_mie_mtie        (o_clint_mie_mtie           ),
+  .i_ex_clint_mtime_overflow  (o_clint_mtime_overflow     ),
+  .i_ex_clint_mip             (o_csr_csrs[`CSR_IDX_MIP]   ),
+  .o_ex_clint_mip             (o_ex_clint_mip             ),
   .o_ex_pc                    (o_ex_pc                    ),
   .o_ex_inst                  (o_ex_inst                  ),
   .o_ex_pc_jmp                (o_ex_pc_jmp                ),
@@ -304,7 +318,8 @@ exe_stage Exe_stage(
   .o_ex_csr_ren               (o_ex_csr_ren               ),
   .o_ex_csr_wen               (o_ex_csr_wen               ),
   .o_ex_csr_wdata             (o_ex_csr_wdata             ),
-  .o_ex_skipcmt               (o_ex_skipcmt               )
+  .o_ex_skipcmt               (o_ex_skipcmt               ),
+  .o_ex_intrNo                (o_ex_intrNo                )
 );
 
 mem_stage Mem_stage(
@@ -326,6 +341,8 @@ mem_stage Mem_stage(
   .i_mem_rd_wdata             (o_ex_rd_wdata              ),
   .i_mem_nocmt                (o_ex_nocmt                 ),
   .i_mem_skipcmt              (o_ex_skipcmt               ),
+  .i_mem_clint_mip            (o_ex_clint_mip             ),
+  .o_mem_clint_mip            (o_mem_clint_mip            ),
   .o_mem_rd                   (o_mem_rd                   ),
   .o_mem_rd_wen               (o_mem_rd_wen               ),
   .o_mem_rd_wdata             (o_mem_rd_wdata             ),
@@ -333,6 +350,9 @@ mem_stage Mem_stage(
   .o_mem_inst                 (o_mem_inst                 ),
   .o_mem_nocmt                (o_mem_nocmt                ),
   .o_mem_skipcmt              (o_mem_skipcmt              ),
+  .o_mem_clint_mtime_overflow (o_clint_mtime_overflow     ),
+  .i_mem_intrNo               (o_ex_intrNo                ),
+  .o_mem_intrNo               (o_mem_intrNo               ),
 
   .o_dcache_req               (o_dcache_req               ),
   .o_dcache_addr              (o_dcache_addr              ),
@@ -357,21 +377,17 @@ wb_stage Wb_stage(
   .i_wb_rd_wdata              (o_mem_rd_wdata             ),
   .i_wb_nocmt                 (o_mem_nocmt                ),
   .i_wb_skipcmt               (o_mem_skipcmt              ),
+  .i_wb_clint_mip             (o_mem_clint_mip            ),
+  .o_wb_clint_mip             (o_wb_clint_mip             ),
   .o_wb_pc                    (o_wb_pc                    ),
   .o_wb_inst                  (o_wb_inst                  ),
   .o_wb_rd                    (o_wb_rd                    ),
   .o_wb_rd_wen                (o_wb_rd_wen                ),
   .o_wb_rd_wdata              (o_wb_rd_wdata              ),
   .o_wb_nocmt                 (o_wb_nocmt                 ),
-  .o_wb_skipcmt               (o_wb_skipcmt               )
-  // .ex_wen_i                   (o_ex_rd_wen                ),
-  // .ex_wdata_i                 (o_ex_rd_wdata              ),
-  // .mem_wen_i                  (ex_memwen                  ),
-  // .mem_wdata_i                (mem_rdata                  ),
-  // .csr_wen_i                  (o_csr_rd_wen               ),
-  // .csr_wdata_i                (o_csr_rd_wdata             ),
-  // .wen_o                      (rd_wen                     ),
-  // .wdata_o                    (rd_wdata                   )
+  .o_wb_skipcmt               (o_wb_skipcmt               ),
+  .i_wb_intrNo                (o_mem_intrNo               ),
+  .o_wb_intrNo                (o_wb_intrNo                )
 );
 
 cmt_stage Cmt_stage(
@@ -387,7 +403,9 @@ cmt_stage Cmt_stage(
   .i_cmt_nocmt                (o_wb_nocmt                 ),
   .i_cmt_skipcmt              (o_wb_skipcmt               ),
   .i_cmt_regs                 (o_reg_regs                 ),
-  .i_cmt_csrs                 (o_csr_csrs                 )
+  .i_cmt_csrs                 (o_csr_csrs                 ),
+  .i_cmt_clint_mip            (o_wb_clint_mip             ),
+  .i_cmt_intrNo               (o_wb_intrNo                )
 );
 
 regfile Regfile(
@@ -413,8 +431,10 @@ csrfile Csrfile(
   .i_csr_wen                  (o_ex_csr_wen               ),
   .i_csr_wdata                (o_ex_csr_wdata             ),
   .o_csr_rdata                (o_csr_rdata                ),
+  .o_csr_clint_mstatus_mie    (o_clint_mstatus_mie        ),
+  .o_csr_clint_mie_mtie       (o_clint_mie_mtie           ),
+  .i_csr_clint_mip            (o_ex_clint_mip             ),
   .o_csrs                     (o_csr_csrs                 )
 );
-
 
 endmodule

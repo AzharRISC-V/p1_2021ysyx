@@ -24,6 +24,8 @@ module mem_stage(
   input   wire  [`BUS_64]     i_mem_op1,
   input   wire  [`BUS_64]     i_mem_op2,
   input   wire  [`BUS_64]     i_mem_op3,
+  input   reg   [`BUS_64]     i_mem_clint_mip,
+  output  reg   [`BUS_64]     o_mem_clint_mip,
   output  wire  [`BUS_RIDX]   o_mem_rd,
   output  wire                o_mem_rd_wen,
   output  wire  [`BUS_64]     o_mem_rd_wdata,
@@ -31,6 +33,9 @@ module mem_stage(
   output  wire  [`BUS_32]     o_mem_inst,
   output  wire                o_mem_nocmt,
   output  wire                o_mem_skipcmt,
+  output  wire                o_mem_clint_mtime_overflow,
+  input   wire  [`BUS_32]     i_mem_intrNo,
+  output  reg   [`BUS_32]     o_mem_intrNo,
 
   ///////////////////////////////////////////////
   // DCache interface
@@ -49,8 +54,8 @@ assign o_mem_executed_ack = 1'b1;
 wire executed_hs = i_mem_executed_req & o_mem_executed_ack;
 wire memoryed_hs = i_mem_memoryed_ack & o_mem_memoryed_req;
 
-wire addr_is_mem = (mem_addr & ~(64'hFFFFFFF)) == 64'h80000000;
-wire addr_is_mmio = (mem_addr & ~(64'hFFF)) == 64'h20000000;
+wire addr_is_mem  = (mem_addr & (64'hFF000000)) == 64'h80000000;
+wire addr_is_mmio = (mem_addr & (64'hFF000000)) == 64'h02000000;
 
 // channel select, only valid in one pulse
 wire ch_mem   = addr_is_mem & (mem_ren | mem_wen);
@@ -145,6 +150,9 @@ always @(posedge clk) begin
       tmp_ch_mmio,
       tmp_ch_none
     } <= 0;
+
+    o_mem_clint_mip <= 0;
+    o_mem_intrNo <= 0;
   end
   else begin
     if (executed_hs) begin
@@ -164,12 +172,18 @@ always @(posedge clk) begin
       tmp_ch_mem                <= ch_mem;
       tmp_ch_mmio               <= ch_mmio;
       tmp_ch_none               <= ch_none;
+
+      o_mem_clint_mip           <= i_mem_clint_mip;
+      o_mem_intrNo <= i_mem_intrNo;
     end
     else if (memoryed_hs) begin
       // 该通道号需要消除，不能留到下一个指令
       tmp_ch_mem                <= 0;
       tmp_ch_mmio               <= 0;
       tmp_ch_none               <= 0;
+
+      o_mem_intrNo <= 0;
+
     end
   end
 end
@@ -311,7 +325,8 @@ mem_mmio Mem_mmio(
   .req                        (memoryed_req_mmio          ), 
   .ren                        (mem_ren                    ),
   .raddr                      (mem_addr                   ),
-  .rdata                      (rdata_mmio                 ) 
+  .rdata                      (rdata_mmio                 ),
+  .o_clint_mtime_overflow     (o_mem_clint_mtime_overflow )
 );
 
 // 仅握手

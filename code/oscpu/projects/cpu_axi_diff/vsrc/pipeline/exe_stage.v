@@ -22,8 +22,13 @@ module exe_stage(
   input   wire  [`BUS_RIDX]   i_ex_rd,
   input   reg                 i_ex_rd_wen,
   input   wire                i_ex_nocmt,
+  input   wire                i_ex_clint_mstatus_mie,
+  input   wire                i_ex_clint_mie_mtie,
+  input   wire                i_ex_clint_mtime_overflow,
   input   wire                i_ex_skipcmt,
   input   reg   [`BUS_64]     i_ex_csr_rdata,
+  input   reg   [`BUS_64]     i_ex_clint_mip,
+  output  reg   [`BUS_64]     o_ex_clint_mip,
   output  reg   [11 : 0]      o_ex_csr_addr,
   output  reg                 o_ex_csr_ren,
   output  reg                 o_ex_csr_wen,
@@ -41,7 +46,8 @@ module exe_stage(
   output  wire  [`BUS_64]     o_ex_op2,
   output  wire  [`BUS_64]     o_ex_op3,
   output  wire                o_ex_nocmt,
-  output  wire                o_ex_skipcmt
+  output  wire                o_ex_skipcmt,
+  output  reg   [`BUS_64]     o_ex_intrNo
 );
 
 assign o_ex_decoded_ack = 1'b1;
@@ -51,10 +57,13 @@ wire executed_hs = i_ex_executed_ack & o_ex_executed_req;
 
 wire exeU_skip_cmt;
 
-// 通道选择
+// 是否为异常指令：ecall, mret
 wire is_inst_exceptionU = (i_ex_inst_opcode == `INST_ECALL) |
   (i_ex_inst_opcode == `INST_MRET);
+// 是否产生了时钟中断？
+wire is_time_int_req = i_ex_clint_mstatus_mie & i_ex_clint_mie_mtie & i_ex_clint_mtime_overflow;
 
+// 通道选择
 reg o_ena_exeU;
 reg o_ena_exceptionU;
 
@@ -98,6 +107,8 @@ always @(posedge clk) begin
 
     o_ex_executed_req   <= 0;
     o_ena_exceptionU    <= 0;
+    o_ex_clint_mip      <= 0;
+    o_ex_intrNo <= 0;
   end
   else begin
     // 启动
@@ -113,9 +124,14 @@ always @(posedge clk) begin
       tmp_i_ex_rd_wen   <= i_ex_rd_wen;
       tmp_i_ex_nocmt    <= i_ex_nocmt;
       tmp_i_ex_skipcmt  <= i_ex_skipcmt;
+      
+      // 只使用命令执行之前的 mip 值
+      // o_ex_clint_mip    <= i_ex_clint_mip;
+      o_ex_clint_mip    <= is_time_int_req ? 64'h80 : 0;//  i_ex_clint_mip;
+      o_ex_intrNo <= is_time_int_req ? 7 : 0;
 
       // 通道选择
-      if (!is_inst_exceptionU) begin
+      if (!is_inst_exceptionU && !is_time_int_req) begin
         o_ena_exeU        <= 1;
         // exeU立即结束，请求信号置位
         o_ex_executed_req <= 1;
@@ -129,6 +145,7 @@ always @(posedge clk) begin
       o_ex_executed_req <= 0;
       o_ena_exeU        <= 0;
       o_ena_exceptionU  <= 0;
+      o_ex_intrNo <= 0;
     end
     // exceptionU结束，请求信号置位
     else if (exceptionU_req) begin
@@ -197,6 +214,7 @@ exceptionU ExceptionU(
   .rst                        (rst                        ),
   .clk                        (clk                        ),
   .ena                        (o_ena_exceptionU & (!o_ex_executed_req)),
+  .i_is_time_int_req          (is_time_int_req            ),
   .ack                        (i_ex_executed_ack          ),
   .req                        (exceptionU_req             ),
   .i_inst_type                (tmp_i_ex_inst_type         ),

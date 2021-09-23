@@ -210,7 +210,8 @@ assign inst_type_I    = ( rst == 1'b1 ) ? 0 :
     inst_ori    | inst_andi   | inst_slli   | inst_srli   | 
     inst_srai   | inst_csrrw  | inst_csrrs  | inst_csrrc  |
     inst_lwu    | inst_ld     | inst_addiw  | inst_slliw  | 
-    inst_srliw  | inst_sraiw  );
+    inst_srliw  | inst_sraiw  | inst_csrrwi | inst_csrrsi | 
+    inst_csrrci );
 assign inst_type_S    = ( rst == 1'b1 ) ? 0 : 
   ( inst_sb     | inst_sh     | inst_sw     | inst_sd     );
 assign inst_type_B    = ( rst == 1'b1 ) ? 0 : 
@@ -237,7 +238,12 @@ always @(*) begin
   end
   else begin
     if (inst_type_R | inst_type_I | inst_type_S | inst_type_B) begin
-      o_op1 = i_rs1_data;
+      if (inst_csrrwi | inst_csrrsi | inst_csrrci) begin
+        o_op1 = {59'd0, rs1};
+      end
+      else begin
+        o_op1 = i_rs1_data;
+      end
     end
     else if (inst_type_U) begin
       o_op1 = imm_U;

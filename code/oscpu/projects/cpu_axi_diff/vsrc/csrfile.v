@@ -12,6 +12,11 @@ module csrfile(
   input   wire  [`BUS_64]   i_csr_wdata,
   output  reg   [`BUS_64]   o_csr_rdata,
 
+  // 中断信号，直接控制csr
+  input   wire  [`BUS_64]   i_csr_clint_mip,
+  output                    o_csr_clint_mstatus_mie,
+  output                    o_csr_clint_mie_mtie,
+
   // difftest
   output  wire  [`BUS_64]   o_csrs[0 : 7]
 );
@@ -19,6 +24,9 @@ module csrfile(
 
 // CSR
 reg [`BUS_64]   csrs[0 : 7];
+
+assign o_csr_clint_mstatus_mie = csrs[`CSR_IDX_MSTATUS][3];
+assign o_csr_clint_mie_mtie = csrs[`CSR_IDX_MIE][7];
 
 // i_csr_addr translate to csr_idx
 reg  [2 : 0]       csr_idx;
@@ -30,9 +38,11 @@ always @(*) begin
     case (i_csr_addr)
       `CSR_ADR_MCYCLE   : csr_idx = `CSR_IDX_MCYCLE;
       `CSR_ADR_MSTATUS  : csr_idx = `CSR_IDX_MSTATUS;
+      `CSR_ADR_MIE      : csr_idx = `CSR_IDX_MIE;
       `CSR_ADR_MTVEC    : csr_idx = `CSR_IDX_MTVEC;
       `CSR_ADR_MEPC     : csr_idx = `CSR_IDX_MEPC;
       `CSR_ADR_MCAUSE   : csr_idx = `CSR_IDX_MCAUSE;
+      `CSR_ADR_MIP      : csr_idx = `CSR_IDX_MIP;
       default           : csr_idx = `CSR_IDX_NONE;
     endcase
   end
@@ -55,12 +65,16 @@ end
 always @(posedge clk) begin
   if (rst == 1'b1) begin
     csrs[`CSR_IDX_MCYCLE]   <= 0;
-    csrs[`CSR_IDX_MSTATUS]  <= 64'h00000000_00001800;
+    csrs[`CSR_IDX_MSTATUS]  <= 64'h1800;// 64'h1808;
+    csrs[`CSR_IDX_MIE]      <= 0;// 64'h80;
     csrs[`CSR_IDX_MTVEC]    <= 0;
     csrs[`CSR_IDX_MEPC]     <= 0;
-    csrs[`CSR_IDX_MCAUSE]   <= 0;
+    csrs[`CSR_IDX_MCAUSE]   <= 0;// 64'h80000000_00000007;
+    csrs[`CSR_IDX_MIP]      <= 0;// 64'h80;
   end
   else begin
+    csrs[`CSR_IDX_MIP]      <= i_csr_clint_mip;// (o_csr_clint_mstatus_mie & o_csr_clint_mie_mtie & i_csr_clint_time_overflow) ? 64'h80 : 0;
+
     if (i_csr_wen) begin
       csrs[csr_idx] = i_csr_wdata;
     end

@@ -6,10 +6,13 @@ static Context* (*user_handler)(Event, Context*) = NULL;
 Context* __am_irq_handle(Context *c) {
   if (user_handler) {
     Event ev = {0};
-    //printf("c->cause:%x, c->GPR1:%x, c->epc:%x\n", c->cause, c->GPR1, c->epc);
+    // printf("cause[0]:%x, cause[1]:%x, status:%x, epc:%x\n", c->cause, c->cause >> 32, c->status, c->epc);
     switch (c->cause) {
-      case 0x800000000007: //!
+      case 0x8000000000000007: //!
         ev.event = EVENT_IRQ_TIMER;
+        // 中断时，保存的pc就是当前这条正在执行（但尚未执行完）的指令
+        // 中断返回时，不需要加4。
+        // 加4时 ecall 特有的。
         break;
       case 11:
         if (c->gpr[17] == -1) {
@@ -54,11 +57,22 @@ Context *kcontext(Area kstack, void (*entry)(void *), void *arg) {
 void yield() {
   // ecall指令，通过引发环境调用异常来请求执行环境
   asm volatile("li a7, -1; ecall");
+
+  // 计时器中断：硬件自动置位 mip寄存器的 mtip 位，进入中断模式
 }
 
 bool ienabled() {
   return false;
 }
 
+#define MIE_MTIE  0x80
+
 void iset(bool enable) {
+  if (enable) {
+    asm volatile("csrsi mstatus, 8");   // mstatus_MIE
+    set_csr(mie, MIE_MTIE);
+  } else {
+    asm volatile("csrci mstatus, 8");
+    clear_csr(mie, MIE_MTIE);
+  }
 }

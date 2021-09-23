@@ -54,18 +54,22 @@
 
 // CSR addr
 `define CSR_ADR_MCYCLE      12'hB00
-`define CSR_ADR_MSTATUS     12'h300               // machine status register
-`define CSR_ADR_MTVEC       12'h305               // machine trap-handler base address
-`define CSR_ADR_MEPC        12'h341               // machine exception program counter
-`define CSR_ADR_MCAUSE      12'h342               // machine trap cause
+`define CSR_ADR_MSTATUS     12'h300         // machine status register
+`define CSR_ADR_MIE         12'h304         // machine interrupt-enable register
+`define CSR_ADR_MTVEC       12'h305         // machine trap-handler base address
+`define CSR_ADR_MEPC        12'h341         // machine exception program counter
+`define CSR_ADR_MCAUSE      12'h342         // machine trap cause
+`define CSR_ADR_MIP         12'h344         // machine interrupt pending
 
 // CSR index in local memory
 `define CSR_IDX_NONE        0
 `define CSR_IDX_MCYCLE      1
-`define CSR_IDX_MSTATUS     2               // machine status register
-`define CSR_IDX_MTVEC       3               // machine trap-handler base address
-`define CSR_IDX_MEPC        4               // machine exception program counter
-`define CSR_IDX_MCAUSE      5               // machine trap cause
+`define CSR_IDX_MSTATUS     2
+`define CSR_IDX_MIE         3
+`define CSR_IDX_MTVEC       4
+`define CSR_IDX_MEPC        5
+`define CSR_IDX_MCAUSE      6
+`define CSR_IDX_MIP         7
 
 // 寄存器配置
 `define REG_BITS            64              // 寄存器位数
@@ -255,7 +259,22 @@
 `define CSROP_READ_SET      2'b10     // read and set
 `define CSROP_READ_CLEAR    2'b11     // read and clear
 
-// Devices
-`define DEV_BASEADDR        64'h00000000_20000000
-`define DEV_RTC_OFFSET      64'h100
+// === Devices
+
+`define DEV_BASEADDR        64'h0200_0000
+
+// RTC
+`define DEV_RTC_OFFSET      64'h0100
 `define DEV_RTC             (`DEV_BASEADDR + `DEV_RTC_OFFSET)
+
+// Machine time register，以恒定频率增加，廉价的RTC软件方案
+// mcycle与mtime的区别：
+// 1. mcycle可随外接时钟而变化
+// 2. mtime必须以恒定的频率增加（估计是因指令执行耗费的clock数不同而引起，这里需要封装差异吗）
+`define DEV_MTIME_OFFSET    64'hbff8
+`define DEV_MTIME           (`DEV_BASEADDR + `DEV_MTIME_OFFSET)
+// Machien time compare register
+// 当 mtime >= mtimecmp 时，产生计时器中断
+// mip的MTIP位置1。
+`define DEV_MTIMECMP_OFFSET 64'h0400
+`define DEV_MTIMECMP        (`DEV_BASEADDR + `DEV_MTIMECMP_OFFSET)

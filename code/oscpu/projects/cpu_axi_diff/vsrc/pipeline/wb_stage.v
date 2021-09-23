@@ -19,15 +19,17 @@ module wb_stage(
   input   wire  [`BUS_64]     i_wb_rd_wdata,
   input   wire                i_wb_nocmt,
   input   wire                i_wb_skipcmt,
+  input   reg                 i_wb_clint_mip,
+  output  reg                 o_wb_clint_mip,
   output  wire  [`BUS_64]     o_wb_pc,
   output  wire  [`BUS_32]     o_wb_inst,
   output  reg   [`BUS_RIDX]   o_wb_rd,
   output  reg                 o_wb_rd_wen,
   output  wire  [`BUS_64]     o_wb_rd_wdata,
   output  reg                 o_wb_nocmt,
-  output  reg                 o_wb_skipcmt
-  // input   wire                  csr_wen_i     ,   // CSR后的写回
-  // input   wire  [`BUS_64]       csr_wdata_i   ,
+  output  reg                 o_wb_skipcmt,
+  input   wire  [`BUS_32]     i_wb_intrNo,
+  output  reg   [`BUS_32]     o_wb_intrNo
 );
 
 
@@ -62,6 +64,9 @@ always @(posedge clk) begin
 
     o_wb_writebacked_req  <= 0;
     i_ena                 <= 0;
+
+    o_wb_clint_mip  <= 0;
+    o_wb_intrNo <= 0;
   end
   else begin
     if (memoryed_hs) begin
@@ -75,10 +80,14 @@ always @(posedge clk) begin
 
       o_wb_writebacked_req  <= 1;
       i_ena                 <= 1;
+
+      o_wb_clint_mip   <= i_wb_clint_mip;
+      o_wb_intrNo <= i_wb_intrNo;
     end
     else if (i_wb_writebacked_ack) begin
       o_wb_writebacked_req  <= 0;
       i_ena                 <= 0;
+      o_wb_intrNo <= 0;
     end
   end
 end

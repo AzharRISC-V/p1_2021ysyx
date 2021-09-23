@@ -15,6 +15,8 @@ module cmtU(
   input   wire [`BUS_32]      i_inst,
   input   wire [`BUS_64]      i_regs[0 : 31],
   input   wire [`BUS_64]      i_csrs[0 :  7],
+  input   reg  [`BUS_64]      i_clint_mip,
+  input   wire [`BUS_32]      i_intrNo,
   input   wire                i_cmtvalid,
   input   wire                i_skipcmt
 );
@@ -48,7 +50,7 @@ always @(negedge clk) begin
     cmt_pc        <= i_pc;
     cmt_inst      <= i_inst;
     cmt_skip      <= i_skipcmt;
-    cmt_valid     <= i_cmtvalid;
+    cmt_valid     <= i_cmtvalid & (i_intrNo == 0);
     regs_diff     <= i_regs;
 		csrs_diff     <= i_csrs;
     trap          <= i_inst[6:0] == 7'h6b;
@@ -57,6 +59,15 @@ always @(negedge clk) begin
     instrCnt      <= instrCnt + instrCnt_inc;
   end
 end
+
+DifftestArchEvent DifftestArchEvent(
+  .clock              (clk),		// 时钟
+  .coreid             (0),		  // cpu id，单核时固定为0
+  .intrNO             (i_intrNo),		  // 中断号，非零有效
+  .cause              (0),			// 异常号，非零有效
+  .exceptionPC        (i_intrNo > 0 ? i_pc : 0),	// 产生异常或中断时的PC
+  .exceptionInst      (0)	  // 产生异常时的指令，未使用
+);
 
 DifftestInstrCommit DifftestInstrCommit(
   .clock              (clk),
@@ -135,8 +146,8 @@ DifftestCSRState DifftestCSRState(
   .mcause             (i_csrs[`CSR_IDX_MCAUSE]),
   .scause             (0),
   .satp               (0),
-  .mip                (0),
-  .mie                (0),
+  .mip                (0),// i_csrs[`CSR_IDX_MIP]),// i_clint_mip),//i_csrs[`CSR_IDX_MIP]),
+  .mie                (i_csrs[`CSR_IDX_MIE]),
   .mscratch           (0),
   .sscratch           (0),
   .mideleg            (0),
