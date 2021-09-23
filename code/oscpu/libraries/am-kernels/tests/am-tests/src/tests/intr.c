@@ -8,7 +8,7 @@ Context *simple_trap(Event ev, Context *ctx) {
     case EVENT_IRQ_TIMER:
       // 由于 mtime 一直在增加，这里到达中断时间后，将mtimecmp也增加，
       // 则产生了固定时间间隔产生中断的效果。
-      *((uint64_t *)CLINT_MTIMECMP) += 700;
+      *((uint64_t *)CLINT_MTIMECMP) += 5000;
       printf("t"); break;
     case EVENT_IRQ_IODEV:
       printf("d"); break;
@@ -34,7 +34,7 @@ void hello_intr() {
   //halt(0);
   while (1) {
     // for (volatile int i = 0; i < 10000000; i++) ;
-    for (volatile int i = 0; i < 1000; i++) ;
+    for (volatile int i = 0; i < 5000; i++) ;
     yield();
   }
 }
