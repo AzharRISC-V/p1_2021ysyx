@@ -96,7 +96,7 @@ compile_chisel() {
 
 compile_difftest() {
     cd $DIFFTEST_HOME
-    make DESIGN_DIR=$PROJECT_PATH $DIFFTEST_PARAM
+    make -s DESIGN_DIR=$PROJECT_PATH $DIFFTEST_PARAM
     if [ $? -ne 0 ]; then
         echo "Failed to compile difftest!!!"
         exit 1
