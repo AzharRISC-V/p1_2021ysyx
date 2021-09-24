@@ -6,12 +6,7 @@
 `include "defines.v"
 
 module ysyx_210544_exeU(
-  input   wire                rst,
-  input   wire                clk,
   input   wire                ena,
-  input   wire                ack,
-  output  reg                 req,
-  input   wire  [4 : 0]       i_inst_type,
   input   wire  [7 : 0]       i_inst_opcode,
   input   wire  [`BUS_64]     i_op1,
   input   wire  [`BUS_64]     i_op2,
@@ -27,25 +22,7 @@ module ysyx_210544_exeU(
   output  reg                 o_exeU_skip_cmt    // 这里也会发现需要跳过提交的指令，比如 csr mcycle
 );
 
-always @(posedge clk) begin
-  if (rst) begin
-    req <= 0;
-  end
-  else begin
-    if (ena) begin
-      // 一个时钟周期即可完成
-      req <= 1;
-    end
-    else if (ack) begin
-      req <= 0;
-    end
-  end
-end
-
 wire i_disable = !ena;
-
-reg [`BUS_64] reg64_1;
-reg [`BUS_32] reg32_1;
 
 wire [63:0] reg64_t1 = i_op1 + i_op2;
 wire [63:0] reg64_t2 = i_op1 << i_op2[5:0];
@@ -174,5 +151,12 @@ always @(*) begin
 end
 
 assign o_exeU_skip_cmt = (inst_csr && (o_csr_addr == 12'hB00));
+
+wire _unused_ok = &{1'b0,
+  reg64_t1[63:32],
+  reg64_t2[63:32],
+  reg64_t3[63:32],
+  reg64_t4[63:32],
+  1'b0};
 
 endmodule

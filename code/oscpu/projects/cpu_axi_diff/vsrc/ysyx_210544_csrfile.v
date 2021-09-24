@@ -15,7 +15,6 @@ module ysyx_210544_csrfile(
   output  reg   [`BUS_64]   o_csr_rdata,
 
   // 中断信号，直接控制csr
-  input   wire  [`BUS_64]   i_csr_clint_mip,
   output                    o_csr_clint_mstatus_mie,
   output                    o_csr_clint_mie_mtie,
 
@@ -78,7 +77,6 @@ always @(posedge clk) begin
     csrs[`CSR_IDX_MIP]      <= 0;// 64'h80;
   end
   else begin
-    csrs[`CSR_IDX_MIP]      <= i_csr_clint_mip;// (o_csr_clint_mstatus_mie & o_csr_clint_mie_mtie & i_csr_clint_time_overflow) ? 64'h80 : 0;
 
     if (i_csr_wen) begin
       if (csr_idx == `CSR_IDX_MSTATUS) begin
@@ -102,10 +100,10 @@ endgenerate
 // mcycle模拟
 always @(posedge clk) begin
   if (rst) begin
-    csrs[`CSR_IDX_MCYCLE] = 0;
+    csrs[`CSR_IDX_MCYCLE] <= 0;
   end
   else begin
-    csrs[`CSR_IDX_MCYCLE] += 1;
+    csrs[`CSR_IDX_MCYCLE] <= csrs[`CSR_IDX_MCYCLE] + 1;
   end
 end
 

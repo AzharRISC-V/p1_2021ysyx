@@ -14,6 +14,7 @@
 * See the Mulan PSL v2 for more details.
 ***************************************************************************************/
 
+/* verilator lint_off DECLFILENAME */
 import "DPI-C" function byte pte_helper (
   input  longint satp,
   input  longint vpn,

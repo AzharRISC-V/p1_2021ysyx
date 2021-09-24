@@ -20,10 +20,10 @@ module ysyx_210544_cpu(
 
 
 // Special Instruction: putch a0
-wire                          putch_wen;
-wire [7 : 0]                  putch_wdata;
-assign putch_wen              = o_if_inst == 32'h7b;
-assign putch_wdata            = (!putch_wen) ? 0 : (o_reg_regs[10][7:0]); 
+// wire                          putch_wen;
+// wire [7 : 0]                  putch_wdata;
+// assign putch_wen              = o_if_inst == 32'h7b;
+// assign putch_wdata            = (!putch_wen) ? 0 : (o_reg_regs[10][7:0]); 
 
 // 方式一：缓存一行后再$write打印。
 // putch Putch(
@@ -49,7 +49,6 @@ end
 
 // handshake between five stages
 wire                          fetched_req;
-wire                          fetched_ack;
 wire                          decoded_req;
 wire                          decoded_ack;
 wire                          executed_req;
@@ -59,19 +58,9 @@ wire                          memoryed_ack;
 wire                          writebacked_req;
 wire                          writebacked_ack;
 
-// Unknown, developping
-wire  [`BUS_64]               o_id_pc_pred;
-wire                          pipe_flush_req;
-wire                          pipe_flush_ack;
-wire  [`BUS_64]               pipe_flush_pc;
-wire                          minidec_pc_jmp;
-wire  [`BUS_64]               minidec_pc_jmpaddr;
-
 // if_stage
 // if_stage -> id_stage
-wire  [`BUS_64]               o_if_pc_old;
 wire  [`BUS_64]               o_if_pc;
-wire  [`BUS_64]               o_if_pc_pred;
 wire  [`BUS_32]               o_if_inst;
 wire                          o_if_nocmt;
 
@@ -84,38 +73,21 @@ wire  [`BUS_RIDX]             o_id_rs2;
 // id_stage -> exe_stage
 wire  [`BUS_RIDX]             o_id_rd;
 wire                          o_id_rd_wen;
-wire  [4 : 0]                 o_id_inst_type;
 wire  [7 : 0]                 o_id_inst_opcode;
-wire  [2 : 0]                 o_id_itype;
-wire  [`BUS_OPCODE]           o_id_opcode;
-wire  [`BUS_FUNCT3]           o_id_funct3;
-wire  [`BUS_FUNCT7]           o_id_funct7;
 wire  [`BUS_64]               o_id_op1;
 wire  [`BUS_64]               o_id_op2;
 wire  [`BUS_64]               o_id_op3;
-wire  [`BUS_64]               o_id_memaddr;
-wire                          o_id_memren;
-wire                          o_id_memwen;
-wire  [`BUS_64]               o_id_memwdata;
 wire                          o_id_nocmt;
 wire                          o_id_skipcmt;
 wire  [`BUS_64]               o_id_pc;
 wire  [`BUS_32]               o_id_inst;
-wire  [1:0]                   o_id_memaction;
 
 // exe_stage
 // exe_stage -> mem_stage
-wire [`BUS_FUNCT3]            o_ex_funct3;
-wire [`BUS_64]                o_ex_memaddr;
-wire                          o_ex_memren;
-wire                          o_ex_memwen;
-wire  [`BUS_64]               o_ex_memwdata;
 wire  [`BUS_64]               o_ex_pc;
 wire  [`BUS_32]               o_ex_inst;
-wire  [`BUS_OPCODE]           o_ex_opcode;
 wire                          o_ex_pc_jmp;
 wire  [`BUS_64]               o_ex_pc_jmpaddr;
-wire  [4 : 0]                 o_ex_inst_type;
 wire  [7 : 0]                 o_ex_inst_opcode;
 wire  [`BUS_RIDX]             o_ex_rd;
 wire                          o_ex_rd_wen;
@@ -125,8 +97,6 @@ wire  [`BUS_64]               o_ex_op2;
 wire  [`BUS_64]               o_ex_op3;
 wire                          o_ex_nocmt;
 wire                          o_ex_skipcmt;
-wire  [1:0]                   o_ex_memaction;
-wire  [`BUS_64]               o_ex_clint_mip;
 wire  [`BUS_32]               o_ex_intrNo;
 
 // ex_stage -> csrfile
@@ -138,7 +108,6 @@ wire  [`BUS_64]               o_ex_csr_wdata;
 
 // mem_stage
 // mem_stage -> wb_stage
-reg   [`BUS_64]               o_mem_rdata;
 wire  [`BUS_64]               o_mem_pc;
 wire  [`BUS_32]               o_mem_inst;
 wire  [`BUS_RIDX]             o_mem_rd;
@@ -146,7 +115,6 @@ wire                          o_mem_rd_wen;
 wire  [`BUS_64]               o_mem_rd_wdata;
 wire                          o_mem_nocmt;
 wire                          o_mem_skipcmt;
-wire  [`BUS_64]               o_mem_clint_mip;
 wire  [`BUS_32]               o_mem_intrNo;
 
 // wb_stage
@@ -155,7 +123,6 @@ wire  [`BUS_64]               o_wb_pc;
 wire  [`BUS_32]               o_wb_inst;
 wire                          o_wb_nocmt;
 wire                          o_wb_skipcmt;
-wire  [`BUS_64]               o_wb_clint_mip;
 wire  [`BUS_32]               o_wb_intrNo;
 // wb_stage -> regfile
 wire  [`BUS_RIDX]             o_wb_rd;
@@ -175,14 +142,10 @@ wire  [`BUS_64]               o_csr_rdata;
 // csrfile -> wb_stage
 wire  [`BUS_64]               o_csr_csrs[0 :  15];
 
-// assign o_csr_rd_wen  = o_id_csrop != 2'b00;
-// assign o_csr_rd_wdata = (o_id_csrop == 2'b00) ? 0 : o_csr_rdata;
-
 // clint
 wire                          o_clint_mstatus_mie;
 wire                          o_clint_mie_mtie;
 wire                          o_clint_mtime_overflow;
-wire  [`BUS_64]               o_clint_mip;
 
 /////////////////////////////////////////////////
 
@@ -236,7 +199,6 @@ ysyx_210544_if_stage If_stage(
   .clk                        (clk                        ),
   .i_if_writebacked_req       (writebacked_req            ),
   .o_if_fetched_req           (fetched_req                ),
-  .i_if_fetched_ack           (fetched_ack                ),
   .o_if_bus_req               (o_icache_req               ),
   .i_if_bus_ack               (i_icache_ack               ),
   .i_if_bus_rdata             (i_icache_rdata             ),
@@ -252,7 +214,6 @@ ysyx_210544_id_stage Id_stage(
   .rst                        (rst                        ),
   .clk                        (clk                        ),
   .i_id_fetched_req           (fetched_req                ),
-  .o_id_fetched_ack           (fetched_ack                ),
   .o_id_decoded_req           (decoded_req                ),
   .i_id_decoded_ack           (decoded_ack                ),
   .i_id_pc                    (o_if_pc                    ),
@@ -261,7 +222,6 @@ ysyx_210544_id_stage Id_stage(
   .i_id_rs2_data              (o_reg_id_rs2_data          ),
   .i_id_nocmt                 (o_if_nocmt                 ),
   .o_id_pc                    (o_id_pc                    ),
-  .o_id_inst_type             (o_id_inst_type             ),
   .o_id_inst_opcode           (o_id_inst_opcode           ),
   .o_id_inst                  (o_id_inst                  ),
   .o_id_rs1_ren               (o_id_rs1_ren               ),
@@ -284,7 +244,6 @@ ysyx_210544_exe_stage Exe_stage(
   .o_ex_decoded_ack           (decoded_ack                ),
   .o_ex_executed_req          (executed_req               ),
   .i_ex_executed_ack          (executed_ack               ),
-  .i_ex_inst_type             (o_id_inst_type             ),
   .i_ex_inst_opcode           (o_id_inst_opcode           ),
   .i_ex_pc                    (o_id_pc                    ),
   .i_ex_inst                  (o_id_inst                  ),
@@ -298,8 +257,6 @@ ysyx_210544_exe_stage Exe_stage(
   .i_ex_clint_mstatus_mie     (o_clint_mstatus_mie        ),
   .i_ex_clint_mie_mtie        (o_clint_mie_mtie           ),
   .i_ex_clint_mtime_overflow  (o_clint_mtime_overflow     ),
-  .i_ex_clint_mip             (o_csr_csrs[`CSR_IDX_MIP]   ),
-  .o_ex_clint_mip             (o_ex_clint_mip             ),
   .o_ex_pc                    (o_ex_pc                    ),
   .o_ex_inst                  (o_ex_inst                  ),
   .o_ex_pc_jmp                (o_ex_pc_jmp                ),
@@ -307,7 +264,6 @@ ysyx_210544_exe_stage Exe_stage(
   .o_ex_rd                    (o_ex_rd                    ),
   .o_ex_rd_wen                (o_ex_rd_wen                ),
   .o_ex_rd_wdata              (o_ex_rd_wdata              ),
-  .o_ex_inst_type             (o_ex_inst_type             ),
   .o_ex_inst_opcode           (o_ex_inst_opcode           ),
   .o_ex_op1                   (o_ex_op1                   ),
   .o_ex_op2                   (o_ex_op2                   ),
@@ -331,7 +287,6 @@ ysyx_210544_mem_stage Mem_stage(
   .i_mem_pc                   (o_ex_pc                    ),
   .i_mem_inst                 (o_ex_inst                  ),
   .i_mem_memoryed_ack         (memoryed_ack               ),
-  .i_mem_inst_type            (o_ex_inst_type             ),
   .i_mem_inst_opcode          (o_ex_inst_opcode           ),
   .i_mem_op1                  (o_ex_op1                   ),
   .i_mem_op2                  (o_ex_op2                   ),
@@ -341,8 +296,6 @@ ysyx_210544_mem_stage Mem_stage(
   .i_mem_rd_wdata             (o_ex_rd_wdata              ),
   .i_mem_nocmt                (o_ex_nocmt                 ),
   .i_mem_skipcmt              (o_ex_skipcmt               ),
-  .i_mem_clint_mip            (o_ex_clint_mip             ),
-  .o_mem_clint_mip            (o_mem_clint_mip            ),
   .o_mem_rd                   (o_mem_rd                   ),
   .o_mem_rd_wen               (o_mem_rd_wen               ),
   .o_mem_rd_wdata             (o_mem_rd_wdata             ),
@@ -377,8 +330,6 @@ ysyx_210544_wb_stage Wb_stage(
   .i_wb_rd_wdata              (o_mem_rd_wdata             ),
   .i_wb_nocmt                 (o_mem_nocmt                ),
   .i_wb_skipcmt               (o_mem_skipcmt              ),
-  .i_wb_clint_mip             (o_mem_clint_mip            ),
-  .o_wb_clint_mip             (o_wb_clint_mip             ),
   .o_wb_pc                    (o_wb_pc                    ),
   .o_wb_inst                  (o_wb_inst                  ),
   .o_wb_rd                    (o_wb_rd                    ),
@@ -404,7 +355,6 @@ ysyx_210544_cmt_stage Cmt_stage(
   .i_cmt_skipcmt              (o_wb_skipcmt               ),
   .i_cmt_regs                 (o_reg_regs                 ),
   .i_cmt_csrs                 (o_csr_csrs                 ),
-  .i_cmt_clint_mip            (o_wb_clint_mip             ),
   .i_cmt_intrNo               (o_wb_intrNo                )
 );
 
@@ -433,7 +383,6 @@ ysyx_210544_csrfile Csrfile(
   .o_csr_rdata                (o_csr_rdata                ),
   .o_csr_clint_mstatus_mie    (o_clint_mstatus_mie        ),
   .o_csr_clint_mie_mtie       (o_clint_mie_mtie           ),
-  .i_csr_clint_mip            (o_ex_clint_mip             ),
   .o_csrs                     (o_csr_csrs                 )
 );
 

@@ -19,13 +19,10 @@ module ysyx_210544_mem_stage(
   input   wire  [`BUS_64]     i_mem_rd_wdata,
   input   wire                i_mem_nocmt,
   input   wire                i_mem_skipcmt,
-  input   wire  [4 : 0]       i_mem_inst_type,
   input   wire  [7 : 0]       i_mem_inst_opcode,
   input   wire  [`BUS_64]     i_mem_op1,
   input   wire  [`BUS_64]     i_mem_op2,
   input   wire  [`BUS_64]     i_mem_op3,
-  input   reg   [`BUS_64]     i_mem_clint_mip,
-  output  reg   [`BUS_64]     o_mem_clint_mip,
   output  wire  [`BUS_RIDX]   o_mem_rd,
   output  wire                o_mem_rd_wen,
   output  wire  [`BUS_64]     o_mem_rd_wdata,
@@ -103,22 +100,16 @@ always @(*) begin
 end
 
 // 保存输入信息
-reg                           tmp_i_mem_executed_req;
 reg   [`BUS_64]               tmp_i_mem_pc;
 reg   [`BUS_32]               tmp_i_mem_inst;
 reg   [`BUS_RIDX]             tmp_i_mem_rd;
 reg                           tmp_i_mem_rd_wen;
 reg   [`BUS_64]               tmp_i_mem_rd_wdata;
-reg   [4 : 0]                 tmp_i_mem_inst_type;
 reg   [7 : 0]                 tmp_i_mem_inst_opcode;
-reg   [`BUS_64]               tmp_i_mem_op1;
-reg   [`BUS_64]               tmp_i_mem_op2;
-reg   [`BUS_64]               tmp_i_mem_op3;
 reg                           tmp_i_mem_nocmt;
 reg                           tmp_i_mem_skipcmt;
 reg                           tmp_ch_mem;
 reg                           tmp_ch_mmio;
-reg                           tmp_ch_none;
 
 reg  [63:0] mem_addr;
 reg  [2:0]  mem_bytes;
@@ -133,36 +124,24 @@ reg  [63:0] mem_wdata;
 always @(posedge clk) begin
   if (rst) begin
     {
-      tmp_i_mem_executed_req,
       tmp_i_mem_pc,
       tmp_i_mem_inst,
       tmp_i_mem_rd,
       tmp_i_mem_rd_wen,
       tmp_i_mem_rd_wdata,
-      tmp_i_mem_inst_type,
       tmp_i_mem_inst_opcode,
-      tmp_i_mem_op1,
-      tmp_i_mem_op2,
-      tmp_i_mem_op3,
       tmp_i_mem_nocmt,
       tmp_i_mem_skipcmt,
       tmp_ch_mem,
-      tmp_ch_mmio,
-      tmp_ch_none
+      tmp_ch_mmio
     } <= 0;
 
-    o_mem_clint_mip <= 0;
     o_mem_intrNo <= 0;
   end
   else begin
     if (executed_hs) begin
-      tmp_i_mem_executed_req    <= i_mem_executed_req;
       tmp_i_mem_pc              <= i_mem_pc;
       tmp_i_mem_inst            <= i_mem_inst;
-      tmp_i_mem_op1             <= i_mem_op1;
-      tmp_i_mem_op2             <= i_mem_op2;
-      tmp_i_mem_op3             <= i_mem_op3;
-      tmp_i_mem_inst_type       <= i_mem_inst_type;
       tmp_i_mem_inst_opcode     <= i_mem_inst_opcode;
       tmp_i_mem_rd              <= i_mem_rd;
       tmp_i_mem_rd_wen          <= i_mem_rd_wen;
@@ -171,16 +150,13 @@ always @(posedge clk) begin
       tmp_i_mem_skipcmt         <= i_mem_skipcmt;
       tmp_ch_mem                <= ch_mem;
       tmp_ch_mmio               <= ch_mmio;
-      tmp_ch_none               <= ch_none;
 
-      o_mem_clint_mip           <= i_mem_clint_mip;
       o_mem_intrNo <= i_mem_intrNo;
     end
     else if (memoryed_hs) begin
       // 该通道号需要消除，不能留到下一个指令
       tmp_ch_mem                <= 0;
       tmp_ch_mmio               <= 0;
-      tmp_ch_none               <= 0;
 
       o_mem_intrNo <= 0;
 

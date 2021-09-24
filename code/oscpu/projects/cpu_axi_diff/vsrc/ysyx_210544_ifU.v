@@ -6,7 +6,6 @@
 `include "defines.v"
 
 module ysyx_210544_ifU(
-  input   wire                i_ena,
   input   wire                clk,
   input   wire                rst,
 
@@ -27,8 +26,7 @@ module ysyx_210544_ifU(
   output  reg                 o_nocmt               // 由于冲刷流水线而不提交这条指令
 );
 
-
-wire i_disable = !i_ena;
+assign o_nocmt = 0;
 
 // o_bus_req
 always @(posedge clk) begin

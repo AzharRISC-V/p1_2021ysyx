@@ -117,7 +117,7 @@ wire [511:0]                  i_user_axi_rdata;
 wire                          o_user_axi_op;
 wire                          o_user_axi_valid;
 wire [511:0]                  o_user_axi_wdata;
-wire [31:0]                   o_user_axi_addr;
+wire [63:0]                   o_user_axi_addr;
 wire [1:0]                    o_user_axi_size;
 wire [7:0]                    o_user_axi_blks;
 
@@ -140,5 +140,32 @@ ysyx_210544_cpu u_cpu(
   .o_axi_io_blks              (o_user_axi_blks            )
 );
 
+assign io_uart_out_valid = 0;
+assign io_uart_out_ch = 0;
+assign io_uart_in_valid = 0;
+
+assign `AXI_TOP_INTERFACE(aw_bits_prot) = 0;
+assign `AXI_TOP_INTERFACE(aw_bits_user) = 0;
+assign `AXI_TOP_INTERFACE(aw_bits_lock) = 0;
+assign `AXI_TOP_INTERFACE(aw_bits_cache) = 0;
+assign `AXI_TOP_INTERFACE(aw_bits_qos) = 0;
+assign `AXI_TOP_INTERFACE(ar_bits_prot) = 0;
+assign `AXI_TOP_INTERFACE(ar_bits_user) = 0;
+assign `AXI_TOP_INTERFACE(ar_bits_lock) = 0;
+assign `AXI_TOP_INTERFACE(ar_bits_cache) = 0;
+assign `AXI_TOP_INTERFACE(ar_bits_qos) = 0;
+
+
+wire _unused_ok = &{1'b0,
+  io_logCtrl_log_begin,
+  io_logCtrl_log_end,
+  io_logCtrl_log_level,
+  io_perfInfo_clean,
+  io_perfInfo_dump,
+  io_uart_in_ch,
+  `AXI_TOP_INTERFACE(b_bits_user),
+  `AXI_TOP_INTERFACE(r_bits_user),
+  o_user_axi_resp,
+  1'b0};
 
 endmodule

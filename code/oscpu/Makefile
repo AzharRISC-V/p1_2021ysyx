@@ -38,7 +38,7 @@ soc:
 	ysyx_210544_clint.v ysyx_210544_regfile.v ysyx_210544_csrfile.v ysyx_210544_if_stage.v ysyx_210544_ifU.v \
 	ysyx_210544_id_stage.v ysyx_210544_idU.v ysyx_210544_exe_stage.v ysyx_210544_exeU.v ysyx_210544_exceptionU.v \
 	ysyx_210544_mem_stage.v ysyx_210544_memU.v ysyx_210544_mem_mmio.v ysyx_210544_mem_nothing.v ysyx_210544_wb_stage.v \
-	ysyx_210544_wbU.v ysyx_210544_cmt_stage.v ysyx_210544_cmtU.v ysyx_210544_cpu.v SimTop4Soc.v > ysyx_210544.v; \
+	ysyx_210544_cmt_stage.v ysyx_210544_cmtU.v ysyx_210544_cpu.v SimTop4Soc.v > ysyx_210544.v; \
 	mv ysyx_210544.v ../../soc/vsrc/; \
 	cd ../../soc/vsrc/; \
 	sed '/`include/d' ysyx_210544.v -i; \

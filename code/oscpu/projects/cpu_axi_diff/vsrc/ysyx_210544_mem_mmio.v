@@ -19,7 +19,6 @@ module ysyx_210544_mem_mmio(
 );
 
 // rtc设备
-wire                rtc_ren;
 wire  [`BUS_64]     rtc_rdata;
 
 ysyx_210544_rtc Rtc(

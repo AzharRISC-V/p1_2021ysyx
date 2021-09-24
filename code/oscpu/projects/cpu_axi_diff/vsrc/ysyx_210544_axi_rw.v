@@ -337,4 +337,12 @@ module ysyx_210544_axi_rw (
         end
     endgenerate
 
+wire _unused_ok = &{1'b0,
+  axi_b_id_i,
+  axi_r_id_i,
+  addr_end[2:0],
+  aligned_offset_h_tmp[6],
+  axi_user,
+  1'b0};
+
 endmodule

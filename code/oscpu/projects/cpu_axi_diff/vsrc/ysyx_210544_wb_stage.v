@@ -19,8 +19,6 @@ module ysyx_210544_wb_stage(
   input   wire  [`BUS_64]     i_wb_rd_wdata,
   input   wire                i_wb_nocmt,
   input   wire                i_wb_skipcmt,
-  input   reg   [`BUS_64]     i_wb_clint_mip,
-  output  reg   [`BUS_64]     o_wb_clint_mip,
   output  wire  [`BUS_64]     o_wb_pc,
   output  wire  [`BUS_32]     o_wb_inst,
   output  reg   [`BUS_RIDX]   o_wb_rd,
@@ -65,7 +63,6 @@ always @(posedge clk) begin
     o_wb_writebacked_req  <= 0;
     i_ena                 <= 0;
 
-    o_wb_clint_mip  <= 0;
     o_wb_intrNo <= 0;
   end
   else begin
@@ -81,7 +78,6 @@ always @(posedge clk) begin
       o_wb_writebacked_req  <= 1;
       i_ena                 <= 1;
 
-      o_wb_clint_mip   <= i_wb_clint_mip;
       o_wb_intrNo <= i_wb_intrNo;
     end
     else if (i_wb_writebacked_ack) begin
@@ -99,17 +95,5 @@ assign o_wb_skipcmt   = i_disable ? 0 : tmp_i_wb_skipcmt;
 assign o_wb_rd        = i_disable ? 0 : tmp_i_wb_rd;
 assign o_wb_rd_wen    = i_disable ? 0 : tmp_i_wb_rd_wen;
 assign o_wb_rd_wdata  = i_disable ? 0 : tmp_i_wb_rd_wdata;
-
-ysyx_210544_wbU WbU(
-  .i_ena                      (i_ena                      ),
-  .clk                        (clk                        ),
-  .rst                        (rst                        ),
-  .i_rd                       (tmp_i_wb_rd                ),
-  .i_rd_wen                   (tmp_i_wb_rd_wen            ),
-  .i_rd_wdata                 (tmp_i_wb_rd_wdata          ),
-  .o_rd                       (                     ),
-  .o_rd_wen                   (                 ),
-  .o_rd_wdata                 (               )
-);
 
 endmodule

@@ -12,7 +12,6 @@ module ysyx_210544_exe_stage(
   output  reg                 o_ex_decoded_ack,
   output  reg                 o_ex_executed_req,
   input   reg                 i_ex_executed_ack,
-  input   wire  [4 : 0]       i_ex_inst_type,
   input   wire  [7 : 0]       i_ex_inst_opcode,
   input   wire  [`BUS_64]     i_ex_pc,
   input   wire  [`BUS_32]     i_ex_inst,
@@ -27,8 +26,6 @@ module ysyx_210544_exe_stage(
   input   wire                i_ex_clint_mtime_overflow,
   input   wire                i_ex_skipcmt,
   input   reg   [`BUS_64]     i_ex_csr_rdata,
-  input   reg   [`BUS_64]     i_ex_clint_mip,
-  output  reg   [`BUS_64]     o_ex_clint_mip,
   output  reg   [11 : 0]      o_ex_csr_addr,
   output  reg                 o_ex_csr_ren,
   output  reg                 o_ex_csr_wen,
@@ -40,7 +37,6 @@ module ysyx_210544_exe_stage(
   output  reg   [`BUS_RIDX]   o_ex_rd,
   output  reg                 o_ex_rd_wen,
   output  reg   [`BUS_64]     o_ex_rd_wdata,
-  output  wire  [4 : 0]       o_ex_inst_type,
   output  wire  [7 : 0]       o_ex_inst_opcode,
   output  wire  [`BUS_64]     o_ex_op1,
   output  wire  [`BUS_64]     o_ex_op2,
@@ -67,7 +63,6 @@ wire is_time_int_req = i_ex_clint_mstatus_mie & i_ex_clint_mie_mtie & i_ex_clint
 reg o_ena_exeU;
 reg o_ena_exceptionU;
 
-wire            exeU_req;
 wire            exeU_pc_jmp;
 wire [`BUS_64]  exeU_pc_jmpaddr;
 
@@ -77,7 +72,6 @@ wire [`BUS_64]  exceptionU_pc_jmpaddr;
 
 
 // 保存输入信息
-reg   [4 : 0]                 tmp_i_ex_inst_type;
 reg   [7 : 0]                 tmp_i_ex_inst_opcode;
 reg   [`BUS_64]               tmp_i_ex_pc;
 reg   [`BUS_32]               tmp_i_ex_inst;
@@ -92,7 +86,6 @@ reg                           tmp_i_ex_skipcmt;
 always @(posedge clk) begin
   if (rst) begin
     {
-      tmp_i_ex_inst_type,
       tmp_i_ex_inst_opcode,
       tmp_i_ex_pc,
       tmp_i_ex_inst,
@@ -107,13 +100,11 @@ always @(posedge clk) begin
 
     o_ex_executed_req   <= 0;
     o_ena_exceptionU    <= 0;
-    o_ex_clint_mip      <= 0;
     o_ex_intrNo <= 0;
   end
   else begin
     // 启动
     if (decoded_hs) begin
-      tmp_i_ex_inst_type   <= i_ex_inst_type;
       tmp_i_ex_inst_opcode <= i_ex_inst_opcode;
       tmp_i_ex_pc       <= i_ex_pc;
       tmp_i_ex_inst     <= i_ex_inst;
@@ -125,9 +116,6 @@ always @(posedge clk) begin
       tmp_i_ex_nocmt    <= i_ex_nocmt;
       tmp_i_ex_skipcmt  <= i_ex_skipcmt;
       
-      // 只使用命令执行之前的 mip 值
-      // o_ex_clint_mip    <= i_ex_clint_mip;
-      o_ex_clint_mip    <= is_time_int_req ? 64'h80 : 0;//  i_ex_clint_mip;
       o_ex_intrNo <= is_time_int_req ? 7 : 0;
 
       // 通道选择
@@ -162,7 +150,6 @@ assign o_ex_rd            = i_disable ? 0 : tmp_i_ex_rd;
 assign o_ex_op1           = i_disable ? 0 : tmp_i_ex_op1;
 assign o_ex_op2           = i_disable ? 0 : tmp_i_ex_op2;
 assign o_ex_op3           = i_disable ? 0 : tmp_i_ex_op3;
-assign o_ex_inst_type     = i_disable ? 0 : tmp_i_ex_inst_type;
 assign o_ex_inst_opcode   = i_disable ? 0 : tmp_i_ex_inst_opcode;
 assign o_ex_rd            = i_disable ? 0 : (!o_ena_exeU ? 0 : tmp_i_ex_rd);
 assign o_ex_rd_wen        = i_disable ? 0 : (!o_ena_exeU ? 0 : tmp_i_ex_rd_wen);
@@ -174,7 +161,6 @@ wire   [11 : 0]      exeU_csr_addr;
 wire                 exeU_csr_ren;
 wire                 exeU_csr_wen;
 wire   [`BUS_64]     exeU_csr_wdata;
-wire   [`BUS_64]     exceptionU_csr_rdata;
 wire   [11 : 0]      exceptionU_csr_addr;
 wire                 exceptionU_csr_ren;
 wire                 exceptionU_csr_wen;
@@ -189,12 +175,7 @@ assign o_ex_csr_wen     = rst ? 0 : (o_ena_exeU ? exeU_csr_wen    : exceptionU_c
 assign o_ex_csr_wdata   = rst ? 0 : (o_ena_exeU ? exeU_csr_wdata  : exceptionU_csr_wdata);
 
 ysyx_210544_exeU ExeU(
-  .rst                        (rst                        ),
-  .clk                        (clk                        ),
   .ena                        (o_ena_exeU                 ),
-  .ack                        (i_ex_executed_ack          ),
-  .req                        (exeU_req                   ),
-  .i_inst_type                (tmp_i_ex_inst_type         ),
   .i_inst_opcode              (tmp_i_ex_inst_opcode       ),
   .i_op1                      (tmp_i_ex_op1               ),
   .i_op2                      (tmp_i_ex_op2               ),

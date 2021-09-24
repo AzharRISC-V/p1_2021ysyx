@@ -142,7 +142,7 @@ generate
     for (genvar i = 0; i < `BLKS; i += 1) begin
       always @(posedge clk) begin
         if (rst) begin
-          assign cache_info[w][i] = {w, 1'b0, 1'b0, 17'b0};
+          cache_info[w][i] <= {w, 1'b0, 1'b0, 17'b0};
         end
       end
     end
@@ -219,8 +219,8 @@ generate
     parameter [1:0] w = way;
     always @(posedge clk) begin
       if (rst) begin
-        assign chip_data_cen[w] = !CHIP_DATA_CEN;
-        assign chip_data_wen[w] = !CHIP_DATA_WEN;
+        chip_data_cen[w] <= !CHIP_DATA_CEN;
+        chip_data_wen[w] <= !CHIP_DATA_WEN;
       end
     end
   end
@@ -243,12 +243,12 @@ parameter [2:0] STATE_LOAD_FROM_BUS     = 3'd4;
 parameter [2:0] STATE_LOAD_TO_RAM       = 3'd5;
 
 reg [2:0] state;
-wire state_idle             = state == STATE_IDLE;
-wire state_ready            = state == STATE_READY;
-wire state_store_from_ram   = state == STATE_STORE_FROM_RAM;
-wire state_store_to_bus     = state == STATE_STORE_TO_BUS;
-wire state_load_from_bus    = state == STATE_LOAD_FROM_BUS;
-wire state_load_to_ram      = state == STATE_LOAD_TO_RAM;
+// wire state_idle             = state == STATE_IDLE;
+// wire state_ready            = state == STATE_READY;
+// wire state_store_from_ram   = state == STATE_STORE_FROM_RAM;
+// wire state_store_to_bus     = state == STATE_STORE_TO_BUS;
+// wire state_load_from_bus    = state == STATE_LOAD_FROM_BUS;
+// wire state_load_to_ram      = state == STATE_LOAD_TO_RAM;
 
 always @(posedge clk) begin
     if (rst) begin
@@ -314,7 +314,6 @@ wire                hs_ramread;                 // ram操作 握手（完成4行
 wire                hs_ramline;                 // ram操作 握手（完成指定1行读写）
 reg   [127: 0]      rdata_line;                 // 读取一行数据
 reg   [63: 0]       rdata_out;                  // 输出的数据
-reg                 ram_rdata_save;             // 是否暂存RAM读出的数据至AXI的写入寄存器
 
 assign ram_op_offset_128 = ({6'd0, ram_op_cnt} - 2) << 7;
 assign hs_cache = i_cache_basic_req & o_cache_basic_ack;
@@ -479,5 +478,11 @@ ysyx_210544_cache_axi Cache_axi(
   .o_axi_io_blks              (o_axi_io_blks              )
 );
 
+wire _unused_ok = &{1'b0,
+  i_cache_basic_addr[63:32],
+  mem_offset_bytes,
+  mem_offset_bits[8:7],
+  c_offset_bytes,
+  1'b0};
 
 endmodule

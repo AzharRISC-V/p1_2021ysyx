@@ -10,7 +10,6 @@ module ysyx_210544_if_stage(
   input   wire                rst,
   input                       i_if_writebacked_req,
   output  reg                 o_if_fetched_req,
-  input   reg                 i_if_fetched_ack,
 
   ///////////////////////////////////////////////
   // AXI interface for Fetch
@@ -28,7 +27,6 @@ module ysyx_210544_if_stage(
 );
 
 ysyx_210544_ifU IfU(
-  .i_ena                      (1                          ),
   .clk                        (clk                        ),
   .rst                        (rst                        ),
 	.i_bus_ack                  (i_if_bus_ack               ),

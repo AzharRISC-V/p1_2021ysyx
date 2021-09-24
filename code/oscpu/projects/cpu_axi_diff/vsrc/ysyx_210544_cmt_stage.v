@@ -19,7 +19,6 @@ module ysyx_210544_cmt_stage(
   input   wire                i_cmt_skipcmt,
   input   wire [`BUS_64]      i_cmt_regs[0 : 31],
   input   wire [`BUS_64]      i_cmt_csrs[0 : 15],
-  input   reg  [`BUS_64]      i_cmt_clint_mip,
   input   wire [`BUS_32]      i_cmt_intrNo
 );
 
@@ -41,7 +40,6 @@ ysyx_210544_cmtU CmtU(
   .i_skipcmt                  (i_cmt_skipcmt              ),
   .i_regs                     (i_cmt_regs                 ),
   .i_csrs                     (i_cmt_csrs                 ),
-  .i_clint_mip                (i_cmt_clint_mip            ),
   .i_intrNo                   (i_cmt_intrNo               )
 );
 

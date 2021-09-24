@@ -537,6 +537,14 @@ module ysyx_210544_axi_rw (
         end
     endgenerate
 
+wire _unused_ok = &{1'b0,
+  axi_b_id_i,
+  axi_r_id_i,
+  addr_end[2:0],
+  aligned_offset_h_tmp[6],
+  axi_user,
+  1'b0};
+
 endmodule
 
 
@@ -616,11 +624,10 @@ assign o_axi_io_blks = 7;
 assign o_axi_io_op = i_cache_axi_op;
 
 // 跟踪req信号，连续两个周期的 req 才认为是开始信号，防止一结束就又开始了新的阶段
-reg cache_req_his[2];
+reg cache_req_his0;
 
 // axi请求开始
-wire  axi_start    = i_cache_axi_req & cache_req_his[0] & (!cache_req_his[1]);
-wire  axi_start2   = i_cache_axi_req & !cache_req_his[0];// & (!cache_req_his[1]);
+wire  axi_start    = i_cache_axi_req & cache_req_his0;
 
 // 传输起始地址，64字节对齐
 assign o_axi_io_addr = i_cache_axi_addr & (~64'h3F);
@@ -628,28 +635,23 @@ assign o_axi_io_addr = i_cache_axi_addr & (~64'h3F);
 // 控制传输
 always @( posedge clk ) begin
   if (rst) begin
-    // o_cache_axi_rdata        <= 0;
-    o_cache_axi_ack          <= 0;
-    o_axi_io_valid       <= 0;
-    cache_req_his[0]        <= 0;
-    cache_req_his[1]        <= 0;
+    o_cache_axi_ack         <= 0;
+    o_axi_io_valid          <= 0;
+    cache_req_his0          <= 0;
   end
   else begin
     // 追踪开始信号
-    cache_req_his[0]  <= i_cache_axi_req;
-    cache_req_his[1]  <= cache_req_his[0]; 
+    cache_req_his0  <= i_cache_axi_req;
 
     // 收到数据：保存数据、增加计数、握手反馈
     if (hs_ok) begin
-      // o_cache_axi_rdata  <= i_axi_io_rdata;
       o_cache_axi_ack    <= 1;
       o_axi_io_valid <= 0;
     end
     else begin
       // 触发采样
-      if (axi_start2) begin
+      if (axi_start) begin
         o_axi_io_valid <= 1;
-        // o_cache_axi_rdata  <= 0;
       end
       // 清除信号   
       o_cache_axi_ack    <= 0;
@@ -804,7 +806,7 @@ generate
     for (genvar i = 0; i < `BLKS; i += 1) begin
       always @(posedge clk) begin
         if (rst) begin
-          assign cache_info[w][i] = {w, 1'b0, 1'b0, 17'b0};
+          cache_info[w][i] <= {w, 1'b0, 1'b0, 17'b0};
         end
       end
     end
@@ -881,8 +883,8 @@ generate
     parameter [1:0] w = way;
     always @(posedge clk) begin
       if (rst) begin
-        assign chip_data_cen[w] = !CHIP_DATA_CEN;
-        assign chip_data_wen[w] = !CHIP_DATA_WEN;
+        chip_data_cen[w] <= !CHIP_DATA_CEN;
+        chip_data_wen[w] <= !CHIP_DATA_WEN;
       end
     end
   end
@@ -905,12 +907,12 @@ parameter [2:0] STATE_LOAD_FROM_BUS     = 3'd4;
 parameter [2:0] STATE_LOAD_TO_RAM       = 3'd5;
 
 reg [2:0] state;
-wire state_idle             = state == STATE_IDLE;
-wire state_ready            = state == STATE_READY;
-wire state_store_from_ram   = state == STATE_STORE_FROM_RAM;
-wire state_store_to_bus     = state == STATE_STORE_TO_BUS;
-wire state_load_from_bus    = state == STATE_LOAD_FROM_BUS;
-wire state_load_to_ram      = state == STATE_LOAD_TO_RAM;
+// wire state_idle             = state == STATE_IDLE;
+// wire state_ready            = state == STATE_READY;
+// wire state_store_from_ram   = state == STATE_STORE_FROM_RAM;
+// wire state_store_to_bus     = state == STATE_STORE_TO_BUS;
+// wire state_load_from_bus    = state == STATE_LOAD_FROM_BUS;
+// wire state_load_to_ram      = state == STATE_LOAD_TO_RAM;
 
 always @(posedge clk) begin
     if (rst) begin
@@ -976,7 +978,6 @@ wire                hs_ramread;                 // ram操作 握手（完成4行
 wire                hs_ramline;                 // ram操作 握手（完成指定1行读写）
 reg   [127: 0]      rdata_line;                 // 读取一行数据
 reg   [63: 0]       rdata_out;                  // 输出的数据
-reg                 ram_rdata_save;             // 是否暂存RAM读出的数据至AXI的写入寄存器
 
 assign ram_op_offset_128 = ({6'd0, ram_op_cnt} - 2) << 7;
 assign hs_cache = i_cache_basic_req & o_cache_basic_ack;
@@ -1141,6 +1142,12 @@ ysyx_210544_cache_axi Cache_axi(
   .o_axi_io_blks              (o_axi_io_blks              )
 );
 
+wire _unused_ok = &{1'b0,
+  i_cache_basic_addr[63:32],
+  mem_offset_bytes,
+  mem_offset_bits[8:7],
+  c_offset_bytes,
+  1'b0};
 
 endmodule
 
@@ -1341,8 +1348,6 @@ wire [63:0] icache_rdata;
 assign o_icache_rdata = icache_rdata[31:0];
 
 
-reg  [511:0]     icache_axi_io_rdata;
-reg              icache_axi_io_ready;
 reg              icache_axi_io_valid;
 reg              icache_axi_io_op;
 reg  [511:0]     icache_axi_io_wdata;
@@ -1350,8 +1355,6 @@ reg  [63:0]      icache_axi_io_addr;
 reg  [1:0]       icache_axi_io_size;
 reg  [7:0]       icache_axi_io_blks;
 
-reg  [511:0]     dcache_axi_io_rdata;
-reg              dcache_axi_io_ready;
 reg              dcache_axi_io_valid;
 reg              dcache_axi_io_op;
 reg  [511:0]     dcache_axi_io_wdata;
@@ -1363,7 +1366,7 @@ ysyx_210544_cache_core ICache(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
 	.i_cache_core_addr          (i_icache_addr              ),
-	.i_cache_core_wdata         (                           ),
+	.i_cache_core_wdata         (0                          ),
 	.i_cache_core_bytes         (3                          ),
 	.i_cache_core_op            (`REQ_READ                  ),
 	.i_cache_core_req           (i_icache_req               ),
@@ -1407,6 +1410,11 @@ assign o_axi_io_wdata   = ch_icache ? icache_axi_io_wdata   : dcache_axi_io_wdat
 assign o_axi_io_addr    = ch_icache ? icache_axi_io_addr    : dcache_axi_io_addr;
 assign o_axi_io_size    = ch_icache ? icache_axi_io_size    : dcache_axi_io_size;
 assign o_axi_io_blks    = ch_icache ? icache_axi_io_blks    : dcache_axi_io_blks;
+
+
+wire _unused_ok = &{1'b0,
+  icache_rdata[63:32],
+  1'b0};
 
 endmodule
 
@@ -1479,38 +1487,38 @@ wire  [`BUS_64] rtc_val = {21'b0, year, month, day, hour, minute, second};
 // rtc simulate
 always @(posedge clk) begin
   if (rst) begin
-    year = 2021;
-    month = 1;
-    day = 2;
-    hour = 3;
-    minute = 4;
-    second = 5;
+    year    <= 2021;
+    month   <= 1;
+    day     <= 2;
+    hour    <= 3;
+    minute  <= 4;
+    second  <= 5;
   end
   else begin
-    clk_cnt += 1;
+    clk_cnt <= clk_cnt + 1;
     if (clk_cnt == `CLOCKS_PER_SECOND) begin
-      clk_cnt = 0;
-      second += 1;
+      clk_cnt <= 0;
+      second <= second + 1;
       if (second == 60) begin
-        second = 0;
+        second <= 0;
 
-        minute += 1;
+        minute <= minute + 1;
         if (minute == 60) begin
-          minute = 0;
+          minute <= 0;
 
-          hour += 1;
+          hour <= hour + 1;
           if (hour == 24) begin
-            hour = 0;
+            hour <= 0;
 
-            day += 1;
+            day <= day + 1;
             if (day == 30) begin
-              day = 0;
+              day <= 0;
 
-              month += 1;
+              month <= month + 1;
               if (month == 12) begin
-                month = 0;
+                month <= 0;
 
-                year += 1;
+                year <= year + 1;
               end
             end
           end
@@ -1707,6 +1715,41 @@ generate
   end
 endgenerate
 
+wire _unused_ok = &{1'b0,
+  x00_zero,
+  x01_ra,
+  x02_sp,
+  x03_gp,
+  x04_tp,
+  x05_t0,
+  x06_t1,
+  x07_t2,
+  x08_s0,
+  x09_s1,
+  x10_a0,
+  x11_a1,
+  x12_a2,
+  x13_a3,
+  x14_a4,
+  x15_a5,
+  x16_a6,
+  x17_a7,
+  x18_s2,
+  x19_s3,
+  x20_s4,
+  x21_s5,
+  x22_s6,
+  x23_s7,
+  x24_s8,
+  x25_s9,
+  x26_s10,
+  x27_s11,
+  x28_t3,
+  x29_t4,
+  x30_t5,
+  x31_t6,
+  1'b0};
+
 endmodule
 
 // ZhengpuShi
@@ -1724,7 +1767,6 @@ module ysyx_210544_csrfile(
   output  reg   [`BUS_64]   o_csr_rdata,
 
   // 中断信号，直接控制csr
-  input   wire  [`BUS_64]   i_csr_clint_mip,
   output                    o_csr_clint_mstatus_mie,
   output                    o_csr_clint_mie_mtie,
 
@@ -1787,7 +1829,6 @@ always @(posedge clk) begin
     csrs[`CSR_IDX_MIP]      <= 0;// 64'h80;
   end
   else begin
-    csrs[`CSR_IDX_MIP]      <= i_csr_clint_mip;// (o_csr_clint_mstatus_mie & o_csr_clint_mie_mtie & i_csr_clint_time_overflow) ? 64'h80 : 0;
 
     if (i_csr_wen) begin
       if (csr_idx == `CSR_IDX_MSTATUS) begin
@@ -1811,10 +1852,10 @@ endgenerate
 // mcycle模拟
 always @(posedge clk) begin
   if (rst) begin
-    csrs[`CSR_IDX_MCYCLE] = 0;
+    csrs[`CSR_IDX_MCYCLE] <= 0;
   end
   else begin
-    csrs[`CSR_IDX_MCYCLE] += 1;
+    csrs[`CSR_IDX_MCYCLE] <= csrs[`CSR_IDX_MCYCLE] + 1;
   end
 end
 
@@ -1831,7 +1872,6 @@ module ysyx_210544_if_stage(
   input   wire                rst,
   input                       i_if_writebacked_req,
   output  reg                 o_if_fetched_req,
-  input   reg                 i_if_fetched_ack,
 
   ///////////////////////////////////////////////
   // AXI interface for Fetch
@@ -1849,7 +1889,6 @@ module ysyx_210544_if_stage(
 );
 
 ysyx_210544_ifU IfU(
-  .i_ena                      (1                          ),
   .clk                        (clk                        ),
   .rst                        (rst                        ),
 	.i_bus_ack                  (i_if_bus_ack               ),
@@ -1873,7 +1912,6 @@ endmodule
 
 
 module ysyx_210544_ifU(
-  input   wire                i_ena,
   input   wire                clk,
   input   wire                rst,
 
@@ -1894,8 +1932,7 @@ module ysyx_210544_ifU(
   output  reg                 o_nocmt               // 由于冲刷流水线而不提交这条指令
 );
 
-
-wire i_disable = !i_ena;
+assign o_nocmt = 0;
 
 // o_bus_req
 always @(posedge clk) begin
@@ -1986,7 +2023,6 @@ module ysyx_210544_id_stage(
   input   wire                clk,
   input   wire                rst,
   input   reg                 i_id_fetched_req,
-  output  reg                 o_id_fetched_ack,
   input   reg                 i_id_decoded_ack,
   output  reg                 o_id_decoded_req,
   input   wire  [`BUS_64]     i_id_pc,
@@ -2002,7 +2038,6 @@ module ysyx_210544_id_stage(
   output  wire  [`BUS_RIDX]   o_id_rs2,
   output  wire  [`BUS_RIDX]   o_id_rd,
   output  wire                o_id_rd_wen,
-  output  wire  [4 : 0]       o_id_inst_type,
   output  wire  [7 : 0]       o_id_inst_opcode,
   output  wire  [`BUS_64]     o_id_op1,
   output  wire  [`BUS_64]     o_id_op2,
@@ -2011,10 +2046,7 @@ module ysyx_210544_id_stage(
   output  wire                o_id_skipcmt
 );
 
-
-assign o_id_fetched_ack = 1'b1;
-
-wire fetched_hs = i_id_fetched_req & o_id_fetched_ack;
+wire fetched_hs = i_id_fetched_req;
 wire decoded_hs = i_id_decoded_ack & o_id_decoded_req;
 
 // 是否使能组合逻辑单元部件
@@ -2023,7 +2055,6 @@ reg                           i_ena;
 
 // 保存输入信息
 reg   [`BUS_64]               tmp_i_id_pc;
-reg   [`BUS_64]               tmp_i_id_pc_pred;
 reg   [`BUS_32]               tmp_i_id_inst;
 reg                           tmp_i_id_nocmt;
 
@@ -2031,7 +2062,6 @@ always @(posedge clk) begin
   if (rst) begin
     {
       tmp_i_id_pc,
-      tmp_i_id_pc_pred,
       tmp_i_id_inst,
       tmp_i_id_nocmt
     } <= 0;
@@ -2064,12 +2094,10 @@ assign o_id_nocmt   = i_disable ? 0 : tmp_i_id_nocmt;
 
 ysyx_210544_idU IdU(
   .rst                        (rst                        ),
-  .i_ena                      (i_ena                      ),
   .i_inst                     (tmp_i_id_inst              ),
   .i_rs1_data                 (i_id_rs1_data              ),
   .i_rs2_data                 (i_id_rs2_data              ),
   .i_pc                       (tmp_i_id_pc                ),
-  .o_inst_type                (o_id_inst_type             ),
   .o_inst_opcode              (o_id_inst_opcode           ),
   .o_rs1_ren                  (o_id_rs1_ren               ),
   .o_rs1                      (o_id_rs1                   ),
@@ -2092,7 +2120,6 @@ endmodule
 
 module ysyx_210544_idU(
   input   wire                rst,
-  input   wire                i_ena,
   input   wire  [`BUS_32]     i_inst,
   input   wire  [`BUS_64]     i_rs1_data,
   input   wire  [`BUS_64]     i_rs2_data,
@@ -2103,7 +2130,6 @@ module ysyx_210544_idU(
   output  wire  [`BUS_RIDX]   o_rs2,
   output  wire  [`BUS_RIDX]   o_rd,
   output  wire                o_rd_wen,
-  output  wire  [4 : 0]       o_inst_type,
   output  wire  [7 : 0]       o_inst_opcode,
   output  wire  [`BUS_64]     o_op1,
   output  wire  [`BUS_64]     o_op2,
@@ -2111,10 +2137,8 @@ module ysyx_210544_idU(
   output  wire                o_skipcmt
 );
 
-wire [4  : 0] inst_type;
 wire [7  : 0] inst_opcode;
 
-assign o_inst_type = inst_type;
 assign o_inst_opcode = inst_opcode;
 
 wire [6  : 0] opcode;
@@ -2415,6 +2439,11 @@ assign o_skipcmt =
   // | mem_addr_is_device
   ;
 
+wire _unused_ok = &{1'b0,
+  opcode[1:0],
+  func7[6],
+  func7[2:1],
+  1'b0};
 
 endmodule
 
@@ -2430,7 +2459,6 @@ module ysyx_210544_exe_stage(
   output  reg                 o_ex_decoded_ack,
   output  reg                 o_ex_executed_req,
   input   reg                 i_ex_executed_ack,
-  input   wire  [4 : 0]       i_ex_inst_type,
   input   wire  [7 : 0]       i_ex_inst_opcode,
   input   wire  [`BUS_64]     i_ex_pc,
   input   wire  [`BUS_32]     i_ex_inst,
@@ -2445,8 +2473,6 @@ module ysyx_210544_exe_stage(
   input   wire                i_ex_clint_mtime_overflow,
   input   wire                i_ex_skipcmt,
   input   reg   [`BUS_64]     i_ex_csr_rdata,
-  input   reg   [`BUS_64]     i_ex_clint_mip,
-  output  reg   [`BUS_64]     o_ex_clint_mip,
   output  reg   [11 : 0]      o_ex_csr_addr,
   output  reg                 o_ex_csr_ren,
   output  reg                 o_ex_csr_wen,
@@ -2458,7 +2484,6 @@ module ysyx_210544_exe_stage(
   output  reg   [`BUS_RIDX]   o_ex_rd,
   output  reg                 o_ex_rd_wen,
   output  reg   [`BUS_64]     o_ex_rd_wdata,
-  output  wire  [4 : 0]       o_ex_inst_type,
   output  wire  [7 : 0]       o_ex_inst_opcode,
   output  wire  [`BUS_64]     o_ex_op1,
   output  wire  [`BUS_64]     o_ex_op2,
@@ -2485,7 +2510,6 @@ wire is_time_int_req = i_ex_clint_mstatus_mie & i_ex_clint_mie_mtie & i_ex_clint
 reg o_ena_exeU;
 reg o_ena_exceptionU;
 
-wire            exeU_req;
 wire            exeU_pc_jmp;
 wire [`BUS_64]  exeU_pc_jmpaddr;
 
@@ -2495,7 +2519,6 @@ wire [`BUS_64]  exceptionU_pc_jmpaddr;
 
 
 // 保存输入信息
-reg   [4 : 0]                 tmp_i_ex_inst_type;
 reg   [7 : 0]                 tmp_i_ex_inst_opcode;
 reg   [`BUS_64]               tmp_i_ex_pc;
 reg   [`BUS_32]               tmp_i_ex_inst;
@@ -2510,7 +2533,6 @@ reg                           tmp_i_ex_skipcmt;
 always @(posedge clk) begin
   if (rst) begin
     {
-      tmp_i_ex_inst_type,
       tmp_i_ex_inst_opcode,
       tmp_i_ex_pc,
       tmp_i_ex_inst,
@@ -2525,13 +2547,11 @@ always @(posedge clk) begin
 
     o_ex_executed_req   <= 0;
     o_ena_exceptionU    <= 0;
-    o_ex_clint_mip      <= 0;
     o_ex_intrNo <= 0;
   end
   else begin
     // 启动
     if (decoded_hs) begin
-      tmp_i_ex_inst_type   <= i_ex_inst_type;
       tmp_i_ex_inst_opcode <= i_ex_inst_opcode;
       tmp_i_ex_pc       <= i_ex_pc;
       tmp_i_ex_inst     <= i_ex_inst;
@@ -2543,9 +2563,6 @@ always @(posedge clk) begin
       tmp_i_ex_nocmt    <= i_ex_nocmt;
       tmp_i_ex_skipcmt  <= i_ex_skipcmt;
       
-      // 只使用命令执行之前的 mip 值
-      // o_ex_clint_mip    <= i_ex_clint_mip;
-      o_ex_clint_mip    <= is_time_int_req ? 64'h80 : 0;//  i_ex_clint_mip;
       o_ex_intrNo <= is_time_int_req ? 7 : 0;
 
       // 通道选择
@@ -2580,7 +2597,6 @@ assign o_ex_rd            = i_disable ? 0 : tmp_i_ex_rd;
 assign o_ex_op1           = i_disable ? 0 : tmp_i_ex_op1;
 assign o_ex_op2           = i_disable ? 0 : tmp_i_ex_op2;
 assign o_ex_op3           = i_disable ? 0 : tmp_i_ex_op3;
-assign o_ex_inst_type     = i_disable ? 0 : tmp_i_ex_inst_type;
 assign o_ex_inst_opcode   = i_disable ? 0 : tmp_i_ex_inst_opcode;
 assign o_ex_rd            = i_disable ? 0 : (!o_ena_exeU ? 0 : tmp_i_ex_rd);
 assign o_ex_rd_wen        = i_disable ? 0 : (!o_ena_exeU ? 0 : tmp_i_ex_rd_wen);
@@ -2592,7 +2608,6 @@ wire   [11 : 0]      exeU_csr_addr;
 wire                 exeU_csr_ren;
 wire                 exeU_csr_wen;
 wire   [`BUS_64]     exeU_csr_wdata;
-wire   [`BUS_64]     exceptionU_csr_rdata;
 wire   [11 : 0]      exceptionU_csr_addr;
 wire                 exceptionU_csr_ren;
 wire                 exceptionU_csr_wen;
@@ -2607,12 +2622,7 @@ assign o_ex_csr_wen     = rst ? 0 : (o_ena_exeU ? exeU_csr_wen    : exceptionU_c
 assign o_ex_csr_wdata   = rst ? 0 : (o_ena_exeU ? exeU_csr_wdata  : exceptionU_csr_wdata);
 
 ysyx_210544_exeU ExeU(
-  .rst                        (rst                        ),
-  .clk                        (clk                        ),
   .ena                        (o_ena_exeU                 ),
-  .ack                        (i_ex_executed_ack          ),
-  .req                        (exeU_req                   ),
-  .i_inst_type                (tmp_i_ex_inst_type         ),
   .i_inst_opcode              (tmp_i_ex_inst_opcode       ),
   .i_op1                      (tmp_i_ex_op1               ),
   .i_op2                      (tmp_i_ex_op2               ),
@@ -2653,12 +2663,7 @@ endmodule
 
 
 module ysyx_210544_exeU(
-  input   wire                rst,
-  input   wire                clk,
   input   wire                ena,
-  input   wire                ack,
-  output  reg                 req,
-  input   wire  [4 : 0]       i_inst_type,
   input   wire  [7 : 0]       i_inst_opcode,
   input   wire  [`BUS_64]     i_op1,
   input   wire  [`BUS_64]     i_op2,
@@ -2674,25 +2679,7 @@ module ysyx_210544_exeU(
   output  reg                 o_exeU_skip_cmt    // 这里也会发现需要跳过提交的指令，比如 csr mcycle
 );
 
-always @(posedge clk) begin
-  if (rst) begin
-    req <= 0;
-  end
-  else begin
-    if (ena) begin
-      // 一个时钟周期即可完成
-      req <= 1;
-    end
-    else if (ack) begin
-      req <= 0;
-    end
-  end
-end
-
 wire i_disable = !ena;
-
-reg [`BUS_64] reg64_1;
-reg [`BUS_32] reg32_1;
 
 wire [63:0] reg64_t1 = i_op1 + i_op2;
 wire [63:0] reg64_t2 = i_op1 << i_op2[5:0];
@@ -2821,6 +2808,13 @@ always @(*) begin
 end
 
 assign o_exeU_skip_cmt = (inst_csr && (o_csr_addr == 12'hB00));
+
+wire _unused_ok = &{1'b0,
+  reg64_t1[63:32],
+  reg64_t2[63:32],
+  reg64_t3[63:32],
+  reg64_t4[63:32],
+  1'b0};
 
 endmodule
 
@@ -3131,6 +3125,9 @@ always @(posedge clk) begin
   end
 end
 
+wire _unused_ok = &{1'b0,
+  csr_rdata_save1[12:11],
+  1'b0};
 
 endmodule
 
@@ -3153,13 +3150,10 @@ module ysyx_210544_mem_stage(
   input   wire  [`BUS_64]     i_mem_rd_wdata,
   input   wire                i_mem_nocmt,
   input   wire                i_mem_skipcmt,
-  input   wire  [4 : 0]       i_mem_inst_type,
   input   wire  [7 : 0]       i_mem_inst_opcode,
   input   wire  [`BUS_64]     i_mem_op1,
   input   wire  [`BUS_64]     i_mem_op2,
   input   wire  [`BUS_64]     i_mem_op3,
-  input   reg   [`BUS_64]     i_mem_clint_mip,
-  output  reg   [`BUS_64]     o_mem_clint_mip,
   output  wire  [`BUS_RIDX]   o_mem_rd,
   output  wire                o_mem_rd_wen,
   output  wire  [`BUS_64]     o_mem_rd_wdata,
@@ -3237,22 +3231,16 @@ always @(*) begin
 end
 
 // 保存输入信息
-reg                           tmp_i_mem_executed_req;
 reg   [`BUS_64]               tmp_i_mem_pc;
 reg   [`BUS_32]               tmp_i_mem_inst;
 reg   [`BUS_RIDX]             tmp_i_mem_rd;
 reg                           tmp_i_mem_rd_wen;
 reg   [`BUS_64]               tmp_i_mem_rd_wdata;
-reg   [4 : 0]                 tmp_i_mem_inst_type;
 reg   [7 : 0]                 tmp_i_mem_inst_opcode;
-reg   [`BUS_64]               tmp_i_mem_op1;
-reg   [`BUS_64]               tmp_i_mem_op2;
-reg   [`BUS_64]               tmp_i_mem_op3;
 reg                           tmp_i_mem_nocmt;
 reg                           tmp_i_mem_skipcmt;
 reg                           tmp_ch_mem;
 reg                           tmp_ch_mmio;
-reg                           tmp_ch_none;
 
 reg  [63:0] mem_addr;
 reg  [2:0]  mem_bytes;
@@ -3267,36 +3255,24 @@ reg  [63:0] mem_wdata;
 always @(posedge clk) begin
   if (rst) begin
     {
-      tmp_i_mem_executed_req,
       tmp_i_mem_pc,
       tmp_i_mem_inst,
       tmp_i_mem_rd,
       tmp_i_mem_rd_wen,
       tmp_i_mem_rd_wdata,
-      tmp_i_mem_inst_type,
       tmp_i_mem_inst_opcode,
-      tmp_i_mem_op1,
-      tmp_i_mem_op2,
-      tmp_i_mem_op3,
       tmp_i_mem_nocmt,
       tmp_i_mem_skipcmt,
       tmp_ch_mem,
-      tmp_ch_mmio,
-      tmp_ch_none
+      tmp_ch_mmio
     } <= 0;
 
-    o_mem_clint_mip <= 0;
     o_mem_intrNo <= 0;
   end
   else begin
     if (executed_hs) begin
-      tmp_i_mem_executed_req    <= i_mem_executed_req;
       tmp_i_mem_pc              <= i_mem_pc;
       tmp_i_mem_inst            <= i_mem_inst;
-      tmp_i_mem_op1             <= i_mem_op1;
-      tmp_i_mem_op2             <= i_mem_op2;
-      tmp_i_mem_op3             <= i_mem_op3;
-      tmp_i_mem_inst_type       <= i_mem_inst_type;
       tmp_i_mem_inst_opcode     <= i_mem_inst_opcode;
       tmp_i_mem_rd              <= i_mem_rd;
       tmp_i_mem_rd_wen          <= i_mem_rd_wen;
@@ -3305,16 +3281,13 @@ always @(posedge clk) begin
       tmp_i_mem_skipcmt         <= i_mem_skipcmt;
       tmp_ch_mem                <= ch_mem;
       tmp_ch_mmio               <= ch_mmio;
-      tmp_ch_none               <= ch_none;
 
-      o_mem_clint_mip           <= i_mem_clint_mip;
       o_mem_intrNo <= i_mem_intrNo;
     end
     else if (memoryed_hs) begin
       // 该通道号需要消除，不能留到下一个指令
       tmp_ch_mem                <= 0;
       tmp_ch_mmio               <= 0;
-      tmp_ch_none               <= 0;
 
       o_mem_intrNo <= 0;
 
@@ -3575,7 +3548,6 @@ module ysyx_210544_mem_mmio(
 );
 
 // rtc设备
-wire                rtc_ren;
 wire  [`BUS_64]     rtc_rdata;
 
 ysyx_210544_rtc Rtc(
@@ -3682,8 +3654,6 @@ module ysyx_210544_wb_stage(
   input   wire  [`BUS_64]     i_wb_rd_wdata,
   input   wire                i_wb_nocmt,
   input   wire                i_wb_skipcmt,
-  input   reg   [`BUS_64]     i_wb_clint_mip,
-  output  reg   [`BUS_64]     o_wb_clint_mip,
   output  wire  [`BUS_64]     o_wb_pc,
   output  wire  [`BUS_32]     o_wb_inst,
   output  reg   [`BUS_RIDX]   o_wb_rd,
@@ -3728,7 +3698,6 @@ always @(posedge clk) begin
     o_wb_writebacked_req  <= 0;
     i_ena                 <= 0;
 
-    o_wb_clint_mip  <= 0;
     o_wb_intrNo <= 0;
   end
   else begin
@@ -3744,7 +3713,6 @@ always @(posedge clk) begin
       o_wb_writebacked_req  <= 1;
       i_ena                 <= 1;
 
-      o_wb_clint_mip   <= i_wb_clint_mip;
       o_wb_intrNo <= i_wb_intrNo;
     end
     else if (i_wb_writebacked_ack) begin
@@ -3762,44 +3730,6 @@ assign o_wb_skipcmt   = i_disable ? 0 : tmp_i_wb_skipcmt;
 assign o_wb_rd        = i_disable ? 0 : tmp_i_wb_rd;
 assign o_wb_rd_wen    = i_disable ? 0 : tmp_i_wb_rd_wen;
 assign o_wb_rd_wdata  = i_disable ? 0 : tmp_i_wb_rd_wdata;
-
-ysyx_210544_wbU WbU(
-  .i_ena                      (i_ena                      ),
-  .clk                        (clk                        ),
-  .rst                        (rst                        ),
-  .i_rd                       (tmp_i_wb_rd                ),
-  .i_rd_wen                   (tmp_i_wb_rd_wen            ),
-  .i_rd_wdata                 (tmp_i_wb_rd_wdata          ),
-  .o_rd                       (                     ),
-  .o_rd_wen                   (                 ),
-  .o_rd_wdata                 (               )
-);
-
-endmodule
-
-// ZhengpuShi
-
-// Writeback Unit, 组合逻辑电路
-
-
-module ysyx_210544_wbU(
-  input   wire                i_ena,
-  input   wire                clk,
-  input   wire                rst,
-  input   wire  [`BUS_RIDX]   i_rd,
-  input   wire                i_rd_wen,
-  input   wire  [`BUS_64]     i_rd_wdata,
-  output  reg   [`BUS_RIDX]   o_rd,
-  output  reg                 o_rd_wen,
-  output  wire  [`BUS_64]     o_rd_wdata
-);
-
-
-wire i_disable = !i_ena;
-
-assign o_rd = i_disable ? 0 : i_rd;
-assign o_rd_wen = i_disable ? 0 : i_rd_wen;
-assign o_rd_wdata = i_disable ? 0 : i_rd_wdata;
 
 endmodule
 
@@ -3822,7 +3752,6 @@ module ysyx_210544_cmt_stage(
   input   wire                i_cmt_skipcmt,
   input   wire [`BUS_64]      i_cmt_regs[0 : 31],
   input   wire [`BUS_64]      i_cmt_csrs[0 : 15],
-  input   reg  [`BUS_64]      i_cmt_clint_mip,
   input   wire [`BUS_32]      i_cmt_intrNo
 );
 
@@ -3844,7 +3773,6 @@ ysyx_210544_cmtU CmtU(
   .i_skipcmt                  (i_cmt_skipcmt              ),
   .i_regs                     (i_cmt_regs                 ),
   .i_csrs                     (i_cmt_csrs                 ),
-  .i_clint_mip                (i_cmt_clint_mip            ),
   .i_intrNo                   (i_cmt_intrNo               )
 );
 
@@ -3865,7 +3793,6 @@ module ysyx_210544_cmtU(
   input   wire [`BUS_32]      i_inst,
   input   wire [`BUS_64]      i_regs[0 : 31],
   input   wire [`BUS_64]      i_csrs[0 : 15],
-  input   reg  [`BUS_64]      i_clint_mip,
   input   wire [`BUS_32]      i_intrNo,
   input   wire                i_cmtvalid,
   input   wire                i_skipcmt
@@ -3881,11 +3808,10 @@ reg   [`BUS_32]               cmt_inst;
 reg                           cmt_valid;
 reg                           cmt_skip;       // control commit skip
 reg                           trap;
-reg   [7:0]                   trap_code;
+reg   [2:0]                   trap_code;
 reg   [`BUS_64]               cycleCnt;
 reg   [`BUS_64]               instrCnt;
 reg   [`BUS_64]               regs_diff [0 : 31];
-reg   [`BUS_64]               csrs_diff [0 : 15];
 
 reg   [`BUS_64] instrCnt_inc = i_cmtvalid ? 1 : 0;
 
@@ -3904,9 +3830,8 @@ always @(negedge clk) begin
     cmt_skip      <= i_skipcmt;
     cmt_valid     <= i_cmtvalid & (i_intrNo == 0);
     regs_diff     <= i_regs;
-		csrs_diff     <= i_csrs;
     trap          <= i_inst[6:0] == 7'h6b;
-    trap_code     <= i_regs[10][7:0];
+    trap_code     <= i_regs[10][2:0];
     cycleCnt      <= cycleCnt + 1;
     instrCnt      <= instrCnt + instrCnt_inc;
   end
@@ -4002,7 +3927,7 @@ DifftestCSRState DifftestCSRState(
   .mcause             (i_csrs[`CSR_IDX_MCAUSE]),
   .scause             (0),
   .satp               (0),
-  .mip                (0),// i_csrs[`CSR_IDX_MIP]),// i_clint_mip),//i_csrs[`CSR_IDX_MIP]),
+  .mip                (0),
   .mie                (i_csrs[`CSR_IDX_MIE]),
   .mscratch           (i_csrs[`CSR_IDX_MSCRATCH]),
   .sscratch           (0),
@@ -4071,10 +3996,10 @@ module ysyx_210544_cpu(
 
 
 // Special Instruction: putch a0
-wire                          putch_wen;
-wire [7 : 0]                  putch_wdata;
-assign putch_wen              = o_if_inst == 32'h7b;
-assign putch_wdata            = (!putch_wen) ? 0 : (o_reg_regs[10][7:0]); 
+// wire                          putch_wen;
+// wire [7 : 0]                  putch_wdata;
+// assign putch_wen              = o_if_inst == 32'h7b;
+// assign putch_wdata            = (!putch_wen) ? 0 : (o_reg_regs[10][7:0]); 
 
 // 方式一：缓存一行后再$write打印。
 // putch Putch(
@@ -4100,7 +4025,6 @@ end
 
 // handshake between five stages
 wire                          fetched_req;
-wire                          fetched_ack;
 wire                          decoded_req;
 wire                          decoded_ack;
 wire                          executed_req;
@@ -4110,19 +4034,9 @@ wire                          memoryed_ack;
 wire                          writebacked_req;
 wire                          writebacked_ack;
 
-// Unknown, developping
-wire  [`BUS_64]               o_id_pc_pred;
-wire                          pipe_flush_req;
-wire                          pipe_flush_ack;
-wire  [`BUS_64]               pipe_flush_pc;
-wire                          minidec_pc_jmp;
-wire  [`BUS_64]               minidec_pc_jmpaddr;
-
 // if_stage
 // if_stage -> id_stage
-wire  [`BUS_64]               o_if_pc_old;
 wire  [`BUS_64]               o_if_pc;
-wire  [`BUS_64]               o_if_pc_pred;
 wire  [`BUS_32]               o_if_inst;
 wire                          o_if_nocmt;
 
@@ -4135,38 +4049,21 @@ wire  [`BUS_RIDX]             o_id_rs2;
 // id_stage -> exe_stage
 wire  [`BUS_RIDX]             o_id_rd;
 wire                          o_id_rd_wen;
-wire  [4 : 0]                 o_id_inst_type;
 wire  [7 : 0]                 o_id_inst_opcode;
-wire  [2 : 0]                 o_id_itype;
-wire  [`BUS_OPCODE]           o_id_opcode;
-wire  [`BUS_FUNCT3]           o_id_funct3;
-wire  [`BUS_FUNCT7]           o_id_funct7;
 wire  [`BUS_64]               o_id_op1;
 wire  [`BUS_64]               o_id_op2;
 wire  [`BUS_64]               o_id_op3;
-wire  [`BUS_64]               o_id_memaddr;
-wire                          o_id_memren;
-wire                          o_id_memwen;
-wire  [`BUS_64]               o_id_memwdata;
 wire                          o_id_nocmt;
 wire                          o_id_skipcmt;
 wire  [`BUS_64]               o_id_pc;
 wire  [`BUS_32]               o_id_inst;
-wire  [1:0]                   o_id_memaction;
 
 // exe_stage
 // exe_stage -> mem_stage
-wire [`BUS_FUNCT3]            o_ex_funct3;
-wire [`BUS_64]                o_ex_memaddr;
-wire                          o_ex_memren;
-wire                          o_ex_memwen;
-wire  [`BUS_64]               o_ex_memwdata;
 wire  [`BUS_64]               o_ex_pc;
 wire  [`BUS_32]               o_ex_inst;
-wire  [`BUS_OPCODE]           o_ex_opcode;
 wire                          o_ex_pc_jmp;
 wire  [`BUS_64]               o_ex_pc_jmpaddr;
-wire  [4 : 0]                 o_ex_inst_type;
 wire  [7 : 0]                 o_ex_inst_opcode;
 wire  [`BUS_RIDX]             o_ex_rd;
 wire                          o_ex_rd_wen;
@@ -4176,8 +4073,6 @@ wire  [`BUS_64]               o_ex_op2;
 wire  [`BUS_64]               o_ex_op3;
 wire                          o_ex_nocmt;
 wire                          o_ex_skipcmt;
-wire  [1:0]                   o_ex_memaction;
-wire  [`BUS_64]               o_ex_clint_mip;
 wire  [`BUS_32]               o_ex_intrNo;
 
 // ex_stage -> csrfile
@@ -4189,7 +4084,6 @@ wire  [`BUS_64]               o_ex_csr_wdata;
 
 // mem_stage
 // mem_stage -> wb_stage
-reg   [`BUS_64]               o_mem_rdata;
 wire  [`BUS_64]               o_mem_pc;
 wire  [`BUS_32]               o_mem_inst;
 wire  [`BUS_RIDX]             o_mem_rd;
@@ -4197,7 +4091,6 @@ wire                          o_mem_rd_wen;
 wire  [`BUS_64]               o_mem_rd_wdata;
 wire                          o_mem_nocmt;
 wire                          o_mem_skipcmt;
-wire  [`BUS_64]               o_mem_clint_mip;
 wire  [`BUS_32]               o_mem_intrNo;
 
 // wb_stage
@@ -4206,7 +4099,6 @@ wire  [`BUS_64]               o_wb_pc;
 wire  [`BUS_32]               o_wb_inst;
 wire                          o_wb_nocmt;
 wire                          o_wb_skipcmt;
-wire  [`BUS_64]               o_wb_clint_mip;
 wire  [`BUS_32]               o_wb_intrNo;
 // wb_stage -> regfile
 wire  [`BUS_RIDX]             o_wb_rd;
@@ -4226,14 +4118,10 @@ wire  [`BUS_64]               o_csr_rdata;
 // csrfile -> wb_stage
 wire  [`BUS_64]               o_csr_csrs[0 :  15];
 
-// assign o_csr_rd_wen  = o_id_csrop != 2'b00;
-// assign o_csr_rd_wdata = (o_id_csrop == 2'b00) ? 0 : o_csr_rdata;
-
 // clint
 wire                          o_clint_mstatus_mie;
 wire                          o_clint_mie_mtie;
 wire                          o_clint_mtime_overflow;
-wire  [`BUS_64]               o_clint_mip;
 
 /////////////////////////////////////////////////
 
@@ -4287,7 +4175,6 @@ ysyx_210544_if_stage If_stage(
   .clk                        (clk                        ),
   .i_if_writebacked_req       (writebacked_req            ),
   .o_if_fetched_req           (fetched_req                ),
-  .i_if_fetched_ack           (fetched_ack                ),
   .o_if_bus_req               (o_icache_req               ),
   .i_if_bus_ack               (i_icache_ack               ),
   .i_if_bus_rdata             (i_icache_rdata             ),
@@ -4303,7 +4190,6 @@ ysyx_210544_id_stage Id_stage(
   .rst                        (rst                        ),
   .clk                        (clk                        ),
   .i_id_fetched_req           (fetched_req                ),
-  .o_id_fetched_ack           (fetched_ack                ),
   .o_id_decoded_req           (decoded_req                ),
   .i_id_decoded_ack           (decoded_ack                ),
   .i_id_pc                    (o_if_pc                    ),
@@ -4312,7 +4198,6 @@ ysyx_210544_id_stage Id_stage(
   .i_id_rs2_data              (o_reg_id_rs2_data          ),
   .i_id_nocmt                 (o_if_nocmt                 ),
   .o_id_pc                    (o_id_pc                    ),
-  .o_id_inst_type             (o_id_inst_type             ),
   .o_id_inst_opcode           (o_id_inst_opcode           ),
   .o_id_inst                  (o_id_inst                  ),
   .o_id_rs1_ren               (o_id_rs1_ren               ),
@@ -4335,7 +4220,6 @@ ysyx_210544_exe_stage Exe_stage(
   .o_ex_decoded_ack           (decoded_ack                ),
   .o_ex_executed_req          (executed_req               ),
   .i_ex_executed_ack          (executed_ack               ),
-  .i_ex_inst_type             (o_id_inst_type             ),
   .i_ex_inst_opcode           (o_id_inst_opcode           ),
   .i_ex_pc                    (o_id_pc                    ),
   .i_ex_inst                  (o_id_inst                  ),
@@ -4349,8 +4233,6 @@ ysyx_210544_exe_stage Exe_stage(
   .i_ex_clint_mstatus_mie     (o_clint_mstatus_mie        ),
   .i_ex_clint_mie_mtie        (o_clint_mie_mtie           ),
   .i_ex_clint_mtime_overflow  (o_clint_mtime_overflow     ),
-  .i_ex_clint_mip             (o_csr_csrs[`CSR_IDX_MIP]   ),
-  .o_ex_clint_mip             (o_ex_clint_mip             ),
   .o_ex_pc                    (o_ex_pc                    ),
   .o_ex_inst                  (o_ex_inst                  ),
   .o_ex_pc_jmp                (o_ex_pc_jmp                ),
@@ -4358,7 +4240,6 @@ ysyx_210544_exe_stage Exe_stage(
   .o_ex_rd                    (o_ex_rd                    ),
   .o_ex_rd_wen                (o_ex_rd_wen                ),
   .o_ex_rd_wdata              (o_ex_rd_wdata              ),
-  .o_ex_inst_type             (o_ex_inst_type             ),
   .o_ex_inst_opcode           (o_ex_inst_opcode           ),
   .o_ex_op1                   (o_ex_op1                   ),
   .o_ex_op2                   (o_ex_op2                   ),
@@ -4382,7 +4263,6 @@ ysyx_210544_mem_stage Mem_stage(
   .i_mem_pc                   (o_ex_pc                    ),
   .i_mem_inst                 (o_ex_inst                  ),
   .i_mem_memoryed_ack         (memoryed_ack               ),
-  .i_mem_inst_type            (o_ex_inst_type             ),
   .i_mem_inst_opcode          (o_ex_inst_opcode           ),
   .i_mem_op1                  (o_ex_op1                   ),
   .i_mem_op2                  (o_ex_op2                   ),
@@ -4392,8 +4272,6 @@ ysyx_210544_mem_stage Mem_stage(
   .i_mem_rd_wdata             (o_ex_rd_wdata              ),
   .i_mem_nocmt                (o_ex_nocmt                 ),
   .i_mem_skipcmt              (o_ex_skipcmt               ),
-  .i_mem_clint_mip            (o_ex_clint_mip             ),
-  .o_mem_clint_mip            (o_mem_clint_mip            ),
   .o_mem_rd                   (o_mem_rd                   ),
   .o_mem_rd_wen               (o_mem_rd_wen               ),
   .o_mem_rd_wdata             (o_mem_rd_wdata             ),
@@ -4428,8 +4306,6 @@ ysyx_210544_wb_stage Wb_stage(
   .i_wb_rd_wdata              (o_mem_rd_wdata             ),
   .i_wb_nocmt                 (o_mem_nocmt                ),
   .i_wb_skipcmt               (o_mem_skipcmt              ),
-  .i_wb_clint_mip             (o_mem_clint_mip            ),
-  .o_wb_clint_mip             (o_wb_clint_mip             ),
   .o_wb_pc                    (o_wb_pc                    ),
   .o_wb_inst                  (o_wb_inst                  ),
   .o_wb_rd                    (o_wb_rd                    ),
@@ -4455,7 +4331,6 @@ ysyx_210544_cmt_stage Cmt_stage(
   .i_cmt_skipcmt              (o_wb_skipcmt               ),
   .i_cmt_regs                 (o_reg_regs                 ),
   .i_cmt_csrs                 (o_csr_csrs                 ),
-  .i_cmt_clint_mip            (o_wb_clint_mip             ),
   .i_cmt_intrNo               (o_wb_intrNo                )
 );
 
@@ -4484,7 +4359,6 @@ ysyx_210544_csrfile Csrfile(
   .o_csr_rdata                (o_csr_rdata                ),
   .o_csr_clint_mstatus_mie    (o_clint_mstatus_mie        ),
   .o_csr_clint_mie_mtie       (o_clint_mie_mtie           ),
-  .i_csr_clint_mip            (o_ex_clint_mip             ),
   .o_csrs                     (o_csr_csrs                 )
 );
 

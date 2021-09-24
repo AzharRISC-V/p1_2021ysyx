@@ -46,11 +46,10 @@ assign o_axi_io_blks = 7;
 assign o_axi_io_op = i_cache_axi_op;
 
 // 跟踪req信号，连续两个周期的 req 才认为是开始信号，防止一结束就又开始了新的阶段
-reg cache_req_his[2];
+reg cache_req_his0;
 
 // axi请求开始
-wire  axi_start    = i_cache_axi_req & cache_req_his[0] & (!cache_req_his[1]);
-wire  axi_start2   = i_cache_axi_req & !cache_req_his[0];// & (!cache_req_his[1]);
+wire  axi_start    = i_cache_axi_req & cache_req_his0;
 
 // 传输起始地址，64字节对齐
 assign o_axi_io_addr = i_cache_axi_addr & (~64'h3F);
@@ -58,28 +57,23 @@ assign o_axi_io_addr = i_cache_axi_addr & (~64'h3F);
 // 控制传输
 always @( posedge clk ) begin
   if (rst) begin
-    // o_cache_axi_rdata        <= 0;
-    o_cache_axi_ack          <= 0;
-    o_axi_io_valid       <= 0;
-    cache_req_his[0]        <= 0;
-    cache_req_his[1]        <= 0;
+    o_cache_axi_ack         <= 0;
+    o_axi_io_valid          <= 0;
+    cache_req_his0          <= 0;
   end
   else begin
     // 追踪开始信号
-    cache_req_his[0]  <= i_cache_axi_req;
-    cache_req_his[1]  <= cache_req_his[0]; 
+    cache_req_his0  <= i_cache_axi_req;
 
     // 收到数据：保存数据、增加计数、握手反馈
     if (hs_ok) begin
-      // o_cache_axi_rdata  <= i_axi_io_rdata;
       o_cache_axi_ack    <= 1;
       o_axi_io_valid <= 0;
     end
     else begin
       // 触发采样
-      if (axi_start2) begin
+      if (axi_start) begin
         o_axi_io_valid <= 1;
-        // o_cache_axi_rdata  <= 0;
       end
       // 清除信号   
       o_cache_axi_ack    <= 0;

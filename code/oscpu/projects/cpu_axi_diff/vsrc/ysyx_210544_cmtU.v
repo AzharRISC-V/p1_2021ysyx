@@ -15,7 +15,6 @@ module ysyx_210544_cmtU(
   input   wire [`BUS_32]      i_inst,
   input   wire [`BUS_64]      i_regs[0 : 31],
   input   wire [`BUS_64]      i_csrs[0 : 15],
-  input   reg  [`BUS_64]      i_clint_mip,
   input   wire [`BUS_32]      i_intrNo,
   input   wire                i_cmtvalid,
   input   wire                i_skipcmt
@@ -31,11 +30,10 @@ reg   [`BUS_32]               cmt_inst;
 reg                           cmt_valid;
 reg                           cmt_skip;       // control commit skip
 reg                           trap;
-reg   [7:0]                   trap_code;
+reg   [2:0]                   trap_code;
 reg   [`BUS_64]               cycleCnt;
 reg   [`BUS_64]               instrCnt;
 reg   [`BUS_64]               regs_diff [0 : 31];
-reg   [`BUS_64]               csrs_diff [0 : 15];
 
 reg   [`BUS_64] instrCnt_inc = i_cmtvalid ? 1 : 0;
 
@@ -54,9 +52,8 @@ always @(negedge clk) begin
     cmt_skip      <= i_skipcmt;
     cmt_valid     <= i_cmtvalid & (i_intrNo == 0);
     regs_diff     <= i_regs;
-		csrs_diff     <= i_csrs;
     trap          <= i_inst[6:0] == 7'h6b;
-    trap_code     <= i_regs[10][7:0];
+    trap_code     <= i_regs[10][2:0];
     cycleCnt      <= cycleCnt + 1;
     instrCnt      <= instrCnt + instrCnt_inc;
   end
@@ -153,7 +150,7 @@ DifftestCSRState DifftestCSRState(
   .mcause             (i_csrs[`CSR_IDX_MCAUSE]),
   .scause             (0),
   .satp               (0),
-  .mip                (0),// i_csrs[`CSR_IDX_MIP]),// i_clint_mip),//i_csrs[`CSR_IDX_MIP]),
+  .mip                (0),
   .mie                (i_csrs[`CSR_IDX_MIE]),
   .mscratch           (i_csrs[`CSR_IDX_MSCRATCH]),
   .sscratch           (0),

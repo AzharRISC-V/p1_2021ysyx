@@ -27,38 +27,38 @@ wire  [`BUS_64] rtc_val = {21'b0, year, month, day, hour, minute, second};
 // rtc simulate
 always @(posedge clk) begin
   if (rst) begin
-    year = 2021;
-    month = 1;
-    day = 2;
-    hour = 3;
-    minute = 4;
-    second = 5;
+    year    <= 2021;
+    month   <= 1;
+    day     <= 2;
+    hour    <= 3;
+    minute  <= 4;
+    second  <= 5;
   end
   else begin
-    clk_cnt += 1;
+    clk_cnt <= clk_cnt + 1;
     if (clk_cnt == `CLOCKS_PER_SECOND) begin
-      clk_cnt = 0;
-      second += 1;
+      clk_cnt <= 0;
+      second <= second + 1;
       if (second == 60) begin
-        second = 0;
+        second <= 0;
 
-        minute += 1;
+        minute <= minute + 1;
         if (minute == 60) begin
-          minute = 0;
+          minute <= 0;
 
-          hour += 1;
+          hour <= hour + 1;
           if (hour == 24) begin
-            hour = 0;
+            hour <= 0;
 
-            day += 1;
+            day <= day + 1;
             if (day == 30) begin
-              day = 0;
+              day <= 0;
 
-              month += 1;
+              month <= month + 1;
               if (month == 12) begin
-                month = 0;
+                month <= 0;
 
-                year += 1;
+                year <= year + 1;
               end
             end
           end

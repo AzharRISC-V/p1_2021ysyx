@@ -7,7 +7,6 @@
 
 module ysyx_210544_idU(
   input   wire                rst,
-  input   wire                i_ena,
   input   wire  [`BUS_32]     i_inst,
   input   wire  [`BUS_64]     i_rs1_data,
   input   wire  [`BUS_64]     i_rs2_data,
@@ -18,7 +17,6 @@ module ysyx_210544_idU(
   output  wire  [`BUS_RIDX]   o_rs2,
   output  wire  [`BUS_RIDX]   o_rd,
   output  wire                o_rd_wen,
-  output  wire  [4 : 0]       o_inst_type,
   output  wire  [7 : 0]       o_inst_opcode,
   output  wire  [`BUS_64]     o_op1,
   output  wire  [`BUS_64]     o_op2,
@@ -26,10 +24,8 @@ module ysyx_210544_idU(
   output  wire                o_skipcmt
 );
 
-wire [4  : 0] inst_type;
 wire [7  : 0] inst_opcode;
 
-assign o_inst_type = inst_type;
 assign o_inst_opcode = inst_opcode;
 
 wire [6  : 0] opcode;
@@ -330,5 +326,10 @@ assign o_skipcmt =
   // | mem_addr_is_device
   ;
 
+wire _unused_ok = &{1'b0,
+  opcode[1:0],
+  func7[6],
+  func7[2:1],
+  1'b0};
 
 endmodule

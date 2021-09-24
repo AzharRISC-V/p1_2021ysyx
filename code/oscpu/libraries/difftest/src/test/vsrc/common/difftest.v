@@ -14,6 +14,7 @@
 * See the Mulan PSL v2 for more details.
 ***************************************************************************************/
 
+/* verilator lint_off DECLFILENAME */
 `define DIFFTEST_DPIC_FUNC_NAME(name) \
   v_difftest_``name
 
@@ -52,7 +53,7 @@
   `DPIC_ARG_INT  intrNo,
   `DPIC_ARG_INT  cause,
   `DPIC_ARG_LONG exceptionPC,
-  `DPIC_ARG_LONG exceptionInst
+  `DPIC_ARG_INT exceptionInst
 );
 `DIFFTEST_MOD_DECL(ArchEvent) (
   input        clock,

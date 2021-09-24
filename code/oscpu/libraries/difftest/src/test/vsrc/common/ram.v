@@ -14,6 +14,7 @@
 * See the Mulan PSL v2 for more details.
 ***************************************************************************************/
 
+/* verilator lint_off DECLFILENAME */
 import "DPI-C" function void ram_write_helper
 (
   input  longint    wIdx,

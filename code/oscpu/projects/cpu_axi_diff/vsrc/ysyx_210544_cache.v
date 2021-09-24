@@ -49,8 +49,6 @@ wire [63:0] icache_rdata;
 assign o_icache_rdata = icache_rdata[31:0];
 
 
-reg  [511:0]     icache_axi_io_rdata;
-reg              icache_axi_io_ready;
 reg              icache_axi_io_valid;
 reg              icache_axi_io_op;
 reg  [511:0]     icache_axi_io_wdata;
@@ -58,8 +56,6 @@ reg  [63:0]      icache_axi_io_addr;
 reg  [1:0]       icache_axi_io_size;
 reg  [7:0]       icache_axi_io_blks;
 
-reg  [511:0]     dcache_axi_io_rdata;
-reg              dcache_axi_io_ready;
 reg              dcache_axi_io_valid;
 reg              dcache_axi_io_op;
 reg  [511:0]     dcache_axi_io_wdata;
@@ -71,7 +67,7 @@ ysyx_210544_cache_core ICache(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
 	.i_cache_core_addr          (i_icache_addr              ),
-	.i_cache_core_wdata         (                           ),
+	.i_cache_core_wdata         (0                          ),
 	.i_cache_core_bytes         (3                          ),
 	.i_cache_core_op            (`REQ_READ                  ),
 	.i_cache_core_req           (i_icache_req               ),
@@ -115,5 +111,10 @@ assign o_axi_io_wdata   = ch_icache ? icache_axi_io_wdata   : dcache_axi_io_wdat
 assign o_axi_io_addr    = ch_icache ? icache_axi_io_addr    : dcache_axi_io_addr;
 assign o_axi_io_size    = ch_icache ? icache_axi_io_size    : dcache_axi_io_size;
 assign o_axi_io_blks    = ch_icache ? icache_axi_io_blks    : dcache_axi_io_blks;
+
+
+wire _unused_ok = &{1'b0,
+  icache_rdata[63:32],
+  1'b0};
 
 endmodule

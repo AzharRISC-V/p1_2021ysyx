@@ -9,7 +9,6 @@ module ysyx_210544_id_stage(
   input   wire                clk,
   input   wire                rst,
   input   reg                 i_id_fetched_req,
-  output  reg                 o_id_fetched_ack,
   input   reg                 i_id_decoded_ack,
   output  reg                 o_id_decoded_req,
   input   wire  [`BUS_64]     i_id_pc,
@@ -25,7 +24,6 @@ module ysyx_210544_id_stage(
   output  wire  [`BUS_RIDX]   o_id_rs2,
   output  wire  [`BUS_RIDX]   o_id_rd,
   output  wire                o_id_rd_wen,
-  output  wire  [4 : 0]       o_id_inst_type,
   output  wire  [7 : 0]       o_id_inst_opcode,
   output  wire  [`BUS_64]     o_id_op1,
   output  wire  [`BUS_64]     o_id_op2,
@@ -34,10 +32,7 @@ module ysyx_210544_id_stage(
   output  wire                o_id_skipcmt
 );
 
-
-assign o_id_fetched_ack = 1'b1;
-
-wire fetched_hs = i_id_fetched_req & o_id_fetched_ack;
+wire fetched_hs = i_id_fetched_req;
 wire decoded_hs = i_id_decoded_ack & o_id_decoded_req;
 
 // 是否使能组合逻辑单元部件
@@ -46,7 +41,6 @@ reg                           i_ena;
 
 // 保存输入信息
 reg   [`BUS_64]               tmp_i_id_pc;
-reg   [`BUS_64]               tmp_i_id_pc_pred;
 reg   [`BUS_32]               tmp_i_id_inst;
 reg                           tmp_i_id_nocmt;
 
@@ -54,7 +48,6 @@ always @(posedge clk) begin
   if (rst) begin
     {
       tmp_i_id_pc,
-      tmp_i_id_pc_pred,
       tmp_i_id_inst,
       tmp_i_id_nocmt
     } <= 0;
@@ -87,12 +80,10 @@ assign o_id_nocmt   = i_disable ? 0 : tmp_i_id_nocmt;
 
 ysyx_210544_idU IdU(
   .rst                        (rst                        ),
-  .i_ena                      (i_ena                      ),
   .i_inst                     (tmp_i_id_inst              ),
   .i_rs1_data                 (i_id_rs1_data              ),
   .i_rs2_data                 (i_id_rs2_data              ),
   .i_pc                       (tmp_i_id_pc                ),
-  .o_inst_type                (o_id_inst_type             ),
   .o_inst_opcode              (o_id_inst_opcode           ),
   .o_rs1_ren                  (o_id_rs1_ren               ),
   .o_rs1                      (o_id_rs1                   ),
