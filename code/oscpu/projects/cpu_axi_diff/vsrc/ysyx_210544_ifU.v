@@ -13,7 +13,7 @@ module ysyx_210544_ifU(
   /////////////////////////////////////////////////////////
   // AXI interface for Fetch
 	input                       i_bus_ack,
-  input         [`BUS_64]     i_bus_rdata,
+  input         [`BUS_32]     i_bus_rdata,
 	output reg                  o_bus_req,
   output reg    [`BUS_64]     o_bus_addr,
   
@@ -96,7 +96,7 @@ always @( posedge clk ) begin
         o_bus_addr              <= o_bus_addr + 4;
         o_pc                    <= o_bus_addr;
         pc_pred                 <= o_bus_addr + 4;
-        o_inst                  <= i_bus_rdata[31:0];
+        o_inst                  <= i_bus_rdata;
         o_fetched               <= 1;
       end
     end

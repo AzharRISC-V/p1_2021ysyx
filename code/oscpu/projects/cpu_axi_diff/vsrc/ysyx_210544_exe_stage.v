@@ -47,7 +47,7 @@ module ysyx_210544_exe_stage(
   output  wire  [`BUS_64]     o_ex_op3,
   output  wire                o_ex_nocmt,
   output  wire                o_ex_skipcmt,
-  output  reg   [`BUS_64]     o_ex_intrNo
+  output  reg   [`BUS_32]     o_ex_intrNo
 );
 
 assign o_ex_decoded_ack = 1'b1;

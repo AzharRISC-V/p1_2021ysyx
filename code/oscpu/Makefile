@@ -32,7 +32,7 @@ run-all-3:
 
 # ysyx soc
 soc:
-	cd projects/cpu_axi_diff/vsrc/;\
+	@cd projects/cpu_axi_diff/vsrc/;\
 	cat defines.v ysyx_210544_axi_rw.v ysyx_210544_S011HD1P_X32Y2D128_BW.v ysyx_210544_cache_axi.v \
 	ysyx_210544_cache_basic.v ysyx_210544_cache_core.v ysyx_210544_cache.v ysyx_210544_putch.v ysyx_210544_rtc.v \
 	ysyx_210544_clint.v ysyx_210544_regfile.v ysyx_210544_csrfile.v ysyx_210544_if_stage.v ysyx_210544_ifU.v \
@@ -43,7 +43,8 @@ soc:
 	cd ../../soc/vsrc/; \
 	sed '/`include/d' ysyx_210544.v -i; \
 	sed '/`timescale/d' ysyx_210544.v -i; \
-	sed 's/module SimTop4Soc/module ysyx_210544/g' ysyx_210544.v -i
+	sed 's/module SimTop4Soc/module ysyx_210544/g' ysyx_210544.v -i; \
+	sed '/`define SUPPORT_DIFFTEST/d' ysyx_210544.v -i
 	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" --trace' -a "-i ysyxSoc/flash/hello-flash.bin --dump-wave"
 soc-run:
 	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wall --trace' -a "-i ysyxSoc/flash/hello-flash.bin"

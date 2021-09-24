@@ -42,7 +42,7 @@ module ysyx_210544_mem_stage(
   output  wire                o_dcache_req,
   output  wire  [63:0]        o_dcache_addr,
   output  wire                o_dcache_op,
-  output  wire  [3 :0]        o_dcache_bytes,
+  output  wire  [2 :0]        o_dcache_bytes,
   output  wire  [63:0]        o_dcache_wdata,
   input   wire                i_dcache_ack,
   input   wire  [63:0]        i_dcache_rdata

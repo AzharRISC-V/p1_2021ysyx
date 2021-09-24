@@ -64,6 +64,12 @@ module SimTop4Soc(
   output [3:0]  io_slave_rid
 );
 
+wire [63:0] axi_aw_addr_o;
+wire [63:0] axi_ar_addr_o;
+
+assign io_master_awaddr = axi_aw_addr_o[31:0];
+assign io_master_araddr = axi_ar_addr_o[31:0];
+
 ysyx_210544_axi_rw u_axi_rw (
     .clock                          (clock),
     .reset                          (reset),
@@ -80,7 +86,7 @@ ysyx_210544_axi_rw u_axi_rw (
 
     .axi_aw_ready_i                 (io_master_awready),
     .axi_aw_valid_o                 (io_master_awvalid),
-    .axi_aw_addr_o                  (io_master_awaddr),
+    .axi_aw_addr_o                  (axi_aw_addr_o),
     .axi_aw_id_o                    (io_master_awid),
     .axi_aw_len_o                   (io_master_awlen),
     .axi_aw_size_o                  (io_master_awsize),
@@ -99,7 +105,7 @@ ysyx_210544_axi_rw u_axi_rw (
 
     .axi_ar_ready_i                 (io_master_arready),
     .axi_ar_valid_o                 (io_master_arvalid),
-    .axi_ar_addr_o                  (io_master_araddr),
+    .axi_ar_addr_o                  (axi_ar_addr_o),
     .axi_ar_id_o                    (io_master_arid),
     .axi_ar_len_o                   (io_master_arlen),
     .axi_ar_size_o                  (io_master_arsize),

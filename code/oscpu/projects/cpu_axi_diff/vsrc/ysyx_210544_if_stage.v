@@ -15,7 +15,7 @@ module ysyx_210544_if_stage(
   ///////////////////////////////////////////////
   // AXI interface for Fetch
 	input                       i_if_bus_ack,
-  input         [`BUS_64]     i_if_bus_rdata,
+  input         [`BUS_32]     i_if_bus_rdata,
 	output                      o_if_bus_req,
   output        [`BUS_64]     o_if_bus_addr,
   

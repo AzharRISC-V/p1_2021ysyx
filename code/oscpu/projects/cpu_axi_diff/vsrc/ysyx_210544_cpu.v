@@ -193,7 +193,7 @@ reg   [31:0]                  i_icache_rdata;
 wire                          o_dcache_req;
 wire  [63:0]                  o_dcache_addr;
 wire                          o_dcache_op;
-wire  [3 :0]                  o_dcache_bytes;
+wire  [2 :0]                  o_dcache_bytes;
 wire  [63:0]                  o_dcache_wdata;
 reg                           i_dcache_ack;
 reg   [63:0]                  i_dcache_rdata;

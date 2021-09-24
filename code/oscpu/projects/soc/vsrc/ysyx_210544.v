@@ -15,6 +15,13 @@
 `define REQ_READ            1'b0
 `define REQ_WRITE           1'b1
 
+`define RW_DATA_WIDTH       512
+`define RW_ADDR_WIDTH       64
+`define AXI_DATA_WIDTH      64
+`define AXI_ADDR_WIDTH      64
+`define AXI_ID_WIDTH        4
+`define AXI_USER_WIDTH      1
+
 `define RISCV_PRIV_MODE_U   0
 `define RISCV_PRIV_MODE_S   1
 `define RISCV_PRIV_MODE_M   3
@@ -242,15 +249,7 @@
 `define AXI_SIZE_BYTES_64                                   3'b110
 `define AXI_SIZE_BYTES_128                                  3'b111
 
-
-module ysyx_210544_axi_rw # (
-    parameter RW_DATA_WIDTH     = 512,
-    parameter RW_ADDR_WIDTH     = 32,
-    parameter AXI_DATA_WIDTH    = 64,
-    parameter AXI_ADDR_WIDTH    = 32,
-    parameter AXI_ID_WIDTH      = 4,
-    parameter AXI_USER_WIDTH    = 1
-)(
+module ysyx_210544_axi_rw (
     input                               clock,
     input                               reset,
 
@@ -258,36 +257,36 @@ module ysyx_210544_axi_rw # (
 	  output                              user_ready_o,
     input                               user_req_i,         // read or write
     input  [7:0]                        user_blks_i,          // blocks: 0 ~ 7， means 1~8 (后端硬件资源限制为8)
-    output reg [RW_DATA_WIDTH-1:0]      user_rdata_o,
-    input  [RW_DATA_WIDTH-1:0]          user_wdata_i,
-    input  [AXI_ADDR_WIDTH-1:0]         user_addr_i,
+    output reg [`RW_DATA_WIDTH-1:0]     user_rdata_o,
+    input  [`RW_DATA_WIDTH-1:0]         user_wdata_i,
+    input  [`AXI_ADDR_WIDTH-1:0]        user_addr_i,
     input  [1:0]                        user_size_i,
     output [1:0]                        user_resp_o,
 
     // Advanced eXtensible Interface
     input                               axi_aw_ready_i,
     output                              axi_aw_valid_o,
-    output [AXI_ADDR_WIDTH-1:0]         axi_aw_addr_o,
-    output [AXI_ID_WIDTH-1:0]           axi_aw_id_o,
+    output [`AXI_ADDR_WIDTH-1:0]        axi_aw_addr_o,
+    output [`AXI_ID_WIDTH-1:0]          axi_aw_id_o,
     output [7:0]                        axi_aw_len_o,
     output [2:0]                        axi_aw_size_o,
     output [1:0]                        axi_aw_burst_o,
 
     input                               axi_w_ready_i,
     output                              axi_w_valid_o,
-    output [AXI_DATA_WIDTH-1:0]         axi_w_data_o,
-    output [AXI_DATA_WIDTH/8-1:0]       axi_w_strb_o,
+    output [`AXI_DATA_WIDTH-1:0]        axi_w_data_o,
+    output [`AXI_DATA_WIDTH/8-1:0]      axi_w_strb_o,
     output                              axi_w_last_o,
     
     output                              axi_b_ready_o,
     input                               axi_b_valid_i,
     input  [1:0]                        axi_b_resp_i,
-    input  [AXI_ID_WIDTH-1:0]           axi_b_id_i,
+    input  [`AXI_ID_WIDTH-1:0]          axi_b_id_i,
 
     input                               axi_ar_ready_i,
     output                              axi_ar_valid_o,
-    output [AXI_ADDR_WIDTH-1:0]         axi_ar_addr_o,
-    output [AXI_ID_WIDTH-1:0]           axi_ar_id_o,
+    output [`AXI_ADDR_WIDTH-1:0]        axi_ar_addr_o,
+    output [`AXI_ID_WIDTH-1:0]          axi_ar_id_o,
     output [7:0]                        axi_ar_len_o,
     output [2:0]                        axi_ar_size_o,
     output [1:0]                        axi_ar_burst_o,
@@ -295,9 +294,9 @@ module ysyx_210544_axi_rw # (
     output                              axi_r_ready_o,
     input                               axi_r_valid_i,
     input  [1:0]                        axi_r_resp_i,
-    input  [AXI_DATA_WIDTH-1:0]         axi_r_data_i,
+    input  [`AXI_DATA_WIDTH-1:0]        axi_r_data_i,
     input                               axi_r_last_i,
-    input  [AXI_ID_WIDTH-1:0]           axi_r_id_i
+    input  [`AXI_ID_WIDTH-1:0]          axi_r_id_i
 );
 
     wire w_trans    = user_req_i == `REQ_WRITE;
@@ -375,10 +374,10 @@ module ysyx_210544_axi_rw # (
 
 
     // ------------------Process Data------------------
-    parameter ALIGNED_WIDTH = $clog2(AXI_DATA_WIDTH / 8);
-    parameter OFFSET_WIDTH  = $clog2(AXI_DATA_WIDTH);
-    parameter AXI_SIZE      = $clog2(AXI_DATA_WIDTH / 8);
-    parameter MASK_WIDTH    = AXI_DATA_WIDTH * 2;
+    parameter ALIGNED_WIDTH = $clog2(`AXI_DATA_WIDTH / 8);
+    parameter OFFSET_WIDTH  = $clog2(`AXI_DATA_WIDTH);
+    parameter AXI_SIZE      = $clog2(`AXI_DATA_WIDTH / 8);
+    parameter MASK_WIDTH    = `AXI_DATA_WIDTH * 2;
     parameter TRANS_LEN_MAX = 8; //user_blks_i+1;// RW_DATA_WIDTH / AXI_DATA_WIDTH;
 
     wire block_trans        = user_blks_i > 0 ? 1'b1 : 1'b0;
@@ -399,19 +398,20 @@ module ysyx_210544_axi_rw # (
     wire [7:0] axi_len      = aligned ? user_blks_i : {{7{1'b0}}, overstep};
     wire [2:0] axi_size     = AXI_SIZE[2:0];
     
-    wire [AXI_ADDR_WIDTH-1:0] axi_addr          = {user_addr_i[AXI_ADDR_WIDTH-1:ALIGNED_WIDTH], {ALIGNED_WIDTH{1'b0}}};
+    wire [`AXI_ADDR_WIDTH-1:0] axi_addr          = {user_addr_i[`AXI_ADDR_WIDTH-1:ALIGNED_WIDTH], {ALIGNED_WIDTH{1'b0}}};
     wire [OFFSET_WIDTH-1:0] aligned_offset_l    = {{OFFSET_WIDTH-ALIGNED_WIDTH{1'b0}}, {user_addr_i[ALIGNED_WIDTH-1:0]}} << 3;
-    wire [OFFSET_WIDTH-1:0] aligned_offset_h    = AXI_DATA_WIDTH - aligned_offset_l;
+    wire [OFFSET_WIDTH:0]   aligned_offset_h_tmp = `AXI_DATA_WIDTH - aligned_offset_l;
+    wire [OFFSET_WIDTH-1:0] aligned_offset_h    = aligned_offset_h_tmp[5:0];
     wire [MASK_WIDTH-1:0] mask                  = (({MASK_WIDTH{size_b}} & {{MASK_WIDTH-8{1'b0}}, 8'hff})
                                                     | ({MASK_WIDTH{size_h}} & {{MASK_WIDTH-16{1'b0}}, 16'hffff})
                                                     | ({MASK_WIDTH{size_w}} & {{MASK_WIDTH-32{1'b0}}, 32'hffffffff})
                                                     | ({MASK_WIDTH{size_d}} & {{MASK_WIDTH-64{1'b0}}, 64'hffffffff_ffffffff})
                                                     ) << aligned_offset_l;
-    wire [AXI_DATA_WIDTH-1:0] mask_l            = mask[AXI_DATA_WIDTH-1:0];
-    wire [AXI_DATA_WIDTH-1:0] mask_h            = mask[MASK_WIDTH-1:AXI_DATA_WIDTH];
+    wire [`AXI_DATA_WIDTH-1:0] mask_l           = mask[`AXI_DATA_WIDTH-1:0];
+    wire [`AXI_DATA_WIDTH-1:0] mask_h           = mask[MASK_WIDTH-1:`AXI_DATA_WIDTH];
 
-    wire [AXI_ID_WIDTH-1:0] axi_id              = {AXI_ID_WIDTH{1'b0}};
-    wire [AXI_USER_WIDTH-1:0] axi_user          = {AXI_USER_WIDTH{1'b0}};
+    wire [`AXI_ID_WIDTH-1:0] axi_id              = {`AXI_ID_WIDTH{1'b0}};
+    wire [`AXI_USER_WIDTH-1:0] axi_user          = {`AXI_USER_WIDTH{1'b0}};
 
     reg rw_ready;
     wire rw_ready_nxt = trans_done;
@@ -460,7 +460,7 @@ module ysyx_210544_axi_rw # (
       else begin
         if (w_state_write) begin
           if (!axi_w_valid_o) begin
-            axi_w_data_o  <= user_wdata_i[AXI_DATA_WIDTH-1:0];
+            axi_w_data_o  <= user_wdata_i[`AXI_DATA_WIDTH-1:0];
             axi_w_valid_o <= 1;
           end
         end
@@ -482,14 +482,14 @@ module ysyx_210544_axi_rw # (
                 if (w_hs) begin
                   if (~aligned & overstep) begin
                       if (len[0]) begin
-                          axi_w_data_o <= user_wdata_i[AXI_DATA_WIDTH-1:0];
+                          axi_w_data_o <= user_wdata_i[`AXI_DATA_WIDTH-1:0];
                       end
                       else begin
-                          axi_w_data_o <= user_wdata_i[AXI_DATA_WIDTH-1:0];
+                          axi_w_data_o <= user_wdata_i[`AXI_DATA_WIDTH-1:0];
                       end
                   end
                   else if (len == i) begin
-                    axi_w_data_o <= user_wdata_i[(i+1)*AXI_DATA_WIDTH+:AXI_DATA_WIDTH];
+                    axi_w_data_o <= user_wdata_i[(i+1)*`AXI_DATA_WIDTH+:`AXI_DATA_WIDTH];
                   end
                 end
             end
@@ -510,8 +510,8 @@ module ysyx_210544_axi_rw # (
     // Read data channel signals
     assign axi_r_ready_o    = r_state_read;
 
-    wire [AXI_DATA_WIDTH-1:0] axi_r_data_l  = (axi_r_data_i & mask_l) >> aligned_offset_l;
-    wire [AXI_DATA_WIDTH-1:0] axi_r_data_h  = (axi_r_data_i & mask_h) << aligned_offset_h;
+    wire [`AXI_DATA_WIDTH-1:0] axi_r_data_l  = (axi_r_data_i & mask_l) >> aligned_offset_l;
+    wire [`AXI_DATA_WIDTH-1:0] axi_r_data_h  = (axi_r_data_i & mask_h) << aligned_offset_h;
 
     generate
         for (genvar i = 0; i < TRANS_LEN_MAX; i += 1) begin
@@ -522,14 +522,14 @@ module ysyx_210544_axi_rw # (
                 else if (r_hs) begin
                     if (~aligned & overstep) begin
                         if (len[0]) begin
-                            user_rdata_o[AXI_DATA_WIDTH-1:0] <= user_rdata_o[AXI_DATA_WIDTH-1:0] | axi_r_data_h;
+                            user_rdata_o[`AXI_DATA_WIDTH-1:0] <= user_rdata_o[`AXI_DATA_WIDTH-1:0] | axi_r_data_h;
                         end
                         else begin
-                            user_rdata_o[AXI_DATA_WIDTH-1:0] <= axi_r_data_l;
+                            user_rdata_o[`AXI_DATA_WIDTH-1:0] <= axi_r_data_l;
                         end
                     end
                     else if (len == i) begin
-                        user_rdata_o[i*AXI_DATA_WIDTH+:AXI_DATA_WIDTH] <= axi_r_data_l;
+                        user_rdata_o[i*`AXI_DATA_WIDTH+:`AXI_DATA_WIDTH] <= axi_r_data_l;
                     end
                 end
             end
@@ -1835,7 +1835,7 @@ module ysyx_210544_if_stage(
   ///////////////////////////////////////////////
   // AXI interface for Fetch
 	input                       i_if_bus_ack,
-  input         [`BUS_64]     i_if_bus_rdata,
+  input         [`BUS_32]     i_if_bus_rdata,
 	output                      o_if_bus_req,
   output        [`BUS_64]     o_if_bus_addr,
   
@@ -1879,7 +1879,7 @@ module ysyx_210544_ifU(
   /////////////////////////////////////////////////////////
   // AXI interface for Fetch
 	input                       i_bus_ack,
-  input         [`BUS_64]     i_bus_rdata,
+  input         [`BUS_32]     i_bus_rdata,
 	output reg                  o_bus_req,
   output reg    [`BUS_64]     o_bus_addr,
   
@@ -1962,7 +1962,7 @@ always @( posedge clk ) begin
         o_bus_addr              <= o_bus_addr + 4;
         o_pc                    <= o_bus_addr;
         pc_pred                 <= o_bus_addr + 4;
-        o_inst                  <= i_bus_rdata[31:0];
+        o_inst                  <= i_bus_rdata;
         o_fetched               <= 1;
       end
     end
@@ -2464,7 +2464,7 @@ module ysyx_210544_exe_stage(
   output  wire  [`BUS_64]     o_ex_op3,
   output  wire                o_ex_nocmt,
   output  wire                o_ex_skipcmt,
-  output  reg   [`BUS_64]     o_ex_intrNo
+  output  reg   [`BUS_32]     o_ex_intrNo
 );
 
 assign o_ex_decoded_ack = 1'b1;
@@ -3175,7 +3175,7 @@ module ysyx_210544_mem_stage(
   output  wire                o_dcache_req,
   output  wire  [63:0]        o_dcache_addr,
   output  wire                o_dcache_op,
-  output  wire  [3 :0]        o_dcache_bytes,
+  output  wire  [2 :0]        o_dcache_bytes,
   output  wire  [63:0]        o_dcache_wdata,
   input   wire                i_dcache_ack,
   input   wire  [63:0]        i_dcache_rdata
@@ -3500,7 +3500,7 @@ module ysyx_210544_memU(
   output  wire                o_dcache_req,
   output  wire  [63:0]        o_dcache_addr,
   output  wire                o_dcache_op,
-  output  wire  [3 :0]        o_dcache_bytes,
+  output  wire  [2 :0]        o_dcache_bytes,
   output  wire  [63:0]        o_dcache_wdata,
   input   wire                i_dcache_ack,
   input   wire  [63:0]        i_dcache_rdata
@@ -3681,8 +3681,8 @@ module ysyx_210544_wb_stage(
   input   wire  [`BUS_64]     i_wb_rd_wdata,
   input   wire                i_wb_nocmt,
   input   wire                i_wb_skipcmt,
-  input   reg                 i_wb_clint_mip,
-  output  reg                 o_wb_clint_mip,
+  input   reg   [`BUS_64]     i_wb_clint_mip,
+  output  reg   [`BUS_64]     o_wb_clint_mip,
   output  wire  [`BUS_64]     o_wb_pc,
   output  wire  [`BUS_32]     o_wb_inst,
   output  reg   [`BUS_RIDX]   o_wb_rd,
@@ -3911,6 +3911,10 @@ always @(negedge clk) begin
   end
 end
 
+
+
+`ifdef SUPPORT_DIFFTEST
+
 DifftestArchEvent DifftestArchEvent(
   .clock              (clk),		// 时钟
   .coreid             (0),		  // cpu id，单核时固定为0
@@ -4041,6 +4045,8 @@ DifftestArchFpRegState DifftestArchFpRegState(
   .fpr_30             (0),
   .fpr_31             (0)
 );
+
+`endif
 
 endmodule
 
@@ -4237,7 +4243,7 @@ reg   [31:0]                  i_icache_rdata;
 wire                          o_dcache_req;
 wire  [63:0]                  o_dcache_addr;
 wire                          o_dcache_op;
-wire  [3 :0]                  o_dcache_bytes;
+wire  [2 :0]                  o_dcache_bytes;
 wire  [63:0]                  o_dcache_wdata;
 reg                           i_dcache_ack;
 reg   [63:0]                  i_dcache_rdata;
@@ -4547,6 +4553,12 @@ module ysyx_210544(
   output [3:0]  io_slave_rid
 );
 
+wire [63:0] axi_aw_addr_o;
+wire [63:0] axi_ar_addr_o;
+
+assign io_master_awaddr = axi_aw_addr_o[31:0];
+assign io_master_araddr = axi_ar_addr_o[31:0];
+
 ysyx_210544_axi_rw u_axi_rw (
     .clock                          (clock),
     .reset                          (reset),
@@ -4563,7 +4575,7 @@ ysyx_210544_axi_rw u_axi_rw (
 
     .axi_aw_ready_i                 (io_master_awready),
     .axi_aw_valid_o                 (io_master_awvalid),
-    .axi_aw_addr_o                  (io_master_awaddr),
+    .axi_aw_addr_o                  (axi_aw_addr_o),
     .axi_aw_id_o                    (io_master_awid),
     .axi_aw_len_o                   (io_master_awlen),
     .axi_aw_size_o                  (io_master_awsize),
@@ -4582,7 +4594,7 @@ ysyx_210544_axi_rw u_axi_rw (
 
     .axi_ar_ready_i                 (io_master_arready),
     .axi_ar_valid_o                 (io_master_arvalid),
-    .axi_ar_addr_o                  (io_master_araddr),
+    .axi_ar_addr_o                  (axi_ar_addr_o),
     .axi_ar_id_o                    (io_master_arid),
     .axi_ar_len_o                   (io_master_arlen),
     .axi_ar_size_o                  (io_master_arsize),

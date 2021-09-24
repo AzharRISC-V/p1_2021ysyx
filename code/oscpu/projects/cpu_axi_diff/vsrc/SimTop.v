@@ -2,12 +2,6 @@
 
 `define AXI_TOP_INTERFACE(name) io_memAXI_0_``name
 
-`define AXI_ADDR_WIDTH      32
-`define AXI_DATA_WIDTH      64
-`define AXI_ID_WIDTH        4
-`define AXI_USER_WIDTH      1
-
-
 module SimTop(
     input                               clock,
     input                               reset,
@@ -123,7 +117,7 @@ wire [511:0]                  i_user_axi_rdata;
 wire                          o_user_axi_op;
 wire                          o_user_axi_valid;
 wire [511:0]                  o_user_axi_wdata;
-wire [63:0]                   o_user_axi_addr;
+wire [31:0]                   o_user_axi_addr;
 wire [1:0]                    o_user_axi_size;
 wire [7:0]                    o_user_axi_blks;
 
