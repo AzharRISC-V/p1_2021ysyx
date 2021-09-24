@@ -5,7 +5,7 @@
 
 `include "defines.v"
 
-module clint(
+module ysyx_210544_clint(
   input   wire                clk,
   input   wire                rst,
 

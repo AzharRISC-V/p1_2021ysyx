@@ -5,7 +5,7 @@
 
 `include "defines.v"
 
-module wb_stage(
+module ysyx_210544_wb_stage(
   input   wire                clk,
   input   wire                rst,
   input   reg                 i_wb_memoryed_req,
@@ -100,7 +100,7 @@ assign o_wb_rd        = i_disable ? 0 : tmp_i_wb_rd;
 assign o_wb_rd_wen    = i_disable ? 0 : tmp_i_wb_rd_wen;
 assign o_wb_rd_wdata  = i_disable ? 0 : tmp_i_wb_rd_wdata;
 
-wbU WbU(
+ysyx_210544_wbU WbU(
   .i_ena                      (i_ena                      ),
   .clk                        (clk                        ),
   .rst                        (rst                        ),

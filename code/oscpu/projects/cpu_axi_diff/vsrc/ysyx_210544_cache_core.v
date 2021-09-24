@@ -7,7 +7,7 @@
 
 `include "defines.v"
 
-module cache_core (
+module ysyx_210544_cache_core (
   input   wire                clk,
   input   wire                rst,
   input   wire  [`BUS_64]     i_cache_core_addr,          // 地址
@@ -41,7 +41,7 @@ reg                           i_cache_basic_ack;          // 应答
 
 assign o_cache_basic_op = i_cache_core_op;
 
-cache_basic Cache_basic(
+ysyx_210544_cache_basic Cache_basic(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
 	.i_cache_basic_addr         (o_cache_basic_addr         ),

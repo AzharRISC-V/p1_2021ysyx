@@ -5,7 +5,7 @@
 
 `include "defines.v"
 
-module exe_stage(
+module ysyx_210544_exe_stage(
   input   wire                rst,
   input   wire                clk,
   input   reg                 i_ex_decoded_req,
@@ -188,7 +188,7 @@ assign o_ex_csr_ren     = rst ? 0 : (o_ena_exeU ? exeU_csr_ren    : exceptionU_c
 assign o_ex_csr_wen     = rst ? 0 : (o_ena_exeU ? exeU_csr_wen    : exceptionU_csr_wen);
 assign o_ex_csr_wdata   = rst ? 0 : (o_ena_exeU ? exeU_csr_wdata  : exceptionU_csr_wdata);
 
-exeU ExeU(
+ysyx_210544_exeU ExeU(
   .rst                        (rst                        ),
   .clk                        (clk                        ),
   .ena                        (o_ena_exeU                 ),
@@ -210,7 +210,7 @@ exeU ExeU(
   .o_exeU_skip_cmt            (exeU_skip_cmt              )
 );
 
-exceptionU ExceptionU(
+ysyx_210544_exceptionU ExceptionU(
   .rst                        (rst                        ),
   .clk                        (clk                        ),
   .ena                        (o_ena_exceptionU & (!o_ex_executed_req)),

@@ -159,7 +159,7 @@ assign b_resp                                   = `AXI_TOP_INTERFACE(b_bits_resp
 assign b_id                                     = `AXI_TOP_INTERFACE(b_bits_id);
 assign b_user                                   = `AXI_TOP_INTERFACE(b_bits_user);
 
-axi_rw u_axi_rw (
+ysyx_210544_axi_rw u_axi_rw (
     .clock                          (clock),
     .reset                          (reset),
 
@@ -285,7 +285,7 @@ cache_core_test Cache_core_test(
 
 /////////////////////////////////////////////////
 // CPU核
-cpu u_cpu(
+ysyx_210544_cpu u_cpu(
   .clk                        (clock                      ),
   .rst                        (reset                      ),
   .i_axi_io_ready             (i_user_axi_ready           ),

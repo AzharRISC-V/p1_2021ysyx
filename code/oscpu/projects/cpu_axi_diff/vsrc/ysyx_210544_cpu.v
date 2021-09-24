@@ -3,7 +3,7 @@
 
 `include "defines.v"
 
-module cpu(
+module ysyx_210544_cpu(
   input                       clk,
   input                       rst,
 
@@ -199,7 +199,7 @@ reg                           i_dcache_ack;
 reg   [63:0]                  i_dcache_rdata;
 
 
-cache Cache (
+ysyx_210544_cache Cache (
   .clk                        (clk                        ),
   .rst                        (rst                        ),
 
@@ -231,7 +231,7 @@ cache Cache (
 
 /////////////////////////////////////////////////
 // Stages
-if_stage If_stage(
+ysyx_210544_if_stage If_stage(
   .rst                        (rst                        ),
   .clk                        (clk                        ),
   .i_if_writebacked_req       (writebacked_req            ),
@@ -248,7 +248,7 @@ if_stage If_stage(
   .o_if_nocmt                 (o_if_nocmt                 ) 
 );
 
-id_stage Id_stage(
+ysyx_210544_id_stage Id_stage(
   .rst                        (rst                        ),
   .clk                        (clk                        ),
   .i_id_fetched_req           (fetched_req                ),
@@ -277,7 +277,7 @@ id_stage Id_stage(
   .o_id_skipcmt               (o_id_skipcmt               )
 );
 
-exe_stage Exe_stage(
+ysyx_210544_exe_stage Exe_stage(
   .rst                        (rst                        ),
   .clk                        (clk                        ),
   .i_ex_decoded_req           (decoded_req                ),
@@ -322,7 +322,7 @@ exe_stage Exe_stage(
   .o_ex_intrNo                (o_ex_intrNo                )
 );
 
-mem_stage Mem_stage(
+ysyx_210544_mem_stage Mem_stage(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
   .i_mem_executed_req         (executed_req               ),
@@ -363,7 +363,7 @@ mem_stage Mem_stage(
   .i_dcache_rdata             (i_dcache_rdata             )
 );
 
-wb_stage Wb_stage(
+ysyx_210544_wb_stage Wb_stage(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
   .i_wb_memoryed_req          (memoryed_req               ),
@@ -390,7 +390,7 @@ wb_stage Wb_stage(
   .o_wb_intrNo                (o_wb_intrNo                )
 );
 
-cmt_stage Cmt_stage(
+ysyx_210544_cmt_stage Cmt_stage(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
   .i_cmt_writebacked_req      (writebacked_req            ),
@@ -408,7 +408,7 @@ cmt_stage Cmt_stage(
   .i_cmt_intrNo               (o_wb_intrNo                )
 );
 
-regfile Regfile(
+ysyx_210544_regfile Regfile(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
   .i_rs1                      (o_id_rs1                   ),
@@ -423,7 +423,7 @@ regfile Regfile(
   .o_regs                     (o_reg_regs                 )
 );
 
-csrfile Csrfile(
+ysyx_210544_csrfile Csrfile(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
   .i_csr_addr                 (o_ex_csr_addr              ),

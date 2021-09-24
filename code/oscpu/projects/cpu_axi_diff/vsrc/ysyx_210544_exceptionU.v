@@ -5,7 +5,7 @@
 
 `include "defines.v"
 
-module exceptionU(
+module ysyx_210544_exceptionU(
   input   wire                rst,
   input   wire                clk,
   input   wire                ena,

@@ -5,7 +5,7 @@
 
 `include "defines.v"
 
-module memU(
+module ysyx_210544_memU(
   input   wire                clk,
   input   wire                rst,
 

@@ -5,7 +5,7 @@
 
 `include "defines.v"
 
-module wbU(
+module ysyx_210544_wbU(
   input   wire                i_ena,
   input   wire                clk,
   input   wire                rst,

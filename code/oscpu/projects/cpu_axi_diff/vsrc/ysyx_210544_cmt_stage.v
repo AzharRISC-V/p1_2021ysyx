@@ -5,7 +5,7 @@
 
 `include "defines.v"
 
-module cmt_stage(
+module ysyx_210544_cmt_stage(
   input   wire                clk,
   input   wire                rst,
   input   reg                 i_cmt_writebacked_req,
@@ -29,7 +29,7 @@ wire writebacked_hs = i_cmt_writebacked_req & o_cmt_writebacked_ack;
 
 wire i_cmtvalid = writebacked_hs & (!i_cmt_nocmt);
 
-cmtU CmtU(
+ysyx_210544_cmtU CmtU(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
   .i_rd                       (i_cmt_rd                   ),

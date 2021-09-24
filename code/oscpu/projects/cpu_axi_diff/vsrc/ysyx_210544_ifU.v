@@ -5,7 +5,7 @@
 
 `include "defines.v"
 
-module ifU(
+module ysyx_210544_ifU(
   input   wire                i_ena,
   input   wire                clk,
   input   wire                rst,

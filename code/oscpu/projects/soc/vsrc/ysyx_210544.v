@@ -1,203 +1,4 @@
 
-// ZhengpuShi
-
-// Definitions
-
-`timescale 1ns / 1ps
-
-`define ZERO_WORD  64'h00000000_00000000
-`define PC_START   64'h00000000_80000000 
-
-`define AXI_ADDR_WIDTH      32
-`define AXI_DATA_WIDTH      64
-`define AXI_ID_WIDTH        4
-`define AXI_USER_WIDTH      1
-
-`define SIZE_B              2'b00
-`define SIZE_H              2'b01
-`define SIZE_W              2'b10
-`define SIZE_D              2'b11
-
-`define REQ_READ            1'b0
-`define REQ_WRITE           1'b1
-
-`define RISCV_PRIV_MODE_U   0
-`define RISCV_PRIV_MODE_S   1
-`define RISCV_PRIV_MODE_M   3
-
-// mem_stage三种类型的动作
-`define MEM_ACTION_NONE     0     // 普通指令，不访存
-`define MEM_ACTION_LOAD     1     // load指令，数据要写入 rd
-`define MEM_ACTION_STORE    2     // store指令，存入数据
-
-
-`define CLOCKS_PER_SECOND   64'd240_0000        // 每秒的clock数，约240万
-
-`define BUS_8               7:0
-`define BUS_16              15:0
-`define BUS_32              31:0
-`define BUS_64              63:0
-`define BUS_256             255:0
-`define BUS_RIDX            4:0                 // 寄存器索引的总线
-`define BUS_FUNCT3          2:0                 // funct3的总线
-`define BUS_FUNCT7          6:0                 // funct7的总线
-`define BUS_OPCODE          6:0                 // opcode的总线
-
-// 指令状态机
-`define STATE_BUS           3:0
-`define STATE_NONE          4'd0
-`define STATE_IF            4'd1
-`define STATE_ID            4'd2
-`define STATE_EX            4'd3
-`define STATE_MEM           4'd4
-`define STATE_WB            4'd5
-`define STATE_CMT           4'd6
-
-// CSR
-`define BUS_CSR_ADDR        11 : 0          // CSR存储器地址
-
-// CSR addr
-`define CSR_ADR_MCYCLE      12'hB00
-`define CSR_ADR_MSTATUS     12'h300         // machine status register
-`define CSR_ADR_MIE         12'h304         // machine interrupt-enable register
-`define CSR_ADR_MTVEC       12'h305         // machine trap-handler base address
-`define CSR_ADR_MSCRATCH    12'h340         // scratch register for machine trap handlers.
-`define CSR_ADR_MEPC        12'h341         // machine exception program counter
-`define CSR_ADR_MCAUSE      12'h342         // machine trap cause
-`define CSR_ADR_MIP         12'h344         // machine interrupt pending
-
-// CSR index in local memory
-`define CSR_IDX_NONE        4'd0
-`define CSR_IDX_MCYCLE      4'd1
-`define CSR_IDX_MSTATUS     4'd2
-`define CSR_IDX_MIE         4'd3
-`define CSR_IDX_MTVEC       4'd4
-`define CSR_IDX_MSCRATCH    4'd5
-`define CSR_IDX_MEPC        4'd6
-`define CSR_IDX_MCAUSE      4'd7
-`define CSR_IDX_MIP         4'd8
-
-// 寄存器配置
-`define REG_BITS            64              // 寄存器位数
-`define REG_BUS_old         63:0            // 寄存器总线
-`define REG_ADDR_BITS       5               // 寄存器地址位数
-`define REG_ADDR_BUS        4:0             // 寄存器地址总线
-`define REG_NUM             32              // 寄存器个数
-`define REG_ZERO            64'd0           // 寄存器数值0
-
-// 指令配置
-`define INST_BITS           32              // 指令位数
-`define INST_BUS            31:0            // 指令总线
-
-// RAM配置(4KB)
-`define RAM_DATA_BITS       32              // RAM数据位数
-`define RAM_DATA_BUS        31:0            // RAM数据总线
-`define RAM_ADDR_BITS       12              // RAM地址位数
-`define RAM_ADDR_BUS        11:0            // RAM地址总线
-`define RAM_DATA_ZERO       32'd0           // RAM数据0
-`define RAM_SIZE_BUS        4095:0          // RAM单元数总线
-
-// ROM配置(4KB)
-`define ROM_DATA_BITS       32              // ROM数据位数
-`define ROM_DATA_BUS        31:0            // ROM数据总线
-`define ROM_ADDR_BITS       12              // ROM地址位数
-`define ROM_ADDR_BUS        11:0            // ROM地址总线
-`define ROM_DATA_ZERO       32'd0           // ROM数据0
-`define ROM_SIZE_BUS        4095:0          // ROM单元数总线
-
-// 已编码的指令
-`define INST_NOP            32'h0000_0013   // addi x0,x0,0
-
-// 自定义的指令码
-`define INST_LUI            8'b0000_0001    // d1
-`define INST_AUIPC          8'b0000_0010    //
-`define INST_JAL            8'b0000_0011    //
-`define INST_JALR           8'b0000_0100    // 
-`define INST_BEQ            8'b0000_0101    //
-`define INST_BNE            8'b0000_0110    //
-`define INST_BLT            8'b0000_0111    //
-`define INST_BGE            8'b0000_1000    //
-`define INST_BLTU           8'b0000_1001    //
-`define INST_BGEU           8'b0000_1010    //
-`define INST_LB             8'b0000_1011    //
-`define INST_LH             8'b0000_1100    //
-`define INST_LW             8'b0000_1101    //
-`define INST_LBU            8'b0000_1110    //
-`define INST_LHU            8'b0000_1111    // 
-`define INST_SB             8'b0001_0000    //
-`define INST_SH             8'b0001_0001    //
-`define INST_SW             8'b0001_0010    //
-`define INST_ADDI           8'b0001_0011    //
-`define INST_SLTI           8'b0001_0100    //
-`define INST_SLTIU          8'b0001_0101    //
-`define INST_XORI           8'b0001_0110    //
-`define INST_ORI            8'b0001_0111    //
-`define INST_ANDI           8'b0001_1000    //
-`define INST_SLLI           8'b0001_1001    //
-`define INST_SRLI           8'b0001_1010    //
-`define INST_SRAI           8'b0001_1011    //
-`define INST_ADD            8'b0001_1100    //
-`define INST_SUB            8'b0001_1101    //
-`define INST_SLL            8'b0001_1110    //
-`define INST_SLT            8'b0001_1111    //
-`define INST_SLTU           8'b0010_0000    //
-`define INST_XOR            8'b0010_0001    //
-`define INST_SRL            8'b0010_0010    //
-`define INST_SRA            8'b0010_0011    //
-`define INST_OR             8'b0010_0100    //
-`define INST_AND            8'b0010_0101    //
-`define INST_FENCE          8'b0010_0110    //
-`define INST_FENCEI         8'b0010_0111    //
-`define INST_ECALL          8'b0010_1000    //
-`define INST_EBREAK         8'b0010_1001    //
-`define INST_CSRRW          8'b0010_1010    //
-`define INST_CSRRS          8'b0010_1011    //
-`define INST_CSRRC          8'b0010_1100    //
-`define INST_CSRRWI         8'b0010_1101    //
-`define INST_CSRRSI         8'b0010_1110    //
-`define INST_CSRRCI         8'b0010_1111    // d47 = h2F
-
-`define INST_LWU            8'b0011_0000    //
-`define INST_LD             8'b0011_0001    //
-`define INST_SD             8'b0011_0010    //
-`define INST_ADDIW          8'b0011_0011    //
-`define INST_SLLIW          8'b0011_0100    //
-`define INST_SRLIW          8'b0011_0101    //
-`define INST_SRAIW          8'b0011_0110    //
-`define INST_ADDW           8'b0011_0111    //
-`define INST_SUBW           8'b0011_1000    //
-`define INST_SLLW           8'b0011_1001    //
-`define INST_SRLW           8'b0011_1010    //
-`define INST_SRAW           8'b0011_1011    //
-`define INST_MRET           8'b0011_1100    //
-
-// CSR Operation
-`define CSROP_NONE          2'b00     // none
-`define CSROP_READ_WRITE    2'b01     // read and write
-`define CSROP_READ_SET      2'b10     // read and set
-`define CSROP_READ_CLEAR    2'b11     // read and clear
-
-// === Devices
-
-`define DEV_BASEADDR        64'h0200_0000
-
-// RTC
-`define DEV_RTC_OFFSET      64'h0100
-`define DEV_RTC             (`DEV_BASEADDR + `DEV_RTC_OFFSET)
-
-// Machine time register，以恒定频率增加，廉价的RTC软件方案
-// mcycle与mtime的区别：
-// 1. mcycle可随外接时钟而变化
-// 2. mtime必须以恒定的频率增加（估计是因指令执行耗费的clock数不同而引起，这里需要封装差异吗）
-`define DEV_MTIME_OFFSET    64'hbff8
-`define DEV_MTIME           (`DEV_BASEADDR + `DEV_MTIME_OFFSET)
-// Machien time compare register
-// 当 mtime >= mtimecmp 时，产生计时器中断
-// mip的MTIP位置1。
-`define DEV_MTIMECMP_OFFSET 64'h4000
-`define DEV_MTIMECMP        (`DEV_BASEADDR + `DEV_MTIMECMP_OFFSET)
-
-
 // AXI Read & Write Unit
 
 
@@ -253,7 +54,7 @@ module ysyx_210544_axi_rw # (
     parameter RW_DATA_WIDTH     = 512,
     parameter RW_ADDR_WIDTH     = 64,
     parameter AXI_DATA_WIDTH    = 64,
-    parameter AXI_ADDR_WIDTH    = 32,
+    parameter AXI_ADDR_WIDTH    = 64,
     parameter AXI_ID_WIDTH      = 4,
     parameter AXI_USER_WIDTH    = 1
 )(
@@ -1573,10 +1374,11 @@ module ysyx_210544_clint(
   input   wire                clk,
   input   wire                rst,
 
-  input   wire                i_clint_mtimecmp_ren,
-  output  reg  [`BUS_64]      o_clint_mtimecmp_rdata,
-  input   wire                i_clint_mtimecmp_wen,
-  input   reg  [`BUS_64]      i_clint_mtimecmp_wdata,
+  input   wire [`BUS_64]      i_clint_addr,
+  input   wire                i_clint_ren,
+  output  reg  [`BUS_64]      o_clint_rdata,
+  input   wire                i_clint_wen,
+  input   reg  [`BUS_64]      i_clint_wdata,
   output  wire                o_clint_mtime_overflow
 );
 
@@ -1584,6 +1386,8 @@ reg   [7:0]       reg_mtime_cnt;
 reg   [`BUS_64]   reg_mtime;
 reg   [`BUS_64]   reg_mtimecmp;
 
+wire addr_mtime = i_clint_addr == `DEV_MTIME;
+wire addr_mtimecmp = i_clint_addr == `DEV_MTIMECMP;
 
 always @(posedge clk) begin
   if (rst) begin
@@ -1591,21 +1395,24 @@ always @(posedge clk) begin
     reg_mtimecmp <= 5000;
   end
   else begin
-    if (reg_mtime_cnt < 100) begin
+    if (reg_mtime_cnt < 1) begin
       reg_mtime_cnt <= reg_mtime_cnt + 1;
     end
     else begin
       reg_mtime_cnt <= 0;
-      reg_mtime <= reg_mtime + 1;
+      reg_mtime <= reg_mtime + 20;
     end
 
-    if (i_clint_mtimecmp_wen) begin
-      reg_mtimecmp <= i_clint_mtimecmp_wdata;
+    if (i_clint_wen & addr_mtimecmp) begin
+      reg_mtimecmp <= i_clint_wdata;
     end
   end
 end
 
-assign o_clint_mtimecmp_rdata = (rst | !i_clint_mtimecmp_ren) ? 0 : reg_mtimecmp;
+assign o_clint_rdata = (rst | (!i_clint_ren)) ? 0 : 
+  (addr_mtime ? reg_mtime :
+  (addr_mtimecmp ? reg_mtimecmp : 0));
+
 assign o_clint_mtime_overflow = reg_mtime > reg_mtimecmp;
 
 
@@ -2912,6 +2719,7 @@ always @(posedge clk) begin
             if (i_inst_opcode == `INST_ECALL) begin
               state <= STATE_ENTER_WRITE_MEPC;
               exception_cause <= 64'd11;
+              //$write("#ecall\n"); $fflush();
             end
             else if (i_inst_opcode == `INST_MRET) begin
               state <= STATE_LEAVE_READ_MSTATUS;
@@ -2919,6 +2727,8 @@ always @(posedge clk) begin
             else begin
               state <= STATE_ENTER_WRITE_MEPC;
               exception_cause <= 64'h80000000_00000007;
+              // $write("#time-instr\n"); $fflush();
+              // $write("."); $fflush();
             end
             step <= 0;
           end
@@ -3608,30 +3418,25 @@ module ysyx_210544_mem_mmio(
 wire                rtc_ren;
 wire  [`BUS_64]     rtc_rdata;
 
-assign rtc_ren = (rst | !ren) ? 0 : addr == `DEV_RTC;
-
 ysyx_210544_rtc Rtc(
   .clk                (clk              ),
   .rst                (rst              ),
-  .ren                (rtc_ren          ),
+  .ren                (ren & (addr == `DEV_RTC)),
   .rdata              (rtc_rdata        )
 );
 
-reg                           o_clint_mtimecmp_ren;
-reg  [`BUS_64]                i_clint_mtimecmp_rdata;
-reg                           o_clint_mtimecmp_wen;
-reg  [`BUS_64]                o_clint_mtimecmp_wdata;
+reg  [`BUS_64]                i_clint_rdata;
 
-assign o_clint_mtimecmp_ren = (rst | !ren) ? 0 : addr == `DEV_MTIMECMP;
 
 // CLINT (Core Local Interrupt Controller)
 ysyx_210544_clint Clint(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
-  .i_clint_mtimecmp_ren       (o_clint_mtimecmp_ren       ),
-  .o_clint_mtimecmp_rdata     (i_clint_mtimecmp_rdata     ),
-  .i_clint_mtimecmp_wen       (o_clint_mtimecmp_wen       ),
-  .i_clint_mtimecmp_wdata     (o_clint_mtimecmp_wdata     ),
+  .i_clint_addr               (addr                       ),
+  .i_clint_ren                (ren                        ),
+  .o_clint_rdata              (i_clint_rdata              ),
+  .i_clint_wen                (wen                        ),
+  .i_clint_wdata              (wdata                      ),
   .o_clint_mtime_overflow     (o_clint_mtime_overflow     )
 );
 
@@ -3639,8 +3444,6 @@ always @(posedge clk) begin
   if (rst) begin
     req <= 0;
     rdata <= 0;
-    o_clint_mtimecmp_wen <= 0;
-    o_clint_mtimecmp_wdata <= 0;
   end
   else begin
     // set request
@@ -3648,18 +3451,13 @@ always @(posedge clk) begin
       if (ren) begin
         case (addr)
           `DEV_RTC        : rdata <= rtc_rdata;
-          `DEV_MTIMECMP   : rdata <= i_clint_mtimecmp_rdata;
+          `DEV_MTIME      : rdata <= i_clint_rdata;
+          `DEV_MTIMECMP   : rdata <= i_clint_rdata;
           default         : ;
         endcase
         req <= 1;
       end
       else begin
-        case (addr)
-          `DEV_MTIMECMP  : begin
-            o_clint_mtimecmp_wdata <= wdata;
-            o_clint_mtimecmp_wen <= wen;
-          end
-        endcase
         req <= 1;
       end
     end
@@ -3667,8 +3465,6 @@ always @(posedge clk) begin
     else if (ack) begin
       req <= 0;
       rdata <= 0;
-      o_clint_mtimecmp_wdata <= 0;
-      o_clint_mtimecmp_wen <= 0;
     end
   end
 end
@@ -3956,136 +3752,136 @@ always @(negedge clk) begin
   end
 end
 
-// DifftestArchEvent DifftestArchEvent(
-//   .clock              (clk),		// 时钟
-//   .coreid             (0),		  // cpu id，单核时固定为0
-//   .intrNO             (i_intrNo),		  // 中断号，非零有效
-//   .cause              (0),			// 异常号，非零有效
-//   .exceptionPC        (i_intrNo > 0 ? i_pc : 0),	// 产生异常或中断时的PC
-//   .exceptionInst      (0)	  // 产生异常时的指令，未使用
-// );
+DifftestArchEvent DifftestArchEvent(
+  .clock              (clk),		// 时钟
+  .coreid             (0),		  // cpu id，单核时固定为0
+  .intrNO             (i_intrNo),		  // 中断号，非零有效
+  .cause              (0),			// 异常号，非零有效
+  .exceptionPC        (i_intrNo > 0 ? i_pc : 0),	// 产生异常或中断时的PC
+  .exceptionInst      (0)	  // 产生异常时的指令，未使用
+);
 
-// DifftestInstrCommit DifftestInstrCommit(
-//   .clock              (clk),
-//   .coreid             (0),
-//   .index              (0),
-//   .valid              (cmt_valid),
-//   .pc                 (cmt_pc),
-//   .instr              (cmt_inst),
-//   .skip               (cmt_skip),
-//   .isRVC              (0),
-//   .scFailed           (0),
-//   .wen                (cmt_wen),
-//   .wdest              (cmt_wdest),
-//   .wdata              (cmt_wdata)
-// );
+DifftestInstrCommit DifftestInstrCommit(
+  .clock              (clk),
+  .coreid             (0),
+  .index              (0),
+  .valid              (cmt_valid),
+  .pc                 (cmt_pc),
+  .instr              (cmt_inst),
+  .skip               (cmt_skip),
+  .isRVC              (0),
+  .scFailed           (0),
+  .wen                (cmt_wen),
+  .wdest              (cmt_wdest),
+  .wdata              (cmt_wdata)
+);
 
-// DifftestArchIntRegState DifftestArchIntRegState (
-//   .clock              (clk),
-//   .coreid             (0),
-//   .gpr_0              (regs_diff[0]),
-//   .gpr_1              (regs_diff[1]),
-//   .gpr_2              (regs_diff[2]),
-//   .gpr_3              (regs_diff[3]),
-//   .gpr_4              (regs_diff[4]),
-//   .gpr_5              (regs_diff[5]),
-//   .gpr_6              (regs_diff[6]),
-//   .gpr_7              (regs_diff[7]),
-//   .gpr_8              (regs_diff[8]),
-//   .gpr_9              (regs_diff[9]),
-//   .gpr_10             (regs_diff[10]),
-//   .gpr_11             (regs_diff[11]),
-//   .gpr_12             (regs_diff[12]),
-//   .gpr_13             (regs_diff[13]),
-//   .gpr_14             (regs_diff[14]),
-//   .gpr_15             (regs_diff[15]),
-//   .gpr_16             (regs_diff[16]),
-//   .gpr_17             (regs_diff[17]),
-//   .gpr_18             (regs_diff[18]),
-//   .gpr_19             (regs_diff[19]),
-//   .gpr_20             (regs_diff[20]),
-//   .gpr_21             (regs_diff[21]),
-//   .gpr_22             (regs_diff[22]),
-//   .gpr_23             (regs_diff[23]),
-//   .gpr_24             (regs_diff[24]),
-//   .gpr_25             (regs_diff[25]),
-//   .gpr_26             (regs_diff[26]),
-//   .gpr_27             (regs_diff[27]),
-//   .gpr_28             (regs_diff[28]),
-//   .gpr_29             (regs_diff[29]),
-//   .gpr_30             (regs_diff[30]),
-//   .gpr_31             (regs_diff[31])
-// );
+DifftestArchIntRegState DifftestArchIntRegState (
+  .clock              (clk),
+  .coreid             (0),
+  .gpr_0              (regs_diff[0]),
+  .gpr_1              (regs_diff[1]),
+  .gpr_2              (regs_diff[2]),
+  .gpr_3              (regs_diff[3]),
+  .gpr_4              (regs_diff[4]),
+  .gpr_5              (regs_diff[5]),
+  .gpr_6              (regs_diff[6]),
+  .gpr_7              (regs_diff[7]),
+  .gpr_8              (regs_diff[8]),
+  .gpr_9              (regs_diff[9]),
+  .gpr_10             (regs_diff[10]),
+  .gpr_11             (regs_diff[11]),
+  .gpr_12             (regs_diff[12]),
+  .gpr_13             (regs_diff[13]),
+  .gpr_14             (regs_diff[14]),
+  .gpr_15             (regs_diff[15]),
+  .gpr_16             (regs_diff[16]),
+  .gpr_17             (regs_diff[17]),
+  .gpr_18             (regs_diff[18]),
+  .gpr_19             (regs_diff[19]),
+  .gpr_20             (regs_diff[20]),
+  .gpr_21             (regs_diff[21]),
+  .gpr_22             (regs_diff[22]),
+  .gpr_23             (regs_diff[23]),
+  .gpr_24             (regs_diff[24]),
+  .gpr_25             (regs_diff[25]),
+  .gpr_26             (regs_diff[26]),
+  .gpr_27             (regs_diff[27]),
+  .gpr_28             (regs_diff[28]),
+  .gpr_29             (regs_diff[29]),
+  .gpr_30             (regs_diff[30]),
+  .gpr_31             (regs_diff[31])
+);
 
-// DifftestTrapEvent DifftestTrapEvent(
-//   .clock              (clk),
-//   .coreid             (0),
-//   .valid              (trap),
-//   .code               (trap_code),
-//   .pc                 (cmt_pc),
-//   .cycleCnt           (cycleCnt),
-//   .instrCnt           (instrCnt)
-// );
+DifftestTrapEvent DifftestTrapEvent(
+  .clock              (clk),
+  .coreid             (0),
+  .valid              (trap),
+  .code               (trap_code),
+  .pc                 (cmt_pc),
+  .cycleCnt           (cycleCnt),
+  .instrCnt           (instrCnt)
+);
 
-// DifftestCSRState DifftestCSRState(
-//   .clock              (clk),
-//   .coreid             (0),
-//   .priviledgeMode     (`RISCV_PRIV_MODE_M),
-//   .mstatus            (i_csrs[`CSR_IDX_MSTATUS]),
-//   .sstatus            (sstatus),
-//   .mepc               (i_csrs[`CSR_IDX_MEPC]),
-//   .sepc               (0),
-//   .mtval              (0),
-//   .stval              (0),
-//   .mtvec              (i_csrs[`CSR_IDX_MTVEC]),
-//   .stvec              (0),
-//   .mcause             (i_csrs[`CSR_IDX_MCAUSE]),
-//   .scause             (0),
-//   .satp               (0),
-//   .mip                (0),// i_csrs[`CSR_IDX_MIP]),// i_clint_mip),//i_csrs[`CSR_IDX_MIP]),
-//   .mie                (i_csrs[`CSR_IDX_MIE]),
-//   .mscratch           (i_csrs[`CSR_IDX_MSCRATCH]),
-//   .sscratch           (0),
-//   .mideleg            (0),
-//   .medeleg            (0)
-// );
+DifftestCSRState DifftestCSRState(
+  .clock              (clk),
+  .coreid             (0),
+  .priviledgeMode     (`RISCV_PRIV_MODE_M),
+  .mstatus            (i_csrs[`CSR_IDX_MSTATUS]),
+  .sstatus            (sstatus),
+  .mepc               (i_csrs[`CSR_IDX_MEPC]),
+  .sepc               (0),
+  .mtval              (0),
+  .stval              (0),
+  .mtvec              (i_csrs[`CSR_IDX_MTVEC]),
+  .stvec              (0),
+  .mcause             (i_csrs[`CSR_IDX_MCAUSE]),
+  .scause             (0),
+  .satp               (0),
+  .mip                (0),// i_csrs[`CSR_IDX_MIP]),// i_clint_mip),//i_csrs[`CSR_IDX_MIP]),
+  .mie                (i_csrs[`CSR_IDX_MIE]),
+  .mscratch           (i_csrs[`CSR_IDX_MSCRATCH]),
+  .sscratch           (0),
+  .mideleg            (0),
+  .medeleg            (0)
+);
 
-// DifftestArchFpRegState DifftestArchFpRegState(
-//   .clock              (clk),
-//   .coreid             (0),
-//   .fpr_0              (0),
-//   .fpr_1              (0),
-//   .fpr_2              (0),
-//   .fpr_3              (0),
-//   .fpr_4              (0),
-//   .fpr_5              (0),
-//   .fpr_6              (0),
-//   .fpr_7              (0),
-//   .fpr_8              (0),
-//   .fpr_9              (0),
-//   .fpr_10             (0),
-//   .fpr_11             (0),
-//   .fpr_12             (0),
-//   .fpr_13             (0),
-//   .fpr_14             (0),
-//   .fpr_15             (0),
-//   .fpr_16             (0),
-//   .fpr_17             (0),
-//   .fpr_18             (0),
-//   .fpr_19             (0),
-//   .fpr_20             (0),
-//   .fpr_21             (0),
-//   .fpr_22             (0),
-//   .fpr_23             (0),
-//   .fpr_24             (0),
-//   .fpr_25             (0),
-//   .fpr_26             (0),
-//   .fpr_27             (0),
-//   .fpr_28             (0),
-//   .fpr_29             (0),
-//   .fpr_30             (0),
-//   .fpr_31             (0)
-// );
+DifftestArchFpRegState DifftestArchFpRegState(
+  .clock              (clk),
+  .coreid             (0),
+  .fpr_0              (0),
+  .fpr_1              (0),
+  .fpr_2              (0),
+  .fpr_3              (0),
+  .fpr_4              (0),
+  .fpr_5              (0),
+  .fpr_6              (0),
+  .fpr_7              (0),
+  .fpr_8              (0),
+  .fpr_9              (0),
+  .fpr_10             (0),
+  .fpr_11             (0),
+  .fpr_12             (0),
+  .fpr_13             (0),
+  .fpr_14             (0),
+  .fpr_15             (0),
+  .fpr_16             (0),
+  .fpr_17             (0),
+  .fpr_18             (0),
+  .fpr_19             (0),
+  .fpr_20             (0),
+  .fpr_21             (0),
+  .fpr_22             (0),
+  .fpr_23             (0),
+  .fpr_24             (0),
+  .fpr_25             (0),
+  .fpr_26             (0),
+  .fpr_27             (0),
+  .fpr_28             (0),
+  .fpr_29             (0),
+  .fpr_30             (0),
+  .fpr_31             (0)
+);
 
 endmodule
 
@@ -4528,81 +4324,68 @@ ysyx_210544_csrfile Csrfile(
 
 endmodule
 
+`define AXI_TOP_INTERFACE(name) io_memAXI_0_``name
+
 module ysyx_210544(
     input                               clock,
     input                               reset,
-    input                               io_interrupt,
 
-    // input  [63:0]                       io_logCtrl_log_begin,
-    // input  [63:0]                       io_logCtrl_log_end,
-    // input  [63:0]                       io_logCtrl_log_level,
-    // input                               io_perfInfo_clean,
-    // input                               io_perfInfo_dump,
+    input  [63:0]                       io_logCtrl_log_begin,
+    input  [63:0]                       io_logCtrl_log_end,
+    input  [63:0]                       io_logCtrl_log_level,
+    input                               io_perfInfo_clean,
+    input                               io_perfInfo_dump,
 
-    // output                              io_uart_out_valid,
-    // output [7:0]                        io_uart_out_ch,
-    // output                              io_uart_in_valid,
-    // input  [7:0]                        io_uart_in_ch,
+    output                              io_uart_out_valid,
+    output [7:0]                        io_uart_out_ch,
+    output                              io_uart_in_valid,
+    input  [7:0]                        io_uart_in_ch,
 
-    input                               io_master_awready,
-    output                              io_master_awvalid,
-    output [31:0]                       io_master_awaddr,
-    output [3:0]                        io_master_awid,
-    output [7:0]                        io_master_awlen,
-    output [2:0]                        io_master_awsize,
-    output [1:0]                        io_master_awburst,
-    input                               io_master_wready,
-    output                              io_master_wvalid,
-    output [63:0]                       io_master_wdata,
-    output [7:0]                        io_master_wstrb,
-    output                              io_master_wlast,
-    output                              io_master_bready,
-    input                               io_master_bvalid,
-    input  [1:0]                        io_master_bresp,
-    input  [3:0]                        io_master_bid,
-    input                               io_master_arready,
-    output                              io_master_arvalid,
-    output [31:0]                       io_master_araddr,
-    output [3:0]                        io_master_arid,
-    output [7:0]                        io_master_arlen,
-    output [2:0]                        io_master_arsize,
-    output [1:0]                        io_master_arburst,
-    output                              io_master_rready,
-    input                               io_master_rvalid,
-    input  [1:0]                        io_master_rresp,
-    input  [63:0]                       io_master_rdata,
-    input                               io_master_rlast,
-    input  [3:0]                        io_master_rid,
+    input                               `AXI_TOP_INTERFACE(aw_ready),
+    output                              `AXI_TOP_INTERFACE(aw_valid),
+    output [`AXI_ADDR_WIDTH-1:0]        `AXI_TOP_INTERFACE(aw_bits_addr),
+    output [2:0]                        `AXI_TOP_INTERFACE(aw_bits_prot),
+    output [`AXI_ID_WIDTH-1:0]          `AXI_TOP_INTERFACE(aw_bits_id),
+    output [`AXI_USER_WIDTH-1:0]        `AXI_TOP_INTERFACE(aw_bits_user),
+    output [7:0]                        `AXI_TOP_INTERFACE(aw_bits_len),
+    output [2:0]                        `AXI_TOP_INTERFACE(aw_bits_size),
+    output [1:0]                        `AXI_TOP_INTERFACE(aw_bits_burst),
+    output                              `AXI_TOP_INTERFACE(aw_bits_lock),
+    output [3:0]                        `AXI_TOP_INTERFACE(aw_bits_cache),
+    output [3:0]                        `AXI_TOP_INTERFACE(aw_bits_qos),
     
-    output                              io_slave_awready,
-    input                               io_slave_awvalid,
-    input [31:0]                        io_slave_awaddr,
-    input [3:0]                         io_slave_awid,
-    input [7:0]                         io_slave_awlen,
-    input [2:0]                         io_slave_awsize,
-    input [1:0]                         io_slave_awburst,
-    output                              io_slave_wready,
-    input                               io_slave_wvalid,
-    input [63:0]                        io_slave_wdata,
-    input [7:0]                         io_slave_wstrb,
-    input                               io_slave_wlast,
-    input                               io_slave_bready,
-    output                              io_slave_bvalid,
-    output  [1:0]                       io_slave_bresp,
-    output  [3:0]                       io_slave_bid,
-    output                              io_slave_arready,
-    input                               io_slave_arvalid,
-    input [31:0]                        io_slave_araddr,
-    input [3:0]                         io_slave_arid,
-    input [7:0]                         io_slave_arlen,
-    input [2:0]                         io_slave_arsize,
-    input [1:0]                         io_slave_arburst,
-    input                               io_slave_rready,
-    output                              io_slave_rvalid,
-    output  [1:0]                       io_slave_rresp,
-    output  [63:0]                      io_slave_rdata,
-    output                              io_slave_rlast,
-    output  [3:0]                       io_slave_rid
+    input                               `AXI_TOP_INTERFACE(w_ready),
+    output                              `AXI_TOP_INTERFACE(w_valid),
+    output [`AXI_DATA_WIDTH-1:0]        `AXI_TOP_INTERFACE(w_bits_data)         [3:0],
+    output [`AXI_DATA_WIDTH/8-1:0]      `AXI_TOP_INTERFACE(w_bits_strb),
+    output                              `AXI_TOP_INTERFACE(w_bits_last),
+    
+    output                              `AXI_TOP_INTERFACE(b_ready),
+    input                               `AXI_TOP_INTERFACE(b_valid),
+    input  [1:0]                        `AXI_TOP_INTERFACE(b_bits_resp),
+    input  [`AXI_ID_WIDTH-1:0]          `AXI_TOP_INTERFACE(b_bits_id),
+    input  [`AXI_USER_WIDTH-1:0]        `AXI_TOP_INTERFACE(b_bits_user),
+
+    input                               `AXI_TOP_INTERFACE(ar_ready),
+    output                              `AXI_TOP_INTERFACE(ar_valid),
+    output [`AXI_ADDR_WIDTH-1:0]        `AXI_TOP_INTERFACE(ar_bits_addr),
+    output [2:0]                        `AXI_TOP_INTERFACE(ar_bits_prot),
+    output [`AXI_ID_WIDTH-1:0]          `AXI_TOP_INTERFACE(ar_bits_id),
+    output [`AXI_USER_WIDTH-1:0]        `AXI_TOP_INTERFACE(ar_bits_user),
+    output [7:0]                        `AXI_TOP_INTERFACE(ar_bits_len),
+    output [2:0]                        `AXI_TOP_INTERFACE(ar_bits_size),
+    output [1:0]                        `AXI_TOP_INTERFACE(ar_bits_burst),
+    output                              `AXI_TOP_INTERFACE(ar_bits_lock),
+    output [3:0]                        `AXI_TOP_INTERFACE(ar_bits_cache),
+    output [3:0]                        `AXI_TOP_INTERFACE(ar_bits_qos),
+    
+    output                              `AXI_TOP_INTERFACE(r_ready),
+    input                               `AXI_TOP_INTERFACE(r_valid),
+    input  [1:0]                        `AXI_TOP_INTERFACE(r_bits_resp),
+    input  [`AXI_DATA_WIDTH-1:0]        `AXI_TOP_INTERFACE(r_bits_data)         [3:0],
+    input                               `AXI_TOP_INTERFACE(r_bits_last),
+    input  [`AXI_ID_WIDTH-1:0]          `AXI_TOP_INTERFACE(r_bits_id),
+    input  [`AXI_USER_WIDTH-1:0]        `AXI_TOP_INTERFACE(r_bits_user)
 );
 
 wire aw_ready;
@@ -4654,35 +4437,51 @@ wire r_last;
 wire [`AXI_ID_WIDTH-1:0] r_id;
 wire [`AXI_USER_WIDTH-1:0] r_user;
 
-assign ar_ready                       = io_master_arready;
-assign io_master_arvalid              = ar_valid;
-assign io_master_araddr               = ar_addr;
-assign io_master_arid                 = ar_id;
-assign io_master_arlen                = ar_len;
-assign io_master_arsize               = ar_size;
-assign io_master_arburst              = ar_burst;
-assign io_master_rready               = r_ready;
-assign r_valid                        = io_master_rvalid;
-assign r_resp                         = io_master_rresp;
-assign r_data                         = io_master_rdata;
-assign r_last                         = io_master_rlast;
-assign r_id                           = io_master_rid;
-assign aw_ready                       = io_master_awready;
-assign io_master_awvalid              = aw_valid;
-assign io_master_awaddr               = aw_addr;
-assign io_master_awid                 = aw_id;
-assign io_master_awlen                = aw_len;
-assign io_master_awsize               = aw_size;
-assign io_master_awburst              = aw_burst;
-assign w_ready                        = io_master_wready;
-assign io_master_wvalid               = w_valid;
-assign io_master_wdata                = w_data;
-assign io_master_wstrb                = w_strb;
-assign io_master_wlast                = w_last;
-assign io_master_bready               = b_ready;
-assign b_valid                        = io_master_bvalid;
-assign b_resp                         = io_master_bresp;
-assign b_id                           = io_master_bid;
+assign ar_ready                                 = `AXI_TOP_INTERFACE(ar_ready);
+assign `AXI_TOP_INTERFACE(ar_valid)             = ar_valid;
+assign `AXI_TOP_INTERFACE(ar_bits_addr)         = ar_addr;
+assign `AXI_TOP_INTERFACE(ar_bits_prot)         = ar_prot;
+assign `AXI_TOP_INTERFACE(ar_bits_id)           = ar_id;
+assign `AXI_TOP_INTERFACE(ar_bits_user)         = ar_user;
+assign `AXI_TOP_INTERFACE(ar_bits_len)          = ar_len;
+assign `AXI_TOP_INTERFACE(ar_bits_size)         = ar_size;
+assign `AXI_TOP_INTERFACE(ar_bits_burst)        = ar_burst;
+assign `AXI_TOP_INTERFACE(ar_bits_lock)         = ar_lock;
+assign `AXI_TOP_INTERFACE(ar_bits_cache)        = ar_cache;
+assign `AXI_TOP_INTERFACE(ar_bits_qos)          = ar_qos;
+
+assign `AXI_TOP_INTERFACE(r_ready)              = r_ready;
+assign r_valid                                  = `AXI_TOP_INTERFACE(r_valid);
+assign r_resp                                   = `AXI_TOP_INTERFACE(r_bits_resp);
+assign r_data                                   = `AXI_TOP_INTERFACE(r_bits_data)[0];
+assign r_last                                   = `AXI_TOP_INTERFACE(r_bits_last);
+assign r_id                                     = `AXI_TOP_INTERFACE(r_bits_id);
+assign r_user                                   = `AXI_TOP_INTERFACE(r_bits_user);
+
+assign aw_ready                                 = `AXI_TOP_INTERFACE(aw_ready);
+assign `AXI_TOP_INTERFACE(aw_valid)             = aw_valid;
+assign `AXI_TOP_INTERFACE(aw_bits_addr)         = aw_addr;
+assign `AXI_TOP_INTERFACE(aw_bits_prot)         = aw_prot;
+assign `AXI_TOP_INTERFACE(aw_bits_id)           = aw_id;
+assign `AXI_TOP_INTERFACE(aw_bits_user)         = aw_user;
+assign `AXI_TOP_INTERFACE(aw_bits_len)          = aw_len;
+assign `AXI_TOP_INTERFACE(aw_bits_size)         = aw_size;
+assign `AXI_TOP_INTERFACE(aw_bits_burst)        = aw_burst;
+assign `AXI_TOP_INTERFACE(aw_bits_lock)         = aw_lock;
+assign `AXI_TOP_INTERFACE(aw_bits_cache)        = aw_cache;
+assign `AXI_TOP_INTERFACE(aw_bits_qos)          = aw_qos;
+
+assign w_ready                                  = `AXI_TOP_INTERFACE(w_ready);
+assign `AXI_TOP_INTERFACE(w_valid)              = w_valid;
+assign `AXI_TOP_INTERFACE(w_bits_data)[0]       = w_data;
+assign `AXI_TOP_INTERFACE(w_bits_strb)          = w_strb;
+assign `AXI_TOP_INTERFACE(w_bits_last)          = w_last;
+
+assign `AXI_TOP_INTERFACE(b_ready)              = b_ready;
+assign b_valid                                  = `AXI_TOP_INTERFACE(b_valid);
+assign b_resp                                   = `AXI_TOP_INTERFACE(b_bits_resp);
+assign b_id                                     = `AXI_TOP_INTERFACE(b_bits_id);
+assign b_user                                   = `AXI_TOP_INTERFACE(b_bits_user);
 
 ysyx_210544_axi_rw u_axi_rw (
     .clock                          (clock),
@@ -4762,6 +4561,50 @@ wire [7:0]                    o_user_axi_blks;
 
 wire [1:0]                    o_user_axi_resp;
 
+
+// /////////////////////////////////////////////////
+
+// `define CACHE_AXI_TEST 1
+
+`ifdef CACHE_AXI_TEST
+
+  // cache_rw 测试
+  cache_axi_test Cache_axi_test(
+    .clk                        (clock                      ),
+    .rst                        (reset                      ),
+    .i_axi_io_ready             (i_user_axi_ready           ),
+    .i_axi_io_rdata             (i_user_axi_rdata           ),
+    .o_axi_io_op                (o_user_axi_op              ),
+    .o_axi_io_valid             (o_user_axi_valid           ),
+    .o_axi_io_wdata             (o_user_axi_wdata           ),
+    .o_axi_io_addr              (o_user_axi_addr            ),
+    .o_axi_io_size              (o_user_axi_size            ),
+    .o_axi_io_blks              (o_user_axi_blks            )
+  );
+
+`endif
+
+
+/////////////////////////////////////////////////
+
+// `define CACHE_TEST 1
+
+`ifdef CACHE_TEST
+
+cache_core_test Cache_core_test(
+  .clk                        (clock                      ),
+  .rst                        (reset                      ),
+  .i_axi_io_ready             (i_user_axi_ready           ),
+  .i_axi_io_rdata             (i_user_axi_rdata           ),
+  .o_axi_io_op                (o_user_axi_op              ),
+  .o_axi_io_valid             (o_user_axi_valid           ),
+  .o_axi_io_wdata             (o_user_axi_wdata           ),
+  .o_axi_io_addr              (o_user_axi_addr            ),
+  .o_axi_io_size              (o_user_axi_size            ),
+  .o_axi_io_blks              (o_user_axi_blks            )
+);
+
+`endif
 
 
 /////////////////////////////////////////////////

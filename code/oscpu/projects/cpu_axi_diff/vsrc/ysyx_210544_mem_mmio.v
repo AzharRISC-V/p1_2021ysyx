@@ -3,7 +3,7 @@
 
 `include "defines.v"
 
-module mem_mmio(
+module ysyx_210544_mem_mmio(
   input   wire                clk,
   input   wire                rst,
 
@@ -22,7 +22,7 @@ module mem_mmio(
 wire                rtc_ren;
 wire  [`BUS_64]     rtc_rdata;
 
-rtc Rtc(
+ysyx_210544_rtc Rtc(
   .clk                (clk              ),
   .rst                (rst              ),
   .ren                (ren & (addr == `DEV_RTC)),
@@ -33,7 +33,7 @@ reg  [`BUS_64]                i_clint_rdata;
 
 
 // CLINT (Core Local Interrupt Controller)
-clint Clint(
+ysyx_210544_clint Clint(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
   .i_clint_addr               (addr                       ),

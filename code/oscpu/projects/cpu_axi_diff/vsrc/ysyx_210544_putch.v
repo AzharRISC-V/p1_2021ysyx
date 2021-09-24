@@ -5,7 +5,7 @@
 
 `include "defines.v"
 
-module putch(
+module ysyx_210544_putch(
   input   wire                  clk,
   input   wire                  rst,
   input   wire                  wen,

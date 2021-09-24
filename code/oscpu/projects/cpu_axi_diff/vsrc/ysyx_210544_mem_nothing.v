@@ -3,7 +3,7 @@
 
 `include "defines.v"
 
-module mem_nothing(
+module ysyx_210544_mem_nothing(
   input   wire                clk,
   input   wire                rst,
 

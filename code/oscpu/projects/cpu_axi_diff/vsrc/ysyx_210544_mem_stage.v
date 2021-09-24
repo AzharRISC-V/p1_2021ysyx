@@ -5,7 +5,7 @@
 
 `include "defines.v"
 
-module mem_stage(
+module ysyx_210544_mem_stage(
   input   wire                clk,
   input   wire                rst,
   input   reg                 i_mem_executed_req,
@@ -294,7 +294,7 @@ always @(*) begin
 end
 
 // 访问主存
-memU MemU(
+ysyx_210544_memU MemU(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
   .start                      (i_mem_executed_req & ch_mem ),
@@ -317,7 +317,7 @@ memU MemU(
 );
 
 // 访问外设
-mem_mmio Mem_mmio(
+ysyx_210544_mem_mmio Mem_mmio(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
   .start                      (i_mem_executed_req & ch_mmio),
@@ -332,7 +332,7 @@ mem_mmio Mem_mmio(
 );
 
 // 仅握手
-mem_nothing Mem_nothing(
+ysyx_210544_mem_nothing Mem_nothing(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
   .start                      (i_mem_executed_req & ch_none),

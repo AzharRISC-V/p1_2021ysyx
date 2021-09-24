@@ -5,7 +5,7 @@
 
 `include "defines.v"
 
-module idU(
+module ysyx_210544_idU(
   input   wire                rst,
   input   wire                i_ena,
   input   wire  [`BUS_32]     i_inst,

@@ -5,7 +5,7 @@
 
 `include "defines.v"
 
-module id_stage(
+module ysyx_210544_id_stage(
   input   wire                clk,
   input   wire                rst,
   input   reg                 i_id_fetched_req,
@@ -85,7 +85,7 @@ assign o_id_inst    = i_disable ? 0 : tmp_i_id_inst;
 assign o_id_nocmt   = i_disable ? 0 : tmp_i_id_nocmt;
 
 
-idU IdU(
+ysyx_210544_idU IdU(
   .rst                        (rst                        ),
   .i_ena                      (i_ena                      ),
   .i_inst                     (tmp_i_id_inst              ),

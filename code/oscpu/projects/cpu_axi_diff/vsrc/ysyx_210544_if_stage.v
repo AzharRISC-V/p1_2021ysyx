@@ -5,7 +5,7 @@
 
 `include "defines.v"
 
-module if_stage(
+module ysyx_210544_if_stage(
   input   wire                clk,
   input   wire                rst,
   input                       i_if_writebacked_req,
@@ -27,7 +27,7 @@ module if_stage(
   output                      o_if_nocmt
 );
 
-ifU IfU(
+ysyx_210544_ifU IfU(
   .i_ena                      (1                          ),
   .clk                        (clk                        ),
   .rst                        (rst                        ),

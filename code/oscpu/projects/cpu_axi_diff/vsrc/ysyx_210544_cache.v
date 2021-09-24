@@ -6,7 +6,7 @@
 
 `include "defines.v"
 
-module cache(
+module ysyx_210544_cache(
     input                     clk,
     input                     rst,
     
@@ -67,7 +67,7 @@ reg  [63:0]      dcache_axi_io_addr;
 reg  [1:0]       dcache_axi_io_size;
 reg  [7:0]       dcache_axi_io_blks;
 
-cache_core ICache(
+ysyx_210544_cache_core ICache(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
 	.i_cache_core_addr          (i_icache_addr              ),
@@ -88,7 +88,7 @@ cache_core ICache(
   .o_axi_io_blks              (icache_axi_io_blks         )
 );
 
-cache_core DCache(
+ysyx_210544_cache_core DCache(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
 	.i_cache_core_addr          (i_dcache_addr              ),

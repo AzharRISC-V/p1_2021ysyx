@@ -51,7 +51,7 @@
 `define AXI_SIZE_BYTES_128                                  3'b111
 
 
-module axi_rw # (
+module ysyx_210544_axi_rw # (
     parameter RW_DATA_WIDTH     = 512,
     parameter RW_ADDR_WIDTH     = 64,
     parameter AXI_DATA_WIDTH    = 64,

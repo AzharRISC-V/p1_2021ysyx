@@ -5,7 +5,7 @@
 
 `include "defines.v"
 
-module rtc(
+module ysyx_210544_rtc(
   input   wire              clk,
   input   wire              rst,
 

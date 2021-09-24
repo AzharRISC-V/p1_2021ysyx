@@ -52,7 +52,7 @@
 
 `include "defines.v"
 
-module cache_basic (
+module ysyx_210544_cache_basic (
   input   wire                clk,
   input   wire                rst,
   input   wire  [`BUS_64]     i_cache_basic_addr,         // 地址
@@ -201,7 +201,7 @@ wire  [127: 0]                chip_data_rdata[`BUS_WAYS];             // RAM 读
 generate
   for (genvar way = 0; way < `WAYS; way += 1) begin: gen_cache_data
     parameter [1:0] w = way;
-    S011HD1P_X32Y2D128_BW  chip_data(
+    ysyx_210544_S011HD1P_X32Y2D128_BW  chip_data(
       .CLK                        (clk                  ),
       .CEN                        (chip_data_cen[w]     ),
       .WEN                        (chip_data_wen[w]     ),
@@ -459,7 +459,7 @@ reg   [511 : 0]               o_cache_axi_wdata;           // 要写入的数据
 wire  [511 : 0]               i_cache_axi_rdata;           // 已读出的数据
 wire                          i_cache_axi_ack;             // 应答
 
-cache_axi Cache_axi(
+ysyx_210544_cache_axi Cache_axi(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
 	.i_cache_axi_req            (o_cache_axi_req            ),

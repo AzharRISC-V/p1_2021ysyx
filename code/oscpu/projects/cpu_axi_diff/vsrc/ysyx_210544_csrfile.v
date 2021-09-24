@@ -3,7 +3,7 @@
 
 `include "defines.v"
 
-module csrfile(
+module ysyx_210544_csrfile(
   input   wire              clk,
   input   wire              rst,
 
