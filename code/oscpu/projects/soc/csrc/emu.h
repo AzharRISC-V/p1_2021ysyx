@@ -42,10 +42,10 @@ public:
     if (args.dump_wave)
     {
       Verilated::traceEverOn(true);
-      printf("`dump-wave` enabled, waves will be written to \"vlt_dump.vcd\".\n");
+      printf("`dump-wave` enabled, waves will be written to \"../vlt_dump.vcd\".\n");
       fp = new VerilatedVcdC;
       dut_ptr->trace(fp, 1);
-      fp->open("vlt_dump.vcd");
+      fp->open("../vlt_dump.vcd");
       fp->dump(0);
     }
   }
@@ -65,8 +65,12 @@ public:
     cycle++;
     if (args.dump_wave && args.dump_begin <= cycle && cycle <= args.dump_end)
       fp->dump((vluint64_t)cycle);
+
     dut_ptr->clock = 0;
     dut_ptr->eval();
+    cycle++;
+    if (args.dump_wave && args.dump_begin <= cycle && cycle <= args.dump_end)
+      fp->dump((vluint64_t)cycle);
   }
 
   unsigned long long get_cycle()

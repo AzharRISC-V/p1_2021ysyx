@@ -5,8 +5,9 @@
 
 `timescale 1ns / 1ps
 
-`define ZERO_WORD  64'h00000000_00000000
-`define PC_START   64'h00000000_80000000 
+`define ZERO_WORD           64'h00000000_00000000
+// `define PC_START            64'h00000000_80000000 
+`define PC_START            64'h00000000_30000000 
 
 `define SIZE_B              2'b00
 `define SIZE_H              2'b01
