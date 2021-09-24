@@ -28,7 +28,7 @@ void sd_setaddr(uint32_t addr) {
 }
 
 void sd_read(uint32_t *data) {
-  fread(data, 4, 1, fp);
+  size_t n = fread(data, 4, 1, fp);
   //printf("read data = 0x%08x\n", *data);
   //assert(0);
 }

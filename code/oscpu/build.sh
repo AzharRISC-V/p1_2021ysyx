@@ -27,7 +27,7 @@ help() {
 
 create_soft_link() {
     mkdir ${1} 1>/dev/null 2>&1
-    find -L ${1} -type l -delete
+    find -L ${1} -type l -delete 1>/dev/null 2>&1
     FILES=`eval "find ${2} -mindepth 1 -maxdepth 4 -name ${3}"`
     for FILE in ${FILES[@]}
     do
@@ -36,7 +36,7 @@ create_soft_link() {
 }
 
 create_bin_soft_link() {
-    find -L $BUILD_PATH -maxdepth 4 -type l -delete
+    find -L $BUILD_PATH -maxdepth 4 -type l -delete 1>/dev/null 2>&1
     FOLDERS=`find bin -mindepth 1 -maxdepth 4 -type d`
     for FOLDER in ${FOLDERS[@]}
     do
@@ -289,6 +289,9 @@ if [[ "$SIMULATE" == "true" ]]; then
     cd $BUILD_PATH
     
     # run simulation program
+    echo ""
+    echo ""
+    echo "====================================="
     echo "Simulating..."
     [[ "$GDB" == "true" ]] && gdb -s $EMU_FILE --args ./$EMU_FILE $PARAMETERS || ./$EMU_FILE $PARAMETERS
 

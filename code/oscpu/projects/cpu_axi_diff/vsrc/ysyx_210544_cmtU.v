@@ -62,6 +62,11 @@ always @(negedge clk) begin
   end
 end
 
+
+`define SUPPORT_DIFFTEST
+
+`ifdef SUPPORT_DIFFTEST
+
 DifftestArchEvent DifftestArchEvent(
   .clock              (clk),		// 时钟
   .coreid             (0),		  // cpu id，单核时固定为0
@@ -192,5 +197,7 @@ DifftestArchFpRegState DifftestArchFpRegState(
   .fpr_30             (0),
   .fpr_31             (0)
 );
+
+`endif
 
 endmodule
