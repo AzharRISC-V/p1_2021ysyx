@@ -30,12 +30,12 @@ always @(posedge clk) begin
     reg_mtimecmp <= 5000;
   end
   else begin
-    if (reg_mtime_cnt < 5) begin
+    if (reg_mtime_cnt < 1) begin
       reg_mtime_cnt <= reg_mtime_cnt + 1;
     end
     else begin
       reg_mtime_cnt <= 0;
-      reg_mtime <= reg_mtime + 1;
+      reg_mtime <= reg_mtime + 20;
     end
 
     if (i_clint_wen & addr_mtimecmp) begin
