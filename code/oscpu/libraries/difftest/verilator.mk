@@ -85,6 +85,7 @@ VERILATOR_FLAGS =                   \
   +define+RANDOMIZE_GARBAGE_ASSIGN  \
   +define+RANDOMIZE_DELAY=0         \
   -Wno-STMTDLY -Wno-WIDTH           \
+	-Wall \
   $(VEXTRA_FLAGS)                   \
   --assert                          \
   --stats-vars                      \

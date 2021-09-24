@@ -11,7 +11,7 @@ PROJECT_AXI_FLAGS = WITH_DRAMSIM3=1
 # build and run
 app:
 	rm projects/cpu_axi_diff/build/emu-compile -rf
-	@./build.sh -e $(PROJECT) -d -b -s -a "-i $(BIN).bin --dump-wave -b $(START) -e $(END)" -m "EMU_TRACE=1 $(PROJECT_AXI_FLAGS)"
+	./build.sh -e $(PROJECT) -d -b -s -v ' -Wall ' -a "-i $(BIN).bin --dump-wave -b $(START) -e $(END)" -m "EMU_TRACE=1 $(PROJECT_AXI_FLAGS)"
 
 # run without dump
 run:
@@ -44,8 +44,9 @@ soc:
 	sed '/`include/d' ysyx_210544.v -i; \
 	sed '/`timescale/d' ysyx_210544.v -i; \
 	sed 's/module SimTop4Soc/module ysyx_210544/g' ysyx_210544.v -i; \
-	sed '/`define SUPPORT_DIFFTEST/d' ysyx_210544.v -i
-	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" --trace' -a "-i ysyxSoc/flash/hello-flash.bin --dump-wave"
+	sed '/`define SUPPORT_DIFFTEST/d' ysyx_210544.v -i;\
+	sed -i "1i/* verilator lint_off DECLFILENAME */" ysyx_210544.v
+	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wall --trace' -a "-i ysyxSoc/flash/hello-flash.bin --dump-wave"
 soc-run:
 	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wall --trace' -a "-i ysyxSoc/flash/hello-flash.bin"
 
