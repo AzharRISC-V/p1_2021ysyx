@@ -46,7 +46,7 @@ soc:
 	sed 's/module SimTop4Soc/module ysyx_210544/g' ysyx_210544.v -i; \
 	sed '/`define SUPPORT_DIFFTEST/d' ysyx_210544.v -i;\
 	sed -i "1i/* verilator lint_off DECLFILENAME */" ysyx_210544.v
-	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal --trace' -a "-i ysyxSoC/flash/hello-flash.bin --dump-wave"
+	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal --trace -DYSYXSOC' -a "-i ysyxSoC/flash/hello-flash.bin --dump-wave"
 soc-run:
 	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal --trace' -a "-i ysyxSoC/flash/hello-flash.bin"
 soc-run-dump:

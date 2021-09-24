@@ -33,14 +33,17 @@ module ysyx_210544_cache_axi(
   output        [7 : 0]             o_axi_io_blks
 );
 
+// 是否为Flash外设，此时只能4字节传输，且不能使用burst模式，所以64字节需要16次传输
+// wire is_flash = i_cache_axi_addr[31:24] == 8'd3;
+
 // axi一次传输完成
 wire hs_ok = o_axi_io_valid & i_axi_io_ready;
 
 // axi每次传输的大小：64bit
-assign o_axi_io_size = `SIZE_D;
+assign o_axi_io_size = `SIZE_W;// `SIZE_D;
 
 // 块数：0~7表示1~8块
-assign o_axi_io_blks = 7;
+assign o_axi_io_blks = 0;// 7;
 
 // 操作类型：0:read, 1:write
 assign o_axi_io_op = i_cache_axi_op;
