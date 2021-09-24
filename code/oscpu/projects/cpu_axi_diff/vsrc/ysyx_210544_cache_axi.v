@@ -52,7 +52,7 @@ assign o_axi_io_op = i_cache_axi_op;
 reg cache_req_his0;
 
 // axi请求开始
-wire  axi_start    = i_cache_axi_req & cache_req_his0;
+wire  axi_start    = i_cache_axi_req & !cache_req_his0;
 
 // 传输起始地址，64字节对齐
 // assign o_axi_io_addr = i_cache_axi_addr & (~64'h3F);
@@ -61,7 +61,9 @@ wire  axi_start    = i_cache_axi_req & cache_req_his0;
 // 如果是主存，  需要 1次AXI传输得512bit；
 // 如果是Flash，需要16次AXI传输得到512bit，每次传输32bit（64bit是否支持？？）；
 reg [3:0] trans_cnt;
-wire [8:0] offset_bits = {4'd0, trans_cnt} << 5;
+reg [3:0] trans_cnt_write;
+wire [8:0] offset_bits = {5'd0, trans_cnt} << 5;
+wire [8:0] offset_bits_write = {5'd0, trans_cnt_write} << 5;
 
 // 控制传输
 always @( posedge clk ) begin
@@ -78,19 +80,22 @@ always @( posedge clk ) begin
     // 收到数据：保存数据、增加计数、握手反馈
     if (hs_ok) begin
       if (is_flash) begin
+          o_cache_axi_rdata[offset_bits +:32] <= i_axi_io_rdata[0+:32]; // 保存数据
         if (trans_cnt < 15) begin
-          o_cache_axi_rdata[offset_bits +:32] <= i_axi_io_rdata[0+:32];  // 保存数据
+          o_axi_io_wdata    <= {480'd0, i_cache_axi_wdata[offset_bits_write +:32]}; // 准备数据
           o_axi_io_addr <= o_axi_io_addr + 4;     // 地址递增
           trans_cnt <= trans_cnt + 1;             // 次数递增
+          trans_cnt_write <= trans_cnt_write + 1;
         end
         else begin
           o_cache_axi_ack   <= 1;   // 完成
           o_axi_io_valid    <= 0;   // 关闭axi请求
           trans_cnt <= 0;   // 清零计数，准备下次继续
+          trans_cnt_write <= 1; // 初始为1，方便计算偏移量
         end
       end
       else begin
-        o_cache_axi_rdata <= i_axi_io_rdata;  // 保存数据
+        o_cache_axi_rdata <= i_axi_io_rdata;    // 保存数据
         o_cache_axi_ack   <= 1;   // 完成
         o_axi_io_valid    <= 0;   // 关闭axi请求
       end
@@ -101,12 +106,12 @@ always @( posedge clk ) begin
         // 仅在第一次进入时修改地址
         if (!o_axi_io_valid) begin
           if (is_flash) begin
-            // 传输起始地址，4字节对齐
-            o_axi_io_addr <= i_cache_axi_addr & (~64'h3);
+            o_axi_io_addr <= i_cache_axi_addr & (~64'h3);   // 传输起始地址，4字节对齐
+            o_axi_io_wdata    <= i_cache_axi_wdata;         // 准备数据
           end
           else begin
-            // 传输起始地址，64字节对齐
-            o_axi_io_addr <= i_cache_axi_addr & (~64'h3F);
+            o_axi_io_addr <= i_cache_axi_addr & (~64'h3F);  // 传输起始地址，64字节对齐
+            o_axi_io_wdata    <= i_cache_axi_wdata;         // 准备数据
           end
         end
         o_axi_io_valid <= 1;
@@ -118,6 +123,6 @@ always @( posedge clk ) begin
 end
 
 // assign o_cache_axi_rdata = i_axi_io_rdata;
-assign o_axi_io_wdata = i_cache_axi_wdata;
+// assign o_axi_io_wdata = i_cache_axi_wdata;
 
 endmodule
