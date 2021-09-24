@@ -60,9 +60,7 @@ always @(negedge clk) begin
 end
 
 
-`define SUPPORT_DIFFTEST
-
-`ifdef SUPPORT_DIFFTEST
+`ifndef YSYXSOC
 
 DifftestArchEvent DifftestArchEvent(
   .clock              (clk),		// 时钟
@@ -194,6 +192,21 @@ DifftestArchFpRegState DifftestArchFpRegState(
   .fpr_30             (0),
   .fpr_31             (0)
 );
+
+`else
+
+wire _unused_ok = &{1'b0,
+  cmt_wen,
+  cmt_wdest,
+  cmt_wdata,
+  cmt_pc,
+  cmt_inst,
+  cmt_valid,
+  cmt_skip,
+  trap_code,
+  regs_diff,
+  sstatus,
+  1'b0};
 
 `endif
 

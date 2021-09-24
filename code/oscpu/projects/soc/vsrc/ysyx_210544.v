@@ -3846,8 +3846,7 @@ always @(negedge clk) begin
 end
 
 
-
-`ifdef SUPPORT_DIFFTEST
+`ifndef YSYXSOC
 
 DifftestArchEvent DifftestArchEvent(
   .clock              (clk),		// 时钟
@@ -3979,6 +3978,21 @@ DifftestArchFpRegState DifftestArchFpRegState(
   .fpr_30             (0),
   .fpr_31             (0)
 );
+
+`else
+
+wire _unused_ok = &{1'b0,
+  cmt_wen,
+  cmt_wdest,
+  cmt_wdata,
+  cmt_pc,
+  cmt_inst,
+  cmt_valid,
+  cmt_skip,
+  trap_code,
+  regs_diff,
+  sstatus,
+  1'b0};
 
 `endif
 
@@ -4522,5 +4536,44 @@ ysyx_210544_cpu u_cpu(
   .o_axi_io_blks              (o_user_axi_blks            )
 );
 
+
+// io_slave 处理
+
+assign io_slave_awready = 0;
+assign io_slave_wready = 0;
+assign io_slave_bvalid = 0;
+assign io_slave_bresp = 0;
+assign io_slave_bid = 0;
+assign io_slave_arready = 0;
+assign io_slave_rvalid = 0;
+assign io_slave_rresp = 0;
+assign io_slave_rdata = 0;
+assign io_slave_rlast = 0;
+assign io_slave_rid = 0;
+
+wire _unused_ok = &{1'b0,
+  io_interrupt,
+  io_slave_awaddr,
+  io_slave_awid,
+  io_slave_awlen,
+  io_slave_awsize,
+  io_slave_awburst,
+  io_slave_awvalid,
+  io_slave_wvalid,
+  io_slave_wdata,
+  io_slave_wstrb,
+  io_slave_wlast,
+  io_slave_bready,
+  io_slave_arvalid,
+  io_slave_araddr,
+  io_slave_arid,
+  io_slave_arlen,
+  io_slave_arsize,
+  io_slave_arburst,
+  io_slave_rready,
+  axi_aw_addr_o[63:32],
+  axi_ar_addr_o[63:32],
+  o_user_axi_resp,
+  1'b0};
 
 endmodule

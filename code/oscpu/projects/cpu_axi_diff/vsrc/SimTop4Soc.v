@@ -151,4 +151,43 @@ ysyx_210544_cpu u_cpu(
 );
 
 
+// io_slave 处理
+
+assign io_slave_awready = 0;
+assign io_slave_wready = 0;
+assign io_slave_bvalid = 0;
+assign io_slave_bresp = 0;
+assign io_slave_bid = 0;
+assign io_slave_arready = 0;
+assign io_slave_rvalid = 0;
+assign io_slave_rresp = 0;
+assign io_slave_rdata = 0;
+assign io_slave_rlast = 0;
+assign io_slave_rid = 0;
+
+wire _unused_ok = &{1'b0,
+  io_interrupt,
+  io_slave_awaddr,
+  io_slave_awid,
+  io_slave_awlen,
+  io_slave_awsize,
+  io_slave_awburst,
+  io_slave_awvalid,
+  io_slave_wvalid,
+  io_slave_wdata,
+  io_slave_wstrb,
+  io_slave_wlast,
+  io_slave_bready,
+  io_slave_arvalid,
+  io_slave_araddr,
+  io_slave_arid,
+  io_slave_arlen,
+  io_slave_arsize,
+  io_slave_arburst,
+  io_slave_rready,
+  axi_aw_addr_o[63:32],
+  axi_ar_addr_o[63:32],
+  o_user_axi_resp,
+  1'b0};
+
 endmodule
