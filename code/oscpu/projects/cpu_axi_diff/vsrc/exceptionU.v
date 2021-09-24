@@ -55,6 +55,7 @@ always @(posedge clk) begin
             if (i_inst_opcode == `INST_ECALL) begin
               state <= STATE_ENTER_WRITE_MEPC;
               exception_cause <= 64'd11;
+              $write("#ecall\n"); $fflush();
             end
             else if (i_inst_opcode == `INST_MRET) begin
               state <= STATE_LEAVE_READ_MSTATUS;
@@ -62,6 +63,7 @@ always @(posedge clk) begin
             else begin
               state <= STATE_ENTER_WRITE_MEPC;
               exception_cause <= 64'h80000000_00000007;
+              $write("#time-instr\n"); $fflush();
             end
             step <= 0;
           end

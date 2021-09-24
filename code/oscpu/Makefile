@@ -29,6 +29,12 @@ run-all-3:
 	./build.sh -e $(PROJECT) -b -r "my/cpu-tests" -m "EMU_TRACE=1 $(PROJECT_AXI_FLAGS)"
 
 
+# ysyx soc
+soc:
+	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" --trace' -a "-i ysyxSoc/flash/hello-flash.bin --dump-wave"
+soc-run:
+	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wall --trace' -a "-i ysyxSoc/flash/hello-flash.bin"
+
 # Clean nemu/build
 clean:
 	@./build.sh -e $(PROJECT) -c

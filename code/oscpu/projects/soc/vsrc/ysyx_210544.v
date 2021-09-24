@@ -8,7 +8,7 @@
 `define ZERO_WORD  64'h00000000_00000000
 `define PC_START   64'h00000000_80000000 
 
-`define AXI_ADDR_WIDTH      64
+`define AXI_ADDR_WIDTH      32
 `define AXI_DATA_WIDTH      64
 `define AXI_ID_WIDTH        4
 `define AXI_USER_WIDTH      1
@@ -253,7 +253,7 @@ module ysyx_210544_axi_rw # (
     parameter RW_DATA_WIDTH     = 512,
     parameter RW_ADDR_WIDTH     = 64,
     parameter AXI_DATA_WIDTH    = 64,
-    parameter AXI_ADDR_WIDTH    = 64,
+    parameter AXI_ADDR_WIDTH    = 32,
     parameter AXI_ID_WIDTH      = 4,
     parameter AXI_USER_WIDTH    = 1
 )(
@@ -3956,136 +3956,136 @@ always @(negedge clk) begin
   end
 end
 
-DifftestArchEvent DifftestArchEvent(
-  .clock              (clk),		// 时钟
-  .coreid             (0),		  // cpu id，单核时固定为0
-  .intrNO             (i_intrNo),		  // 中断号，非零有效
-  .cause              (0),			// 异常号，非零有效
-  .exceptionPC        (i_intrNo > 0 ? i_pc : 0),	// 产生异常或中断时的PC
-  .exceptionInst      (0)	  // 产生异常时的指令，未使用
-);
+// DifftestArchEvent DifftestArchEvent(
+//   .clock              (clk),		// 时钟
+//   .coreid             (0),		  // cpu id，单核时固定为0
+//   .intrNO             (i_intrNo),		  // 中断号，非零有效
+//   .cause              (0),			// 异常号，非零有效
+//   .exceptionPC        (i_intrNo > 0 ? i_pc : 0),	// 产生异常或中断时的PC
+//   .exceptionInst      (0)	  // 产生异常时的指令，未使用
+// );
 
-DifftestInstrCommit DifftestInstrCommit(
-  .clock              (clk),
-  .coreid             (0),
-  .index              (0),
-  .valid              (cmt_valid),
-  .pc                 (cmt_pc),
-  .instr              (cmt_inst),
-  .skip               (cmt_skip),
-  .isRVC              (0),
-  .scFailed           (0),
-  .wen                (cmt_wen),
-  .wdest              (cmt_wdest),
-  .wdata              (cmt_wdata)
-);
+// DifftestInstrCommit DifftestInstrCommit(
+//   .clock              (clk),
+//   .coreid             (0),
+//   .index              (0),
+//   .valid              (cmt_valid),
+//   .pc                 (cmt_pc),
+//   .instr              (cmt_inst),
+//   .skip               (cmt_skip),
+//   .isRVC              (0),
+//   .scFailed           (0),
+//   .wen                (cmt_wen),
+//   .wdest              (cmt_wdest),
+//   .wdata              (cmt_wdata)
+// );
 
-DifftestArchIntRegState DifftestArchIntRegState (
-  .clock              (clk),
-  .coreid             (0),
-  .gpr_0              (regs_diff[0]),
-  .gpr_1              (regs_diff[1]),
-  .gpr_2              (regs_diff[2]),
-  .gpr_3              (regs_diff[3]),
-  .gpr_4              (regs_diff[4]),
-  .gpr_5              (regs_diff[5]),
-  .gpr_6              (regs_diff[6]),
-  .gpr_7              (regs_diff[7]),
-  .gpr_8              (regs_diff[8]),
-  .gpr_9              (regs_diff[9]),
-  .gpr_10             (regs_diff[10]),
-  .gpr_11             (regs_diff[11]),
-  .gpr_12             (regs_diff[12]),
-  .gpr_13             (regs_diff[13]),
-  .gpr_14             (regs_diff[14]),
-  .gpr_15             (regs_diff[15]),
-  .gpr_16             (regs_diff[16]),
-  .gpr_17             (regs_diff[17]),
-  .gpr_18             (regs_diff[18]),
-  .gpr_19             (regs_diff[19]),
-  .gpr_20             (regs_diff[20]),
-  .gpr_21             (regs_diff[21]),
-  .gpr_22             (regs_diff[22]),
-  .gpr_23             (regs_diff[23]),
-  .gpr_24             (regs_diff[24]),
-  .gpr_25             (regs_diff[25]),
-  .gpr_26             (regs_diff[26]),
-  .gpr_27             (regs_diff[27]),
-  .gpr_28             (regs_diff[28]),
-  .gpr_29             (regs_diff[29]),
-  .gpr_30             (regs_diff[30]),
-  .gpr_31             (regs_diff[31])
-);
+// DifftestArchIntRegState DifftestArchIntRegState (
+//   .clock              (clk),
+//   .coreid             (0),
+//   .gpr_0              (regs_diff[0]),
+//   .gpr_1              (regs_diff[1]),
+//   .gpr_2              (regs_diff[2]),
+//   .gpr_3              (regs_diff[3]),
+//   .gpr_4              (regs_diff[4]),
+//   .gpr_5              (regs_diff[5]),
+//   .gpr_6              (regs_diff[6]),
+//   .gpr_7              (regs_diff[7]),
+//   .gpr_8              (regs_diff[8]),
+//   .gpr_9              (regs_diff[9]),
+//   .gpr_10             (regs_diff[10]),
+//   .gpr_11             (regs_diff[11]),
+//   .gpr_12             (regs_diff[12]),
+//   .gpr_13             (regs_diff[13]),
+//   .gpr_14             (regs_diff[14]),
+//   .gpr_15             (regs_diff[15]),
+//   .gpr_16             (regs_diff[16]),
+//   .gpr_17             (regs_diff[17]),
+//   .gpr_18             (regs_diff[18]),
+//   .gpr_19             (regs_diff[19]),
+//   .gpr_20             (regs_diff[20]),
+//   .gpr_21             (regs_diff[21]),
+//   .gpr_22             (regs_diff[22]),
+//   .gpr_23             (regs_diff[23]),
+//   .gpr_24             (regs_diff[24]),
+//   .gpr_25             (regs_diff[25]),
+//   .gpr_26             (regs_diff[26]),
+//   .gpr_27             (regs_diff[27]),
+//   .gpr_28             (regs_diff[28]),
+//   .gpr_29             (regs_diff[29]),
+//   .gpr_30             (regs_diff[30]),
+//   .gpr_31             (regs_diff[31])
+// );
 
-DifftestTrapEvent DifftestTrapEvent(
-  .clock              (clk),
-  .coreid             (0),
-  .valid              (trap),
-  .code               (trap_code),
-  .pc                 (cmt_pc),
-  .cycleCnt           (cycleCnt),
-  .instrCnt           (instrCnt)
-);
+// DifftestTrapEvent DifftestTrapEvent(
+//   .clock              (clk),
+//   .coreid             (0),
+//   .valid              (trap),
+//   .code               (trap_code),
+//   .pc                 (cmt_pc),
+//   .cycleCnt           (cycleCnt),
+//   .instrCnt           (instrCnt)
+// );
 
-DifftestCSRState DifftestCSRState(
-  .clock              (clk),
-  .coreid             (0),
-  .priviledgeMode     (`RISCV_PRIV_MODE_M),
-  .mstatus            (i_csrs[`CSR_IDX_MSTATUS]),
-  .sstatus            (sstatus),
-  .mepc               (i_csrs[`CSR_IDX_MEPC]),
-  .sepc               (0),
-  .mtval              (0),
-  .stval              (0),
-  .mtvec              (i_csrs[`CSR_IDX_MTVEC]),
-  .stvec              (0),
-  .mcause             (i_csrs[`CSR_IDX_MCAUSE]),
-  .scause             (0),
-  .satp               (0),
-  .mip                (0),// i_csrs[`CSR_IDX_MIP]),// i_clint_mip),//i_csrs[`CSR_IDX_MIP]),
-  .mie                (i_csrs[`CSR_IDX_MIE]),
-  .mscratch           (i_csrs[`CSR_IDX_MSCRATCH]),
-  .sscratch           (0),
-  .mideleg            (0),
-  .medeleg            (0)
-);
+// DifftestCSRState DifftestCSRState(
+//   .clock              (clk),
+//   .coreid             (0),
+//   .priviledgeMode     (`RISCV_PRIV_MODE_M),
+//   .mstatus            (i_csrs[`CSR_IDX_MSTATUS]),
+//   .sstatus            (sstatus),
+//   .mepc               (i_csrs[`CSR_IDX_MEPC]),
+//   .sepc               (0),
+//   .mtval              (0),
+//   .stval              (0),
+//   .mtvec              (i_csrs[`CSR_IDX_MTVEC]),
+//   .stvec              (0),
+//   .mcause             (i_csrs[`CSR_IDX_MCAUSE]),
+//   .scause             (0),
+//   .satp               (0),
+//   .mip                (0),// i_csrs[`CSR_IDX_MIP]),// i_clint_mip),//i_csrs[`CSR_IDX_MIP]),
+//   .mie                (i_csrs[`CSR_IDX_MIE]),
+//   .mscratch           (i_csrs[`CSR_IDX_MSCRATCH]),
+//   .sscratch           (0),
+//   .mideleg            (0),
+//   .medeleg            (0)
+// );
 
-DifftestArchFpRegState DifftestArchFpRegState(
-  .clock              (clk),
-  .coreid             (0),
-  .fpr_0              (0),
-  .fpr_1              (0),
-  .fpr_2              (0),
-  .fpr_3              (0),
-  .fpr_4              (0),
-  .fpr_5              (0),
-  .fpr_6              (0),
-  .fpr_7              (0),
-  .fpr_8              (0),
-  .fpr_9              (0),
-  .fpr_10             (0),
-  .fpr_11             (0),
-  .fpr_12             (0),
-  .fpr_13             (0),
-  .fpr_14             (0),
-  .fpr_15             (0),
-  .fpr_16             (0),
-  .fpr_17             (0),
-  .fpr_18             (0),
-  .fpr_19             (0),
-  .fpr_20             (0),
-  .fpr_21             (0),
-  .fpr_22             (0),
-  .fpr_23             (0),
-  .fpr_24             (0),
-  .fpr_25             (0),
-  .fpr_26             (0),
-  .fpr_27             (0),
-  .fpr_28             (0),
-  .fpr_29             (0),
-  .fpr_30             (0),
-  .fpr_31             (0)
-);
+// DifftestArchFpRegState DifftestArchFpRegState(
+//   .clock              (clk),
+//   .coreid             (0),
+//   .fpr_0              (0),
+//   .fpr_1              (0),
+//   .fpr_2              (0),
+//   .fpr_3              (0),
+//   .fpr_4              (0),
+//   .fpr_5              (0),
+//   .fpr_6              (0),
+//   .fpr_7              (0),
+//   .fpr_8              (0),
+//   .fpr_9              (0),
+//   .fpr_10             (0),
+//   .fpr_11             (0),
+//   .fpr_12             (0),
+//   .fpr_13             (0),
+//   .fpr_14             (0),
+//   .fpr_15             (0),
+//   .fpr_16             (0),
+//   .fpr_17             (0),
+//   .fpr_18             (0),
+//   .fpr_19             (0),
+//   .fpr_20             (0),
+//   .fpr_21             (0),
+//   .fpr_22             (0),
+//   .fpr_23             (0),
+//   .fpr_24             (0),
+//   .fpr_25             (0),
+//   .fpr_26             (0),
+//   .fpr_27             (0),
+//   .fpr_28             (0),
+//   .fpr_29             (0),
+//   .fpr_30             (0),
+//   .fpr_31             (0)
+// );
 
 endmodule
 
@@ -4528,68 +4528,81 @@ ysyx_210544_csrfile Csrfile(
 
 endmodule
 
-`define AXI_TOP_INTERFACE(name) io_memAXI_0_``name
-
-module SimTop(
+module ysyx_210544(
     input                               clock,
     input                               reset,
+    input                               io_interrupt,
 
-    input  [63:0]                       io_logCtrl_log_begin,
-    input  [63:0]                       io_logCtrl_log_end,
-    input  [63:0]                       io_logCtrl_log_level,
-    input                               io_perfInfo_clean,
-    input                               io_perfInfo_dump,
+    // input  [63:0]                       io_logCtrl_log_begin,
+    // input  [63:0]                       io_logCtrl_log_end,
+    // input  [63:0]                       io_logCtrl_log_level,
+    // input                               io_perfInfo_clean,
+    // input                               io_perfInfo_dump,
 
-    output                              io_uart_out_valid,
-    output [7:0]                        io_uart_out_ch,
-    output                              io_uart_in_valid,
-    input  [7:0]                        io_uart_in_ch,
+    // output                              io_uart_out_valid,
+    // output [7:0]                        io_uart_out_ch,
+    // output                              io_uart_in_valid,
+    // input  [7:0]                        io_uart_in_ch,
 
-    input                               `AXI_TOP_INTERFACE(aw_ready),
-    output                              `AXI_TOP_INTERFACE(aw_valid),
-    output [`AXI_ADDR_WIDTH-1:0]        `AXI_TOP_INTERFACE(aw_bits_addr),
-    output [2:0]                        `AXI_TOP_INTERFACE(aw_bits_prot),
-    output [`AXI_ID_WIDTH-1:0]          `AXI_TOP_INTERFACE(aw_bits_id),
-    output [`AXI_USER_WIDTH-1:0]        `AXI_TOP_INTERFACE(aw_bits_user),
-    output [7:0]                        `AXI_TOP_INTERFACE(aw_bits_len),
-    output [2:0]                        `AXI_TOP_INTERFACE(aw_bits_size),
-    output [1:0]                        `AXI_TOP_INTERFACE(aw_bits_burst),
-    output                              `AXI_TOP_INTERFACE(aw_bits_lock),
-    output [3:0]                        `AXI_TOP_INTERFACE(aw_bits_cache),
-    output [3:0]                        `AXI_TOP_INTERFACE(aw_bits_qos),
+    input                               io_master_awready,
+    output                              io_master_awvalid,
+    output [31:0]                       io_master_awaddr,
+    output [3:0]                        io_master_awid,
+    output [7:0]                        io_master_awlen,
+    output [2:0]                        io_master_awsize,
+    output [1:0]                        io_master_awburst,
+    input                               io_master_wready,
+    output                              io_master_wvalid,
+    output [63:0]                       io_master_wdata,
+    output [7:0]                        io_master_wstrb,
+    output                              io_master_wlast,
+    output                              io_master_bready,
+    input                               io_master_bvalid,
+    input  [1:0]                        io_master_bresp,
+    input  [3:0]                        io_master_bid,
+    input                               io_master_arready,
+    output                              io_master_arvalid,
+    output [31:0]                       io_master_araddr,
+    output [3:0]                        io_master_arid,
+    output [7:0]                        io_master_arlen,
+    output [2:0]                        io_master_arsize,
+    output [1:0]                        io_master_arburst,
+    output                              io_master_rready,
+    input                               io_master_rvalid,
+    input  [1:0]                        io_master_rresp,
+    input  [63:0]                       io_master_rdata,
+    input                               io_master_rlast,
+    input  [3:0]                        io_master_rid,
     
-    input                               `AXI_TOP_INTERFACE(w_ready),
-    output                              `AXI_TOP_INTERFACE(w_valid),
-    output [`AXI_DATA_WIDTH-1:0]        `AXI_TOP_INTERFACE(w_bits_data)         [3:0],
-    output [`AXI_DATA_WIDTH/8-1:0]      `AXI_TOP_INTERFACE(w_bits_strb),
-    output                              `AXI_TOP_INTERFACE(w_bits_last),
-    
-    output                              `AXI_TOP_INTERFACE(b_ready),
-    input                               `AXI_TOP_INTERFACE(b_valid),
-    input  [1:0]                        `AXI_TOP_INTERFACE(b_bits_resp),
-    input  [`AXI_ID_WIDTH-1:0]          `AXI_TOP_INTERFACE(b_bits_id),
-    input  [`AXI_USER_WIDTH-1:0]        `AXI_TOP_INTERFACE(b_bits_user),
-
-    input                               `AXI_TOP_INTERFACE(ar_ready),
-    output                              `AXI_TOP_INTERFACE(ar_valid),
-    output [`AXI_ADDR_WIDTH-1:0]        `AXI_TOP_INTERFACE(ar_bits_addr),
-    output [2:0]                        `AXI_TOP_INTERFACE(ar_bits_prot),
-    output [`AXI_ID_WIDTH-1:0]          `AXI_TOP_INTERFACE(ar_bits_id),
-    output [`AXI_USER_WIDTH-1:0]        `AXI_TOP_INTERFACE(ar_bits_user),
-    output [7:0]                        `AXI_TOP_INTERFACE(ar_bits_len),
-    output [2:0]                        `AXI_TOP_INTERFACE(ar_bits_size),
-    output [1:0]                        `AXI_TOP_INTERFACE(ar_bits_burst),
-    output                              `AXI_TOP_INTERFACE(ar_bits_lock),
-    output [3:0]                        `AXI_TOP_INTERFACE(ar_bits_cache),
-    output [3:0]                        `AXI_TOP_INTERFACE(ar_bits_qos),
-    
-    output                              `AXI_TOP_INTERFACE(r_ready),
-    input                               `AXI_TOP_INTERFACE(r_valid),
-    input  [1:0]                        `AXI_TOP_INTERFACE(r_bits_resp),
-    input  [`AXI_DATA_WIDTH-1:0]        `AXI_TOP_INTERFACE(r_bits_data)         [3:0],
-    input                               `AXI_TOP_INTERFACE(r_bits_last),
-    input  [`AXI_ID_WIDTH-1:0]          `AXI_TOP_INTERFACE(r_bits_id),
-    input  [`AXI_USER_WIDTH-1:0]        `AXI_TOP_INTERFACE(r_bits_user)
+    output                              io_slave_awready,
+    input                               io_slave_awvalid,
+    input [31:0]                        io_slave_awaddr,
+    input [3:0]                         io_slave_awid,
+    input [7:0]                         io_slave_awlen,
+    input [2:0]                         io_slave_awsize,
+    input [1:0]                         io_slave_awburst,
+    output                              io_slave_wready,
+    input                               io_slave_wvalid,
+    input [63:0]                        io_slave_wdata,
+    input [7:0]                         io_slave_wstrb,
+    input                               io_slave_wlast,
+    input                               io_slave_bready,
+    output                              io_slave_bvalid,
+    output  [1:0]                       io_slave_bresp,
+    output  [3:0]                       io_slave_bid,
+    output                              io_slave_arready,
+    input                               io_slave_arvalid,
+    input [31:0]                        io_slave_araddr,
+    input [3:0]                         io_slave_arid,
+    input [7:0]                         io_slave_arlen,
+    input [2:0]                         io_slave_arsize,
+    input [1:0]                         io_slave_arburst,
+    input                               io_slave_rready,
+    output                              io_slave_rvalid,
+    output  [1:0]                       io_slave_rresp,
+    output  [63:0]                      io_slave_rdata,
+    output                              io_slave_rlast,
+    output  [3:0]                       io_slave_rid
 );
 
 wire aw_ready;
@@ -4641,51 +4654,35 @@ wire r_last;
 wire [`AXI_ID_WIDTH-1:0] r_id;
 wire [`AXI_USER_WIDTH-1:0] r_user;
 
-assign ar_ready                                 = `AXI_TOP_INTERFACE(ar_ready);
-assign `AXI_TOP_INTERFACE(ar_valid)             = ar_valid;
-assign `AXI_TOP_INTERFACE(ar_bits_addr)         = ar_addr;
-assign `AXI_TOP_INTERFACE(ar_bits_prot)         = ar_prot;
-assign `AXI_TOP_INTERFACE(ar_bits_id)           = ar_id;
-assign `AXI_TOP_INTERFACE(ar_bits_user)         = ar_user;
-assign `AXI_TOP_INTERFACE(ar_bits_len)          = ar_len;
-assign `AXI_TOP_INTERFACE(ar_bits_size)         = ar_size;
-assign `AXI_TOP_INTERFACE(ar_bits_burst)        = ar_burst;
-assign `AXI_TOP_INTERFACE(ar_bits_lock)         = ar_lock;
-assign `AXI_TOP_INTERFACE(ar_bits_cache)        = ar_cache;
-assign `AXI_TOP_INTERFACE(ar_bits_qos)          = ar_qos;
-
-assign `AXI_TOP_INTERFACE(r_ready)              = r_ready;
-assign r_valid                                  = `AXI_TOP_INTERFACE(r_valid);
-assign r_resp                                   = `AXI_TOP_INTERFACE(r_bits_resp);
-assign r_data                                   = `AXI_TOP_INTERFACE(r_bits_data)[0];
-assign r_last                                   = `AXI_TOP_INTERFACE(r_bits_last);
-assign r_id                                     = `AXI_TOP_INTERFACE(r_bits_id);
-assign r_user                                   = `AXI_TOP_INTERFACE(r_bits_user);
-
-assign aw_ready                                 = `AXI_TOP_INTERFACE(aw_ready);
-assign `AXI_TOP_INTERFACE(aw_valid)             = aw_valid;
-assign `AXI_TOP_INTERFACE(aw_bits_addr)         = aw_addr;
-assign `AXI_TOP_INTERFACE(aw_bits_prot)         = aw_prot;
-assign `AXI_TOP_INTERFACE(aw_bits_id)           = aw_id;
-assign `AXI_TOP_INTERFACE(aw_bits_user)         = aw_user;
-assign `AXI_TOP_INTERFACE(aw_bits_len)          = aw_len;
-assign `AXI_TOP_INTERFACE(aw_bits_size)         = aw_size;
-assign `AXI_TOP_INTERFACE(aw_bits_burst)        = aw_burst;
-assign `AXI_TOP_INTERFACE(aw_bits_lock)         = aw_lock;
-assign `AXI_TOP_INTERFACE(aw_bits_cache)        = aw_cache;
-assign `AXI_TOP_INTERFACE(aw_bits_qos)          = aw_qos;
-
-assign w_ready                                  = `AXI_TOP_INTERFACE(w_ready);
-assign `AXI_TOP_INTERFACE(w_valid)              = w_valid;
-assign `AXI_TOP_INTERFACE(w_bits_data)[0]       = w_data;
-assign `AXI_TOP_INTERFACE(w_bits_strb)          = w_strb;
-assign `AXI_TOP_INTERFACE(w_bits_last)          = w_last;
-
-assign `AXI_TOP_INTERFACE(b_ready)              = b_ready;
-assign b_valid                                  = `AXI_TOP_INTERFACE(b_valid);
-assign b_resp                                   = `AXI_TOP_INTERFACE(b_bits_resp);
-assign b_id                                     = `AXI_TOP_INTERFACE(b_bits_id);
-assign b_user                                   = `AXI_TOP_INTERFACE(b_bits_user);
+assign ar_ready                       = io_master_arready;
+assign io_master_arvalid              = ar_valid;
+assign io_master_araddr               = ar_addr;
+assign io_master_arid                 = ar_id;
+assign io_master_arlen                = ar_len;
+assign io_master_arsize               = ar_size;
+assign io_master_arburst              = ar_burst;
+assign io_master_rready               = r_ready;
+assign r_valid                        = io_master_rvalid;
+assign r_resp                         = io_master_rresp;
+assign r_data                         = io_master_rdata;
+assign r_last                         = io_master_rlast;
+assign r_id                           = io_master_rid;
+assign aw_ready                       = io_master_awready;
+assign io_master_awvalid              = aw_valid;
+assign io_master_awaddr               = aw_addr;
+assign io_master_awid                 = aw_id;
+assign io_master_awlen                = aw_len;
+assign io_master_awsize               = aw_size;
+assign io_master_awburst              = aw_burst;
+assign w_ready                        = io_master_wready;
+assign io_master_wvalid               = w_valid;
+assign io_master_wdata                = w_data;
+assign io_master_wstrb                = w_strb;
+assign io_master_wlast                = w_last;
+assign io_master_bready               = b_ready;
+assign b_valid                        = io_master_bvalid;
+assign b_resp                         = io_master_bresp;
+assign b_id                           = io_master_bid;
 
 ysyx_210544_axi_rw u_axi_rw (
     .clock                          (clock),
@@ -4765,50 +4762,6 @@ wire [7:0]                    o_user_axi_blks;
 
 wire [1:0]                    o_user_axi_resp;
 
-
-// /////////////////////////////////////////////////
-
-// `define CACHE_AXI_TEST 1
-
-`ifdef CACHE_AXI_TEST
-
-  // cache_rw 测试
-  cache_axi_test Cache_axi_test(
-    .clk                        (clock                      ),
-    .rst                        (reset                      ),
-    .i_axi_io_ready             (i_user_axi_ready           ),
-    .i_axi_io_rdata             (i_user_axi_rdata           ),
-    .o_axi_io_op                (o_user_axi_op              ),
-    .o_axi_io_valid             (o_user_axi_valid           ),
-    .o_axi_io_wdata             (o_user_axi_wdata           ),
-    .o_axi_io_addr              (o_user_axi_addr            ),
-    .o_axi_io_size              (o_user_axi_size            ),
-    .o_axi_io_blks              (o_user_axi_blks            )
-  );
-
-`endif
-
-
-/////////////////////////////////////////////////
-
-// `define CACHE_TEST 1
-
-`ifdef CACHE_TEST
-
-cache_core_test Cache_core_test(
-  .clk                        (clock                      ),
-  .rst                        (reset                      ),
-  .i_axi_io_ready             (i_user_axi_ready           ),
-  .i_axi_io_rdata             (i_user_axi_rdata           ),
-  .o_axi_io_op                (o_user_axi_op              ),
-  .o_axi_io_valid             (o_user_axi_valid           ),
-  .o_axi_io_wdata             (o_user_axi_wdata           ),
-  .o_axi_io_addr              (o_user_axi_addr            ),
-  .o_axi_io_size              (o_user_axi_size            ),
-  .o_axi_io_blks              (o_user_axi_blks            )
-);
-
-`endif
 
 
 /////////////////////////////////////////////////
