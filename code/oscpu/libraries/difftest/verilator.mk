@@ -89,7 +89,7 @@ VERILATOR_FLAGS =                   \
   --assert                          \
   --stats-vars                      \
   --output-split 30000              \
-  --output-split-cfuncs 30000   -Wall
+  --output-split-cfuncs 30000   #-Wall
 
 EMU_MK := $(BUILD_DIR)/emu-compile/V$(EMU_TOP).mk
 EMU_DEPS := $(EMU_VFILES) $(EMU_CXXFILES)

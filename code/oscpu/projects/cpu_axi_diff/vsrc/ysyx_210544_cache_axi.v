@@ -34,16 +34,16 @@ module ysyx_210544_cache_axi(
 );
 
 // 是否为Flash外设，此时只能4字节传输，且不能使用burst模式，所以64字节需要16次传输
-// wire is_flash = i_cache_axi_addr[31:24] == 8'd3;
+wire is_flash = i_cache_axi_addr[31:28] == 4'd8;
 
 // axi一次传输完成
 wire hs_ok = o_axi_io_valid & i_axi_io_ready;
 
 // axi每次传输的大小：64bit
-assign o_axi_io_size = `SIZE_W;// `SIZE_D;
+assign o_axi_io_size = is_flash ? `SIZE_W : `SIZE_D;
 
 // 块数：0~7表示1~8块
-assign o_axi_io_blks = 0;// 7;
+assign o_axi_io_blks = is_flash ? 0 : 7;
 
 // 操作类型：0:read, 1:write
 assign o_axi_io_op = i_cache_axi_op;
@@ -55,7 +55,13 @@ reg cache_req_his0;
 wire  axi_start    = i_cache_axi_req & cache_req_his0;
 
 // 传输起始地址，64字节对齐
-assign o_axi_io_addr = i_cache_axi_addr & (~64'h3F);
+// assign o_axi_io_addr = i_cache_axi_addr & (~64'h3F);
+
+// 控制传输次数，
+// 如果是主存，  需要 1次AXI传输得512bit；
+// 如果是Flash，需要16次AXI传输得到512bit，每次传输32bit（64bit是否支持？？）；
+reg [3:0] trans_cnt;
+wire [8:0] offset_bits = {4'd0, trans_cnt} << 5;
 
 // 控制传输
 always @( posedge clk ) begin
@@ -63,6 +69,7 @@ always @( posedge clk ) begin
     o_cache_axi_ack         <= 0;
     o_axi_io_valid          <= 0;
     cache_req_his0          <= 0;
+    trans_cnt               <= 0;
   end
   else begin
     // 追踪开始信号
@@ -70,12 +77,38 @@ always @( posedge clk ) begin
 
     // 收到数据：保存数据、增加计数、握手反馈
     if (hs_ok) begin
-      o_cache_axi_ack    <= 1;
-      o_axi_io_valid <= 0;
+      if (is_flash) begin
+        if (trans_cnt < 15) begin
+          o_cache_axi_rdata[offset_bits +:32] <= i_axi_io_rdata[0+:32];  // 保存数据
+          o_axi_io_addr <= o_axi_io_addr + 4;     // 地址递增
+          trans_cnt <= trans_cnt + 1;             // 次数递增
+        end
+        else begin
+          o_cache_axi_ack   <= 1;   // 完成
+          o_axi_io_valid    <= 0;   // 关闭axi请求
+          trans_cnt <= 0;   // 清零计数，准备下次继续
+        end
+      end
+      else begin
+        o_cache_axi_rdata <= i_axi_io_rdata;  // 保存数据
+        o_cache_axi_ack   <= 1;   // 完成
+        o_axi_io_valid    <= 0;   // 关闭axi请求
+      end
     end
     else begin
       // 触发采样
       if (axi_start) begin
+        // 仅在第一次进入时修改地址
+        if (!o_axi_io_valid) begin
+          if (is_flash) begin
+            // 传输起始地址，4字节对齐
+            o_axi_io_addr <= i_cache_axi_addr & (~64'h3);
+          end
+          else begin
+            // 传输起始地址，64字节对齐
+            o_axi_io_addr <= i_cache_axi_addr & (~64'h3F);
+          end
+        end
         o_axi_io_valid <= 1;
       end
       // 清除信号   
@@ -84,7 +117,7 @@ always @( posedge clk ) begin
   end
 end
 
-assign o_cache_axi_rdata = i_axi_io_rdata;
+// assign o_cache_axi_rdata = i_axi_io_rdata;
 assign o_axi_io_wdata = i_cache_axi_wdata;
 
 endmodule
