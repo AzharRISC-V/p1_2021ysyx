@@ -442,7 +442,30 @@ module ysyx_210544_axi_rw (
     end
 
     assign axi_w_last_o     = w_hs & (len == axi_len);
-    assign axi_w_strb_o     = 8'b1111_1111;     // 每个bit代表一个字节是否要写入
+  
+    // 仅根据size生成的wstrb，需要移位后使用，是吗？？
+    reg  [7:0] axi_w_strb_orig;
+    always @(*) begin
+      if (reset) begin
+        axi_w_strb_orig = 0;
+      end
+      else begin
+        case (user_size_i)
+          `SIZE_B: axi_w_strb_orig = 8'b0000_0001;
+          `SIZE_H: axi_w_strb_orig = 8'b0000_0011;
+          `SIZE_W: axi_w_strb_orig = 8'b0000_1111;
+          `SIZE_D: axi_w_strb_orig = 8'b1111_1111;
+          default: axi_w_strb_orig = 8'b0000_0000; // 不支持
+        endcase 
+      end
+    end
+
+    // 输入地址的8字节内偏移量
+    wire [2:0] aix_addr_offset = user_addr_i[2:0];
+
+    // 移位生成最终的 w_strb。可是数据确实是在低位，可能 wdata 和 wstrb 都不需要移位
+    // assign axi_w_strb_o     = 8'b1111_1111;     // 每个bit代表一个字节是否要写入
+    assign axi_w_strb_o = axi_w_strb_orig;// << aix_addr_offset;
 
     // Wreite response channel signals
     assign axi_b_ready_o    = w_state_resp;
