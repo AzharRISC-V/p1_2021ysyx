@@ -134,10 +134,10 @@ build_soc_proj() {
         exit 1
     fi
 
-    if [[ ! -f $BUILD_PATH/vsrc/ysyxSoCFull.v ]]; then
-        cp $YSYXSOC_HOME/ysyx/soc/ysyxSoCFull.v $BUILD_PATH/vsrc/
-        sed -i -e "s/ysyx_000000/ysyx_${ID:0-6}/g" $BUILD_PATH/vsrc/ysyxSoCFull.v
-    fi
+    #if [[ ! -f $BUILD_PATH/vsrc/ysyxSoCFull.v ]]; then
+    #    cp $YSYXSOC_HOME/ysyx/soc/ysyxSoCFull.v $BUILD_PATH/vsrc/
+    #    sed -i -e "s/ysyx_000000/ysyx_${ID:0-6}/g" $BUILD_PATH/vsrc/ysyxSoCFull.v
+    #fi
 
     ln -s $YSYXSOC_HOME/ysyx/peripheral $BUILD_PATH/vsrc/
     ln -s $YSYXSOC_HOME/ysyx/peripheral/spiFlash $BUILD_PATH/csrc/

@@ -22,7 +22,6 @@
 `define REQ_WRITE           1'b1
 
 `define RW_DATA_WIDTH       512
-`define AXI_DATA_WIDTH      64
 `define AXI_ID_WIDTH        4
 
 `define RISCV_PRIV_MODE_U   0
@@ -377,42 +376,12 @@ module ysyx_210544_axi_rw (
 
 
     // ------------------Process Data------------------
-    parameter ALIGNED_WIDTH = $clog2(`AXI_DATA_WIDTH / 8);
-    parameter OFFSET_WIDTH  = $clog2(`AXI_DATA_WIDTH);
-    // parameter AXI_SIZE      = $clog2(`AXI_DATA_WIDTH / 8);
-    parameter MASK_WIDTH    = 128;
-    parameter TRANS_LEN_MAX = 8; //user_blks_i+1;// RW_DATA_WIDTH / AXI_DATA_WIDTH;
+    parameter TRANS_LEN_MAX = 8;
 
-    wire block_trans        = user_blks_i > 0 ? 1'b1 : 1'b0;
-    wire aligned            = block_trans | user_addr_i[ALIGNED_WIDTH-1:0] == 0;
-    wire size_b             = user_size_i == `SIZE_B;
-    wire size_h             = user_size_i == `SIZE_H;
-    wire size_w             = user_size_i == `SIZE_W;
-    wire size_d             = user_size_i == `SIZE_D;
-    wire [3:0] addr_op1     = {{4-ALIGNED_WIDTH{1'b0}}, user_addr_i[ALIGNED_WIDTH-1:0]};
-    wire [3:0] addr_op2     = ({4{size_b}} & {4'b0})
-                                | ({4{size_h}} & {4'b1})
-                                | ({4{size_w}} & {4'b11})
-                                | ({4{size_d}} & {4'b111})
-                                ;
-    wire [3:0] addr_end     = addr_op1 + addr_op2;
-    wire overstep           = addr_end[3:ALIGNED_WIDTH] != 0;
-
-    wire [7:0] axi_len      = aligned ? user_blks_i : {{7{1'b0}}, overstep};
+    wire [7:0] axi_len      = user_blks_i;
     wire [2:0] axi_size     = {1'b0, user_size_i};// AXI_SIZE[2:0];
     
-    wire [63:0] axi_addr                        = {user_addr_i[63:ALIGNED_WIDTH], {ALIGNED_WIDTH{1'b0}}};
-    wire [OFFSET_WIDTH-1:0] aligned_offset_l    = {{OFFSET_WIDTH-ALIGNED_WIDTH{1'b0}}, {user_addr_i[ALIGNED_WIDTH-1:0]}} << 3;
-    wire [OFFSET_WIDTH:0]   aligned_offset_h_tmp = `AXI_DATA_WIDTH - aligned_offset_l;
-    wire [OFFSET_WIDTH-1:0] aligned_offset_h    = aligned_offset_h_tmp[5:0];
-    wire [127:0] mask                  = (({MASK_WIDTH{size_b}} & {{MASK_WIDTH-8{1'b0}}, 8'hff})
-                                                    | ({MASK_WIDTH{size_h}} & {{MASK_WIDTH-16{1'b0}}, 16'hffff})
-                                                    | ({MASK_WIDTH{size_w}} & {{MASK_WIDTH-32{1'b0}}, 32'hffffffff})
-                                                    | ({MASK_WIDTH{size_d}} & {{MASK_WIDTH-64{1'b0}}, 64'hffffffff_ffffffff})
-                                                    ) << aligned_offset_l;
-    wire [`AXI_DATA_WIDTH-1:0] mask_l           = mask[`AXI_DATA_WIDTH-1:0];
-    wire [`AXI_DATA_WIDTH-1:0] mask_h           = mask[MASK_WIDTH-1:`AXI_DATA_WIDTH];
-
+    wire [63:0] axi_addr                         = user_addr_i;
     wire [`AXI_ID_WIDTH-1:0] axi_id              = {`AXI_ID_WIDTH{1'b0}};
 
     reg rw_ready;
@@ -462,7 +431,7 @@ module ysyx_210544_axi_rw (
       else begin
         if (w_state_write) begin
           if (!axi_w_valid_o) begin
-            axi_w_data_o  <= user_wdata_i[`AXI_DATA_WIDTH-1:0];
+            axi_w_data_o  <= user_wdata_i[63:0];
             axi_w_valid_o <= 1;
           end
         end
@@ -483,7 +452,7 @@ module ysyx_210544_axi_rw (
             always @(posedge clock) begin
                 if (w_hs) begin
                   if (len == i) begin
-                    axi_w_data_o <= user_wdata_i[(i+1)*`AXI_DATA_WIDTH+:`AXI_DATA_WIDTH];
+                    axi_w_data_o <= user_wdata_i[(i+1)*64+:64];
                   end
                 end
             end
@@ -504,8 +473,18 @@ module ysyx_210544_axi_rw (
     // Read data channel signals
     assign axi_r_ready_o    = r_state_read;
 
-    wire [`AXI_DATA_WIDTH-1:0] axi_r_data_l  = (axi_r_data_i & mask_l) >> aligned_offset_l;
-    wire [`AXI_DATA_WIDTH-1:0] axi_r_data_h  = (axi_r_data_i & mask_h) << aligned_offset_h;
+    // User Data Size
+    wire size_b             = user_size_i == `SIZE_B;
+    wire size_h             = user_size_i == `SIZE_H;
+    wire size_w             = user_size_i == `SIZE_W;
+    wire size_d             = user_size_i == `SIZE_D;
+    
+    // Read data mask
+    wire [63:0] mask_rdata  = (({ 64{size_b}} & {{64- 8{1'b0}}, 8'hff})
+                              | ({64{size_h}} & {{64-16{1'b0}}, 16'hffff})
+                              | ({64{size_w}} & {{64-32{1'b0}}, 32'hffffffff})
+                              | ({64{size_d}} & {{64-64{1'b0}}, 64'hffffffff_ffffffff})
+                              );
 
     generate
         for (genvar i = 0; i < TRANS_LEN_MAX; i += 1) begin
@@ -515,7 +494,7 @@ module ysyx_210544_axi_rw (
                 end
                 else if (r_hs) begin
                     if (len == i) begin
-                        user_rdata_o[i*`AXI_DATA_WIDTH+:`AXI_DATA_WIDTH] <= axi_r_data_l;
+                        user_rdata_o[i*64+:64] <= axi_r_data_i & mask_rdata;
                     end
                 end
             end
@@ -525,8 +504,6 @@ module ysyx_210544_axi_rw (
 wire _unused_ok = &{1'b0,
   axi_b_id_i,
   axi_r_id_i,
-  addr_end[2:0],
-  aligned_offset_h_tmp[6],
   1'b0};
 
 endmodule
@@ -3207,8 +3184,8 @@ assign o_mem_executed_ack = 1'b1;
 wire executed_hs = i_mem_executed_req & o_mem_executed_ack;
 wire memoryed_hs = i_mem_memoryed_ack & o_mem_memoryed_req;
 
-wire addr_is_mem  = (mem_addr & (64'hFF000000)) == 64'h80000000;
-wire addr_is_mmio = (mem_addr & (64'hFF000000)) == 64'h02000000;
+wire addr_is_mem  = (mem_addr[31:24] == 8'h80) | (mem_addr[31:24] == 8'h10) | (mem_addr[31:24] == 8'h30);
+wire addr_is_mmio = (mem_addr[31:24] == 8'h02);// & (64'hFF000000)) == 64'h02000000;
 
 // channel select, only valid in one pulse
 wire ch_mem   = addr_is_mem & (mem_ren | mem_wen);
@@ -4537,6 +4514,19 @@ wire [7:0]                    o_user_axi_blks;
 wire [1:0]                    o_user_axi_resp;
 
 
+// 使用Verilator快速编译的测试，尝试修改这里的内容，看看soc编译需要多久
+reg tmp;
+always @(posedge clock) begin
+  if (reset) begin
+    tmp <= 0;
+  end
+  else begin
+    if (!tmp) begin
+      tmp <= 1;
+      $display("TEST by Steven. 2021.09.25 12:17\n");
+    end
+  end
+end
 
 /////////////////////////////////////////////////
 // CPU核

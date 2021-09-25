@@ -272,6 +272,19 @@ module ysyx_210544_axi_rw (
     // Read data channel signals
     assign axi_r_ready_o    = r_state_read;
 
+    // User Data Size
+    wire size_b             = user_size_i == `SIZE_B;
+    wire size_h             = user_size_i == `SIZE_H;
+    wire size_w             = user_size_i == `SIZE_W;
+    wire size_d             = user_size_i == `SIZE_D;
+    
+    // Read data mask
+    wire [63:0] mask_rdata  = (({ 64{size_b}} & {{64- 8{1'b0}}, 8'hff})
+                              | ({64{size_h}} & {{64-16{1'b0}}, 16'hffff})
+                              | ({64{size_w}} & {{64-32{1'b0}}, 32'hffffffff})
+                              | ({64{size_d}} & {{64-64{1'b0}}, 64'hffffffff_ffffffff})
+                              );
+
     generate
         for (genvar i = 0; i < TRANS_LEN_MAX; i += 1) begin
             always @(posedge clock) begin
@@ -280,7 +293,7 @@ module ysyx_210544_axi_rw (
                 end
                 else if (r_hs) begin
                     if (len == i) begin
-                        user_rdata_o[i*64+:64] <= axi_r_data_i;
+                        user_rdata_o[i*64+:64] <= axi_r_data_i & mask_rdata;
                     end
                 end
             end
