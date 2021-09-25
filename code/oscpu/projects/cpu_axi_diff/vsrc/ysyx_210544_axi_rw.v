@@ -60,14 +60,14 @@ module ysyx_210544_axi_rw (
     input  [7:0]                        user_blks_i,          // blocks: 0 ~ 7， means 1~8 (后端硬件资源限制为8)
     output reg [`RW_DATA_WIDTH-1:0]     user_rdata_o,
     input  [`RW_DATA_WIDTH-1:0]         user_wdata_i,
-    input  [`AXI_ADDR_WIDTH-1:0]        user_addr_i,
+    input  [63:0]                       user_addr_i,
     input  [1:0]                        user_size_i,
     output [1:0]                        user_resp_o,
 
     // Advanced eXtensible Interface
     input                               axi_aw_ready_i,
     output                              axi_aw_valid_o,
-    output [`AXI_ADDR_WIDTH-1:0]        axi_aw_addr_o,
+    output [63:0]                       axi_aw_addr_o,
     output [`AXI_ID_WIDTH-1:0]          axi_aw_id_o,
     output [7:0]                        axi_aw_len_o,
     output [2:0]                        axi_aw_size_o,
@@ -75,8 +75,8 @@ module ysyx_210544_axi_rw (
 
     input                               axi_w_ready_i,
     output                              axi_w_valid_o,
-    output [`AXI_DATA_WIDTH-1:0]        axi_w_data_o,
-    output [`AXI_DATA_WIDTH/8-1:0]      axi_w_strb_o,
+    output [63:0]                       axi_w_data_o,
+    output [7:0]                        axi_w_strb_o,
     output                              axi_w_last_o,
     
     output                              axi_b_ready_o,
@@ -86,7 +86,7 @@ module ysyx_210544_axi_rw (
 
     input                               axi_ar_ready_i,
     output                              axi_ar_valid_o,
-    output [`AXI_ADDR_WIDTH-1:0]        axi_ar_addr_o,
+    output [63:0]                       axi_ar_addr_o,
     output [`AXI_ID_WIDTH-1:0]          axi_ar_id_o,
     output [7:0]                        axi_ar_len_o,
     output [2:0]                        axi_ar_size_o,
@@ -95,7 +95,7 @@ module ysyx_210544_axi_rw (
     output                              axi_r_ready_o,
     input                               axi_r_valid_i,
     input  [1:0]                        axi_r_resp_i,
-    input  [`AXI_DATA_WIDTH-1:0]        axi_r_data_i,
+    input  [63:0]                       axi_r_data_i,
     input                               axi_r_last_i,
     input  [`AXI_ID_WIDTH-1:0]          axi_r_id_i
 );
@@ -177,8 +177,8 @@ module ysyx_210544_axi_rw (
     // ------------------Process Data------------------
     parameter ALIGNED_WIDTH = $clog2(`AXI_DATA_WIDTH / 8);
     parameter OFFSET_WIDTH  = $clog2(`AXI_DATA_WIDTH);
-    parameter AXI_SIZE      = $clog2(`AXI_DATA_WIDTH / 8);
-    parameter MASK_WIDTH    = `AXI_DATA_WIDTH * 2;
+    // parameter AXI_SIZE      = $clog2(`AXI_DATA_WIDTH / 8);
+    parameter MASK_WIDTH    = 128;
     parameter TRANS_LEN_MAX = 8; //user_blks_i+1;// RW_DATA_WIDTH / AXI_DATA_WIDTH;
 
     wire block_trans        = user_blks_i > 0 ? 1'b1 : 1'b0;
@@ -197,13 +197,13 @@ module ysyx_210544_axi_rw (
     wire overstep           = addr_end[3:ALIGNED_WIDTH] != 0;
 
     wire [7:0] axi_len      = aligned ? user_blks_i : {{7{1'b0}}, overstep};
-    wire [2:0] axi_size     = AXI_SIZE[2:0];
+    wire [2:0] axi_size     = {1'b0, user_size_i};// AXI_SIZE[2:0];
     
-    wire [`AXI_ADDR_WIDTH-1:0] axi_addr          = {user_addr_i[`AXI_ADDR_WIDTH-1:ALIGNED_WIDTH], {ALIGNED_WIDTH{1'b0}}};
+    wire [63:0] axi_addr                        = {user_addr_i[63:ALIGNED_WIDTH], {ALIGNED_WIDTH{1'b0}}};
     wire [OFFSET_WIDTH-1:0] aligned_offset_l    = {{OFFSET_WIDTH-ALIGNED_WIDTH{1'b0}}, {user_addr_i[ALIGNED_WIDTH-1:0]}} << 3;
     wire [OFFSET_WIDTH:0]   aligned_offset_h_tmp = `AXI_DATA_WIDTH - aligned_offset_l;
     wire [OFFSET_WIDTH-1:0] aligned_offset_h    = aligned_offset_h_tmp[5:0];
-    wire [MASK_WIDTH-1:0] mask                  = (({MASK_WIDTH{size_b}} & {{MASK_WIDTH-8{1'b0}}, 8'hff})
+    wire [127:0] mask                  = (({MASK_WIDTH{size_b}} & {{MASK_WIDTH-8{1'b0}}, 8'hff})
                                                     | ({MASK_WIDTH{size_h}} & {{MASK_WIDTH-16{1'b0}}, 16'hffff})
                                                     | ({MASK_WIDTH{size_w}} & {{MASK_WIDTH-32{1'b0}}, 32'hffffffff})
                                                     | ({MASK_WIDTH{size_d}} & {{MASK_WIDTH-64{1'b0}}, 64'hffffffff_ffffffff})
@@ -212,7 +212,6 @@ module ysyx_210544_axi_rw (
     wire [`AXI_DATA_WIDTH-1:0] mask_h           = mask[MASK_WIDTH-1:`AXI_DATA_WIDTH];
 
     wire [`AXI_ID_WIDTH-1:0] axi_id              = {`AXI_ID_WIDTH{1'b0}};
-    wire [`AXI_USER_WIDTH-1:0] axi_user          = {`AXI_USER_WIDTH{1'b0}};
 
     reg rw_ready;
     wire rw_ready_nxt = trans_done;
@@ -342,7 +341,6 @@ wire _unused_ok = &{1'b0,
   axi_r_id_i,
   addr_end[2:0],
   aligned_offset_h_tmp[6],
-  axi_user,
   1'b0};
 
 endmodule

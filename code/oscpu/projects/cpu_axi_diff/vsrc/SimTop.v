@@ -19,10 +19,10 @@ module SimTop(
 
     input                               `AXI_TOP_INTERFACE(aw_ready),
     output                              `AXI_TOP_INTERFACE(aw_valid),
-    output [`AXI_ADDR_WIDTH-1:0]        `AXI_TOP_INTERFACE(aw_bits_addr),
+    output [63:0]                       `AXI_TOP_INTERFACE(aw_bits_addr),
     output [2:0]                        `AXI_TOP_INTERFACE(aw_bits_prot),
     output [`AXI_ID_WIDTH-1:0]          `AXI_TOP_INTERFACE(aw_bits_id),
-    output [`AXI_USER_WIDTH-1:0]        `AXI_TOP_INTERFACE(aw_bits_user),
+    output                              `AXI_TOP_INTERFACE(aw_bits_user),
     output [7:0]                        `AXI_TOP_INTERFACE(aw_bits_len),
     output [2:0]                        `AXI_TOP_INTERFACE(aw_bits_size),
     output [1:0]                        `AXI_TOP_INTERFACE(aw_bits_burst),
@@ -40,14 +40,14 @@ module SimTop(
     input                               `AXI_TOP_INTERFACE(b_valid),
     input  [1:0]                        `AXI_TOP_INTERFACE(b_bits_resp),
     input  [`AXI_ID_WIDTH-1:0]          `AXI_TOP_INTERFACE(b_bits_id),
-    input  [`AXI_USER_WIDTH-1:0]        `AXI_TOP_INTERFACE(b_bits_user),
+    input                               `AXI_TOP_INTERFACE(b_bits_user),
 
     input                               `AXI_TOP_INTERFACE(ar_ready),
     output                              `AXI_TOP_INTERFACE(ar_valid),
-    output [`AXI_ADDR_WIDTH-1:0]        `AXI_TOP_INTERFACE(ar_bits_addr),
+    output [63:0]                       `AXI_TOP_INTERFACE(ar_bits_addr),
     output [2:0]                        `AXI_TOP_INTERFACE(ar_bits_prot),
     output [`AXI_ID_WIDTH-1:0]          `AXI_TOP_INTERFACE(ar_bits_id),
-    output [`AXI_USER_WIDTH-1:0]        `AXI_TOP_INTERFACE(ar_bits_user),
+    output                              `AXI_TOP_INTERFACE(ar_bits_user),
     output [7:0]                        `AXI_TOP_INTERFACE(ar_bits_len),
     output [2:0]                        `AXI_TOP_INTERFACE(ar_bits_size),
     output [1:0]                        `AXI_TOP_INTERFACE(ar_bits_burst),
@@ -58,10 +58,10 @@ module SimTop(
     output                              `AXI_TOP_INTERFACE(r_ready),
     input                               `AXI_TOP_INTERFACE(r_valid),
     input  [1:0]                        `AXI_TOP_INTERFACE(r_bits_resp),
-    input  [`AXI_DATA_WIDTH-1:0]        `AXI_TOP_INTERFACE(r_bits_data)         [3:0],
+    input  [63:0]                       `AXI_TOP_INTERFACE(r_bits_data)         [3:0],
     input                               `AXI_TOP_INTERFACE(r_bits_last),
     input  [`AXI_ID_WIDTH-1:0]          `AXI_TOP_INTERFACE(r_bits_id),
-    input  [`AXI_USER_WIDTH-1:0]        `AXI_TOP_INTERFACE(r_bits_user)
+    input                               `AXI_TOP_INTERFACE(r_bits_user)
 );
 
 ysyx_210544_axi_rw u_axi_rw (
