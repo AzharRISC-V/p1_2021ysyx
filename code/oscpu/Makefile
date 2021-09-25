@@ -34,7 +34,8 @@ run-all-3:
 soc:
 	@cd projects/cpu_axi_diff/vsrc/;\
 	cat defines.v ysyx_210544_axi_rw.v ysyx_210544_S011HD1P_X32Y2D128_BW.v ysyx_210544_cache_axi.v \
-	ysyx_210544_cache_basic.v ysyx_210544_cache_core.v ysyx_210544_cache.v ysyx_210544_putch.v ysyx_210544_rtc.v \
+	ysyx_210544_cache_basic.v ysyx_210544_cache_core.v ysyx_210544_cache_nocache.v ysyx_210544_cache.v \
+	ysyx_210544_putch.v ysyx_210544_rtc.v \
 	ysyx_210544_clint.v ysyx_210544_regfile.v ysyx_210544_csrfile.v ysyx_210544_if_stage.v ysyx_210544_ifU.v \
 	ysyx_210544_id_stage.v ysyx_210544_idU.v ysyx_210544_exe_stage.v ysyx_210544_exeU.v ysyx_210544_exceptionU.v \
 	ysyx_210544_mem_stage.v ysyx_210544_memU.v ysyx_210544_mem_mmio.v ysyx_210544_mem_nothing.v ysyx_210544_wb_stage.v \
