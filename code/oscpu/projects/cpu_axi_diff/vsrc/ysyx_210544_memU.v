@@ -66,6 +66,7 @@ always @(posedge clk) begin
           wait_finish       <= 0;
           o_dcache_req      <= 0;
           req               <= 1;
+          o_rdata           <= i_dcache_rdata;
         end
       end
       // 清除req信号
@@ -76,7 +77,7 @@ always @(posedge clk) begin
   end
 end
 
-assign o_rdata = i_dcache_rdata;
+// assign o_rdata = i_dcache_rdata;
 
 
 endmodule
