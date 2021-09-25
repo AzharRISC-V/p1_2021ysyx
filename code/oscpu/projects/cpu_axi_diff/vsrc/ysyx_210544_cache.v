@@ -42,23 +42,18 @@ module ysyx_210544_cache(
 // 0x1000_0000 ~ END, 是UART
 // 0x3000_0000 ~ END, 是Flash
 // 0x8000_0000 ~ END, 是主存
-wire iaddr_UART   = i_icache_addr[31:28] == 4'h1;
-wire iaddr_FLASH  = i_icache_addr[31:28] == 4'h3;
-wire iaddr_MEM    = i_icache_addr[31:28] == 4'h8;
+wire iaddr_UART   = i_icache_req & i_icache_addr[31:28] == 4'h1;
+wire iaddr_FLASH  = i_icache_req & i_icache_addr[31:28] == 4'h3;
+wire iaddr_MEM    = i_icache_req & i_icache_addr[31:28] == 4'h8;
 
-wire daddr_UART   = i_dcache_addr[31:28] == 4'h1;
-wire daddr_FLASH  = i_dcache_addr[31:28] == 4'h3;
-wire daddr_MEM    = i_dcache_addr[31:28] == 4'h8;
+wire daddr_UART   = i_dcache_req & i_dcache_addr[31:28] == 4'h1;
+wire daddr_FLASH  = i_dcache_req & i_dcache_addr[31:28] == 4'h3;
+wire daddr_MEM    = i_dcache_req & i_dcache_addr[31:28] == 4'h8;
 
-wire addr_UART    = iaddr_UART  | daddr_UART;
-wire addr_FLASH   = iaddr_FLASH | daddr_FLASH;
-wire addr_MEM     = iaddr_MEM   | daddr_MEM;
-
-wire ch_icache    = addr_MEM & i_icache_req;
-wire ch_dcache    = addr_MEM & i_dcache_req;
 // 注意： FLASH可选的使用Cache或不使用Cache，Cache已做适配。
-wire ch_nocache   = (i_icache_req | i_dcache_req) &
-  (addr_UART | addr_FLASH);
+wire ch_icache    = iaddr_MEM;// | iaddr_FLASH;
+wire ch_dcache    = daddr_MEM;// | daddr_FLASH;
+wire ch_nocache   = iaddr_UART | daddr_UART | iaddr_FLASH | daddr_FLASH;
 
 
 /////////////////////////////////////////////////
@@ -80,7 +75,7 @@ ysyx_210544_cache_core ICache(
 	.i_cache_core_wdata         (0                          ),
 	.i_cache_core_bytes         (3                          ),
 	.i_cache_core_op            (`REQ_READ                  ),
-	.i_cache_core_req           (i_icache_req               ),
+	.i_cache_core_req           (ch_icache ? i_icache_req : 0),
 	.o_cache_core_rdata         (icache_rdata               ),
 	.o_cache_core_ack           (icache_ack                 ),
 
@@ -114,7 +109,7 @@ ysyx_210544_cache_core DCache(
 	.i_cache_core_wdata         (i_dcache_wdata             ),
 	.i_cache_core_bytes         (i_dcache_bytes             ),
 	.i_cache_core_op            (i_dcache_op                ),
-	.i_cache_core_req           (i_dcache_req               ),
+	.i_cache_core_req           (ch_dcache ? i_dcache_req : 0),
 	.o_cache_core_rdata         (dcache_rdata               ),
 	.o_cache_core_ack           (dcache_ack                 ),
 
@@ -154,7 +149,7 @@ ysyx_210544_cache_nocache NoCache(
 	.i_cache_nocache_wdata      (nocache_wdata              ),
 	.i_cache_nocache_bytes      (nocache_bytes              ),
 	.i_cache_nocache_op         (nocache_op                 ),
-	.i_cache_nocache_req        (nocache_req                ),
+	.i_cache_nocache_req        (ch_nocache ? nocache_req : 0),
 	.o_cache_nocache_rdata      (nocache_rdata              ),
 	.o_cache_nocache_ack        (nocache_ack                ),
 

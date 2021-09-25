@@ -53,3 +53,26 @@ sed '/`define SUPPORT_DIFFTEST/d' ysyx_210544.v -i
 ## 顶部插入一行
 sed -i "1i/* verilator lint_off DECLFILENAME */" ysyx_210544.v
 
+
+4. 关于 MEM/Flash/UART 以及 Cache 的说明
+a.
+  MEM在语言层面，支持各种类型的访问，地址可以不对齐，访问单元是1/2/4/8字节，
+  Cache会对MEM有良好的支持，将跨页访问会自动处理为对齐的1~2次访问。
+b.
+  Flash访问，按要求是4字节对齐，只读。支持XIP。不支持突发传输。
+  Flash的访问可以用Cache，也可不用Cache。
+  如果用Cache，则Cache内部会自动对该地址范围进行多次访问，以凑足数据，使用与Mem相同的Cache机制。
+  如果不用Cache，则使用NoCache模块，必须自行保证4字节对齐，以及地址和操作数相加不会越界。
+  如果在Flash上运行 ld-riscv-tests程序，则必定会出错。因为ld指令会访问8字节，而Flash不支持。
+c.
+  UART访问，典型的外设，不支持突发传输，一般是1字节访问。
+  只能使用NoCache接口来访问。
+d.
+  关于Flash，是否使用Cache，这里有一个测试数据。
+  运行 lw-riscv-tests 程序
+    有Cache, 122776ps
+    无Cache, 149563ps
+    说明：这个例子比较特别，该程序没有循环，cache优越性不明显。 
+  运行 leap-year-cpu-tests 程序
+    有Cache，525954 cycles in 24s/22s.  波形中为27384ps，约是525954的一半。
+    无Cache，无法运行，因为内部有8字节访问指令，而无cache时，Flash不支持8字节访问，除非再做个封装。

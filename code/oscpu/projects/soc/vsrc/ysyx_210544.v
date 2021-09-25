@@ -13,10 +13,10 @@
   `define PC_START            64'h00000000_80000000 
 `endif
 
-`define SIZE_B              2'b00
-`define SIZE_H              2'b01
-`define SIZE_W              2'b10
-`define SIZE_D              2'b11
+`define SIZE_B              3'b000
+`define SIZE_H              3'b001
+`define SIZE_W              3'b010
+`define SIZE_D              3'b011
 
 `define REQ_READ            1'b0
 `define REQ_WRITE           1'b1
@@ -262,7 +262,7 @@ module ysyx_210544_axi_rw (
     output reg [`RW_DATA_WIDTH-1:0]     user_rdata_o,
     input  [`RW_DATA_WIDTH-1:0]         user_wdata_i,
     input  [63:0]                       user_addr_i,
-    input  [1:0]                        user_size_i,
+    input  [2:0]                        user_size_i,
     output [1:0]                        user_resp_o,
 
     // Advanced eXtensible Interface
@@ -379,7 +379,7 @@ module ysyx_210544_axi_rw (
     parameter TRANS_LEN_MAX = 8;
 
     wire [7:0] axi_len      = user_blks_i;
-    wire [2:0] axi_size     = {1'b0, user_size_i};// AXI_SIZE[2:0];
+    wire [2:0] axi_size     = user_size_i;
     
     wire [63:0] axi_addr                         = user_addr_i;
     wire [`AXI_ID_WIDTH-1:0] axi_id              = {`AXI_ID_WIDTH{1'b0}};
@@ -568,7 +568,7 @@ module ysyx_210544_cache_axi(
 	output reg                        o_axi_io_valid,
   output reg    [63 : 0]            o_axi_io_addr,
   output        [511 : 0]           o_axi_io_wdata,
-  output        [1 : 0]             o_axi_io_size,
+  output        [2 : 0]             o_axi_io_size,
   output        [7 : 0]             o_axi_io_blks
 );
 
@@ -721,7 +721,7 @@ endmodule
 module ysyx_210544_cache_basic (
   input   wire                clk,
   input   wire                rst,
-  input   wire  [`BUS_64]     i_cache_basic_addr,         // 地址
+  input   wire  [`BUS_64]     i_cache_basic_addr,         // 地址。保证与操作数大小相加后不能跨界。
   input   wire  [`BUS_64]     i_cache_basic_wdata,        // 写入的数据
   input   wire  [2 : 0]       i_cache_basic_bytes,        // 操作的字节数: 0~7表示1~8字节
 	input   wire                i_cache_basic_op,           // 操作: 0:read, 1:write
@@ -736,7 +736,7 @@ module ysyx_210544_cache_basic (
   output  wire                o_axi_io_op,
   output  wire  [511:0]       o_axi_io_wdata,
   output  wire  [63:0]        o_axi_io_addr,
-  output  wire  [1:0]         o_axi_io_size,
+  output  wire  [2:0]         o_axi_io_size,
   output  wire  [7:0]         o_axi_io_blks
 );
 
@@ -1163,7 +1163,7 @@ endmodule
 module ysyx_210544_cache_core (
   input   wire                clk,
   input   wire                rst,
-  input   wire  [`BUS_64]     i_cache_core_addr,          // 地址
+  input   wire  [`BUS_64]     i_cache_core_addr,          // 地址。地址与操作数相加后可以跨界。
   input   wire  [`BUS_64]     i_cache_core_wdata,         // 写入的数据
   input   wire  [2 : 0]       i_cache_core_bytes,         // 操作的字节数: 0~7表示1~8字节
 	input   wire                i_cache_core_op,            // 操作: 0:read, 1:write
@@ -1178,7 +1178,7 @@ module ysyx_210544_cache_core (
   output  wire                o_axi_io_op,
   output  wire  [511:0]       o_axi_io_wdata,
   output  wire  [63:0]        o_axi_io_addr,
-  output  wire  [1:0]         o_axi_io_size,
+  output  wire  [2:0]         o_axi_io_size,
   output  wire  [7:0]         o_axi_io_blks
 );
 
@@ -1325,11 +1325,22 @@ module ysyx_210544_cache_nocache (
   output  wire                o_axi_io_op,
   output  wire  [511:0]       o_axi_io_wdata,
   output  wire  [63:0]        o_axi_io_addr,
-  output  wire  [1:0]         o_axi_io_size,
+  output  wire  [2:0]         o_axi_io_size,
   output  wire  [7:0]         o_axi_io_blks
 );
 
 wire hs_axi_io = o_axi_io_valid & i_axi_io_ready;
+
+reg [2:0] nocache_size;
+always @(*) begin
+  case (i_cache_nocache_bytes)
+    3'b000: nocache_size = `SIZE_B;
+    3'b001: nocache_size = `SIZE_H;
+    3'b011: nocache_size = `SIZE_W;
+    3'b111: nocache_size = `SIZE_D;
+    default: nocache_size = `SIZE_B;  // 这种情况应该是不支持的。
+  endcase
+end
 
 always @(posedge clk) begin
   if (rst) begin
@@ -1343,7 +1354,7 @@ always @(posedge clk) begin
         o_axi_io_addr   <= i_cache_nocache_addr;
         o_axi_io_blks   <= 0;
         o_axi_io_op     <= i_cache_nocache_op;
-        o_axi_io_size   <= i_cache_nocache_bytes[2:1];  // 高2位正好
+        o_axi_io_size   <= nocache_size;
         o_axi_io_wdata  <= {448'b0, i_cache_nocache_wdata};
         o_axi_io_valid  <= 1;
       end
@@ -1361,6 +1372,9 @@ always @(posedge clk) begin
   end
 end
 
+wire _unused_ok = &{1'b0,
+  i_axi_io_rdata[511:64],
+  1'b0};
 
 endmodule
 
@@ -1389,15 +1403,6 @@ module ysyx_210544_cache(
     output  wire              o_dcache_ack,
     output  wire  [63:0]      o_dcache_rdata,
 
-    // No Cache
-    input   wire              i_nocache_req,
-    input   wire  [63:0]      i_nocache_addr,
-    input   wire              i_nocache_op,
-    input   wire  [2 :0]      i_nocache_bytes,
-    input   wire  [63:0]      i_nocache_wdata,
-    output  wire              o_nocache_ack,
-    output  wire  [63:0]      o_nocache_rdata,
-    
     // AXI interface
     input   wire  [511:0]     i_axi_io_rdata,
     input   wire              i_axi_io_ready,
@@ -1405,39 +1410,41 @@ module ysyx_210544_cache(
     output  wire              o_axi_io_op,
     output  wire  [511:0]     o_axi_io_wdata,
     output  wire  [63:0]      o_axi_io_addr,
-    output  wire  [1:0]       o_axi_io_size,
+    output  wire  [2:0]       o_axi_io_size,
     output  wire  [7:0]       o_axi_io_blks
 );
 
+/////////////////////////////////////////////////
+// 数据通路选择
 
-// 数据选择器
-wire ch_icache = i_icache_req;
-wire ch_dcache = i_dcache_req;
-wire ch_nocache = i_nocache_req;
+// 0x1000_0000 ~ END, 是UART
+// 0x3000_0000 ~ END, 是Flash
+// 0x8000_0000 ~ END, 是主存
+wire iaddr_UART   = i_icache_req & i_icache_addr[31:28] == 4'h1;
+wire iaddr_FLASH  = i_icache_req & i_icache_addr[31:28] == 4'h3;
+wire iaddr_MEM    = i_icache_req & i_icache_addr[31:28] == 4'h8;
 
-wire [63:0] icache_rdata;
-assign o_icache_rdata = icache_rdata[31:0];
+wire daddr_UART   = i_dcache_req & i_dcache_addr[31:28] == 4'h1;
+wire daddr_FLASH  = i_dcache_req & i_dcache_addr[31:28] == 4'h3;
+wire daddr_MEM    = i_dcache_req & i_dcache_addr[31:28] == 4'h8;
 
-reg              icache_axi_io_valid;
-reg              icache_axi_io_op;
-reg  [511:0]     icache_axi_io_wdata;
-reg  [63:0]      icache_axi_io_addr;
-reg  [1:0]       icache_axi_io_size;
-reg  [7:0]       icache_axi_io_blks;
+// 注意： FLASH可选的使用Cache或不使用Cache，Cache已做适配。
+wire ch_icache    = iaddr_MEM;// | iaddr_FLASH;
+wire ch_dcache    = daddr_MEM;// | daddr_FLASH;
+wire ch_nocache   = iaddr_UART | daddr_UART | iaddr_FLASH | daddr_FLASH;
 
-reg              dcache_axi_io_valid;
-reg              dcache_axi_io_op;
-reg  [511:0]     dcache_axi_io_wdata;
-reg  [63:0]      dcache_axi_io_addr;
-reg  [1:0]       dcache_axi_io_size;
-reg  [7:0]       dcache_axi_io_blks;
 
-reg              nocache_axi_io_valid;
-reg              nocache_axi_io_op;
-reg  [511:0]     nocache_axi_io_wdata;
-reg  [63:0]      nocache_axi_io_addr;
-reg  [1:0]       nocache_axi_io_size;
-reg  [7:0]       nocache_axi_io_blks;
+/////////////////////////////////////////////////
+// Instruction Cache
+
+wire  [63:0]      icache_rdata;
+wire              icache_ack;
+wire              icache_axi_io_valid;
+wire              icache_axi_io_op;
+wire  [511:0]     icache_axi_io_wdata;
+wire  [63:0]      icache_axi_io_addr;
+wire  [2:0]       icache_axi_io_size;
+wire  [7:0]       icache_axi_io_blks;
 
 ysyx_210544_cache_core ICache(
   .clk                        (clk                        ),
@@ -1446,9 +1453,9 @@ ysyx_210544_cache_core ICache(
 	.i_cache_core_wdata         (0                          ),
 	.i_cache_core_bytes         (3                          ),
 	.i_cache_core_op            (`REQ_READ                  ),
-	.i_cache_core_req           (i_icache_req               ),
+	.i_cache_core_req           (ch_icache ? i_icache_req : 0),
 	.o_cache_core_rdata         (icache_rdata               ),
-	.o_cache_core_ack           (o_icache_ack               ),
+	.o_cache_core_ack           (icache_ack                 ),
 
   .i_axi_io_ready             (ch_icache ? i_axi_io_ready : 0        ),
   .i_axi_io_rdata             (ch_icache ? i_axi_io_rdata : 0        ),
@@ -1460,6 +1467,19 @@ ysyx_210544_cache_core ICache(
   .o_axi_io_blks              (icache_axi_io_blks         )
 );
 
+
+/////////////////////////////////////////////////
+// Data Cache
+
+wire [63:0]       dcache_rdata;
+wire              dcache_ack;
+wire              dcache_axi_io_valid;
+wire              dcache_axi_io_op;
+wire  [511:0]     dcache_axi_io_wdata;
+wire  [63:0]      dcache_axi_io_addr;
+wire  [2:0]       dcache_axi_io_size;
+wire  [7:0]       dcache_axi_io_blks;
+
 ysyx_210544_cache_core DCache(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
@@ -1467,9 +1487,9 @@ ysyx_210544_cache_core DCache(
 	.i_cache_core_wdata         (i_dcache_wdata             ),
 	.i_cache_core_bytes         (i_dcache_bytes             ),
 	.i_cache_core_op            (i_dcache_op                ),
-	.i_cache_core_req           (i_dcache_req               ),
-	.o_cache_core_rdata         (o_dcache_rdata             ),
-	.o_cache_core_ack           (o_dcache_ack               ),
+	.i_cache_core_req           (ch_dcache ? i_dcache_req : 0),
+	.o_cache_core_rdata         (dcache_rdata               ),
+	.o_cache_core_ack           (dcache_ack                 ),
 
   .i_axi_io_ready             (ch_dcache ? i_axi_io_ready : 0        ),
   .i_axi_io_rdata             (ch_dcache ? i_axi_io_rdata : 0        ),
@@ -1482,17 +1502,34 @@ ysyx_210544_cache_core DCache(
 );
 
 
-// 访问UART
+/////////////////////////////////////////////////
+// NoCache, access bus directly
+  
+wire              nocache_req;
+wire  [63:0]      nocache_addr;
+wire              nocache_op;
+wire  [2 :0]      nocache_bytes;
+wire  [63:0]      nocache_wdata;
+wire              nocache_ack;
+wire  [63:0]      nocache_rdata;
+
+wire              nocache_axi_io_valid;
+wire              nocache_axi_io_op;
+wire  [511:0]     nocache_axi_io_wdata;
+wire  [63:0]      nocache_axi_io_addr;
+wire  [2:0]       nocache_axi_io_size;
+wire  [7:0]       nocache_axi_io_blks;
+
 ysyx_210544_cache_nocache NoCache(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
-	.i_cache_nocache_addr       (i_nocache_addr             ),
-	.i_cache_nocache_wdata      (i_nocache_wdata            ),
-	.i_cache_nocache_bytes      (i_nocache_bytes            ),
-	.i_cache_nocache_op         (i_nocache_op               ),
-	.i_cache_nocache_req        (i_nocache_req              ),
-	.o_cache_nocache_rdata      (o_nocache_rdata            ),
-	.o_cache_nocache_ack        (o_nocache_ack              ),
+	.i_cache_nocache_addr       (nocache_addr               ),
+	.i_cache_nocache_wdata      (nocache_wdata              ),
+	.i_cache_nocache_bytes      (nocache_bytes              ),
+	.i_cache_nocache_op         (nocache_op                 ),
+	.i_cache_nocache_req        (ch_nocache ? nocache_req : 0),
+	.o_cache_nocache_rdata      (nocache_rdata              ),
+	.o_cache_nocache_ack        (nocache_ack                ),
 
   .i_axi_io_ready             (ch_nocache ? i_axi_io_ready : 0        ),
   .i_axi_io_rdata             (ch_nocache ? i_axi_io_rdata : 0        ),
@@ -1504,6 +1541,17 @@ ysyx_210544_cache_nocache NoCache(
   .o_axi_io_blks              (nocache_axi_io_blks        )
 );
 
+
+
+/////////////////////////////////////////////////
+// 信号互联
+
+assign nocache_req      = ch_nocache ? (i_icache_req | i_dcache_req                     ) : 0;
+assign nocache_addr     = ch_nocache ? (i_icache_req ? i_icache_addr  : i_dcache_addr   ) : 0;
+assign nocache_wdata    = ch_nocache ? (i_icache_req ? 0              : i_dcache_wdata  ) : 0;
+assign nocache_bytes    = ch_nocache ? (i_icache_req ? 3              : i_dcache_bytes  ) : 0;
+assign nocache_op       = ch_nocache ? (i_icache_req ? `REQ_READ      : i_dcache_op     ) : 0;
+
 assign o_axi_io_valid   = ch_icache ? icache_axi_io_valid   : (ch_dcache ? dcache_axi_io_valid  : nocache_axi_io_valid);
 assign o_axi_io_op      = ch_icache ? icache_axi_io_op      : (ch_dcache ? dcache_axi_io_op     : nocache_axi_io_op);
 assign o_axi_io_wdata   = ch_icache ? icache_axi_io_wdata   : (ch_dcache ? dcache_axi_io_wdata  : nocache_axi_io_wdata);
@@ -1511,6 +1559,11 @@ assign o_axi_io_addr    = ch_icache ? icache_axi_io_addr    : (ch_dcache ? dcach
 assign o_axi_io_size    = ch_icache ? icache_axi_io_size    : (ch_dcache ? dcache_axi_io_size   : nocache_axi_io_size);
 assign o_axi_io_blks    = ch_icache ? icache_axi_io_blks    : (ch_dcache ? dcache_axi_io_blks   : nocache_axi_io_blks);
 
+assign o_icache_rdata   = ch_icache ? icache_rdata[31:0] : nocache_rdata[31:0];
+assign o_icache_ack     = ch_icache ? icache_ack         : nocache_ack        ;
+
+assign o_dcache_rdata   = ch_dcache ? dcache_rdata       : nocache_rdata      ;
+assign o_dcache_ack     = ch_dcache ? dcache_ack         : nocache_ack        ;
 
 wire _unused_ok = &{1'b0,
   icache_rdata[63:32],
@@ -3273,16 +3326,7 @@ module ysyx_210544_mem_stage(
   output  wire  [2 :0]        o_dcache_bytes,
   output  wire  [63:0]        o_dcache_wdata,
   input   wire                i_dcache_ack,
-  input   wire  [63:0]        i_dcache_rdata,
-  
-  // NoCache interface
-  output  wire                o_nocache_req,
-  output  wire  [63:0]        o_nocache_addr,
-  output  wire                o_nocache_op,
-  output  wire  [2 :0]        o_nocache_bytes,
-  output  wire  [63:0]        o_nocache_wdata,
-  input   wire                i_nocache_ack,
-  input   wire  [63:0]        i_nocache_rdata
+  input   wire  [63:0]        i_dcache_rdata
 );
 
 
@@ -3529,15 +3573,7 @@ ysyx_210544_memU MemU(
   .o_dcache_bytes             (o_dcache_bytes             ),
   .o_dcache_wdata             (o_dcache_wdata             ),
   .i_dcache_ack               (i_dcache_ack               ),
-  .i_dcache_rdata             (i_dcache_rdata             ),
-
-  .o_nocache_req              (o_nocache_req              ),
-  .o_nocache_addr             (o_nocache_addr             ),
-  .o_nocache_op               (o_nocache_op               ),
-  .o_nocache_bytes            (o_nocache_bytes            ),
-  .o_nocache_wdata            (o_nocache_wdata            ),
-  .i_nocache_ack              (i_nocache_ack              ),
-  .i_nocache_rdata            (i_nocache_rdata            )
+  .i_dcache_rdata             (i_dcache_rdata             )
 );
 
 // 访问外设（cpu内部的）
@@ -3594,29 +3630,13 @@ module ysyx_210544_memU(
   output  wire  [2 :0]        o_dcache_bytes,
   output  wire  [63:0]        o_dcache_wdata,
   input   wire                i_dcache_ack,
-  input   wire  [63:0]        i_dcache_rdata,
-  
-  // NoCache interface
-  output  wire                o_nocache_req,
-  output  wire  [63:0]        o_nocache_addr,
-  output  wire                o_nocache_op,
-  output  wire  [2 :0]        o_nocache_bytes,
-  output  wire  [63:0]        o_nocache_wdata,
-  input   wire                i_nocache_ack,
-  input   wire  [63:0]        i_nocache_rdata
+  input   wire  [63:0]        i_dcache_rdata
 );
 
 
 wire hs_dcache  = o_dcache_req & i_dcache_ack;
-wire hs_nocache = o_nocache_req & i_nocache_ack;
 
 reg wait_finish;  // 是否等待访存完毕？
-
-// 是否为外设？
-// 0x1000_0000 ~ END, 是UART
-// 0x3000_0000 ~ END, 是Flash（也当主存来访问）
-// 0x8000_0000 ~ END, 是主存
-wire is_peripheral = (i_addr[31:28] == 4'h1) | (i_addr[31:28] == 4'h3);
 
 always @(posedge clk) begin
   if (rst) begin
@@ -3626,35 +3646,18 @@ always @(posedge clk) begin
   else begin
     if (start) begin
       if (i_ren) begin
-        if (is_peripheral) begin
-          o_nocache_req      <= 1;
-          o_nocache_op       <= `REQ_READ;
-          o_nocache_addr     <= i_addr;
-          o_nocache_bytes    <= i_bytes;
-        end
-        else begin
-          o_dcache_req      <= 1;
-          o_dcache_op       <= `REQ_READ;
-          o_dcache_addr     <= i_addr;
-          o_dcache_bytes    <= i_bytes;
-        end
+        o_dcache_req      <= 1;
+        o_dcache_op       <= `REQ_READ;
+        o_dcache_addr     <= i_addr;
+        o_dcache_bytes    <= i_bytes;
         wait_finish       <= 1;
       end
       else if (i_wen) begin
-        if (is_peripheral) begin
-          o_nocache_req      <= 1;
-          o_nocache_op       <= `REQ_WRITE;
-          o_nocache_addr     <= i_addr;
-          o_nocache_bytes    <= i_bytes;
-          o_nocache_wdata    <= i_wdata;          
-        end
-        else begin
-          o_dcache_req      <= 1;
-          o_dcache_op       <= `REQ_WRITE;
-          o_dcache_addr     <= i_addr;
-          o_dcache_bytes    <= i_bytes;
-          o_dcache_wdata    <= i_wdata;
-        end
+        o_dcache_req      <= 1;
+        o_dcache_op       <= `REQ_WRITE;
+        o_dcache_addr     <= i_addr;
+        o_dcache_bytes    <= i_bytes;
+        o_dcache_wdata    <= i_wdata;
         wait_finish       <= 1;
       end
     end
@@ -3665,11 +3668,7 @@ always @(posedge clk) begin
           wait_finish       <= 0;
           o_dcache_req      <= 0;
           req               <= 1;
-        end
-        else if (hs_nocache) begin
-          wait_finish       <= 0;
-          o_nocache_req      <= 0;
-          req               <= 1;
+          o_rdata           <= i_dcache_rdata;
         end
       end
       // 清除req信号
@@ -3680,7 +3679,7 @@ always @(posedge clk) begin
   end
 end
 
-assign o_rdata = is_peripheral ? i_nocache_rdata : i_dcache_rdata;
+// assign o_rdata = i_dcache_rdata;
 
 
 endmodule
@@ -3962,6 +3961,10 @@ always @(posedge clk) begin
   end
 end
 
+wire _unused_ok = &{1'b0,
+  cnt,
+  1'b0};
+
 endmodule
 
 // ZhengpuShi
@@ -4190,7 +4193,7 @@ module ysyx_210544_cpu(
   output  wire                o_axi_io_op,
   output  wire  [511:0]       o_axi_io_wdata,
   output  wire  [63:0]        o_axi_io_addr,
-  output  wire  [1:0]         o_axi_io_size,
+  output  wire  [2:0]         o_axi_io_size,
   output  wire  [7:0]         o_axi_io_blks
 );
 
@@ -4338,14 +4341,6 @@ wire  [63:0]                  o_dcache_wdata;
 reg                           i_dcache_ack;
 reg   [63:0]                  i_dcache_rdata;
 
-wire                          o_nocache_req;
-wire  [63:0]                  o_nocache_addr;
-wire                          o_nocache_op;
-wire  [2 :0]                  o_nocache_bytes;
-wire  [63:0]                  o_nocache_wdata;
-reg                           i_nocache_ack;
-reg   [63:0]                  i_nocache_rdata;
-
 ysyx_210544_cache Cache (
   .clk                        (clk                        ),
   .rst                        (rst                        ),
@@ -4364,15 +4359,6 @@ ysyx_210544_cache Cache (
   .i_dcache_wdata             (o_dcache_wdata             ),
   .o_dcache_ack               (i_dcache_ack               ),
   .o_dcache_rdata             (i_dcache_rdata             ),
-
-    // NoCache
-  .i_nocache_req              (o_nocache_req               ),
-  .i_nocache_addr             (o_nocache_addr              ),
-  .i_nocache_op               (o_nocache_op                ),
-  .i_nocache_bytes            (o_nocache_bytes             ),
-  .i_nocache_wdata            (o_nocache_wdata             ),
-  .o_nocache_ack              (i_nocache_ack               ),
-  .o_nocache_rdata            (i_nocache_rdata             ),
 
   // AXI
   .i_axi_io_ready             (i_axi_io_ready             ),
@@ -4507,15 +4493,7 @@ ysyx_210544_mem_stage Mem_stage(
   .o_dcache_bytes             (o_dcache_bytes             ),
   .o_dcache_wdata             (o_dcache_wdata             ),
   .i_dcache_ack               (i_dcache_ack               ),
-  .i_dcache_rdata             (i_dcache_rdata             ),
-
-  .o_nocache_req              (o_nocache_req              ),
-  .o_nocache_addr             (o_nocache_addr             ),
-  .o_nocache_op               (o_nocache_op               ),
-  .o_nocache_bytes            (o_nocache_bytes            ),
-  .o_nocache_wdata            (o_nocache_wdata            ),
-  .i_nocache_ack              (i_nocache_ack              ),
-  .i_nocache_rdata            (i_nocache_rdata            )
+  .i_dcache_rdata             (i_dcache_rdata             )
 );
 
 ysyx_210544_wb_stage Wb_stage(
