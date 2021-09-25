@@ -29,7 +29,7 @@ module ysyx_210544_cache_axi(
 	output reg                        o_axi_io_valid,
   output reg    [63 : 0]            o_axi_io_addr,
   output        [511 : 0]           o_axi_io_wdata,
-  output        [1 : 0]             o_axi_io_size,
+  output        [2 : 0]             o_axi_io_size,
   output        [7 : 0]             o_axi_io_blks
 );
 

@@ -14,7 +14,7 @@ module ysyx_210544_cpu(
   output  wire                o_axi_io_op,
   output  wire  [511:0]       o_axi_io_wdata,
   output  wire  [63:0]        o_axi_io_addr,
-  output  wire  [1:0]         o_axi_io_size,
+  output  wire  [2:0]         o_axi_io_size,
   output  wire  [7:0]         o_axi_io_blks
 );
 
@@ -162,14 +162,6 @@ wire  [63:0]                  o_dcache_wdata;
 reg                           i_dcache_ack;
 reg   [63:0]                  i_dcache_rdata;
 
-wire                          o_nocache_req;
-wire  [63:0]                  o_nocache_addr;
-wire                          o_nocache_op;
-wire  [2 :0]                  o_nocache_bytes;
-wire  [63:0]                  o_nocache_wdata;
-reg                           i_nocache_ack;
-reg   [63:0]                  i_nocache_rdata;
-
 ysyx_210544_cache Cache (
   .clk                        (clk                        ),
   .rst                        (rst                        ),
@@ -188,15 +180,6 @@ ysyx_210544_cache Cache (
   .i_dcache_wdata             (o_dcache_wdata             ),
   .o_dcache_ack               (i_dcache_ack               ),
   .o_dcache_rdata             (i_dcache_rdata             ),
-
-    // NoCache
-  .i_nocache_req              (o_nocache_req               ),
-  .i_nocache_addr             (o_nocache_addr              ),
-  .i_nocache_op               (o_nocache_op                ),
-  .i_nocache_bytes            (o_nocache_bytes             ),
-  .i_nocache_wdata            (o_nocache_wdata             ),
-  .o_nocache_ack              (i_nocache_ack               ),
-  .o_nocache_rdata            (i_nocache_rdata             ),
 
   // AXI
   .i_axi_io_ready             (i_axi_io_ready             ),
@@ -331,15 +314,7 @@ ysyx_210544_mem_stage Mem_stage(
   .o_dcache_bytes             (o_dcache_bytes             ),
   .o_dcache_wdata             (o_dcache_wdata             ),
   .i_dcache_ack               (i_dcache_ack               ),
-  .i_dcache_rdata             (i_dcache_rdata             ),
-
-  .o_nocache_req              (o_nocache_req              ),
-  .o_nocache_addr             (o_nocache_addr             ),
-  .o_nocache_op               (o_nocache_op               ),
-  .o_nocache_bytes            (o_nocache_bytes            ),
-  .o_nocache_wdata            (o_nocache_wdata            ),
-  .i_nocache_ack              (i_nocache_ack              ),
-  .i_nocache_rdata            (i_nocache_rdata            )
+  .i_dcache_rdata             (i_dcache_rdata             )
 );
 
 ysyx_210544_wb_stage Wb_stage(

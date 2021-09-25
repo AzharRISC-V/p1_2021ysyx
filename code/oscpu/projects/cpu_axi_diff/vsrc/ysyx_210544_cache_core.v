@@ -10,7 +10,7 @@
 module ysyx_210544_cache_core (
   input   wire                clk,
   input   wire                rst,
-  input   wire  [`BUS_64]     i_cache_core_addr,          // 地址
+  input   wire  [`BUS_64]     i_cache_core_addr,          // 地址。地址与操作数相加后可以跨界。
   input   wire  [`BUS_64]     i_cache_core_wdata,         // 写入的数据
   input   wire  [2 : 0]       i_cache_core_bytes,         // 操作的字节数: 0~7表示1~8字节
 	input   wire                i_cache_core_op,            // 操作: 0:read, 1:write
@@ -25,7 +25,7 @@ module ysyx_210544_cache_core (
   output  wire                o_axi_io_op,
   output  wire  [511:0]       o_axi_io_wdata,
   output  wire  [63:0]        o_axi_io_addr,
-  output  wire  [1:0]         o_axi_io_size,
+  output  wire  [2:0]         o_axi_io_size,
   output  wire  [7:0]         o_axi_io_blks
 );
 

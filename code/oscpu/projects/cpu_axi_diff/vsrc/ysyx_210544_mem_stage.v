@@ -42,16 +42,7 @@ module ysyx_210544_mem_stage(
   output  wire  [2 :0]        o_dcache_bytes,
   output  wire  [63:0]        o_dcache_wdata,
   input   wire                i_dcache_ack,
-  input   wire  [63:0]        i_dcache_rdata,
-  
-  // NoCache interface
-  output  wire                o_nocache_req,
-  output  wire  [63:0]        o_nocache_addr,
-  output  wire                o_nocache_op,
-  output  wire  [2 :0]        o_nocache_bytes,
-  output  wire  [63:0]        o_nocache_wdata,
-  input   wire                i_nocache_ack,
-  input   wire  [63:0]        i_nocache_rdata
+  input   wire  [63:0]        i_dcache_rdata
 );
 
 
@@ -298,15 +289,7 @@ ysyx_210544_memU MemU(
   .o_dcache_bytes             (o_dcache_bytes             ),
   .o_dcache_wdata             (o_dcache_wdata             ),
   .i_dcache_ack               (i_dcache_ack               ),
-  .i_dcache_rdata             (i_dcache_rdata             ),
-
-  .o_nocache_req              (o_nocache_req              ),
-  .o_nocache_addr             (o_nocache_addr             ),
-  .o_nocache_op               (o_nocache_op               ),
-  .o_nocache_bytes            (o_nocache_bytes            ),
-  .o_nocache_wdata            (o_nocache_wdata            ),
-  .i_nocache_ack              (i_nocache_ack              ),
-  .i_nocache_rdata            (i_nocache_rdata            )
+  .i_dcache_rdata             (i_dcache_rdata             )
 );
 
 // 访问外设（cpu内部的）

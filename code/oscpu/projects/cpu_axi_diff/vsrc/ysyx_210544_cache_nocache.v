@@ -24,11 +24,22 @@ module ysyx_210544_cache_nocache (
   output  wire                o_axi_io_op,
   output  wire  [511:0]       o_axi_io_wdata,
   output  wire  [63:0]        o_axi_io_addr,
-  output  wire  [1:0]         o_axi_io_size,
+  output  wire  [2:0]         o_axi_io_size,
   output  wire  [7:0]         o_axi_io_blks
 );
 
 wire hs_axi_io = o_axi_io_valid & i_axi_io_ready;
+
+reg [2:0] nocache_size;
+always @(*) begin
+  case (i_cache_nocache_bytes)
+    3'b000: nocache_size = `SIZE_B;
+    3'b001: nocache_size = `SIZE_H;
+    3'b011: nocache_size = `SIZE_W;
+    3'b111: nocache_size = `SIZE_D;
+    default: nocache_size = `SIZE_B;  // 这种情况应该是不支持的。
+  endcase
+end
 
 always @(posedge clk) begin
   if (rst) begin
@@ -42,7 +53,7 @@ always @(posedge clk) begin
         o_axi_io_addr   <= i_cache_nocache_addr;
         o_axi_io_blks   <= 0;
         o_axi_io_op     <= i_cache_nocache_op;
-        o_axi_io_size   <= i_cache_nocache_bytes[2:1];  // 高2位正好
+        o_axi_io_size   <= nocache_size;
         o_axi_io_wdata  <= {448'b0, i_cache_nocache_wdata};
         o_axi_io_valid  <= 1;
       end
@@ -60,5 +71,8 @@ always @(posedge clk) begin
   end
 end
 
+wire _unused_ok = &{1'b0,
+  i_axi_io_rdata[511:64],
+  1'b0};
 
 endmodule

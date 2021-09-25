@@ -43,4 +43,38 @@ ysyx_210544_cmtU CmtU(
   .i_intrNo                   (i_cmt_intrNo               )
 );
 
+reg [63:0] cnt;
+always @(posedge clk) begin
+  if (rst) begin
+    cnt <= 1;
+  end
+  else begin
+    
+    // 判断停机
+    if (i_cmt_inst == 32'h6b) begin
+      if (i_cmt_regs[10] == 0) begin
+        $display("*****SUCCESS!");
+      end
+      else begin
+        $display("!!!!!FAIL!");
+      end
+      $finish();
+    end
+
+    // 打印执行情况
+    // if (i_cmtvalid) begin
+    //   cnt <= cnt + 1;
+    //   if (cnt[4:0] == 0) begin
+    //     $displayh("[cnt:", cnt, ", pc:", i_cmt_pc, "]");
+    //   end
+    // end
+
+
+  end
+end
+
+wire _unused_ok = &{1'b0,
+  cnt,
+  1'b0};
+
 endmodule

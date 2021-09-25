@@ -61,7 +61,7 @@ module ysyx_210544_axi_rw (
     output reg [`RW_DATA_WIDTH-1:0]     user_rdata_o,
     input  [`RW_DATA_WIDTH-1:0]         user_wdata_i,
     input  [63:0]                       user_addr_i,
-    input  [1:0]                        user_size_i,
+    input  [2:0]                        user_size_i,
     output [1:0]                        user_resp_o,
 
     // Advanced eXtensible Interface
@@ -178,7 +178,7 @@ module ysyx_210544_axi_rw (
     parameter TRANS_LEN_MAX = 8;
 
     wire [7:0] axi_len      = user_blks_i;
-    wire [2:0] axi_size     = {1'b0, user_size_i};// AXI_SIZE[2:0];
+    wire [2:0] axi_size     = user_size_i;
     
     wire [63:0] axi_addr                         = user_addr_i;
     wire [`AXI_ID_WIDTH-1:0] axi_id              = {`AXI_ID_WIDTH{1'b0}};

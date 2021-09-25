@@ -3616,7 +3616,7 @@ reg wait_finish;  // 是否等待访存完毕？
 // 0x1000_0000 ~ END, 是UART
 // 0x3000_0000 ~ END, 是Flash（也当主存来访问）
 // 0x8000_0000 ~ END, 是主存
-wire is_peripheral = i_addr[31:28] == 4'h1;
+wire is_peripheral = (i_addr[31:28] == 4'h1) | (i_addr[31:28] == 4'h3);
 
 always @(posedge clk) begin
   if (rst) begin
@@ -3931,6 +3931,36 @@ ysyx_210544_cmtU CmtU(
   .i_csrs                     (i_cmt_csrs                 ),
   .i_intrNo                   (i_cmt_intrNo               )
 );
+
+reg [63:0] cnt;
+always @(posedge clk) begin
+  if (rst) begin
+    cnt <= 1;
+  end
+  else begin
+    
+    // 判断停机
+    if (i_cmt_inst == 32'h6b) begin
+      if (i_cmt_regs[10] == 0) begin
+        $display("*****SUCCESS!");
+      end
+      else begin
+        $display("!!!!!FAIL!");
+      end
+      $finish();
+    end
+
+    // 打印执行情况
+    // if (i_cmtvalid) begin
+    //   cnt <= cnt + 1;
+    //   if (cnt[4:0] == 0) begin
+    //     $displayh("[cnt:", cnt, ", pc:", i_cmt_pc, "]");
+    //   end
+    // end
+
+
+  end
+end
 
 endmodule
 
