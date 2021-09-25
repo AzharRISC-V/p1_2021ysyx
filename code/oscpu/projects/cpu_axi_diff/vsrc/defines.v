@@ -22,7 +22,6 @@
 `define REQ_WRITE           1'b1
 
 `define RW_DATA_WIDTH       512
-`define AXI_DATA_WIDTH      64
 `define AXI_ID_WIDTH        4
 
 `define RISCV_PRIV_MODE_U   0

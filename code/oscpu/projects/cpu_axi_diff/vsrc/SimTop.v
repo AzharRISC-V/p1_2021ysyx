@@ -32,8 +32,8 @@ module SimTop(
     
     input                               `AXI_TOP_INTERFACE(w_ready),
     output                              `AXI_TOP_INTERFACE(w_valid),
-    output [`AXI_DATA_WIDTH-1:0]        `AXI_TOP_INTERFACE(w_bits_data)         [3:0],
-    output [`AXI_DATA_WIDTH/8-1:0]      `AXI_TOP_INTERFACE(w_bits_strb),
+    output [63:0]                       `AXI_TOP_INTERFACE(w_bits_data)         [3:0],
+    output [7:0]                        `AXI_TOP_INTERFACE(w_bits_strb),
     output                              `AXI_TOP_INTERFACE(w_bits_last),
     
     output                              `AXI_TOP_INTERFACE(b_ready),

@@ -34,7 +34,7 @@ module ysyx_210544_cache_axi(
 );
 
 // 是否为Flash外设，此时只能4字节传输，且不能使用burst模式，所以64字节需要16次传输
-wire is_flash = 0;// i_cache_axi_addr[31:28] == 4'd8;
+wire is_flash = i_cache_axi_addr[31:28] == 4'd3;
 
 // axi一次传输完成
 wire hs_ok = o_axi_io_valid & i_axi_io_ready;

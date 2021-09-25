@@ -270,7 +270,7 @@ fi
 
 # Build project
 if [[ "$BUILD" == "true" ]]; then
-    [[ -d $BUILD_PATH ]] && find $BUILD_PATH -type l -delete
+    #[[ -d $BUILD_PATH ]] && find $BUILD_PATH -type l -delete
     [[ "$YSYXSOC" == "true" ]] && build_soc_proj
     [[ "$DIFFTEST" == "true" ]] && build_diff_proj || build_proj
 

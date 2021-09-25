@@ -48,9 +48,9 @@ soc:
 	sed -i "1i/* verilator lint_off DECLFILENAME */" ysyx_210544.v
 	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal --trace -DYSYXSOC' -a "-i ysyxSoC/flash/hello-flash.bin --dump-wave"
 soc-run:
-	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal --trace' -a "-i ysyxSoC/flash/hello-flash.bin"
+	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal --trace -DYSYXSOC' -a "-i ysyxSoC/flash/hello-flash.bin"
 soc-run-dump:
-	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal --trace' -a "-i ysyxSoC/flash/hello-flash.bin --dump-wave"
+	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal --trace -DYSYXSOC' -a "-i ysyxSoC/flash/hello-flash.bin --dump-wave"
 
 # Clean nemu/build
 clean:
