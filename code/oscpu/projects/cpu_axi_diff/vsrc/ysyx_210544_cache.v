@@ -51,9 +51,9 @@ wire daddr_FLASH  = i_dcache_req & i_dcache_addr[31:28] == 4'h3;
 wire daddr_MEM    = i_dcache_req & i_dcache_addr[31:28] == 4'h8;
 
 // 注意： FLASH可选的使用Cache或不使用Cache，Cache已做适配。
-wire ch_icache    = iaddr_MEM;// | iaddr_FLASH;
-wire ch_dcache    = daddr_MEM;// | daddr_FLASH;
-wire ch_nocache   = iaddr_UART | daddr_UART | iaddr_FLASH | daddr_FLASH;
+wire ch_icache    = iaddr_MEM | iaddr_FLASH;
+wire ch_dcache    = daddr_MEM | daddr_FLASH;
+wire ch_nocache   = iaddr_UART | daddr_UART;// | iaddr_FLASH | daddr_FLASH;
 
 
 /////////////////////////////////////////////////
