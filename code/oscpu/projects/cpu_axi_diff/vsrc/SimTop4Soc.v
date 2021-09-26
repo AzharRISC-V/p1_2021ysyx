@@ -128,7 +128,7 @@ wire                          o_user_axi_op;
 wire                          o_user_axi_valid;
 wire [511:0]                  o_user_axi_wdata;
 wire [63:0]                   o_user_axi_addr;
-wire [1:0]                    o_user_axi_size;
+wire [2:0]                    o_user_axi_size;
 wire [7:0]                    o_user_axi_blks;
 
 wire [1:0]                    o_user_axi_resp;
