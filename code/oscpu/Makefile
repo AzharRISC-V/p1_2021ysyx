@@ -48,11 +48,14 @@ soc:
 	sed 's/module SimTop4Soc/module ysyx_210544/g' ysyx_210544.v -i; \
 	sed '/`define SUPPORT_DIFFTEST/d' ysyx_210544.v -i;\
 	sed -i "1i/* verilator lint_off DECLFILENAME */" ysyx_210544.v
-	@./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal --trace -DYSYXSOC' -a "-i $(SOCBIN) --dump-wave"
+	@./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal -DYSYXSOC' \
+		-a "-i $(SOCBIN) --dump-wave -b $(START) -e $(END)"
 soc-run:
-	@./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal -DYSYXSOC' -a "-i $(SOCBIN)"
+	@./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal -DYSYXSOC'\
+		-a "-i $(SOCBIN)"
 soc-run-dump:
-	@./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal --trace -DYSYXSOC' -a "-i $(SOCBIN) --dump-wave"
+	@./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal -DYSYXSOC' \
+		-a "-i $(SOCBIN) --dump-wave -b $(START) -e $(END)"
 
 # Clean nemu/build
 clean:

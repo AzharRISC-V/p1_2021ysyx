@@ -536,6 +536,8 @@ wire _unused_ok = &{1'b0,
 
 endmodule
 
+/*verilator tracing_off*/
+
 
 module ysyx_210544_S011HD1P_X32Y2D128_BW(
     Q, CLK, CEN, WEN, BWEN, A, D
@@ -3063,7 +3065,7 @@ always @(posedge clk) begin
               state <= STATE_ENTER_WRITE_MEPC;
               exception_cause <= 64'h80000000_00000007;
               // $write("#time-instr\n"); $fflush();
-              // $write("."); $fflush();
+              $write("."); $fflush();
             end
             step <= 0;
           end
