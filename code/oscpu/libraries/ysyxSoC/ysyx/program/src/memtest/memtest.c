@@ -5,7 +5,7 @@
 #define ARR_SIZE 0x2000
 
 int main(){
-    putstr("START TEST...");
+    putstr("START TEST...\n");
     uint16_t* data = (void*)(0x80200000);
     for(int i = 0; i < ARR_SIZE / sizeof(uint16_t); i++){
         data[i] = i;

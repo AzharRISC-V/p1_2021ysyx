@@ -1,0 +1,67 @@
+
+/home/steven/p1_2021ysyx/code/oscpu/libraries/ysyxSoC/ysyx/program/src/hello/build/hello-riscv64-mycpu.elf:     file format elf64-littleriscv
+
+
+Disassembly of section .text:
+
+0000000030000000 <_start>:
+    30000000:	00000413          	li	s0,0
+    30000004:	50100117          	auipc	sp,0x50100
+    30000008:	ffc10113          	addi	sp,sp,-4 # 80100000 <_end>
+    3000000c:	040000ef          	jal	ra,3000004c <_trm_init>
+
+0000000030000010 <main>:
+    30000010:	ff010113          	addi	sp,sp,-16
+    30000014:	00813023          	sd	s0,0(sp)
+    30000018:	00113423          	sd	ra,8(sp)
+    3000001c:	00000417          	auipc	s0,0x0
+    30000020:	0ac40413          	addi	s0,s0,172 # 300000c8 <_etext>
+    30000024:	04800513          	li	a0,72
+    30000028:	00140413          	addi	s0,s0,1
+    3000002c:	01c000ef          	jal	ra,30000048 <putch>
+    30000030:	00044503          	lbu	a0,0(s0)
+    30000034:	fe051ae3          	bnez	a0,30000028 <main+0x18>
+    30000038:	00813083          	ld	ra,8(sp)
+    3000003c:	00013403          	ld	s0,0(sp)
+    30000040:	01010113          	addi	sp,sp,16
+    30000044:	00008067          	ret
+
+0000000030000048 <putch>:
+    30000048:	0680006f          	j	300000b0 <drv_uart_putc>
+
+000000003000004c <_trm_init>:
+    3000004c:	ff010113          	addi	sp,sp,-16
+    30000050:	00113423          	sd	ra,8(sp)
+    30000054:	01c000ef          	jal	ra,30000070 <virt_uart_init>
+    30000058:	00000517          	auipc	a0,0x0
+    3000005c:	08050513          	addi	a0,a0,128 # 300000d8 <mainargs>
+    30000060:	fb1ff0ef          	jal	ra,30000010 <main>
+    30000064:	00050513          	mv	a0,a0
+    30000068:	0000006b          	0x6b
+    3000006c:	0000006f          	j	3000006c <_trm_init+0x20>
+
+0000000030000070 <virt_uart_init>:
+    30000070:	100007b7          	lui	a5,0x10000
+    30000074:	000780a3          	sb	zero,1(a5) # 10000001 <_entry_offset+0x10000001>
+    30000078:	0037c703          	lbu	a4,3(a5)
+    3000007c:	f8076713          	ori	a4,a4,-128
+    30000080:	0ff77713          	andi	a4,a4,255
+    30000084:	00e781a3          	sb	a4,3(a5)
+    30000088:	00100713          	li	a4,1
+    3000008c:	00e78023          	sb	a4,0(a5)
+    30000090:	000780a3          	sb	zero,1(a5)
+    30000094:	00300713          	li	a4,3
+    30000098:	00e781a3          	sb	a4,3(a5)
+    3000009c:	0017c703          	lbu	a4,1(a5)
+    300000a0:	0ff77713          	andi	a4,a4,255
+    300000a4:	00176713          	ori	a4,a4,1
+    300000a8:	00e780a3          	sb	a4,1(a5)
+    300000ac:	00008067          	ret
+
+00000000300000b0 <drv_uart_putc>:
+    300000b0:	10000737          	lui	a4,0x10000
+    300000b4:	00574783          	lbu	a5,5(a4) # 10000005 <_entry_offset+0x10000005>
+    300000b8:	0207f793          	andi	a5,a5,32
+    300000bc:	fe078ce3          	beqz	a5,300000b4 <drv_uart_putc+0x4>
+    300000c0:	00a70023          	sb	a0,0(a4)
+    300000c4:	00008067          	ret
