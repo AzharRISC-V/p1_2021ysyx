@@ -260,11 +260,11 @@ module ysyx_210544_axi_rw (
     end
 
     // 输入地址的8字节内偏移量
-    wire [2:0] aix_addr_offset = user_addr_i[2:0];
+    wire [2:0] axi_addr_offset = user_addr_i[2:0];
 
     // 移位生成最终的 w_strb。可是数据确实是在低位，可能 wdata 和 wstrb 都不需要移位
     // assign axi_w_strb_o     = 8'b1111_1111;     // 每个bit代表一个字节是否要写入
-    assign axi_w_strb_o = axi_w_strb_orig;// << aix_addr_offset;
+    assign axi_w_strb_o = axi_w_strb_orig;// << axi_addr_offset;
 
     // Wreite response channel signals
     assign axi_b_ready_o    = w_state_resp;
