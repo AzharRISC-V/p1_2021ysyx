@@ -461,7 +461,7 @@ module ysyx_210544_axi_rw (
     end
 
     // 输入地址的8字节内偏移量
-    wire [2:0] axi_addr_offset = user_addr_i[2:0];
+    // wire [2:0] axi_addr_offset = user_addr_i[2:0];
 
     // 移位生成最终的 w_strb。可是数据确实是在低位，可能 wdata 和 wstrb 都不需要移位
     // assign axi_w_strb_o     = 8'b1111_1111;     // 每个bit代表一个字节是否要写入
@@ -509,6 +509,11 @@ module ysyx_210544_axi_rw (
                               | ({64{size_d}} & {{64-64{1'b0}}, 64'hffffffff_ffffffff})
                               );
 
+    // 移位的bit数。0~7 转换为 0~56
+    wire [5:0] aligned_offset    = {3'b0, user_addr_i[2:0]} << 3;
+    // 已掩码，已移位后的数据
+    wire [63:0] axi_r_data_masked_unaligned = (axi_r_data_i >> aligned_offset) & mask_rdata;
+
     generate
         for (genvar i = 0; i < TRANS_LEN_MAX; i += 1) begin
             always @(posedge clock) begin
@@ -517,7 +522,7 @@ module ysyx_210544_axi_rw (
                 end
                 else if (r_hs) begin
                     if (len == i) begin
-                        user_rdata_o[i*64+:64] <= axi_r_data_i & mask_rdata;
+                        user_rdata_o[i*64+:64] <= axi_r_data_masked_unaligned;
                     end
                 end
             end
