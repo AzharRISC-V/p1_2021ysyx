@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.20"
+VERSION="1.21"
 
 help() {
     echo "Version v"$VERSION
@@ -110,7 +110,7 @@ build_diff_proj() {
     compile_chisel
 
     # Refresh the modification time of the top file, otherwise some changes to the RTL source code will not take effect in next compilation.
-    touch -m `find $BUILD_PATH -name $DIFFTEST_TOP_FILE` 1>/dev/null 2>&1
+    touch -m `find $PROJECT_PATH/$VSRC_FOLDER -name $DIFFTEST_TOP_FILE` 1>/dev/null 2>&1
     # create soft link ($BUILD_PATH/*.v -> $PROJECT_PATH/$VSRC_FOLDER/*.v)
     create_soft_link $BUILD_PATH $PROJECT_PATH/$VSRC_FOLDER \"*.v\"
 
