@@ -350,10 +350,10 @@ assign stx_pad_o = lcr[`UART_LC_BC] ? 1'b0 : stx_o_tmp;    // Break condition
 
 `ifdef VCD_DUMP_ON
    initial begin
-           $dumpvars(1, enable);
-           $dumpvars(1, tstate, tf_count, clk);
-           $dumpvars(1, wb_rst_i, tf_data_in, tf_data_out);
-           $dumpvars(1, tf_push, tf_pop, tf_overrun, tx_reset, lsr_mask);
+          //  $dumpvars(1, enable);
+          //  $dumpvars(1, tstate, tf_count, clk);
+          //  $dumpvars(1, wb_rst_i, tf_data_in, tf_data_out);
+          //  $dumpvars(1, tf_push, tf_pop, tf_overrun, tx_reset, lsr_mask);
    end
 `endif
     

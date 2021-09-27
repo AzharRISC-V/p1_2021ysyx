@@ -289,9 +289,6 @@ if [[ "$SIMULATE" == "true" ]]; then
     cd $BUILD_PATH
     
     # run simulation program
-    echo ""
-    echo ""
-    echo "====================================="
     echo "Simulating..."
     [[ "$GDB" == "true" ]] && gdb -s $EMU_FILE --args ./$EMU_FILE $PARAMETERS || ./$EMU_FILE $PARAMETERS
 

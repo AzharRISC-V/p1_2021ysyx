@@ -35,10 +35,11 @@ always @(posedge clk) begin
     end
     else begin
       reg_mtime_cnt <= 0;
-      reg_mtime <= reg_mtime + 20;
+      reg_mtime <= reg_mtime + 200;
     end
 
     if (i_clint_wen & addr_mtimecmp) begin
+      $display("reg_mtimecmp, old: ", reg_mtimecmp, ", new: ", i_clint_wdata, ". reg_mtime: ", reg_mtime);
       reg_mtimecmp <= i_clint_wdata;
     end
   end

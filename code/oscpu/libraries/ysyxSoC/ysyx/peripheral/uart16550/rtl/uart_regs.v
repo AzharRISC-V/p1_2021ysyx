@@ -896,7 +896,7 @@ end
 
 `ifdef VCD_DUMP_ON
    initial begin
-           $dumpvars(1, dl, dlc, wb_dat_i, wb_dat_o);
+          //  $dumpvars(1, dl, dlc, wb_dat_i, wb_dat_o);
    end
 `endif
 

@@ -68,6 +68,7 @@ wire mstatus_sd = (i_csr_wdata[14:13] == 2'b11) | (i_csr_wdata[16:15] == 2'b11);
 // csr写入
 always @(posedge clk) begin
   if (rst == 1'b1) begin
+    csrs[`CSR_IDX_NONE]     <= 0;
     csrs[`CSR_IDX_MCYCLE]   <= 0;
     csrs[`CSR_IDX_MSTATUS]  <= 64'h1800;// 64'h1808;
     csrs[`CSR_IDX_MIE]      <= 0;// 64'h80;

@@ -134,19 +134,19 @@ wire [7:0]                    o_user_axi_blks;
 wire [1:0]                    o_user_axi_resp;
 
 
-// 使用Verilator快速编译的测试，尝试修改这里的内容，看看soc编译需要多久
-reg tmp;
-always @(posedge clock) begin
-  if (reset) begin
-    tmp <= 0;
-  end
-  else begin
-    if (!tmp) begin
-      tmp <= 1;
-      $display("TEST by Steven. 2021.09.25 12:17\n");
-    end
-  end
-end
+// // 使用Verilator快速编译的测试，尝试修改这里的内容，看看soc编译需要多久
+// reg tmp;
+// always @(posedge clock) begin
+//   if (reset) begin
+//     tmp <= 0;
+//   end
+//   else begin
+//     if (!tmp) begin
+//       tmp <= 1;
+//       $display("TEST by Steven. 2021.09.25 12:17\n");
+//     end
+//   end
+// end
 
 /////////////////////////////////////////////////
 // CPU核

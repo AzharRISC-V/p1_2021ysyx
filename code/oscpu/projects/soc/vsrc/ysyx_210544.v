@@ -1749,10 +1749,11 @@ always @(posedge clk) begin
     end
     else begin
       reg_mtime_cnt <= 0;
-      reg_mtime <= reg_mtime + 20;
+      reg_mtime <= reg_mtime + 200;
     end
 
     if (i_clint_wen & addr_mtimecmp) begin
+      $display("reg_mtimecmp, old: ", reg_mtimecmp, ", new: ", i_clint_wdata, ". reg_mtime: ", reg_mtime);
       reg_mtimecmp <= i_clint_wdata;
     end
   end
@@ -2001,6 +2002,7 @@ wire mstatus_sd = (i_csr_wdata[14:13] == 2'b11) | (i_csr_wdata[16:15] == 2'b11);
 // csr写入
 always @(posedge clk) begin
   if (rst == 1'b1) begin
+    csrs[`CSR_IDX_NONE]     <= 0;
     csrs[`CSR_IDX_MCYCLE]   <= 0;
     csrs[`CSR_IDX_MSTATUS]  <= 64'h1800;// 64'h1808;
     csrs[`CSR_IDX_MIE]      <= 0;// 64'h80;
@@ -4730,19 +4732,19 @@ wire [7:0]                    o_user_axi_blks;
 wire [1:0]                    o_user_axi_resp;
 
 
-// 使用Verilator快速编译的测试，尝试修改这里的内容，看看soc编译需要多久
-reg tmp;
-always @(posedge clock) begin
-  if (reset) begin
-    tmp <= 0;
-  end
-  else begin
-    if (!tmp) begin
-      tmp <= 1;
-      $display("TEST by Steven. 2021.09.25 12:17\n");
-    end
-  end
-end
+// // 使用Verilator快速编译的测试，尝试修改这里的内容，看看soc编译需要多久
+// reg tmp;
+// always @(posedge clock) begin
+//   if (reset) begin
+//     tmp <= 0;
+//   end
+//   else begin
+//     if (!tmp) begin
+//       tmp <= 1;
+//       $display("TEST by Steven. 2021.09.25 12:17\n");
+//     end
+//   end
+// end
 
 /////////////////////////////////////////////////
 // CPU核
