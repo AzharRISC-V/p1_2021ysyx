@@ -51,7 +51,7 @@ assign o_mem_executed_ack = 1'b1;
 wire executed_hs = i_mem_executed_req & o_mem_executed_ack;
 wire memoryed_hs = i_mem_memoryed_ack & o_mem_memoryed_req;
 
-wire addr_is_mem  = (mem_addr[31:24] == 8'h80) | (mem_addr[31:24] == 8'h10) | (mem_addr[31:24] == 8'h30);
+wire addr_is_mem  = (mem_addr[31:28] == 4'h8) | (mem_addr[31:28] == 4'h1) | (mem_addr[31:28] == 4'h3);
 wire addr_is_mmio = (mem_addr[31:24] == 8'h02);// & (64'hFF000000)) == 64'h02000000;
 
 // channel select, only valid in one pulse
