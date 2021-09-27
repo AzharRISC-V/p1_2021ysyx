@@ -1,0 +1,146 @@
+
+调试 Hello 不打印的问题。可能是 axi 问题
+
+=================== 2021.09.27 10:26 重新开始 ==========================
+
+1. 先找到出错位置
+heap: [0x8000d5f0 - 0x8640d5f0]
+#DBG: rt_hw_board_init() ok
+
+ \ | /
+- RT -     Thread Operating System
+ / | \     4.0.4 build Sep 27 2021
+ 2006 - 2021 Copyright by rt-thread team
+#DBG: rt_system_timer_init() ok
+#DBG: rt_system_scheduler_init() ok
+#DBG: rt_application_init() ok
+#DBG: rt_system_timer_thread_init() ok
+#DBG: rt_thread_idle_init() ok
+  to_thread:timer
+  remove_thread
+  switch_to, sp:8000c960
+!!!!!FAIL!
+- vsrc/ysyx_210544.v:3978: Verilog $finish
+Simulated 3532588 cycles in 119s
+
+2. 再次出发
+ make SOCBIN=rtthread-my/rtthread-my.bin soc START=3530000 END=3539999
+ 
+	3000981c:	08043783          	ld	a5,128(s0) 
+(属于0000000030009660 <rt_serial_write>:）
+	30009834:	000780e7          	jalr	a5	-> 0000000030000174 <drv_uart_putc>
+	30009838:	fa091ee3          	bnez	s2,300097f4 <rt_serial_write+0x194>
+	30009818:	000780e7          	jalr	a5	-> 0000000030000174 <drv_uart_putc>
+	30009834:	000780e7          	jalr	a5	-> 0000000030000174 <drv_uart_putc>
+
+3. 打印内容太多了，2588个cycles不够，修正c代码为简单的打印，再次出发。
+heap: [0x8000d478 - 0x8640d478]
+1
+ \ | /
+- RT -     Thread Operating System
+ / | \     4.0.4 build Sep 27 2021
+ 2006 - 2021 Copyright by rt-thread team
+23445abc!!!!!FAIL!
+- vsrc/ysyx_210544.v:3979: Verilog $finish
+Simulated 3196322 cycles in 120s
+
+4. 抓波形 make SOCBIN=rtthread-my/rtthread-my.bin soc START=3180000
+	30001508:	03813083          	ld	ra,56(sp)
+（属于 000000003000148c <rt_timer_init>）
+	30001534:	00008067          	ret
+	30004434:	8f01b783          	ld	a5,-1808(gp) # 80004280 <rt_thread_inited_hook>
+(属于 0000000030004350 <_rt_thread_init.isra.0>:）
+	3000445c:	00008067          	ret
+	30001eac:	00040513          	mv	a0,s0
+(属于0000000030001e58 <rt_thread_idle_init>:）
+	30001eb0:	4a1020ef          	jal	ra,30004b50 <rt_thread_startup>
+跟上进度了，rt_thread_startup
+	由于之前知道，rt_thread_resume 是成功的， 找到了
+	30004be8:	e95ff0ef          	jal	ra,30004a7c <rt_thread_resume>
+0000000030004a7c <rt_thread_resume>:
+修改c源码，打印字符，然后继续调试
+
+由于改动不大，直接抓波形 make SOCBIN=rtthread-my/rtthread-my.bin soc START=3180000
+注意，运行一次，要2min。
+reg_mtimecmp, old:                 5000, new:            105579000. reg_mtime:            105491400
+heap: [0x8000d478 - 0x8640d478]
+1
+ \ | /
+- RT -     Thread Operating System
+ / | \     4.0.4 build Sep 27 2021
+ 2006 - 2021 Copyright by rt-thread team
+23[1234564[1234564[1234565abc!!!!!FAIL!
+- vsrc/ysyx_210544.v:3979: Verilog $finish
+Simulated 3203974 cycles in 119s
+开始分析
+
+--------------
+再次开始
+<reg_mtimecmp, old:                 5000, new:            105617400. reg_mtime:            105529800
+heap: [0x8000d478 - 0x8640d478]
+1
+ \ | /
+- RT -     Thread Operating System
+ / | \     4.0.4 build Sep 27 2021
+ 2006 - 2021 Copyright by rt-thread team
+23{1[123456]25}4{1[123456]25}5{1[123456]25}6abc!!!!!FAIL!
+- vsrc/ysyx_210544.v:3979: Verilog $finish
+Simulated 3210246 cycles in 107s
+
+--------------
+再次开始
+make SOCBIN=rtthread-my/rtthread-my.bin soc START=3209000
+<reg_mtimecmp, old:                 5000, new:            105642800. reg_mtime:            105548000
+heap: [0x8000d478 - 0x8640d478]
+1
+ \ | /
+- RT -     Thread Operating System
+ / | \     4.0.4 build Sep 27 2021
+ 2006 - 2021 Copyright by rt-thread team
+23{1[123456]25}4{1[123456]25}5{1[123456]25}6abc.^CABCSIGINT received, gracefully shutting down... Type Ctrl+C again to stop forcely.
+
+Simulated 3527262 cycles in 147s
+
+分析
+0000000030001c64 <rt_system_scheduler_start>:
+	30001cc8:	23c030ef          	jal	ra,30004f04 <rt_hw_context_switch_to>
+0000000030004f04 <rt_hw_context_switch_to>:
+    30004f04:	00053103          	ld	sp,0(a0)
+    30004f08:	01013503          	ld	a0,16(sp)
+    30004f0c:	30051073          	csrw	mstatus,a0
+    30004f10:	0a00006f          	j	30004fb0 <rt_hw_context_switch_exit>
+0000000030004fb0 <rt_hw_context_switch_exit>:
+    30004fb0:	00013503          	ld	a0,0(sp)
+    30004fb4:	34151073          	csrw	mepc,a0
+    30004fb8:	00813083          	ld	ra,8(sp)
+    30004fbc:	000082b7          	lui	t0,0x8
+    30004fc0:	8002829b          	addiw	t0,t0,-2048
+    30004fc4:	30029073          	csrw	mstatus,t0
+    30004fc8:	01013503          	ld	a0,16(sp)
+    30004fcc:	30052073          	csrs	mstatus,a0
+    ....
+    30005044:	30200073          	mret
+0000000030004d08 <rt_thread_timer_entry>:
+    刚刚进入，马上发生了一次中断，
+0000000030005774 <trap_entry>
+    3000582c:	cb0fd0ef          	jal	ra,30002cdc <rt_interrupt_enter>
+    0000000030002cdc <rt_interrupt_enter>:
+    	30002cf0:	204020ef          	jal	ra,30004ef4 <rt_hw_interrupt_disable> 关中断
+    	（这里是可选的，软件可以挂 hook，可能是便于调试）
+    	30002d1c:	1e0020ef          	jal	ra,30004efc <rt_hw_interrupt_enable> 开中断
+    	30002d30:	b7cfd06f          	j	300000ac <ysyxSoC_putc> 往后就出错了。
+    	30002d24:	00813083          	ld	ra,8(sp)
+    	这一步，ra是错误的。
+    	终于找到问题，这里的sp+8=8100_3FF8，而CPU之前是判断80开头的是memory地址，当然错了。
+    	
+    	
+    	
+    	
+    	
+    	
+   
+	
+	
+	
+	
+	

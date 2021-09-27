@@ -1731,7 +1731,7 @@ module ysyx_210544_clint(
   output  wire                o_clint_mtime_overflow
 );
 
-reg   [7:0]       reg_mtime_cnt;
+// reg   [7:0]       reg_mtime_cnt;
 reg   [`BUS_64]   reg_mtime;
 reg   [`BUS_64]   reg_mtimecmp;
 
@@ -1744,16 +1744,18 @@ always @(posedge clk) begin
     reg_mtimecmp <= 5000;
   end
   else begin
-    if (reg_mtime_cnt < 1) begin
-      reg_mtime_cnt <= reg_mtime_cnt + 1;
-    end
-    else begin
-      reg_mtime_cnt <= 0;
-      reg_mtime <= reg_mtime + 200;
-    end
-
+    // if (reg_mtime_cnt < 1) begin
+    //   reg_mtime_cnt <= reg_mtime_cnt + 1;
+    // end
+    // else begin
+    //   reg_mtime_cnt <= 0;
+    //   reg_mtime <= reg_mtime + 500;
+    // end
+    reg_mtime <= reg_mtime + 1;
+    
     if (i_clint_wen & addr_mtimecmp) begin
-      $display("reg_mtimecmp, old: ", reg_mtimecmp, ", new: ", i_clint_wdata, ". reg_mtime: ", reg_mtime);
+      // $display("reg_mtimecmp, old: ", reg_mtimecmp, ", new: ", i_clint_wdata, ". reg_mtime: ", reg_mtime);
+      // $write("^");
       reg_mtimecmp <= i_clint_wdata;
     end
   end
@@ -3365,7 +3367,7 @@ assign o_mem_executed_ack = 1'b1;
 wire executed_hs = i_mem_executed_req & o_mem_executed_ack;
 wire memoryed_hs = i_mem_memoryed_ack & o_mem_memoryed_req;
 
-wire addr_is_mem  = (mem_addr[31:24] == 8'h80) | (mem_addr[31:24] == 8'h10) | (mem_addr[31:24] == 8'h30);
+wire addr_is_mem  = (mem_addr[31:28] == 4'h8) | (mem_addr[31:28] == 4'h1) | (mem_addr[31:28] == 4'h3);
 wire addr_is_mmio = (mem_addr[31:24] == 8'h02);// & (64'hFF000000)) == 64'h02000000;
 
 // channel select, only valid in one pulse
