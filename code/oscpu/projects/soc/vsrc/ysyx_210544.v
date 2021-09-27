@@ -3067,7 +3067,7 @@ always @(posedge clk) begin
               state <= STATE_ENTER_WRITE_MEPC;
               exception_cause <= 64'h80000000_00000007;
               // $write("#time-instr\n"); $fflush();
-              $write("."); $fflush();
+              // $write("."); $fflush();
             end
             step <= 0;
           end
