@@ -5,6 +5,35 @@ cache一致性调试，2021.09.28 12:57:00
  从波形搜索这个指令，找不到，昨天还是有的。再看奇怪的地方是哪里，最后宕机正式在 fence.i 的位置，很好。
  应该搜索100f，因为隐藏前了前导0就找不到了。
  
+ hello-loader.txt 文件得到：
+ 加载bin位于 ab8 的位置，部分如下：
+ ab8:	00000413          	li	s0,0
+ abc:	00100117          	auipc	sp,0x100
+ ac0:	ffc10113          	addi	sp,sp,-4 # 0x100ab8
+ ac4:	040000ef          	jal	ra,0xb04
+ ac8:	ff010113          	addi	sp,sp,-16
+ acc:	00813023          	sd	s0,0(sp)
+ ad0:	00113423          	sd	ra,8(sp)
+ ad4:	00000417          	auipc	s0,0x0
+ ad8:	0a440413          	addi	s0,s0,164 # 0xb78
+ adc:	04800513          	li	a0,72
+ ae0:	00140413          	addi	s0,s0,1
+ ae4:	01c000ef          	jal	ra,0xb00
+ ae8:	00044503          	lbu	a0,0(s0)
+ 
+ loader程序反汇编，关键代码
+  3cc:	0007a783          	lw	a5,0(a5)	// 读取数据
+  
+ 
+ 分析 flash 中的布局，
+ 首先，sync_rwayid = 0, mem_blkno = 0, 所以， cache_info[wayId][mem_blkno] 取到了第一个cache行的信息，
+ 得到 c_tag[0] = C0003, 翻译后是 3000_0C00，
+ 可是，为什么是这个地址， 不应该是  1b8 吗？
+ 
+ 
+ Flash加载地址，3000_0C00，这个是如何算出的？
+ 
+ 
  
  
  

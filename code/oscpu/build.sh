@@ -139,6 +139,7 @@ build_soc_proj() {
        sed -i -e "s/ysyx_000000/ysyx_${ID:0-6}/g" $BUILD_PATH/vsrc/ysyxSoCFull.v
     fi
 
+    ln -s $YSYXSOC_HOME/ysyx/ram $BUILD_PATH/vsrc/
     ln -s $YSYXSOC_HOME/ysyx/peripheral $BUILD_PATH/vsrc/
     ln -s $YSYXSOC_HOME/ysyx/peripheral/spiFlash $BUILD_PATH/csrc/
     VSRC_FOLDER+=" $BUILD_PATH/vsrc"

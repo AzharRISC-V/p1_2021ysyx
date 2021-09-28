@@ -230,7 +230,7 @@ module ysyx_210544_axi_rw (
       else begin
         if (w_state_write) begin
           if (!axi_w_valid_o) begin
-            axi_w_data_o  <= user_wdata_i[63:0];
+            axi_w_data_o  <= user_wdata_i[63:0] << axi_addr_offset_bits;
             axi_w_valid_o <= 1;
           end
         end
@@ -259,12 +259,14 @@ module ysyx_210544_axi_rw (
       end
     end
 
-    // 输入地址的8字节内偏移量
-    wire [2:0] axi_addr_offset = user_addr_i[2:0];
+    // 输入地址的 字节偏移量(0~7)
+    wire [2:0] axi_addr_offset_bytes  = user_addr_i[2:0];
+    // 输入地址的   位偏移量(0~56)
+    wire [5:0] axi_addr_offset_bits   = {3'b0, axi_addr_offset_bytes} << 3;
 
     // 移位生成最终的 w_strb。wdata 和 wstrb 都需要移位
     // assign axi_w_strb_o     = 8'b1111_1111;     // 每个bit代表一个字节是否要写入
-    assign axi_w_strb_o = axi_w_strb_orig << axi_addr_offset;
+    assign axi_w_strb_o = axi_w_strb_orig << axi_addr_offset_bytes;
 
     // Wreite response channel signals
     assign axi_b_ready_o    = w_state_resp;
@@ -274,7 +276,7 @@ module ysyx_210544_axi_rw (
             always @(posedge clock) begin
                 if (w_hs) begin
                   if (len == i) begin
-                    axi_w_data_o <= user_wdata_i[(i+1)*64+:64] << axi_addr_offset;
+                    axi_w_data_o <= user_wdata_i[(i+1)*64+:64] << axi_addr_offset_bits;
                   end
                 end
             end

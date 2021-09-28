@@ -83,15 +83,16 @@ ysyx_210544_cache_core ICache(
 	.o_cache_core_rdata         (icache_rdata               ),
 	.o_cache_core_ack           (icache_ack                 ),
 
-  .i_cache_core_sync_req      (o_sync_icache_req          ),
-  .i_cache_core_sync_op       (`REQ_WRITE                 ),
-  .i_cache_core_sync_wetag    (o_sync_icache_wetag        ),
-  .i_cache_core_sync_wdata    (o_sync_icache_wdata        ),
+  .i_cache_core_sync_rreq     (0                          ),
+  .o_cache_core_sync_rack     (sync_icache_rack           ),
   .i_cache_core_sync_rpackack (0                          ),
-  .o_cache_core_sync_ack      (i_sync_icache_ack          ),
-  .o_cache_core_sync_rpackreq (i_sync_icache_rpackreq     ),
-  .o_cache_core_sync_retag    (i_sync_icache_retag        ),
-  .o_cache_core_sync_rdata    (i_sync_icache_rdata        ),
+  .o_cache_core_sync_rpackreq (sync_icache_rpackreq       ),
+  .o_cache_core_sync_retag    (sync_icache_retag          ),
+  .o_cache_core_sync_rdata    (sync_icache_rdata          ),
+  .i_cache_core_sync_wreq     (sync_icache_wreq           ),
+  .o_cache_core_sync_wack     (sync_icache_wack           ),
+  .i_cache_core_sync_wetag    (sync_icache_wetag          ),
+  .i_cache_core_sync_wdata    (sync_icache_wdata          ),
 
   .i_axi_io_ready             (ch_icache ? i_axi_io_ready : 0        ),
   .i_axi_io_rdata             (ch_icache ? i_axi_io_rdata : 0        ),
@@ -127,15 +128,16 @@ ysyx_210544_cache_core DCache(
 	.o_cache_core_rdata         (dcache_rdata               ),
 	.o_cache_core_ack           (dcache_ack                 ),
 
-  .i_cache_core_sync_req      (o_sync_dcache_req          ),
-  .i_cache_core_sync_op       (`REQ_READ                  ),
+  .i_cache_core_sync_rreq     (sync_dcache_rreq           ),
+  .o_cache_core_sync_rack     (sync_dcache_rack           ),
+  .i_cache_core_sync_rpackack (sync_dcache_rpackack       ),
+  .o_cache_core_sync_rpackreq (sync_dcache_rpackreq       ),
+  .o_cache_core_sync_retag    (sync_dcache_retag          ),
+  .o_cache_core_sync_rdata    (sync_dcache_rdata          ),
+  .i_cache_core_sync_wreq     (0                          ),
+  .o_cache_core_sync_wack     (sync_dcache_wack           ),
   .i_cache_core_sync_wetag    (0                          ),
-  .i_cache_core_sync_rpackack (0                          ),
   .i_cache_core_sync_wdata    (0                          ),
-  .o_cache_core_sync_ack      (i_sync_dcache_ack          ),
-  .o_cache_core_sync_rpackreq (i_sync_dcache_rpackreq     ),
-  .o_cache_core_sync_retag    (i_sync_dcache_retag        ),
-  .o_cache_core_sync_rdata    (i_sync_dcache_rdata        ),
 
   .i_axi_io_ready             (ch_dcache ? i_axi_io_ready : 0        ),
   .i_axi_io_rdata             (ch_dcache ? i_axi_io_rdata : 0        ),
@@ -191,20 +193,22 @@ ysyx_210544_cache_nocache NoCache(
 /////////////////////////////////////////////////
 // Cache_sync, ICache and DCache auto exchange data
 
-wire              o_sync_icache_req;
-wire  [ 27:0]     o_sync_icache_wetag;
-wire  [127:0]     o_sync_icache_wdata;
-wire              i_sync_icache_ack;
-wire              i_sync_icache_rpackreq;
-wire  [ 27:0]     i_sync_icache_retag;
-wire  [127:0]     i_sync_icache_rdata;
+wire              sync_dcache_rreq;
+wire              sync_dcache_rack;
+wire              sync_dcache_rpackreq;
+wire              sync_dcache_rpackack;
+wire  [ 27:0]     sync_dcache_retag;
+wire  [127:0]     sync_dcache_rdata;
+wire              sync_dcache_wack;
 
-wire              o_sync_dcache_req;
-wire              o_sync_dcache_rpackack;
-wire              i_sync_dcache_ack;
-wire              i_sync_dcache_rpackreq;
-wire  [ 27:0]     i_sync_dcache_retag;
-wire  [127:0]     i_sync_dcache_rdata;
+wire              sync_icache_rack;
+wire              sync_icache_rpackreq;
+wire  [ 27:0]     sync_icache_retag;
+wire  [127:0]     sync_icache_rdata;
+wire              sync_icache_wreq;
+wire              sync_icache_wack;
+wire  [ 27:0]     sync_icache_wetag;
+wire  [127:0]     sync_icache_wdata;
 
 
 ysyx_210544_cache_sync Cache_sync(
@@ -212,16 +216,16 @@ ysyx_210544_cache_sync Cache_sync(
   .rst                        (rst                        ),
   .i_fencei_req               (i_fencei_req               ),
   .o_fencei_ack               (o_fencei_ack               ),
-  .o_sync_icache_req          (o_sync_icache_req          ),
-  .o_sync_icache_wetag        (o_sync_icache_wetag        ),
-  .o_sync_icache_wdata        (o_sync_icache_wdata        ),
-  .i_sync_icache_ack          (i_sync_icache_ack          ),
-  .o_sync_dcache_req          (o_sync_dcache_req          ),
-  .o_sync_dcache_rpackack     (o_sync_dcache_rpackack     ),
-  .i_sync_dcache_ack          (i_sync_dcache_ack          ),
-  .i_sync_dcache_rpackreq     (i_sync_dcache_rpackreq     ),
-  .i_sync_dcache_retag        (i_sync_dcache_retag        ),
-  .i_sync_dcache_rdata        (i_sync_dcache_rdata        )
+  .o_sync_dcache_rreq         (sync_dcache_rreq           ),
+  .i_sync_dcache_rack         (sync_dcache_rack           ),
+  .o_sync_dcache_rpackack     (sync_dcache_rpackack       ),
+  .i_sync_dcache_rpackreq     (sync_dcache_rpackreq       ),
+  .i_sync_dcache_retag        (sync_dcache_retag          ),
+  .i_sync_dcache_rdata        (sync_dcache_rdata          ),
+  .o_sync_icache_wreq         (sync_icache_wreq           ),
+  .i_sync_icache_wack         (sync_icache_wack           ),
+  .o_sync_icache_wetag        (sync_icache_wetag          ),
+  .o_sync_icache_wdata        (sync_icache_wdata          )
 );
 
 
@@ -247,14 +251,15 @@ assign o_icache_ack     = ch_icache ? icache_ack         : nocache_ack        ;
 assign o_dcache_rdata   = ch_dcache ? dcache_rdata       : nocache_rdata      ;
 assign o_dcache_ack     = ch_dcache ? dcache_ack         : nocache_ack        ;
 
+
 wire _unused_ok = &{1'b0,
   iaddr_PERI,
   icache_rdata[63:32],
-  i_sync_icache_ack,
-  i_sync_icache_rpackreq,
-  i_sync_icache_retag,
-  i_sync_icache_rdata,
-  o_sync_dcache_rpackack,
+  sync_dcache_wack,
+  sync_icache_rack,
+  sync_icache_retag,
+  sync_icache_rdata,
+  sync_icache_rpackreq,
   1'b0};
 
 endmodule

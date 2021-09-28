@@ -26,20 +26,20 @@ module ysyx_210544_cache_sync(
   // fence.i
   input   wire                i_fencei_req,
   output  reg                 o_fencei_ack,
-
-  // ICache
-  output  wire                o_sync_icache_req,      // 请求，需要一直保持，收到应答后撤销。
-  output  wire  [ 27:0]       o_sync_icache_wetag,    // wetag
-  output  wire  [127:0]       o_sync_icache_wdata,    // 写入数据
-  input   wire                i_sync_icache_ack,      // 应答，最终的应答
   
   // DCache
-  output  wire                o_sync_dcache_req,      // 请求，需要一直保持，收到应答后撤销。
-  output  wire                o_sync_dcache_rpackack, // 应答一包数据
-  input   wire                i_sync_dcache_ack,      // 应答，最终的应答
-  input   wire                i_sync_dcache_rpackreq, // 请求一包数据
+  output  wire                o_sync_dcache_rreq,     // 读请求
+  input   wire                i_sync_dcache_rack,     // 读应答
+  input   wire                i_sync_dcache_rpackreq, // 读包请求
+  output  wire                o_sync_dcache_rpackack, // 读包应答
   input   wire  [ 27:0]       i_sync_dcache_retag,    // retag
-  input   wire  [127:0]       i_sync_dcache_rdata     // 读出数据
+  input   wire  [127:0]       i_sync_dcache_rdata,    // 读出数据
+
+  // ICache
+  output  wire                o_sync_icache_wreq,     // 写请求
+  input   wire                i_sync_icache_wack,     // 写应答
+  output  wire  [ 27:0]       o_sync_icache_wetag,    // wetag
+  output  wire  [127:0]       o_sync_icache_wdata     // 写入数据
 );
 
 
@@ -54,9 +54,9 @@ parameter [1:0] STATE_SYNC_WRITE        = 2'd2;
 
 reg [1:0] state;
 
-wire hs_readone     = o_sync_dcache_req & (o_sync_dcache_rpackack & i_sync_dcache_rpackreq);
-wire hs_read_done   = o_sync_dcache_req & i_sync_dcache_ack;
-wire hs_write_ok    = o_sync_icache_req & i_sync_icache_ack;
+wire hs_rd          = o_sync_dcache_rreq & i_sync_dcache_rack;
+wire hs_rd_pack     = o_sync_dcache_rpackack & i_sync_dcache_rpackreq;
+wire hs_wr          = o_sync_icache_wreq & i_sync_icache_wack;
 
 always @(posedge clk) begin
   if (rst) begin
@@ -71,16 +71,16 @@ always @(posedge clk) begin
       end
       
       STATE_SYNC_READ:  begin
-        if (hs_readone) begin
+        if (hs_rd_pack) begin
           state <= STATE_SYNC_WRITE;
         end
-        else if (hs_read_done) begin
+        else if (hs_rd) begin
           state <= STATE_IDLE;
         end
       end
 
       STATE_SYNC_WRITE:     begin
-        if (hs_write_ok) begin
+        if (hs_wr) begin
           state <= STATE_SYNC_READ;
         end
       end
@@ -105,27 +105,31 @@ always @(posedge clk) begin
       end
 
       STATE_SYNC_READ: begin
-        if (!hs_read_done) begin
-          o_sync_dcache_req <= 1;
+        if (!hs_rd) begin
+          o_sync_dcache_rreq <= 1;
         end
         else begin
-          o_sync_dcache_req <= 0;
+          o_sync_dcache_rreq <= 0;
         end
 
-        if (hs_readone) begin
-
-          o_sync_icache_wetag <= i_sync_dcache_retag;
-          o_sync_icache_wdata <= i_sync_dcache_rdata;
+        if (!hs_rd_pack) begin
+          if (i_sync_dcache_rpackreq) begin
+            o_sync_dcache_rpackack <= 1;
+            o_sync_icache_wetag <= i_sync_dcache_retag;
+            o_sync_icache_wdata <= i_sync_dcache_rdata;
+          end
+        end
+        else begin
+          o_sync_dcache_rpackack <= 0;
         end
       end
 
       STATE_SYNC_WRITE: begin
-        if (!hs_write_ok) begin
-          o_sync_icache_req <= 1;
+        if (!hs_wr) begin
+          o_sync_icache_wreq <= 1;
         end
         else begin
-          o_sync_dcache_rpackack <= 1;
-          o_sync_icache_req <= 0;
+          o_sync_icache_wreq <= 0;
         end
       end
 

@@ -19,15 +19,16 @@ module ysyx_210544_cache_core (
 	output  reg                 o_cache_core_ack,           // 应答
 
   // 同步通道
-  input   wire                i_cache_core_sync_req,      // 请求，需要一直保持，收到应答后撤销。
-  input   wire                i_cache_core_sync_op,       // 0 读取, 1 写入
-  input   wire  [ 27:0]       i_cache_core_sync_wetag,    // wetag
-  input   wire  [127:0]       i_cache_core_sync_wdata,    // 写入数据
-  input   wire                i_cache_core_sync_rpackack, // 
-  output  wire                o_cache_core_sync_ack,      // 应答，最终的应答
-  output  wire                o_cache_core_sync_rpackreq, // 
+  input   wire                i_cache_core_sync_rreq,     // 读请求
+  output  wire                o_cache_core_sync_rack,     // 读应答
+  input   wire                i_cache_core_sync_rpackack, // 读包请求
+  output  wire                o_cache_core_sync_rpackreq, // 读包应答
   output  wire  [ 27:0]       o_cache_core_sync_retag,    // retag
   output  wire  [127:0]       o_cache_core_sync_rdata,    // 读出数据
+  input   wire                i_cache_core_sync_wreq,     // 写请求
+  output  wire                o_cache_core_sync_wack,     // 写应答
+  input   wire  [ 27:0]       i_cache_core_sync_wetag,    // wetag
+  input   wire  [127:0]       i_cache_core_sync_wdata,    // 写入数据
 
   // AXI interface
   input   wire  [511:0]       i_axi_io_rdata,
@@ -63,15 +64,16 @@ ysyx_210544_cache_basic Cache_basic(
 	.o_cache_basic_rdata        (i_cache_basic_rdata        ),
 	.o_cache_basic_ack          (i_cache_basic_ack          ),
 
-  .i_cache_basic_sync_req       (i_cache_core_sync_req      ),
-  .i_cache_basic_sync_op        (i_cache_core_sync_op       ),
-  .i_cache_basic_sync_wetag     (i_cache_core_sync_wetag    ),
-  .i_cache_basic_sync_wdata     (i_cache_core_sync_wdata    ),
-  .i_cache_basic_sync_rpackack  (i_cache_core_sync_rpackack ),
-  .o_cache_basic_sync_ack       (o_cache_core_sync_ack      ),
-  .o_cache_basic_sync_rpackreq  (o_cache_core_sync_rpackreq ),
-  .o_cache_basic_sync_retag     (o_cache_core_sync_retag    ),
-  .o_cache_basic_sync_rdata     (o_cache_core_sync_rdata    ),
+  .i_cache_basic_sync_rreq    (i_cache_core_sync_rreq     ),
+  .o_cache_basic_sync_rack    (o_cache_core_sync_rack     ),
+  .o_cache_basic_sync_rpackreq(o_cache_core_sync_rpackreq ),
+  .i_cache_basic_sync_rpackack(i_cache_core_sync_rpackack ),
+  .i_cache_basic_sync_wreq    (i_cache_core_sync_wreq     ),
+  .o_cache_basic_sync_wack    (o_cache_core_sync_wack     ),
+  .o_cache_basic_sync_retag   (o_cache_core_sync_retag    ),
+  .o_cache_basic_sync_rdata   (o_cache_core_sync_rdata    ),
+  .i_cache_basic_sync_wetag   (i_cache_core_sync_wetag    ),
+  .i_cache_basic_sync_wdata   (i_cache_core_sync_wdata    ),
 
   .i_axi_io_ready             (i_axi_io_ready             ),
   .i_axi_io_rdata             (i_axi_io_rdata             ),
