@@ -33,6 +33,8 @@ module ysyx_210544_mem_stage(
   output  wire                o_mem_clint_mtime_overflow,
   input   wire  [`BUS_32]     i_mem_intrNo,
   output  reg   [`BUS_32]     o_mem_intrNo,
+  output  wire                o_mem_fencei_req,
+  input   wire                i_mem_fencei_ack,
 
   ///////////////////////////////////////////////
   // DCache interface
@@ -51,15 +53,19 @@ assign o_mem_executed_ack = 1'b1;
 wire executed_hs = i_mem_executed_req & o_mem_executed_ack;
 wire memoryed_hs = i_mem_memoryed_ack & o_mem_memoryed_req;
 
-wire addr_is_mem  = (mem_addr[31:28] == 4'h8) | (mem_addr[31:28] == 4'h1) | (mem_addr[31:28] == 4'h3);
+wire addr_is_mem  = (mem_addr[31:28] != 4'b0);
 wire addr_is_mmio = (mem_addr[31:24] == 8'h02);// & (64'hFF000000)) == 64'h02000000;
 
 // channel select, only valid in one pulse
-wire ch_mem   = addr_is_mem & (mem_ren | mem_wen);
-wire ch_mmio  = addr_is_mmio & (mem_ren | mem_wen);
-wire ch_none  = (!(addr_is_mem | addr_is_mmio)) | (!(mem_ren | mem_wen));
+wire ren_or_wen = mem_ren | mem_wen;
+
+wire ch_cachesync = i_mem_inst_opcode == `INST_FENCEI;
+wire ch_mem   = addr_is_mem & ren_or_wen;
+wire ch_mmio  = addr_is_mmio & ren_or_wen;
+wire ch_none  = (!ch_cachesync) & ((!(addr_is_mem | addr_is_mmio)) | (!ren_or_wen));
 
 // memoryed request for different slaves
+wire                  memoryed_req_cachesync;
 wire                  memoryed_req_mem;
 wire                  memoryed_req_mmio;
 wire                  memoryed_req_none;
@@ -71,6 +77,9 @@ reg    [`BUS_64]      rdata;          // readed data from main memory or mmio
 always @(*) begin
   if (rst) begin
     o_mem_memoryed_req = 0;
+  end
+  else if (tmp_ch_cachesync) begin
+    o_mem_memoryed_req = memoryed_req_cachesync;
   end
   else if (tmp_ch_mem) begin
     o_mem_memoryed_req = memoryed_req_mem;
@@ -108,6 +117,7 @@ reg   [`BUS_64]               tmp_i_mem_rd_wdata;
 reg   [7 : 0]                 tmp_i_mem_inst_opcode;
 reg                           tmp_i_mem_nocmt;
 reg                           tmp_i_mem_skipcmt;
+reg                           tmp_ch_cachesync;
 reg                           tmp_ch_mem;
 reg                           tmp_ch_mmio;
 
@@ -132,6 +142,7 @@ always @(posedge clk) begin
       tmp_i_mem_inst_opcode,
       tmp_i_mem_nocmt,
       tmp_i_mem_skipcmt,
+      tmp_ch_cachesync,
       tmp_ch_mem,
       tmp_ch_mmio
     } <= 0;
@@ -148,6 +159,7 @@ always @(posedge clk) begin
       tmp_i_mem_rd_wdata        <= i_mem_rd_wdata;
       tmp_i_mem_nocmt           <= i_mem_nocmt;
       tmp_i_mem_skipcmt         <= i_mem_skipcmt;
+      tmp_ch_cachesync          <= ch_cachesync;
       tmp_ch_mem                <= ch_mem;
       tmp_ch_mmio               <= ch_mmio;
 
@@ -155,6 +167,7 @@ always @(posedge clk) begin
     end
     else if (memoryed_hs) begin
       // 该通道号需要消除，不能留到下一个指令
+      tmp_ch_cachesync          <= 0;
       tmp_ch_mem                <= 0;
       tmp_ch_mmio               <= 0;
 
@@ -305,6 +318,17 @@ ysyx_210544_mem_mmio Mem_mmio(
   .addr                       (mem_addr                   ),
   .rdata                      (rdata_mmio                 ),
   .o_clint_mtime_overflow     (o_mem_clint_mtime_overflow )
+);
+
+// 访问Cache
+ysyx_210544_mem_cachesync Mem_cachesync(
+  .clk                        (clk                        ),
+  .rst                        (rst                        ),
+  .start                      (i_mem_executed_req & ch_cachesync),
+  .ack                        (i_mem_memoryed_ack         ),
+  .req                        (memoryed_req_cachesync     ),
+  .o_cachesync_req            (o_mem_fencei_req           ),
+  .i_cachesync_ack            (i_mem_fencei_ack           )
 );
 
 // 仅握手

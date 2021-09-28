@@ -116,6 +116,9 @@ wire  [`BUS_64]               o_mem_rd_wdata;
 wire                          o_mem_nocmt;
 wire                          o_mem_skipcmt;
 wire  [`BUS_32]               o_mem_intrNo;
+// mem_stage -> cache
+wire                          o_mem_fencei_req;
+wire                          i_mem_fencei_ack;
 
 // wb_stage
 // wb_stage -> cmt_stage
@@ -166,7 +169,11 @@ ysyx_210544_cache Cache (
   .clk                        (clk                        ),
   .rst                        (rst                        ),
 
-    // ICache
+  // fence.i
+  .i_fencei_req               (o_mem_fencei_req           ),
+  .o_fencei_ack               (i_mem_fencei_ack           ),
+
+  // ICache
   .i_icache_req               (o_icache_req               ),
   .i_icache_addr              (o_icache_addr              ),
   .o_icache_ack               (i_icache_ack               ),
@@ -307,6 +314,8 @@ ysyx_210544_mem_stage Mem_stage(
   .o_mem_clint_mtime_overflow (o_clint_mtime_overflow     ),
   .i_mem_intrNo               (o_ex_intrNo                ),
   .o_mem_intrNo               (o_mem_intrNo               ),
+  .o_mem_fencei_req           (o_mem_fencei_req           ),
+  .i_mem_fencei_ack           (i_mem_fencei_ack           ),
 
   .o_dcache_req               (o_dcache_req               ),
   .o_dcache_addr              (o_dcache_addr              ),

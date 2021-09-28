@@ -18,6 +18,17 @@ module ysyx_210544_cache_core (
   output  reg   [`BUS_64]     o_cache_core_rdata,         // 读出的数据
 	output  reg                 o_cache_core_ack,           // 应答
 
+  // 同步通道
+  input   wire                i_cache_core_sync_req,      // 请求，需要一直保持，收到应答后撤销。
+  input   wire                i_cache_core_sync_op,       // 0 读取, 1 写入
+  input   wire  [ 27:0]       i_cache_core_sync_wetag,    // wetag
+  input   wire  [127:0]       i_cache_core_sync_wdata,    // 写入数据
+  input   wire                i_cache_core_sync_rpackack, // 
+  output  wire                o_cache_core_sync_ack,      // 应答，最终的应答
+  output  wire                o_cache_core_sync_rpackreq, // 
+  output  wire  [ 27:0]       o_cache_core_sync_retag,    // retag
+  output  wire  [127:0]       o_cache_core_sync_rdata,    // 读出数据
+
   // AXI interface
   input   wire  [511:0]       i_axi_io_rdata,
   input   wire                i_axi_io_ready,
@@ -51,6 +62,16 @@ ysyx_210544_cache_basic Cache_basic(
 	.i_cache_basic_req          (o_cache_basic_req          ),
 	.o_cache_basic_rdata        (i_cache_basic_rdata        ),
 	.o_cache_basic_ack          (i_cache_basic_ack          ),
+
+  .i_cache_basic_sync_req       (i_cache_core_sync_req      ),
+  .i_cache_basic_sync_op        (i_cache_core_sync_op       ),
+  .i_cache_basic_sync_wetag     (i_cache_core_sync_wetag    ),
+  .i_cache_basic_sync_wdata     (i_cache_core_sync_wdata    ),
+  .i_cache_basic_sync_rpackack  (i_cache_core_sync_rpackack ),
+  .o_cache_basic_sync_ack       (o_cache_core_sync_ack      ),
+  .o_cache_basic_sync_rpackreq  (o_cache_core_sync_rpackreq ),
+  .o_cache_basic_sync_retag     (o_cache_core_sync_retag    ),
+  .o_cache_basic_sync_rdata     (o_cache_core_sync_rdata    ),
 
   .i_axi_io_ready             (i_axi_io_ready             ),
   .i_axi_io_rdata             (i_axi_io_rdata             ),
