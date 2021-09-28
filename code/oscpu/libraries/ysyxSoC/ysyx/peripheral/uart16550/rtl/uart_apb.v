@@ -44,23 +44,23 @@ module uart_apb (
    assign reg_adr = in_paddr[2:0]; //assign adr_o   = in_paddr[2:0];
    assign in_prdata  = (in_psel) ? {4{reg_dat8_r}} : 'h0;
    always @ (in_paddr[1:0] or in_pwdata) begin
-    //  `ifdef DATA_BUS_WIDTH_8
+     `ifdef DATA_BUS_WIDTH_8
             reg_dat8_w =  in_pwdata[7:0];
-    //  `else
-    //          case (in_paddr[1:0])
-    //          `ifdef ENDIAN_BIG
-    //          2'b00: reg_dat8_w =  in_pwdata[31:24];
-    //          2'b01: reg_dat8_w =  in_pwdata[23:16];
-    //          2'b10: reg_dat8_w =  in_pwdata[15:8];
-    //          2'b11: reg_dat8_w =  in_pwdata[7:0];
-    //          `else // little-endian -- default
-    //          2'b00: reg_dat8_w =  in_pwdata[7:0];
-    //          2'b01: reg_dat8_w =  in_pwdata[15:8];
-    //          2'b10: reg_dat8_w =  in_pwdata[23:16];
-    //          2'b11: reg_dat8_w =  in_pwdata[31:24];
-    //          `endif
-    //          endcase
-    //  `endif
+     `else
+             case (in_paddr[1:0])
+             `ifdef ENDIAN_BIG
+             2'b00: reg_dat8_w =  in_pwdata[31:24];
+             2'b01: reg_dat8_w =  in_pwdata[23:16];
+             2'b10: reg_dat8_w =  in_pwdata[15:8];
+             2'b11: reg_dat8_w =  in_pwdata[7:0];
+             `else // little-endian -- default
+             2'b00: reg_dat8_w =  in_pwdata[7:0];
+             2'b01: reg_dat8_w =  in_pwdata[15:8];
+             2'b10: reg_dat8_w =  in_pwdata[23:16];
+             2'b11: reg_dat8_w =  in_pwdata[31:24];
+             `endif
+             endcase
+     `endif
 
    end
    always @ (posedge clk) begin
