@@ -40,7 +40,7 @@
       3. cache_info地址：
         共4路                            -- 2bit
         每路又分16行                      -- 4bit
-        每行21bit，从高位到低位，2bit顺序，1bit脏位，1bit有效位，17bit主存标记
+        每行26bit，从高位到低位，2bit顺序，1bit脏位，1bit有效位，22bit主存标记
       4. 支持不对齐访问，需要处理跨行、跨页访问
         可能产生跨行、跨页，使用更高层的调用方式，产生两次cache调用。
         1>. byte访问不会产生跨页
@@ -389,7 +389,7 @@ end
 
 // =============== 处理用户请求 ===============
 
-reg   [2:0]         sync_step;                  // sync操作的不同阶段
+reg   [1:0]         sync_step;                  // sync操作的不同阶段
 reg   [2:0]         ram_op_cnt;                 // RAM操作计数器(0~3表示1~4次，剩余的位数用于大于4的计数)
 wire  [8:0]         ram_op_offset_128;          // RAM操作的128位偏移量（延迟2个时钟周期后输出）
 wire                hs_cache;                   // cache操作 握手
@@ -548,22 +548,21 @@ always @(posedge clk) begin
         if (!hs_sync_rd) begin
           // step0: 找到一个空位置
           if (sync_step == 0) begin
+            // 若命中，则开始搬运数据
             if (hit_any) begin
               sync_step <= 1;
             end
-            // 最后一包，且不命中，则完成任务
-            else if (sync_rlast) begin
-              sync_rack <= 1;
-              // 指针清零，以备下次使用
-              sync_rlineid <= 0;
-              sync_rwayid <= 0;
-            end
-            // 移动指针
+            // 若不命中则移动指针，或者完成任务
             else begin
-              sync_rlineid <= sync_rlineid + 1;
-              if (sync_rlineid == 6'd63) begin
-                sync_rlineid <= 0;
-                sync_rwayid <= sync_rwayid + 1;
+              if (!sync_rlast) begin
+                sync_rlineid <= sync_rlineid + 1;
+                if (sync_rlineid == 6'd63) begin
+                  sync_rlineid <= 0;
+                  sync_rwayid <= sync_rwayid + 1;
+                end
+              end
+              else begin
+                sync_step <= 3;
               end
             end
           end
@@ -585,14 +584,31 @@ always @(posedge clk) begin
           else if (sync_step == 2) begin
             if (hs_sync_rpack) begin
               sync_rpackreq <= 0; // 撤销请求
-              // 若是最后一包，则完成任务
-              if (sync_rlast) begin
-                sync_rack <= 1;
-                sync_step <= 0; // 清零，以便下次使用
-                // 指针清零，以备下次使用
-                sync_rlineid <= 0;
-                sync_rwayid <= 0;
+              // 若不是最后一包，则移动指针继续工作，否则完成任务
+              if (!sync_rlast) begin
+                sync_rlineid <= sync_rlineid + 1;
+                if (sync_rlineid == 6'd63) begin
+                  sync_rlineid <= 0;
+                  sync_rwayid <= sync_rwayid + 1;
+                end
+                sync_step <= 0;
               end
+              else begin
+                sync_step <= 3;
+              end
+            end
+          end
+          // step3: 完成任务
+          else if (sync_step == 3) begin
+            if (!hs_sync_rd) begin
+              sync_rack <= 1;
+            end
+            else begin
+              // 清零所有信号
+              sync_step <= 0;
+              sync_rack <= 0;
+              sync_rlineid <= 0;
+              sync_rwayid <= 0;
             end
           end
         end
@@ -618,7 +634,8 @@ always @(posedge clk) begin
             // 更新cache记录一行的 tag,v,d 位
             cache_info[wayID_select][mem_blkno][`c_tag_BUS]      <= mem_tag; // c_tag
             cache_info[wayID_select][mem_blkno][`c_v_BUS]        <= 1;       // 有效位
-            cache_info[wayID_select][mem_blkno][`c_d_BUS]        <= 0;       // 脏位
+            cache_info[wayID_select][mem_blkno][`c_d_BUS]        <= 1;       // 脏位
+                // 注意：虽然是ICache，但是这里标记了脏，因为这些内容可以写回到主存。
             // 更新cache记录四行的 s 位，循环移动
             cache_info[3][mem_blkno][`c_s_BUS] <= cache_info[2][mem_blkno][`c_s_BUS];
             cache_info[2][mem_blkno][`c_s_BUS] <= cache_info[1][mem_blkno][`c_s_BUS];

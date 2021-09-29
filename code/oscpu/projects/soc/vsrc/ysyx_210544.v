@@ -1054,7 +1054,7 @@ end
 
 // =============== 处理用户请求 ===============
 
-reg   [2:0]         sync_step;                  // sync操作的不同阶段
+reg   [1:0]         sync_step;                  // sync操作的不同阶段
 reg   [2:0]         ram_op_cnt;                 // RAM操作计数器(0~3表示1~4次，剩余的位数用于大于4的计数)
 wire  [8:0]         ram_op_offset_128;          // RAM操作的128位偏移量（延迟2个时钟周期后输出）
 wire                hs_cache;                   // cache操作 握手
@@ -1213,22 +1213,21 @@ always @(posedge clk) begin
         if (!hs_sync_rd) begin
           // step0: 找到一个空位置
           if (sync_step == 0) begin
+            // 若命中，则开始搬运数据
             if (hit_any) begin
               sync_step <= 1;
             end
-            // 最后一包，且不命中，则完成任务
-            else if (sync_rlast) begin
-              sync_rack <= 1;
-              // 指针清零，以备下次使用
-              sync_rlineid <= 0;
-              sync_rwayid <= 0;
-            end
-            // 移动指针
+            // 若不命中则移动指针，或者完成任务
             else begin
-              sync_rlineid <= sync_rlineid + 1;
-              if (sync_rlineid == 6'd63) begin
-                sync_rlineid <= 0;
-                sync_rwayid <= sync_rwayid + 1;
+              if (!sync_rlast) begin
+                sync_rlineid <= sync_rlineid + 1;
+                if (sync_rlineid == 6'd63) begin
+                  sync_rlineid <= 0;
+                  sync_rwayid <= sync_rwayid + 1;
+                end
+              end
+              else begin
+                sync_step <= 3;
               end
             end
           end
@@ -1250,14 +1249,31 @@ always @(posedge clk) begin
           else if (sync_step == 2) begin
             if (hs_sync_rpack) begin
               sync_rpackreq <= 0; // 撤销请求
-              // 若是最后一包，则完成任务
-              if (sync_rlast) begin
-                sync_rack <= 1;
-                sync_step <= 0; // 清零，以便下次使用
-                // 指针清零，以备下次使用
-                sync_rlineid <= 0;
-                sync_rwayid <= 0;
+              // 若不是最后一包，则移动指针继续工作，否则完成任务
+              if (!sync_rlast) begin
+                sync_rlineid <= sync_rlineid + 1;
+                if (sync_rlineid == 6'd63) begin
+                  sync_rlineid <= 0;
+                  sync_rwayid <= sync_rwayid + 1;
+                end
+                sync_step <= 0;
               end
+              else begin
+                sync_step <= 3;
+              end
+            end
+          end
+          // step3: 完成任务
+          else if (sync_step == 3) begin
+            if (!hs_sync_rd) begin
+              sync_rack <= 1;
+            end
+            else begin
+              // 清零所有信号
+              sync_step <= 0;
+              sync_rack <= 0;
+              sync_rlineid <= 0;
+              sync_rwayid <= 0;
             end
           end
         end
@@ -1283,7 +1299,7 @@ always @(posedge clk) begin
             // 更新cache记录一行的 tag,v,d 位
             cache_info[wayID_select][mem_blkno][`c_tag_BUS]      <= mem_tag; // c_tag
             cache_info[wayID_select][mem_blkno][`c_v_BUS]        <= 1;       // 有效位
-            cache_info[wayID_select][mem_blkno][`c_d_BUS]        <= 0;       // 脏位
+            cache_info[wayID_select][mem_blkno][`c_d_BUS]        <= 1;       // 脏位，注意：虽然是ICache，但是这里标记了脏，因为这些内容可以写回到主存。
             // 更新cache记录四行的 s 位，循环移动
             cache_info[3][mem_blkno][`c_s_BUS] <= cache_info[2][mem_blkno][`c_s_BUS];
             cache_info[2][mem_blkno][`c_s_BUS] <= cache_info[1][mem_blkno][`c_s_BUS];
@@ -1631,15 +1647,17 @@ module ysyx_210544_cache_sync(
 //  英文名称          中文名称    含义
 //  IDLE            空闲        无活动。有fencei请求进入 SYNC_READ
 //  SYNC_READ       读          读DCache。读到一包数据，进入 SYNC_WRITE；读取完成，进入 IDLE
-//  SYNC_WRITE      写          写ICache。操作完成，进入 SYNC_READ
+//  SYNC_WRITE      写          写ICache。写入ICache完成，进入 SYNC_RPACK_ACK
+//  SYNC_RPACK_ACK  读包应答     读包应答的写入和清除。清除后，进入 SYNC_READ
 parameter [1:0] STATE_IDLE              = 2'd0;
 parameter [1:0] STATE_SYNC_READ         = 2'd1;
 parameter [1:0] STATE_SYNC_WRITE        = 2'd2;
+parameter [1:0] STATE_SYNC_RPACK_ACK    = 2'd3;
 
 reg [1:0] state;
 
 wire hs_rd          = o_sync_dcache_rreq & i_sync_dcache_rack;
-wire hs_rd_pack     = o_sync_dcache_rpackack & i_sync_dcache_rpackreq;
+// wire hs_rd_pack     = o_sync_dcache_rpackack & i_sync_dcache_rpackreq;
 wire hs_wr          = o_sync_icache_wreq & i_sync_icache_wack;
 
 always @(posedge clk) begin
@@ -1649,13 +1667,13 @@ always @(posedge clk) begin
   else begin
     case (state)
       STATE_IDLE:   begin
-        if (i_fencei_req) begin
+        if (i_fencei_req & (!o_fencei_ack)) begin
           state <= STATE_SYNC_READ;
         end
       end
       
       STATE_SYNC_READ:  begin
-        if (hs_rd_pack) begin
+        if (i_sync_dcache_rpackreq) begin
           state <= STATE_SYNC_WRITE;
         end
         else if (hs_rd) begin
@@ -1665,6 +1683,13 @@ always @(posedge clk) begin
 
       STATE_SYNC_WRITE:     begin
         if (hs_wr) begin
+          state <= STATE_SYNC_RPACK_ACK;
+        end
+      end
+
+      STATE_SYNC_RPACK_ACK:     begin
+        // 等待 rapckreq 信号撤销
+        if (!i_sync_dcache_rpackreq) begin
           state <= STATE_SYNC_READ;
         end
       end
@@ -1693,18 +1718,13 @@ always @(posedge clk) begin
           o_sync_dcache_rreq <= 1;
         end
         else begin
+          o_fencei_ack <= 1;
           o_sync_dcache_rreq <= 0;
         end
 
-        if (!hs_rd_pack) begin
-          if (i_sync_dcache_rpackreq) begin
-            o_sync_dcache_rpackack <= 1;
-            o_sync_icache_wetag <= i_sync_dcache_retag;
-            o_sync_icache_wdata <= i_sync_dcache_rdata;
-          end
-        end
-        else begin
-          o_sync_dcache_rpackack <= 0;
+        if (i_sync_dcache_rpackreq) begin
+          o_sync_icache_wetag <= i_sync_dcache_retag;
+          o_sync_icache_wdata <= i_sync_dcache_rdata;
         end
       end
 
@@ -1714,7 +1734,13 @@ always @(posedge clk) begin
         end
         else begin
           o_sync_icache_wreq <= 0;
+          o_sync_dcache_rpackack <= 1;
         end
+      end
+
+      STATE_SYNC_RPACK_ACK: begin
+        // rapckack只保持一个周期，自动清除
+        o_sync_dcache_rpackack <= 0; 
       end
 
       default:;

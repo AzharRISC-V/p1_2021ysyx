@@ -47,15 +47,17 @@ module ysyx_210544_cache_sync(
 //  英文名称          中文名称    含义
 //  IDLE            空闲        无活动。有fencei请求进入 SYNC_READ
 //  SYNC_READ       读          读DCache。读到一包数据，进入 SYNC_WRITE；读取完成，进入 IDLE
-//  SYNC_WRITE      写          写ICache。操作完成，进入 SYNC_READ
+//  SYNC_WRITE      写          写ICache。写入ICache完成，进入 SYNC_RPACK_ACK
+//  SYNC_RPACK_ACK  读包应答     读包应答的写入和清除。清除后，进入 SYNC_READ
 parameter [1:0] STATE_IDLE              = 2'd0;
 parameter [1:0] STATE_SYNC_READ         = 2'd1;
 parameter [1:0] STATE_SYNC_WRITE        = 2'd2;
+parameter [1:0] STATE_SYNC_RPACK_ACK    = 2'd3;
 
 reg [1:0] state;
 
 wire hs_rd          = o_sync_dcache_rreq & i_sync_dcache_rack;
-wire hs_rd_pack     = o_sync_dcache_rpackack & i_sync_dcache_rpackreq;
+// wire hs_rd_pack     = o_sync_dcache_rpackack & i_sync_dcache_rpackreq;
 wire hs_wr          = o_sync_icache_wreq & i_sync_icache_wack;
 
 always @(posedge clk) begin
@@ -65,13 +67,13 @@ always @(posedge clk) begin
   else begin
     case (state)
       STATE_IDLE:   begin
-        if (i_fencei_req) begin
+        if (i_fencei_req & (!o_fencei_ack)) begin
           state <= STATE_SYNC_READ;
         end
       end
       
       STATE_SYNC_READ:  begin
-        if (hs_rd_pack) begin
+        if (i_sync_dcache_rpackreq) begin
           state <= STATE_SYNC_WRITE;
         end
         else if (hs_rd) begin
@@ -81,6 +83,13 @@ always @(posedge clk) begin
 
       STATE_SYNC_WRITE:     begin
         if (hs_wr) begin
+          state <= STATE_SYNC_RPACK_ACK;
+        end
+      end
+
+      STATE_SYNC_RPACK_ACK:     begin
+        // 等待 rapckreq 信号撤销
+        if (!i_sync_dcache_rpackreq) begin
           state <= STATE_SYNC_READ;
         end
       end
@@ -109,18 +118,13 @@ always @(posedge clk) begin
           o_sync_dcache_rreq <= 1;
         end
         else begin
+          o_fencei_ack <= 1;
           o_sync_dcache_rreq <= 0;
         end
 
-        if (!hs_rd_pack) begin
-          if (i_sync_dcache_rpackreq) begin
-            o_sync_dcache_rpackack <= 1;
-            o_sync_icache_wetag <= i_sync_dcache_retag;
-            o_sync_icache_wdata <= i_sync_dcache_rdata;
-          end
-        end
-        else begin
-          o_sync_dcache_rpackack <= 0;
+        if (i_sync_dcache_rpackreq) begin
+          o_sync_icache_wetag <= i_sync_dcache_retag;
+          o_sync_icache_wdata <= i_sync_dcache_rdata;
         end
       end
 
@@ -130,7 +134,13 @@ always @(posedge clk) begin
         end
         else begin
           o_sync_icache_wreq <= 0;
+          o_sync_dcache_rpackack <= 1;
         end
+      end
+
+      STATE_SYNC_RPACK_ACK: begin
+        // rapckack只保持一个周期，自动清除
+        o_sync_dcache_rpackack <= 0; 
       end
 
       default:;
