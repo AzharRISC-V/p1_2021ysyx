@@ -23,12 +23,16 @@ module ysyx_210544_cache_core (
   output  wire                o_cache_core_sync_rack,     // 读应答
   input   wire                i_cache_core_sync_rpackack, // 读包请求
   output  wire                o_cache_core_sync_rpackreq, // 读包应答
-  output  wire  [ 27:0]       o_cache_core_sync_retag,    // retag
-  output  wire  [127:0]       o_cache_core_sync_rdata,    // 读出数据
+  output  wire  [  1: 0]      o_cache_core_sync_rwayid,   // read way_id
+  output  wire  [  3: 0]      o_cache_core_sync_rblkid,   // read blk_id
+  output  wire  [ 25: 0]      o_cache_core_sync_rinfo,    // read cache_info
+  output  wire  [511: 0]      o_cache_core_sync_rdata,    // read cache_data
   input   wire                i_cache_core_sync_wreq,     // 写请求
   output  wire                o_cache_core_sync_wack,     // 写应答
-  input   wire  [ 27:0]       i_cache_core_sync_wetag,    // wetag
-  input   wire  [127:0]       i_cache_core_sync_wdata,    // 写入数据
+  input   wire  [  1: 0]      i_cache_core_sync_wwayid,   // write way_id
+  input   wire  [  3: 0]      i_cache_core_sync_wblkid,   // write blk_id
+  input   wire  [ 25: 0]      i_cache_core_sync_winfo,    // write cache_info
+  input   wire  [511: 0]      i_cache_core_sync_wdata,    // write cache_data
 
   // AXI interface
   input   wire  [511:0]       i_axi_io_rdata,
@@ -70,9 +74,13 @@ ysyx_210544_cache_basic Cache_basic(
   .i_cache_basic_sync_rpackack(i_cache_core_sync_rpackack ),
   .i_cache_basic_sync_wreq    (i_cache_core_sync_wreq     ),
   .o_cache_basic_sync_wack    (o_cache_core_sync_wack     ),
-  .o_cache_basic_sync_retag   (o_cache_core_sync_retag    ),
+  .o_cache_basic_sync_rwayid  (o_cache_core_sync_rwayid   ),
+  .o_cache_basic_sync_rblkid  (o_cache_core_sync_rblkid   ),
+  .o_cache_basic_sync_rinfo   (o_cache_core_sync_rinfo    ),
   .o_cache_basic_sync_rdata   (o_cache_core_sync_rdata    ),
-  .i_cache_basic_sync_wetag   (i_cache_core_sync_wetag    ),
+  .i_cache_basic_sync_wwayid  (i_cache_core_sync_wwayid   ),
+  .i_cache_basic_sync_wblkid  (i_cache_core_sync_wblkid   ),
+  .i_cache_basic_sync_winfo   (i_cache_core_sync_winfo    ),
   .i_cache_basic_sync_wdata   (i_cache_core_sync_wdata    ),
 
   .i_axi_io_ready             (i_axi_io_ready             ),

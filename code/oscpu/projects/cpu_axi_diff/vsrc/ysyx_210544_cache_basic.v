@@ -70,12 +70,16 @@ module ysyx_210544_cache_basic (
   output  wire                o_cache_basic_sync_rack,      // 读应答，操作完毕后应答
   output  wire                o_cache_basic_sync_rpackreq,  // 读包请求，DCache发出请求
   input   wire                i_cache_basic_sync_rpackack,  // 读包应答，DCache收到应答
-  output  wire  [27 :0]       o_cache_basic_sync_retag,     // read extended tag ({tag,lineid})
-  output  wire  [127:0]       o_cache_basic_sync_rdata,     // 读出数据
+  output  wire  [  1: 0]      o_cache_basic_sync_rwayid,    // 读取到的路id: 0~3
+  output  wire  [  3: 0]      o_cache_basic_sync_rblkid,    // 读取到的块id: 0~15
+  output  wire  [ 25: 0]      o_cache_basic_sync_rinfo,     // 读取到的cache_info
+  output  wire  [511: 0]      o_cache_basic_sync_rdata,     // 读取到的cache_data
   input   wire                i_cache_basic_sync_wreq,      // 写请求，ICache收到请求
   output  wire                o_cache_basic_sync_wack,      // 写应答，ICache发出应答
-  input   wire  [27 :0]       i_cache_basic_sync_wetag,     // write extended tag ({tag,lineid})
-  input   wire  [127:0]       i_cache_basic_sync_wdata,     // 写入数据
+  input   wire  [  1: 0]      i_cache_basic_sync_wwayid,    // 要写入的路id: 0~3
+  input   wire  [  3: 0]      i_cache_basic_sync_wblkid,    // 要写入的块id: 0~15
+  input   wire  [ 25: 0]      i_cache_basic_sync_winfo,     // 要写入的cache_info
+  input   wire  [511: 0]      i_cache_basic_sync_wdata,     // 要写入的cache_data
 
   // AXI interface
   input   wire  [511:0]       i_axi_io_rdata,
@@ -101,18 +105,16 @@ wire                          sync_rpackack;              // 同步操作读包�
 wire                          sync_wreq;                  // 同步操作写包请求
 reg                           sync_wack;                  // 同步操作写包应答
 
-reg   [1  : 0]                sync_rwayid;                // 读取路id: 0~3
-wire  [3  : 0]                sync_rblkid;                // 读取块id: 0~15
-reg   [5  : 0]                sync_rlineid;               // 读取行id: 0~63
-wire                          sync_rlast;                 // 是否达到最后一个单元？
-wire  [21 : 0]                sync_rtag;                  // 读取tag
-wire  [127: 0]                sync_rdata;                 // 读到的数据
+reg   [1  : 0]                sync_rwayid;                // 读取到的路id: 0~3
+reg   [3  : 0]                sync_rblkid;                // 读取到的块id: 0~15
+reg   [25 : 0]                sync_rinfo;                 // 读到到的cache_info
+reg   [511: 0]                sync_rdata;                 // 读到到的cache_data
+reg                           sync_rlast;                 // 读取达到最后一个单元
 
-wire  [27 : 0]                sync_wetag;                 // 写入etag
-wire  [21 : 0]                sync_wtag;                  // 写入tag
-wire  [5  : 0]                sync_wlineid;               // 写入行id: 0~63
-wire  [3  : 0]                sync_wblkid;                // 写入块id: 0~15
-wire  [127: 0]                sync_wdata;                 // 写入的数据
+wire  [1  : 0]                sync_wwayid;                // 要写入的路id: 0~3
+wire  [3  : 0]                sync_wblkid;                // 要写入的块id: 0~15
+wire  [25 : 0]                sync_winfo;                 // 要写入的cache_info
+wire  [511: 0]                sync_wdata;                 // 要写入的cache_data
 
 assign sync_rreq                    = i_cache_basic_sync_rreq;
 assign o_cache_basic_sync_rack      = sync_rack;
@@ -121,18 +123,28 @@ assign sync_rpackack                = i_cache_basic_sync_rpackack;
 assign sync_wreq                    = i_cache_basic_sync_wreq;
 assign o_cache_basic_sync_wack      = sync_wack;
 
-assign sync_rblkid                  = !sync_rreq ? 0 : {sync_rlineid >> 2}[3:0];
-assign sync_rlast                   = !sync_rreq ? 0 : (sync_rwayid == 2'd3) && (sync_rlineid == 6'd63);
-assign sync_rtag                    = !sync_rreq ? 0 : c_tag[sync_rwayid];
-assign o_cache_basic_sync_retag     = {sync_rtag, sync_rlineid};
-assign sync_rdata                   = !sync_rreq ? 0 : rdata_line;
+assign o_cache_basic_sync_rwayid    = sync_rwayid;
+assign o_cache_basic_sync_rblkid    = sync_rblkid;
+assign o_cache_basic_sync_rinfo     = sync_rinfo;
 assign o_cache_basic_sync_rdata     = sync_rdata;
 
-assign sync_wetag                   = !sync_wreq ? 0 : i_cache_basic_sync_wetag;
-assign sync_wtag                    = !sync_wreq ? 0 : sync_wetag[27:6];
-assign sync_wlineid                 = !sync_wreq ? 0 : sync_wetag[5:0];
-assign sync_wblkid                  = !sync_wreq ? 0 : {sync_wlineid >> 2}[3:0];
-assign sync_wdata                   = !sync_wreq ? 0 : i_cache_basic_sync_wdata;
+assign sync_rlast                   = !sync_rreq ? 0 : (sync_rwayid == 2'd3) && (sync_rblkid == 4'd15);
+
+assign sync_wwayid                  = i_cache_basic_sync_wwayid;
+assign sync_wblkid                  = i_cache_basic_sync_wblkid;
+assign sync_winfo                   = i_cache_basic_sync_winfo;
+assign sync_wdata                   = i_cache_basic_sync_wdata;
+
+// assign sync_rblkid                  = !sync_rreq ? 0 : {sync_rlineid >> 2}[3:0];
+// assign sync_rtag                    = !sync_rreq ? 0 : c_tag[sync_rwayid];
+// assign o_cache_basic_sync_retag     = {sync_rtag, sync_rlineid};
+// assign sync_rdata                   = !sync_rreq ? 0 : rdata_line;
+
+// assign sync_wetag                   = !sync_wreq ? 0 : i_cache_basic_sync_wetag;
+// assign sync_wtag                    = !sync_wreq ? 0 : sync_wetag[27:6];
+// assign sync_wlineid                 = !sync_wreq ? 0 : sync_wetag[5:0];
+// assign sync_wblkid                  = !sync_wreq ? 0 : {sync_wlineid >> 2}[3:0];
+// assign sync_wdata                   = !sync_wreq ? 0 : i_cache_basic_sync_wdata;
 
 
 // =============== 物理地址解码 ===============
@@ -162,8 +174,8 @@ end
 
 assign mem_offset_bytes   = i_cache_basic_addr[5:0];
 assign mem_offset_bits    = {3'b0, i_cache_basic_addr[5:0]} << 3;
-assign mem_blkno          = sync_rreq ? sync_rblkid : (sync_wreq ? sync_wblkid : i_cache_basic_addr[9:6]  );
-assign mem_tag            = sync_rreq ? sync_rtag   : (sync_wreq ? sync_wtag   : i_cache_basic_addr[31:10]);
+assign mem_blkno          = i_cache_basic_addr[9:6];
+assign mem_tag            = i_cache_basic_addr[31:10];
 
 
 // =============== Cache Info 缓存信息 ===============
@@ -174,11 +186,11 @@ wire  [6 : 0]                 c_offset_bits;                      // cache行内
 wire  [127:0]                 c_wdata;                            // cache行要写入的数据
 wire  [127:0]                 c_wmask;                            // cache行要写入的掩码
 
-assign c_data_lineno    = sync_rreq ? sync_rlineid : (sync_wreq ? sync_wlineid : i_cache_basic_addr[9:4]);
+assign c_data_lineno    = i_cache_basic_addr[9:4];
 assign c_offset_bytes   = mem_offset_bits[6:3]; 
 assign c_offset_bits    = mem_offset_bits[6:0];
-assign c_wmask          = sync_wreq ? {128{1'b1}} : {64'd0, user_wmask} << c_offset_bits;
-assign c_wdata          = sync_wreq ? sync_wdata  : {64'd0, i_cache_basic_wdata} << c_offset_bits;
+assign c_wmask          = {64'd0, user_wmask} << c_offset_bits;
+assign c_wdata          = {64'd0, i_cache_basic_wdata} << c_offset_bits;
 
 `define c_tag_BUS             21:0          // cache的tag所在的总线 
 `define c_v_BUS               22            // cache的v所在的总线 
@@ -284,31 +296,33 @@ endgenerate
 
 
 // =============== 状态机 ===============
-//  英文名称          中文名称             含义
-//  IDLE            空闲                 无活动。有用户请求则进入 READY / STORE_FROM_RAM / LOAD_FROM_BUS 这三种情况
-//  READY           就绪                  命中，则直接读写。读写完毕回到IDLE。
-//  STORE_FROM_RAM  存储(从RAM读取数据)    不命中并选择脏的数据块，则需要写回。先以128bit为单位分4次从RAM读入数据，读取完毕跳转到 StoreToBUS
-//  STORE_TO_BUS    存储(写入总线)         不命中并选择脏的数据块，则需要写回。再将512bit数据写入总线，写入完毕跳转到 LoadFromBUS
-//  LOAD_FROM_BUS   加载(从总线读取数据)    不命中并选择不脏的数据块，则需要读入新数据。先从总线读取512bit数据，读取完毕跳转到 LoadToRAM
-//  LOAD_TO_RAM     加载(写入RAM)         不命中并选择不脏的数据块，则需要读入新数据。再以128bit为单位分4次写入RAM，写入完毕跳转到READY
-//  FENCE_RAM_RD    同步读RAM             有fence请求，读取数据。以128bit为单位操作，操作完毕后跳转到IDLE
-//  FENCE_RAM_WR    同步写RAM             有fence请求，写入数据。以128bit为单位操作，操作完毕后跳转到IDLE
+//  英文名称          中文名称               含义
+//  IDLE              空闲                 无活动。有用户请求则进入 READY / STORE_FROM_RAM / LOAD_FROM_BUS 这三种情况
+//  READY             就绪                  命中，则直接读写。读写完毕回到IDLE。
+//  STORE_FROM_RAM    存储(从RAM读取数据)    不命中并选择脏的数据块，则需要写回。先以128bit为单位分4次从RAM读入数据，读取完毕跳转到 StoreToBUS
+//  STORE_TO_BUS      存储(写入总线)         不命中并选择脏的数据块，则需要写回。再将512bit数据写入总线，写入完毕跳转到 LoadFromBUS
+//  LOAD_FROM_BUS     加载(从总线读取数据)    不命中并选择不脏的数据块，则需要读入新数据。先从总线读取512bit数据，读取完毕跳转到 LoadToRAM
+//  LOAD_TO_RAM       加载(写入RAM)         不命中并选择不脏的数据块，则需要读入新数据。再以128bit为单位分4次写入RAM，写入完毕跳转到READY
+//  FENCE_RD          同步读               有fence请求，读取vlaid的数据，送出
+//  FENCE_WR          同步写               有fence请求，收到数据包，写入。
 parameter [2:0] STATE_IDLE              = 3'd0;
 parameter [2:0] STATE_READY             = 3'd1;
 parameter [2:0] STATE_STORE_FROM_RAM    = 3'd2;
 parameter [2:0] STATE_STORE_TO_BUS      = 3'd3;
 parameter [2:0] STATE_LOAD_FROM_BUS     = 3'd4;
 parameter [2:0] STATE_LOAD_TO_RAM       = 3'd5;
-parameter [2:0] STATE_FENCE_RAM_RD      = 3'd6;
-parameter [2:0] STATE_FENCE_RAM_WR      = 3'd7;
+parameter [2:0] STATE_FENCE_RD          = 3'd6;
+parameter [2:0] STATE_FENCE_WR          = 3'd7;
 
 reg [2:0] state;
+reg   [1  : 0]                sync_step;                  // sync操作的不同阶段
 // wire state_idle             = state == STATE_IDLE;
 // wire state_ready            = state == STATE_READY;
 // wire state_store_from_ram   = state == STATE_STORE_FROM_RAM;
 // wire state_store_to_bus     = state == STATE_STORE_TO_BUS;
 // wire state_load_from_bus    = state == STATE_LOAD_FROM_BUS;
 // wire state_load_to_ram      = state == STATE_LOAD_TO_RAM;
+
 
 always @(posedge clk) begin
     if (rst) begin
@@ -318,10 +332,10 @@ always @(posedge clk) begin
       case (state)
           STATE_IDLE:   begin
             if (sync_rreq) begin
-              state <= STATE_FENCE_RAM_RD;
+              state <= STATE_FENCE_RD;
             end
             else if (sync_wreq) begin
-              state <= STATE_FENCE_RAM_WR;
+              state <= STATE_FENCE_WR;
             end
             else if (i_cache_basic_req) begin
               if (hit_any) begin
@@ -369,13 +383,13 @@ always @(posedge clk) begin
             end
           end
 
-          STATE_FENCE_RAM_RD: begin
+          STATE_FENCE_RD: begin
             if (hs_sync_rd) begin
               state <= STATE_IDLE;
             end
           end
 
-          STATE_FENCE_RAM_WR: begin
+          STATE_FENCE_WR: begin
             if (hs_sync_wr) begin
               state <= STATE_IDLE;
             end
@@ -389,7 +403,6 @@ end
 
 // =============== 处理用户请求 ===============
 
-reg   [1:0]         sync_step;                  // sync操作的不同阶段
 reg   [2:0]         ram_op_cnt;                 // RAM操作计数器(0~3表示1~4次，剩余的位数用于大于4的计数)
 wire  [8:0]         ram_op_offset_128;          // RAM操作的128位偏移量（延迟2个时钟周期后输出）
 wire                hs_cache;                   // cache操作 握手
@@ -422,8 +435,10 @@ always @(posedge clk) begin
     sync_rpackreq <= 0;
     sync_rack <= 0;
     sync_wack <= 0;
-    sync_rlineid <= 0;
     sync_rwayid <= 0;
+    sync_rblkid <= 0;
+    sync_rinfo <= 0;
+    sync_rdata <= 0;
   end
   else begin
     case (state)
@@ -544,7 +559,7 @@ always @(posedge clk) begin
         end
       end
 
-      STATE_FENCE_RAM_RD: begin
+      STATE_FENCE_RD: begin
         if (!hs_sync_rd) begin
           // step0: 找到一个空位置
           if (sync_step == 0) begin
@@ -555,9 +570,9 @@ always @(posedge clk) begin
             // 若不命中则移动指针，或者完成任务
             else begin
               if (!sync_rlast) begin
-                sync_rlineid <= sync_rlineid + 1;
-                if (sync_rlineid == 6'd63) begin
-                  sync_rlineid <= 0;
+                sync_rblkid <= sync_rblkid + 1;
+                if (sync_rblkid == 4'd15) begin
+                  sync_rblkid <= 0;
                   sync_rwayid <= sync_rwayid + 1;
                 end
               end
@@ -568,16 +583,25 @@ always @(posedge clk) begin
           end
           // step1: 读取数据
           else if (sync_step == 1) begin
-            if (!hs_ramline) begin
-              chip_data_cen[wayID_select] <= CHIP_DATA_CEN;
-              chip_data_addr[wayID_select] <= c_data_lineno;
+            // 读取RAM一个块
+            if (!hs_ramread) begin
               ram_op_cnt <= ram_op_cnt + 1;
+              // RAM控制信号在前4个周期有效
+              if (ram_op_cnt <= 3) begin
+                chip_data_cen[sync_rwayid]  <= CHIP_DATA_CEN;
+                chip_data_addr[sync_rwayid] <= {{2'd0, sync_rblkid} << 2} | {4'd0, ram_op_cnt[1:0]};
+              end
+              // 延迟2个周期后保存RAM读出的数据
+              if (ram_op_cnt >= 2) begin
+                sync_rdata[ram_op_offset_128+:128] <= chip_data_rdata[sync_rwayid];   // 128的倍数
+              end
             end
             else begin
-              chip_data_cen[wayID_select] <= !CHIP_DATA_CEN;
+              ram_op_cnt <= 0;
+              chip_data_cen[sync_rwayid] <= !CHIP_DATA_CEN;
               sync_rpackreq <= 1;
+              sync_rinfo <= cache_info[sync_rwayid][sync_rblkid];
               sync_step <= 2;
-              ram_op_cnt <= 0; // 清零，以便下次使用
             end
           end
           // step2: 等待数据包应答
@@ -586,9 +610,9 @@ always @(posedge clk) begin
               sync_rpackreq <= 0; // 撤销请求
               // 若不是最后一包，则移动指针继续工作，否则完成任务
               if (!sync_rlast) begin
-                sync_rlineid <= sync_rlineid + 1;
-                if (sync_rlineid == 6'd63) begin
-                  sync_rlineid <= 0;
+                sync_rblkid <= sync_rblkid + 1;
+                if (sync_rblkid == 4'd15) begin
+                  sync_rblkid <= 0;
                   sync_rwayid <= sync_rwayid + 1;
                 end
                 sync_step <= 0;
@@ -607,40 +631,35 @@ always @(posedge clk) begin
               // 清零所有信号
               sync_step <= 0;
               sync_rack <= 0;
-              sync_rlineid <= 0;
+              sync_rblkid <= 0;
               sync_rwayid <= 0;
             end
           end
         end
       end
 
-      STATE_FENCE_RAM_WR: begin
+      STATE_FENCE_WR: begin
         if (!hs_sync_wr) begin
-          // 写入RAM一个单元
-          if (!hs_ramline) begin
-            chip_data_cen[wayID_select] <= CHIP_DATA_CEN;
-            chip_data_wen[wayID_select] <= CHIP_DATA_WEN;
-            chip_data_addr[wayID_select] <= c_data_lineno;
-            chip_data_wdata[wayID_select] <= c_wdata;
-            chip_data_wmask[wayID_select] <= ~c_wmask;  // 芯片的写入掩码低电平有效，需要取反
+
+          // 写入RAM一个块
+          if (!hs_ramwrite) begin
             ram_op_cnt <= ram_op_cnt + 1;
+            // 写入cache数据一行
+            chip_data_cen[sync_wwayid] <= CHIP_DATA_CEN;
+            chip_data_wen[sync_wwayid] <= CHIP_DATA_WEN;
+            chip_data_addr[sync_wwayid] <= {{2'd0, sync_wblkid} << 2} | {4'd0, ram_op_cnt[1:0]};
+            chip_data_wdata[sync_wwayid] <= sync_wdata[{{7'd0,ram_op_cnt[1:0]} << 7}+:128];   // 128的倍数
+            chip_data_wmask[sync_wwayid] <= {128{CHIP_DATA_WMASK_EN}};
           end
           else begin
-            chip_data_cen[wayID_select] <= !CHIP_DATA_CEN;
-            chip_data_wen[wayID_select] <= !CHIP_DATA_WEN;
-            sync_wack <= 1;
             ram_op_cnt <= 0;
+            chip_data_cen[sync_wwayid] <= !CHIP_DATA_CEN;
+            chip_data_wen[sync_wwayid] <= !CHIP_DATA_WEN;
+            // 更新cache记录一行，并强行置位dirty位，保证在调换时能被写入主存
+            // 这里cache s位是否需要考虑？如果是DCache全部搬运，则不需要考虑。如果是搬运v=1的块，则要考虑吧
+            cache_info[sync_wwayid][sync_wblkid] <= sync_winfo | (1 << `c_d_BUS);
 
-            // 更新cache记录一行的 tag,v,d 位
-            cache_info[wayID_select][mem_blkno][`c_tag_BUS]      <= mem_tag; // c_tag
-            cache_info[wayID_select][mem_blkno][`c_v_BUS]        <= 1;       // 有效位
-            cache_info[wayID_select][mem_blkno][`c_d_BUS]        <= 1;       // 脏位
-                // 注意：虽然是ICache，但是这里标记了脏，因为这些内容可以写回到主存。
-            // 更新cache记录四行的 s 位，循环移动
-            cache_info[3][mem_blkno][`c_s_BUS] <= cache_info[2][mem_blkno][`c_s_BUS];
-            cache_info[2][mem_blkno][`c_s_BUS] <= cache_info[1][mem_blkno][`c_s_BUS];
-            cache_info[1][mem_blkno][`c_s_BUS] <= cache_info[0][mem_blkno][`c_s_BUS];
-            cache_info[0][mem_blkno][`c_s_BUS] <= cache_info[3][mem_blkno][`c_s_BUS];
+            sync_wack <= 1;
           end
         end
       end

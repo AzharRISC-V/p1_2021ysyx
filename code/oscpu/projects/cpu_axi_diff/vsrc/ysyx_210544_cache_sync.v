@@ -32,14 +32,18 @@ module ysyx_210544_cache_sync(
   input   wire                i_sync_dcache_rack,     // 读应答
   input   wire                i_sync_dcache_rpackreq, // 读包请求
   output  wire                o_sync_dcache_rpackack, // 读包应答
-  input   wire  [ 27:0]       i_sync_dcache_retag,    // retag
-  input   wire  [127:0]       i_sync_dcache_rdata,    // 读出数据
+  input   wire  [  1: 0]      i_sync_dcache_rwayid,   // read way_id
+  input   wire  [  3: 0]      i_sync_dcache_rblkid,   // read blk_id
+  input   wire  [ 25: 0]      i_sync_dcache_rinfo,    // read cache_info
+  input   wire  [511: 0]      i_sync_dcache_rdata,    // read cache_data
 
   // ICache
   output  wire                o_sync_icache_wreq,     // 写请求
   input   wire                i_sync_icache_wack,     // 写应答
-  output  wire  [ 27:0]       o_sync_icache_wetag,    // wetag
-  output  wire  [127:0]       o_sync_icache_wdata     // 写入数据
+  output  wire  [  1: 0]      o_sync_icache_wwayid,   // write way_id
+  output  wire  [  3: 0]      o_sync_icache_wblkid,   // write blk_id
+  output  wire  [ 25: 0]      o_sync_icache_winfo,    // write cache_info
+  output  wire  [511: 0]      o_sync_icache_wdata     // write cache_data
 );
 
 
@@ -123,8 +127,10 @@ always @(posedge clk) begin
         end
 
         if (i_sync_dcache_rpackreq) begin
-          o_sync_icache_wetag <= i_sync_dcache_retag;
-          o_sync_icache_wdata <= i_sync_dcache_rdata;
+          o_sync_icache_wwayid  <= i_sync_dcache_rwayid;
+          o_sync_icache_wblkid  <= i_sync_dcache_rblkid;
+          o_sync_icache_winfo   <= i_sync_dcache_rinfo;
+          o_sync_icache_wdata   <= i_sync_dcache_rdata;
         end
       end
 
