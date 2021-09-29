@@ -93,9 +93,15 @@ module ysyx_210544_cache_basic (
 );
 
 
-`define WAYS        4         // 路数
-`define BLKS        16        // 块数
-`define BUS_WAYS    0:3       // 各路的总线。4路
+`define WAYS                  4             // 路数
+`define BLKS                  16            // 块数
+`define BUS_WAYS              0:3           // 各路的总线。4路
+
+`define c_tag_BUS             21:0          // cache的tag所在的总线 
+`define c_tag_msb_BUS         21            // cache的tag最高位所在的总线，若为1则是主存地址，即：8000_0000 ~ 4GB-1 
+`define c_v_BUS               22            // cache的v所在的总线 
+`define c_d_BUS               23            // cache的d所在的总线 
+`define c_s_BUS               25:24         // cache的s所在的总线
 
 // =============== 同步功能用到的变量 ===========
 wire                          sync_rreq;                  // 同步操作读请求
@@ -110,6 +116,7 @@ reg   [3  : 0]                sync_rblkid;                // 读取到的块id: 
 reg   [25 : 0]                sync_rinfo;                 // 读到到的cache_info
 reg   [511: 0]                sync_rdata;                 // 读到到的cache_data
 reg                           sync_rlast;                 // 读取达到最后一个单元
+wire                          sync_r_need;                // 是否需要读取的条件：cache行有效，且地址是主存的地址
 
 wire  [1  : 0]                sync_wwayid;                // 要写入的路id: 0~3
 wire  [3  : 0]                sync_wblkid;                // 要写入的块id: 0~15
@@ -123,12 +130,14 @@ assign sync_rpackack                = i_cache_basic_sync_rpackack;
 assign sync_wreq                    = i_cache_basic_sync_wreq;
 assign o_cache_basic_sync_wack      = sync_wack;
 
+assign sync_rinfo                   = cache_info[sync_rwayid][sync_rblkid];
 assign o_cache_basic_sync_rwayid    = sync_rwayid;
 assign o_cache_basic_sync_rblkid    = sync_rblkid;
 assign o_cache_basic_sync_rinfo     = sync_rinfo;
 assign o_cache_basic_sync_rdata     = sync_rdata;
 
 assign sync_rlast                   = !sync_rreq ? 0 : (sync_rwayid == 2'd3) && (sync_rblkid == 4'd15);
+assign sync_r_need                  = sync_rinfo[`c_v_BUS] & sync_rinfo[`c_tag_msb_BUS];
 
 assign sync_wwayid                  = i_cache_basic_sync_wwayid;
 assign sync_wblkid                  = i_cache_basic_sync_wblkid;
@@ -192,11 +201,6 @@ assign c_offset_bits    = mem_offset_bits[6:0];
 assign c_wmask          = {64'd0, user_wmask} << c_offset_bits;
 assign c_wdata          = {64'd0, i_cache_basic_wdata} << c_offset_bits;
 
-`define c_tag_BUS             21:0          // cache的tag所在的总线 
-`define c_v_BUS               22            // cache的v所在的总线 
-`define c_d_BUS               23            // cache的d所在的总线 
-`define c_s_BUS               25:24         // cache的s所在的总线
-
 reg   [25 : 0]                cache_info[`BUS_WAYS][0:`BLKS-1];   // cache信息块
 wire                          c_v[`BUS_WAYS];                     // cache valid bit 有效位，1位有效
 wire                          c_d[`BUS_WAYS];                     // cache dirty bit 脏位，1为脏
@@ -241,7 +245,7 @@ wire [1:0]                    wayID_select;       // 选择了哪一路？方法
 generate
   for (genvar way = 0; way < `WAYS; way += 1) begin
     parameter [1:0] w = way;
-    assign hit[w] = sync_rreq ? c_v[w] : (c_v[w] && (c_tag[w] == mem_tag));
+    assign hit[w] = c_v[w] && (c_tag[w] == mem_tag);
   end
 endgenerate
 
@@ -437,7 +441,6 @@ always @(posedge clk) begin
     sync_wack <= 0;
     sync_rwayid <= 0;
     sync_rblkid <= 0;
-    sync_rinfo <= 0;
     sync_rdata <= 0;
   end
   else begin
@@ -563,8 +566,8 @@ always @(posedge clk) begin
         if (!hs_sync_rd) begin
           // step0: 找到一个空位置
           if (sync_step == 0) begin
-            // 若命中，则开始搬运数据
-            if (hit_any) begin
+            // 若是主存地址，且存在，则开始搬运数据
+            if (sync_r_need) begin
               sync_step <= 1;
             end
             // 若不命中则移动指针，或者完成任务
@@ -600,7 +603,6 @@ always @(posedge clk) begin
               ram_op_cnt <= 0;
               chip_data_cen[sync_rwayid] <= !CHIP_DATA_CEN;
               sync_rpackreq <= 1;
-              sync_rinfo <= cache_info[sync_rwayid][sync_rblkid];
               sync_step <= 2;
             end
           end
