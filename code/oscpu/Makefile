@@ -58,6 +58,15 @@ soc-run-dump:
 	@./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal -DYSYXSOC' \
 		-a "-i $(SOCBIN) --dump-wave -b $(START) -e $(END)"
 
+# 注意：以下并不能使用，因为这些测试程序不会自动停止，而Ctrl+C会终止所有的后续命令。
+soc-run-all:
+	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal -DYSYXSOC' -a "-i ysyxSoC/flash/hello-flash.bin"
+	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal -DYSYXSOC' -a "-i ysyxSoC/flash/memtest-flash.bin"
+	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal -DYSYXSOC' -a "-i ysyxSoC/flash/rtthread-flash.bin"
+	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal -DYSYXSOC' -a "-i ysyxSoC/flash/hello-flash.bin"
+	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal -DYSYXSOC' -a "-i ysyxSoC/flash/memtest-flash.bin"
+	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal -DYSYXSOC' -a "-i ysyxSoC/flash/rtthread-flash.bin"
+
 # Clean nemu/build
 clean:
 	@./build.sh -e $(PROJECT) -c

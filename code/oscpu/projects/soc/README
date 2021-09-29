@@ -1,0 +1,84 @@
+
+-----------------------------------------------------------
+2021.09.29 14:10
+所有6个测试通过，终于告一段落，记录如下。
+1. 测试通过的输出信息
+  Initializing flash with "ysyxSoC/flash/hello-flash.bin" ...
+  Start simulating ...
+  Hello RISC-V
+  ^CSIGINT received, gracefully shutting down... Type Ctrl+C again to stop forcely.
+  Simulated 12482 cycles in 1s
+
+  Initializing flash with "ysyxSoC/flash/memtest-flash.bin" ...
+  Start simulating ...
+  START TEST...ALL DATA PREPARED
+  ALL TESTS PASSED!!
+  ^CSIGINT received, gracefully shutting down... Type Ctrl+C again to stop forcely.
+  Simulated 1410712 cycles in 71s
+
+  Initializing flash with "ysyxSoC/flash/rtthread-flash.bin" ...
+  Start simulating ...
+  heap: [0x8000d478 - 0x8640d478]
+  \ | /
+  - RT -     Thread Operating System
+  / | \     4.0.4 build Sep  8 2021
+  2006 - 2021 Copyright by rt-thread team
+  Hello RISC-V!
+  ^CSIGINT received, gracefully shutting down... Type Ctrl+C again to stop forcely.
+  Simulated 3629854 cycles in 200s
+
+  Initializing flash with "ysyxSoC/loader/hello-loader.bin" ...
+  Start simulating ...
+  Loading program of size 208: expect 128 '#'
+  Loading.....#####################################################
+  Load Finished
+  Hello RISC-V
+  ^CSIGINT received, gracefully shutting down... Type Ctrl+C again to stop forcely.
+  Simulated 114238 cycles in 5s
+
+  Initializing flash with "ysyxSoC/loader/memtest-loader.bin" ...
+  Start simulating ...
+  Loading program of size 512: expect 128 '#'
+  Loading.....#################################################################################################################################
+  Load Finished
+  START TEST...ALL DATA PREPARED
+  ALL TESTS PASSED!!
+  ^CSIGINT received, gracefully shutting down... Type Ctrl+C again to stop forcely.
+  Simulated 1514078 cycles in 83s
+
+  Initializing flash with "ysyxSoC/loader/rtthread-loader.bin" ...
+  Start simulating ...
+  Loading program of size 69880: expect 128 '#'
+  Loading.....################################################################################################################################
+  Load Finished
+  heap: [0x800223d0 - 0x864223d0]
+  \ | /
+  - RT -     Thread Operating System
+  / | \     4.0.4 build Sep  8 2021
+  2006 - 2021 Copyright by rt-thread team
+  Hello RISC-V!
+  ^CSIGINT received, gracefully shutting down... Type Ctrl+C again to stop forcely.
+  Simulated 7605560 cycles in 396s
+
+  测试结果
+                flash    loader  
+    hello       1s       7s      
+    memtest     71s      83s     
+    rtthread    200s     396s    
+  （由于还开着另一个虚拟机上腾讯会议，所以这里应该是慢了一倍）
+
+2. 现阶段的设计特性
+  a. 简单的5级流水线，并未流起来，所以没有各种冒险问题。
+  b. 实现了关键的cache部件，速度有很大提高。
+  c. 近几天解决了cache一致性问题，方法是：
+     收到fence指令时，将dcache中所有有效并以主存地址开头的缓存块都搬运到icache，并将这些块的dirty置位。
+     (1). 原有icache的数据不需要写回，因此可以直接覆盖。
+     (2). 在loader程序工作时，一部分数据已经进了主存，另一部分在dcache中，而fence并不将它们写回主存，而是转移到icache
+     (3). 所有刚刚进入icache的数据都已被标记为dirty，所以在后续的取指过程中，这些数据才会被慢慢的写入主存，不过没关系。
+3. 改进的几个方向
+  a. 检查各个部件浪费掉的时序，是否可以改进。
+  b. 检查冗余信号
+  c. 观察cache的设计性能
+  d. 画流程图，提交代码。
+  e. 重新编译这6个程序，带上6b停机指令，以实现自动停止。但rtthread需要考虑在何时停机。
+  f. 去掉快速spi功能，再测一遍，看看cache和快速spi两方面各自的效果。
