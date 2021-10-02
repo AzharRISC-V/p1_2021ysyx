@@ -226,4 +226,128 @@
 
   * 子程序 rtc_test，需要实现 timer, rtc
 
-* 
+* Environment Setting, and compile step
+
+   RECORDED by Zhengpu Shi, 2021.09.29 22:00
+
+  * download from github
+
+  * verilator and gtkwave
+
+    ```
+    $ cd docs/
+    $ install verilator 4.2.4
+    $ verilator -version
+    $ apt install gtkwave
+    ```
+
+  * AM_HOME, NEMU_HOME, NOOP_HOME
+
+    ```
+    $ cd libraries/NEMU
+    $ echo export NEMU_HOME=$(pwd) >> ~/.bashrc
+    ```
+
+  * error message "NEMU, make menuconfig"
+
+    ```
+    $ cd NEMU
+    $ make menuconfig
+    but, you might meet error "bison"
+    $ apt install bison
+    then, you might meet error "curses.h"
+    $ apt install apt install libncurses5-dev
+    then,
+    $ make menuconfig
+    keep default setting at most situations, choose riscv64.
+    finished.
+    I added configs to git now.
+    ```
+
+  * compile first
+
+    ```
+    $ cd oscpu
+    $ make
+    got an error, "readline.h"
+    $ apt install libreadline-dev
+    then, try make
+    $ make
+    oups, get error, "SDL2/SDL.h"
+    $ apt install libsdl2-dev
+    
+    ```
+
+  * usful test instruction
+
+    ```
+    # test addi
+    $ make
+    
+    # test rtthread
+    $ make BIN=rtthread run
+    
+    # test cpu-test
+    $ make run-all-1
+    
+    # test riscv-test
+    $ make run-all-2
+    
+    # SOC prepare, need to stop the process after finished. becaue dump is enabled by default.
+    # note that dump file located at project/soc/vlt_dump.vcd
+    $ make soc
+    $ rm projects/soc/vlt_dump.vcd
+    
+    # SOC test
+    $ ./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal -DYSYXSOC' -a "-i ysyxSoC/flash/hello-flash.bin"
+    $ ./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal -DYSYXSOC' -a "-i ysyxSoC/flash/memtest-flash.bin"
+    $ ./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal -DYSYXSOC' -a "-i ysyxSoC/flash/rtthread-flash.bin"
+    $ ./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal -DYSYXSOC' -a "-i ysyxSoC/loader/hello-loader.bin"
+    $ ./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal -DYSYXSOC' -a "-i ysyxSoC/loader/memtest-loader.bin"
+    $ ./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal -DYSYXSOC' -a "-i ysyxSoC/loader/rtthread-loader.bin"
+    ```
+
+  * test result
+
+    ```
+    I USE A REAL MACHINE, INSTEAD VIRTUAL MACHINE BEFORE. 
+    ThinkBook 14 G2 ITL, Ubuntu 20.04
+    1. won't use FAST SPI
+    	flash
+    		hello			1s
+    		memtest			40s
+    		rtthread		232s
+    	loader
+    		hello			?s
+    		memtest			?s
+    		rtthread		?s
+    
+    2. use FAST SPI
+    	flash
+    		hello			1s
+    		memtest			38s
+    		rtthread		99s
+    	loader
+    		hello			1s
+    		memtest			35s
+    		rtthread		101s
+    ```
+
+  * favor vscode extensions
+
+    ```
+    Rainbow Brackets
+    vscode-icons
+    	setting by: >icons
+    indent-rainbow
+    Better Comments
+    vscode-pdf
+    Markdown ALl in One
+    Verilog-HDL/SystemVerilog/Bluespec SystemVerilog
+    ```
+
+  * VSCode extra setting
+
+    * verilog linting: verilator
+
+  * GOOD LUCK!
