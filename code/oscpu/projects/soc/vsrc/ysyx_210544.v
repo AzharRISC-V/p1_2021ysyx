@@ -7,10 +7,10 @@
 
 `define ZERO_WORD           64'h00000000_00000000
 
-`ifdef YSYXSOC
-  `define PC_START            64'h00000000_30000000 
-`else
+`ifdef DIFFTEST_YSYX_210544
   `define PC_START            64'h00000000_80000000 
+`else
+  `define PC_START            64'h00000000_30000000 
 `endif
 
 `define SIZE_B              3'b000
@@ -4602,7 +4602,7 @@ always @(negedge clk) begin
 end
 
 
-`ifndef YSYXSOC
+`ifdef DIFFTEST_YSYX_210544
 
 DifftestArchEvent DifftestArchEvent(
   .clock              (clk),		// 时钟

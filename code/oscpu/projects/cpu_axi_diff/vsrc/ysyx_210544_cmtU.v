@@ -60,7 +60,7 @@ always @(negedge clk) begin
 end
 
 
-`ifndef YSYXSOC
+`ifdef DIFFTEST_YSYX_210544
 
 DifftestArchEvent DifftestArchEvent(
   .clock              (clk),		// 时钟

@@ -315,22 +315,22 @@
     1. won't use FAST SPI
     	flash
     		hello			1s
-    		memtest			40s
-    		rtthread		232s
+    		memtest			45s
+    		rtthread		273s
     	loader
-    		hello			?s
-    		memtest			?s
-    		rtthread		?s
+    		hello			8s
+    		memtest			52s
+    		rtthread		415s
     
     2. use FAST SPI
     	flash
     		hello			1s
-    		memtest			38s
-    		rtthread		99s
+    		memtest			42s
+    		rtthread		120s
     	loader
-    		hello			1s
-    		memtest			35s
-    		rtthread		101s
+    		hello			4s
+    		memtest			46s
+    		rtthread		245s
     ```
 
   * favor vscode extensions
