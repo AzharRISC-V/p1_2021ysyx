@@ -301,30 +301,83 @@ module ysyx_210544_axi_rw (
     input  [`AXI_ID_WIDTH-1:0]          axi_r_id_i
 );
 
-    wire w_trans    = user_req_i == `REQ_WRITE;
-    wire r_trans    = user_req_i == `REQ_READ;
-    wire w_valid    = user_valid_i & w_trans & (!rw_ready);
-    wire r_valid    = user_valid_i & r_trans & (!rw_ready);
+    parameter [1:0] W_STATE_IDLE = 2'b00, W_STATE_ADDR = 2'b01, W_STATE_WRITE = 2'b10, W_STATE_RESP = 2'b11;
+    parameter [1:0] R_STATE_IDLE = 2'b00, R_STATE_ADDR = 2'b01, R_STATE_READ  = 2'b10;
+    parameter TRANS_LEN_MAX = 8;
+
+    reg rw_ready;
+    wire w_trans;
+    wire r_trans;
+    wire w_valid;
+    wire r_valid;
+    wire aw_hs;
+    wire w_hs;
+    wire b_hs;
+    wire ar_hs;
+    wire r_hs;
+    wire w_done;
+    wire r_done;
+    wire trans_done;
+    reg [1:0] w_state;
+    reg [1:0] r_state;
+    wire w_state_idle;
+    wire w_state_addr;
+    wire w_state_write;
+    wire w_state_resp;
+    wire r_state_idle;
+    wire r_state_addr;
+    wire r_state_read;
+    reg [7:0] len;
+    wire [7:0] axi_len;
+    wire len_reset;
+    wire len_incr_en;
+    wire [2:0] axi_size;
+    wire [63:0] axi_addr;
+    wire [`AXI_ID_WIDTH-1:0] axi_id;
+    wire rw_ready_nxt;
+    wire rw_ready_en;
+    reg [1:0] rw_resp;
+    wire [1:0] rw_resp_nxt;
+    wire resp_en;
+    wire [2:0] axi_addr_offset_bytes;       // 输入地址的 字节偏移量(0~7)
+    wire [5:0] axi_addr_offset_bits;        // 输入地址的   位偏移量(0~56)
+    reg  [7:0] axi_w_strb_orig;
+
+    wire size_b;
+    wire size_h;
+    wire size_w;
+    wire size_d;
+    wire [63:0] mask_rdata;
+    wire [5:0] aligned_offset;                      // 移位的bit数。0~7 转换为 0~56
+    wire [63:0] axi_r_data_masked_unaligned;        // 已掩码，已移位后的数据
+
+
+
+    assign w_trans    = user_req_i == `REQ_WRITE;
+    assign r_trans    = user_req_i == `REQ_READ;
+    assign w_valid    = user_valid_i & w_trans & (!rw_ready);
+    assign r_valid    = user_valid_i & r_trans & (!rw_ready);
 
     // handshake
-    wire aw_hs      = axi_aw_ready_i & axi_aw_valid_o;
-    wire w_hs       = axi_w_ready_i  & axi_w_valid_o;
-    wire b_hs       = axi_b_ready_o  & axi_b_valid_i;
-    wire ar_hs      = axi_ar_ready_i & axi_ar_valid_o;
-    wire r_hs       = axi_r_ready_o  & axi_r_valid_i;
+    assign aw_hs      = axi_aw_ready_i & axi_aw_valid_o;
+    assign w_hs       = axi_w_ready_i  & axi_w_valid_o;
+    assign b_hs       = axi_b_ready_o  & axi_b_valid_i;
+    assign ar_hs      = axi_ar_ready_i & axi_ar_valid_o;
+    assign r_hs       = axi_r_ready_o  & axi_r_valid_i;
 
-    wire w_done     = w_hs & axi_w_last_o;
-    wire r_done     = r_hs & axi_r_last_i;
-    wire trans_done = w_trans ? b_hs : r_done;
+    assign w_done     = w_hs & axi_w_last_o;
+    assign r_done     = r_hs & axi_r_last_i;
+    assign trans_done = w_trans ? b_hs : r_done;
 
     
     // ------------------State Machine------------------
-    parameter [1:0] W_STATE_IDLE = 2'b00, W_STATE_ADDR = 2'b01, W_STATE_WRITE = 2'b10, W_STATE_RESP = 2'b11;
-    parameter [1:0] R_STATE_IDLE = 2'b00, R_STATE_ADDR = 2'b01, R_STATE_READ  = 2'b10;
-
-    reg [1:0] w_state, r_state;
-    wire w_state_idle = w_state == W_STATE_IDLE, w_state_addr = w_state == W_STATE_ADDR, w_state_write = w_state == W_STATE_WRITE, w_state_resp = w_state == W_STATE_RESP;
-    wire r_state_idle = r_state == R_STATE_IDLE, r_state_addr = r_state == R_STATE_ADDR, r_state_read  = r_state == R_STATE_READ;
+    assign w_state_idle = w_state == W_STATE_IDLE;
+    assign w_state_addr = w_state == W_STATE_ADDR;
+    assign w_state_write = w_state == W_STATE_WRITE;
+    assign w_state_resp = w_state == W_STATE_RESP;
+    assign r_state_idle = r_state == R_STATE_IDLE;
+    assign r_state_addr = r_state == R_STATE_ADDR;
+    assign r_state_read  = r_state == R_STATE_READ;
 
     // Wirte State Machine
     always @(posedge clock) begin
@@ -360,11 +413,9 @@ module ysyx_210544_axi_rw (
         end
     end
 
-
     // ------------------Number of transmission------------------
-    reg [7:0] len;
-    wire len_reset      = reset | (w_trans & w_state_idle) | (r_trans & r_state_idle);
-    wire len_incr_en    = (len != axi_len) & (w_hs | r_hs);
+    assign len_reset      = reset | (w_trans & w_state_idle) | (r_trans & r_state_idle);
+    assign len_incr_en    = (len != axi_len) & (w_hs | r_hs);
     always @(posedge clock) begin
         if (len_reset) begin
             len <= 0;
@@ -374,19 +425,14 @@ module ysyx_210544_axi_rw (
         end
     end
 
-
     // ------------------Process Data------------------
-    parameter TRANS_LEN_MAX = 8;
+    assign axi_len          = user_blks_i;
+    assign axi_size         = user_size_i;
+    assign axi_addr         = user_addr_i;
+    assign axi_id           = {`AXI_ID_WIDTH{1'b0}};
 
-    wire [7:0] axi_len      = user_blks_i;
-    wire [2:0] axi_size     = user_size_i;
-    
-    wire [63:0] axi_addr                         = user_addr_i;
-    wire [`AXI_ID_WIDTH-1:0] axi_id              = {`AXI_ID_WIDTH{1'b0}};
-
-    reg rw_ready;
-    wire rw_ready_nxt = trans_done;
-    wire rw_ready_en      = trans_done | rw_ready;
+    assign rw_ready_nxt = trans_done;
+    assign rw_ready_en      = trans_done | rw_ready;
     always @(posedge clock) begin
         if (reset) begin
             rw_ready <= 0;
@@ -397,9 +443,8 @@ module ysyx_210544_axi_rw (
     end
     assign user_ready_o     = rw_ready;
 
-    reg [1:0] rw_resp;
-    wire [1:0] rw_resp_nxt = w_trans ? axi_b_resp_i : axi_r_resp_i;
-    wire resp_en = trans_done;
+    assign rw_resp_nxt = w_trans ? axi_b_resp_i : axi_r_resp_i;
+    assign resp_en = trans_done;
     always @(posedge clock) begin
         if (reset) begin
             rw_resp <= 0;
@@ -444,7 +489,7 @@ module ysyx_210544_axi_rw (
     assign axi_w_last_o     = w_hs & (len == axi_len);
   
     // 仅根据size生成的wstrb，需要移位后使用，是吗？？
-    reg  [7:0] axi_w_strb_orig;
+
     always @(*) begin
       if (reset) begin
         axi_w_strb_orig = 0;
@@ -460,10 +505,8 @@ module ysyx_210544_axi_rw (
       end
     end
 
-    // 输入地址的 字节偏移量(0~7)
-    wire [2:0] axi_addr_offset_bytes  = user_addr_i[2:0];
-    // 输入地址的   位偏移量(0~56)
-    wire [5:0] axi_addr_offset_bits   = {3'b0, axi_addr_offset_bytes} << 3;
+    assign axi_addr_offset_bytes  = user_addr_i[2:0];
+    assign axi_addr_offset_bits   = {3'b0, axi_addr_offset_bytes} << 3;
 
     // 移位生成最终的 w_strb。wdata 和 wstrb 都需要移位
     // assign axi_w_strb_o     = 8'b1111_1111;     // 每个bit代表一个字节是否要写入
@@ -499,22 +542,23 @@ module ysyx_210544_axi_rw (
     assign axi_r_ready_o    = r_state_read;
 
     // User Data Size
-    wire size_b             = user_size_i == `SIZE_B;
-    wire size_h             = user_size_i == `SIZE_H;
-    wire size_w             = user_size_i == `SIZE_W;
-    wire size_d             = user_size_i == `SIZE_D;
+
+    assign size_b             = user_size_i == `SIZE_B;
+    assign size_h             = user_size_i == `SIZE_H;
+    assign size_w             = user_size_i == `SIZE_W;
+    assign size_d             = user_size_i == `SIZE_D;
     
     // Read data mask
-    wire [63:0] mask_rdata  = (({ 64{size_b}} & {{64- 8{1'b0}}, 8'hff})
+    assign mask_rdata  = (({ 64{size_b}} & {{64- 8{1'b0}}, 8'hff})
                               | ({64{size_h}} & {{64-16{1'b0}}, 16'hffff})
                               | ({64{size_w}} & {{64-32{1'b0}}, 32'hffffffff})
                               | ({64{size_d}} & {{64-64{1'b0}}, 64'hffffffff_ffffffff})
                               );
 
-    // 移位的bit数。0~7 转换为 0~56
-    wire [5:0] aligned_offset    = {3'b0, user_addr_i[2:0]} << 3;
-    // 已掩码，已移位后的数据
-    wire [63:0] axi_r_data_masked_unaligned = (axi_r_data_i >> aligned_offset) & mask_rdata;
+    
+    assign aligned_offset    = {3'b0, user_addr_i[2:0]} << 3;
+    
+    assign axi_r_data_masked_unaligned = (axi_r_data_i >> aligned_offset) & mask_rdata;
 
     generate
         for (genvar i = 0; i < TRANS_LEN_MAX; i += 1) begin
@@ -571,11 +615,21 @@ module ysyx_210544_cache_axi(
   output        [7 : 0]             o_axi_io_blks
 );
 
-// 是否为Flash外设，此时只能4字节传输，且不能使用burst模式，所以64字节需要16次传输
-wire is_flash = i_cache_axi_addr[31:28] == 4'h3;
 
-// axi一次传输完成
-wire hs_ok = o_axi_io_valid & i_axi_io_ready;
+wire is_flash;    // 是否为Flash外设，此时只能4字节传输，且不能使用burst模式，所以64字节需要16次传输
+wire hs_ok;       // axi一次传输完成
+reg cache_req_his0;   // 跟踪req信号，连续两个周期的 req 才认为是开始信号，防止一结束就又开始了新的阶段
+wire  axi_start;    // axi请求开始
+
+reg [3:0] trans_cnt;          // 传输次数
+reg [3:0] trans_cnt_write;    // 传输次数（写入）
+wire [8:0] offset_bits;       // 偏移位数
+wire [8:0] offset_bits_write; // 偏移位数（写入）
+
+
+
+assign is_flash = i_cache_axi_addr[31:28] == 4'h3;
+assign hs_ok = o_axi_io_valid & i_axi_io_ready;
 
 // axi每次传输的大小：64bit
 assign o_axi_io_size = is_flash ? `SIZE_W : `SIZE_D;
@@ -586,11 +640,7 @@ assign o_axi_io_blks = is_flash ? 0 : 7;
 // 操作类型：0:read, 1:write
 assign o_axi_io_op = i_cache_axi_op;
 
-// 跟踪req信号，连续两个周期的 req 才认为是开始信号，防止一结束就又开始了新的阶段
-reg cache_req_his0;
-
-// axi请求开始
-wire  axi_start    = i_cache_axi_req & !cache_req_his0;
+assign axi_start    = i_cache_axi_req & !cache_req_his0;
 
 // 传输起始地址，64字节对齐
 // assign o_axi_io_addr = i_cache_axi_addr & (~64'h3F);
@@ -598,10 +648,8 @@ wire  axi_start    = i_cache_axi_req & !cache_req_his0;
 // 控制传输次数，
 // 如果是主存，  需要 1次AXI传输得512bit；
 // 如果是Flash，需要16次AXI传输得到512bit，每次传输32bit（64bit是否支持？？）；
-reg [3:0] trans_cnt;
-reg [3:0] trans_cnt_write;
-wire [8:0] offset_bits = {5'd0, trans_cnt} << 5;
-wire [8:0] offset_bits_write = {5'd0, trans_cnt_write} << 5;
+assign offset_bits = {5'd0, trans_cnt} << 5;
+assign offset_bits_write = {5'd0, trans_cnt_write} << 5;
 
 // 控制传输
 always @( posedge clk ) begin
@@ -757,7 +805,6 @@ module ysyx_210544_cache_basic (
   output  wire  [7:0]         o_axi_io_blks
 );
 
-
 `define WAYS                  4             // 路数
 `define BLKS                  16            // 块数
 `define BUS_WAYS              0:3           // 各路的总线。4路
@@ -768,7 +815,15 @@ module ysyx_210544_cache_basic (
 `define c_d_BUS               23            // cache的d所在的总线 
 `define c_s_BUS               25:24         // cache的s所在的总线
 
-// =============== 同步功能用到的变量 ===========
+
+reg                           o_cache_axi_req;            // 请求
+reg   [63 : 0]                o_cache_axi_addr;           // 存储器地址（字节为单位），64字节对齐，低6位为0。
+reg                           o_cache_axi_op;             // 操作类型：0读取，1写入
+reg   [511 : 0]               o_cache_axi_wdata;          // 要写入的数据
+wire  [511 : 0]               i_cache_axi_rdata;          // 已读出的数据
+wire                          i_cache_axi_ack;            // 应答
+
+// =============== 同步 ===============
 wire                          sync_rreq;                  // 同步操作读请求
 reg                           sync_rack;                  // 同步操作读应答
 reg                           sync_rpackreq;              // 同步操作读包请求
@@ -787,6 +842,85 @@ wire  [1  : 0]                sync_wwayid;                // 要写入的路id: 
 wire  [3  : 0]                sync_wblkid;                // 要写入的块id: 0~15
 wire  [25 : 0]                sync_winfo;                 // 要写入的cache_info
 wire  [511: 0]                sync_wdata;                 // 要写入的cache_data
+
+// =============== 物理地址解码 ===============
+wire  [63: 0]                 user_blk_aligned_bytes;     // 用户地址的按块对齐地址(按字节)（64字节对齐，低6位为0）
+reg   [63: 0]                 user_wmask;                 // 用户数据的写入掩码，由bytes决定，高电平有效
+wire  [3 : 0]                 mem_blkno;                  // mem块号，0~15
+wire  [5 : 0]                 mem_offset_bytes;           // mem块内偏移(按字节)，0~63
+wire  [8 : 0]                 mem_offset_bits;            // mem块内偏移(按位)，0~511
+wire  [21: 0]                 mem_tag;                    // mem标记
+
+// =============== Cache Info 缓存信息 ===============
+reg   [25 : 0]                cache_info[`BUS_WAYS][0:`BLKS-1];   // cache信息块
+wire  [5 : 0]                 c_data_lineno;                      // cache数据行号(0~63)
+wire  [3 : 0]                 c_offset_bytes;                     // cache行内偏移(按字节)(0~15)
+wire  [6 : 0]                 c_offset_bits;                      // cache行内偏移(按位)(0~127)
+wire  [127:0]                 c_wdata;                            // cache行要写入的数据
+wire  [127:0]                 c_wmask;                            // cache行要写入的掩码
+
+wire                          c_v[`BUS_WAYS];                     // cache valid bit 有效位，1位有效
+wire                          c_d[`BUS_WAYS];                     // cache dirty bit 脏位，1为脏
+wire  [1 : 0]                 c_s[`BUS_WAYS];                     // cache seqence bit 顺序位，越大越需要先被替换走
+wire  [21: 0]                 c_tag[`BUS_WAYS];                   // cache标记
+
+// =============== cache选中 ===============
+wire                          hit[`BUS_WAYS];     // 各路是否命中
+wire                          hit_any;            // 是否有任意一路命中？
+wire [1:0]                    wayID_smin;         // s最小的是哪一路？
+wire [1:0]                    wayID_hit;          // 已命中的是哪一路（至多有一路命中） 
+wire [1:0]                    wayID_select;       // 选择了哪一路？方法：若命中则就是命中的那一路；否则选择smax所在的那一路
+
+// =============== Cache Data 缓存数据 ===============
+// 根据实际硬件模型设置有效电平
+parameter bit CHIP_DATA_CEN = 0;        // cen有效的电平
+parameter bit CHIP_DATA_WEN = 0;        // wen有效的电平
+parameter bit CHIP_DATA_WMASK_EN = 0;   // 写掩码有效的电平
+
+reg                           chip_data_cen[`BUS_WAYS];               // RAM 使能，低电平有效
+reg                           chip_data_wen[`BUS_WAYS];               // RAM 写使能，低电平有效
+reg   [5  : 0]                chip_data_addr[`BUS_WAYS];              // RAM 地址
+reg   [127: 0]                chip_data_wdata[`BUS_WAYS];             // RAM 写入数据
+reg   [127: 0]                chip_data_wmask[`BUS_WAYS];             // RAM 写入掩码
+wire  [127: 0]                chip_data_rdata[`BUS_WAYS];             // RAM 读出数据
+
+// =============== 状态机 ===============
+//  英文名称          中文名称               含义
+//  IDLE              空闲                 无活动。有用户请求则进入 READY / STORE_FROM_RAM / LOAD_FROM_BUS 这三种情况
+//  READY             就绪                  命中，则直接读写。读写完毕回到IDLE。
+//  STORE_FROM_RAM    存储(从RAM读取数据)    不命中并选择脏的数据块，则需要写回。先以128bit为单位分4次从RAM读入数据，读取完毕跳转到 StoreToBUS
+//  STORE_TO_BUS      存储(写入总线)         不命中并选择脏的数据块，则需要写回。再将512bit数据写入总线，写入完毕跳转到 LoadFromBUS
+//  LOAD_FROM_BUS     加载(从总线读取数据)    不命中并选择不脏的数据块，则需要读入新数据。先从总线读取512bit数据，读取完毕跳转到 LoadToRAM
+//  LOAD_TO_RAM       加载(写入RAM)         不命中并选择不脏的数据块，则需要读入新数据。再以128bit为单位分4次写入RAM，写入完毕跳转到READY
+//  FENCE_RD          同步读               有fence请求，读取vlaid的数据，送出
+//  FENCE_WR          同步写               有fence请求，收到数据包，写入。
+parameter [2:0] STATE_IDLE              = 3'd0;
+parameter [2:0] STATE_READY             = 3'd1;
+parameter [2:0] STATE_STORE_FROM_RAM    = 3'd2;
+parameter [2:0] STATE_STORE_TO_BUS      = 3'd3;
+parameter [2:0] STATE_LOAD_FROM_BUS     = 3'd4;
+parameter [2:0] STATE_LOAD_TO_RAM       = 3'd5;
+parameter [2:0] STATE_FENCE_RD          = 3'd6;
+parameter [2:0] STATE_FENCE_WR          = 3'd7;
+
+reg [2:0] state;
+reg   [1  : 0]                sync_step;                  // sync操作的不同阶段
+
+// =============== 处理用户请求 ===============
+reg   [2:0]         ram_op_cnt;                 // RAM操作计数器(0~3表示1~4次，剩余的位数用于大于4的计数)
+wire  [8:0]         ram_op_offset_128;          // RAM操作的128位偏移量（延迟2个时钟周期后输出）
+wire                hs_cache;                   // cache操作 握手
+wire                hs_sync_rd;                 // sync读操作 握手
+wire                hs_sync_rpack;              // sync读包操作 握手
+wire                hs_sync_wr;                 // sync写操作 握手
+wire                hs_cache_axi;               // cache_axi操作 握手
+wire                hs_ramwrite;                // ram操作 握手（完成4行写入）
+wire                hs_ramread;                 // ram操作 握手（完成4行读取）
+wire                hs_ramline;                 // ram操作 握手（完成指定1行读写）
+reg   [127: 0]      rdata_line;                 // 读取一行数据
+reg   [63: 0]       rdata_out;                  // 输出的数据
+
+
 
 assign sync_rreq                    = i_cache_basic_sync_rreq;
 assign o_cache_basic_sync_rack      = sync_rack;
@@ -820,16 +954,6 @@ assign sync_wdata                   = i_cache_basic_sync_wdata;
 // assign sync_wblkid                  = !sync_wreq ? 0 : {sync_wlineid >> 2}[3:0];
 // assign sync_wdata                   = !sync_wreq ? 0 : i_cache_basic_sync_wdata;
 
-
-// =============== 物理地址解码 ===============
-
-wire  [63: 0]                 user_blk_aligned_bytes;     // 用户地址的按块对齐地址(按字节)（64字节对齐，低6位为0）
-reg   [63: 0]                 user_wmask;                 // 用户数据的写入掩码，由bytes决定，高电平有效
-wire  [3 : 0]                 mem_blkno;                  // mem块号，0~15
-wire  [5 : 0]                 mem_offset_bytes;           // mem块内偏移(按字节)，0~63
-wire  [8 : 0]                 mem_offset_bits;            // mem块内偏移(按位)，0~511
-wire  [21: 0]                 mem_tag;                    // mem标记
-
 assign user_blk_aligned_bytes = {32'd0, i_cache_basic_addr[31:6], 6'd0};
 
 always @(*) begin
@@ -851,26 +975,11 @@ assign mem_offset_bits    = {3'b0, i_cache_basic_addr[5:0]} << 3;
 assign mem_blkno          = i_cache_basic_addr[9:6];
 assign mem_tag            = i_cache_basic_addr[31:10];
 
-
-// =============== Cache Info 缓存信息 ===============
-
-wire  [5 : 0]                 c_data_lineno;                      // cache数据行号(0~63)
-wire  [3 : 0]                 c_offset_bytes;                     // cache行内偏移(按字节)(0~15)
-wire  [6 : 0]                 c_offset_bits;                      // cache行内偏移(按位)(0~127)
-wire  [127:0]                 c_wdata;                            // cache行要写入的数据
-wire  [127:0]                 c_wmask;                            // cache行要写入的掩码
-
 assign c_data_lineno    = i_cache_basic_addr[9:4];
 assign c_offset_bytes   = mem_offset_bits[6:3]; 
 assign c_offset_bits    = mem_offset_bits[6:0];
 assign c_wmask          = {64'd0, user_wmask} << c_offset_bits;
 assign c_wdata          = {64'd0, i_cache_basic_wdata} << c_offset_bits;
-
-reg   [25 : 0]                cache_info[`BUS_WAYS][0:`BLKS-1];   // cache信息块
-wire                          c_v[`BUS_WAYS];                     // cache valid bit 有效位，1位有效
-wire                          c_d[`BUS_WAYS];                     // cache dirty bit 脏位，1为脏
-wire  [1 : 0]                 c_s[`BUS_WAYS];                     // cache seqence bit 顺序位，越大越需要先被替换走
-wire  [21: 0]                 c_tag[`BUS_WAYS];                   // cache标记
 
 // cache_info
 generate
@@ -897,15 +1006,6 @@ generate
   end
 endgenerate
 
-
-// =============== cache选中 ===============
-
-wire                          hit[`BUS_WAYS];     // 各路是否命中
-wire                          hit_any;            // 是否有任意一路命中？
-wire [1:0]                    wayID_smin;         // s最小的是哪一路？
-wire [1:0]                    wayID_hit;          // 已命中的是哪一路（至多有一路命中） 
-wire [1:0]                    wayID_select;       // 选择了哪一路？方法：若命中则就是命中的那一路；否则选择smax所在的那一路
-
 // hit
 generate
   for (genvar way = 0; way < `WAYS; way += 1) begin
@@ -918,21 +1018,6 @@ assign hit_any = hit[0] | hit[1] | hit[2] | hit[3];
 assign wayID_hit = (hit[1] ? 1 : 0) | (hit[2] ? 2 : 0) | (hit[3] ? 3 : 0);
 assign wayID_smin = (c_s[1] == 0 ? 1 : 0) | (c_s[2] == 0 ? 2 : 0) | (c_s[3] == 0 ? 3 : 0);
 assign wayID_select = hit_any ? wayID_hit : wayID_smin;
-
-
-// =============== Cache Data 缓存数据 ===============
-
-// 根据实际硬件模型设置有效电平
-parameter bit CHIP_DATA_CEN = 0;        // cen有效的电平
-parameter bit CHIP_DATA_WEN = 0;        // wen有效的电平
-parameter bit CHIP_DATA_WMASK_EN = 0;   // 写掩码有效的电平
-
-reg                           chip_data_cen[`BUS_WAYS];               // RAM 使能，低电平有效
-reg                           chip_data_wen[`BUS_WAYS];               // RAM 写使能，低电平有效
-reg   [5  : 0]                chip_data_addr[`BUS_WAYS];              // RAM 地址
-reg   [127: 0]                chip_data_wdata[`BUS_WAYS];             // RAM 写入数据
-reg   [127: 0]                chip_data_wmask[`BUS_WAYS];             // RAM 写入掩码
-wire  [127: 0]                chip_data_rdata[`BUS_WAYS];             // RAM 读出数据
 
 // RAM instantiate
 generate
@@ -963,28 +1048,6 @@ generate
   end
 endgenerate
 
-
-// =============== 状态机 ===============
-//  英文名称          中文名称               含义
-//  IDLE              空闲                 无活动。有用户请求则进入 READY / STORE_FROM_RAM / LOAD_FROM_BUS 这三种情况
-//  READY             就绪                  命中，则直接读写。读写完毕回到IDLE。
-//  STORE_FROM_RAM    存储(从RAM读取数据)    不命中并选择脏的数据块，则需要写回。先以128bit为单位分4次从RAM读入数据，读取完毕跳转到 StoreToBUS
-//  STORE_TO_BUS      存储(写入总线)         不命中并选择脏的数据块，则需要写回。再将512bit数据写入总线，写入完毕跳转到 LoadFromBUS
-//  LOAD_FROM_BUS     加载(从总线读取数据)    不命中并选择不脏的数据块，则需要读入新数据。先从总线读取512bit数据，读取完毕跳转到 LoadToRAM
-//  LOAD_TO_RAM       加载(写入RAM)         不命中并选择不脏的数据块，则需要读入新数据。再以128bit为单位分4次写入RAM，写入完毕跳转到READY
-//  FENCE_RD          同步读               有fence请求，读取vlaid的数据，送出
-//  FENCE_WR          同步写               有fence请求，收到数据包，写入。
-parameter [2:0] STATE_IDLE              = 3'd0;
-parameter [2:0] STATE_READY             = 3'd1;
-parameter [2:0] STATE_STORE_FROM_RAM    = 3'd2;
-parameter [2:0] STATE_STORE_TO_BUS      = 3'd3;
-parameter [2:0] STATE_LOAD_FROM_BUS     = 3'd4;
-parameter [2:0] STATE_LOAD_TO_RAM       = 3'd5;
-parameter [2:0] STATE_FENCE_RD          = 3'd6;
-parameter [2:0] STATE_FENCE_WR          = 3'd7;
-
-reg [2:0] state;
-reg   [1  : 0]                sync_step;                  // sync操作的不同阶段
 // wire state_idle             = state == STATE_IDLE;
 // wire state_ready            = state == STATE_READY;
 // wire state_store_from_ram   = state == STATE_STORE_FROM_RAM;
@@ -992,6 +1055,17 @@ reg   [1  : 0]                sync_step;                  // sync操作的不同
 // wire state_load_from_bus    = state == STATE_LOAD_FROM_BUS;
 // wire state_load_to_ram      = state == STATE_LOAD_TO_RAM;
 
+assign ram_op_offset_128 = ({6'd0, ram_op_cnt} - 2) << 7;
+assign hs_cache = i_cache_basic_req & o_cache_basic_ack;
+assign hs_sync_rd = sync_rreq & sync_rack;
+assign hs_sync_rpack = sync_rpackack & sync_rpackreq;
+assign hs_sync_wr = sync_wreq & sync_wack;
+assign hs_cache_axi = o_cache_axi_req & i_cache_axi_ack;
+assign hs_ramwrite = ram_op_cnt == 3'd4;
+assign hs_ramread = ram_op_cnt == 3'd6;
+assign hs_ramline = ram_op_cnt == 3'd3;
+assign rdata_line = chip_data_rdata[wayID_select];
+assign rdata_out = rdata_line[c_offset_bits +:64] & user_wmask;
 
 always @(posedge clk) begin
     if (rst) begin
@@ -1068,35 +1142,6 @@ always @(posedge clk) begin
       endcase
     end
 end
-
-
-// =============== 处理用户请求 ===============
-
-reg   [2:0]         ram_op_cnt;                 // RAM操作计数器(0~3表示1~4次，剩余的位数用于大于4的计数)
-wire  [8:0]         ram_op_offset_128;          // RAM操作的128位偏移量（延迟2个时钟周期后输出）
-wire                hs_cache;                   // cache操作 握手
-wire                hs_sync_rd;                 // sync读操作 握手
-wire                hs_sync_rpack;              // sync读包操作 握手
-wire                hs_sync_wr;                 // sync写操作 握手
-wire                hs_cache_axi;               // cache_axi操作 握手
-wire                hs_ramwrite;                // ram操作 握手（完成4行写入）
-wire                hs_ramread;                 // ram操作 握手（完成4行读取）
-wire                hs_ramline;                 // ram操作 握手（完成指定1行读写）
-reg   [127: 0]      rdata_line;                 // 读取一行数据
-reg   [63: 0]       rdata_out;                  // 输出的数据
-
-
-assign ram_op_offset_128 = ({6'd0, ram_op_cnt} - 2) << 7;
-assign hs_cache = i_cache_basic_req & o_cache_basic_ack;
-assign hs_sync_rd = sync_rreq & sync_rack;
-assign hs_sync_rpack = sync_rpackack & sync_rpackreq;
-assign hs_sync_wr = sync_wreq & sync_wack;
-assign hs_cache_axi = o_cache_axi_req & i_cache_axi_ack;
-assign hs_ramwrite = ram_op_cnt == 3'd4;
-assign hs_ramread = ram_op_cnt == 3'd6;
-assign hs_ramline = ram_op_cnt == 3'd3;
-assign rdata_line = chip_data_rdata[wayID_select];
-assign rdata_out = rdata_line[c_offset_bits +:64] & user_wmask;
 
 always @(posedge clk) begin
   if (rst) begin
@@ -1338,13 +1383,6 @@ end
 
 // =============== cache_axi 从机端，请求传输数据 ===============
 
-reg                           o_cache_axi_req;             // 请求
-reg   [63 : 0]                o_cache_axi_addr;            // 存储器地址（字节为单位），64字节对齐，低6位为0。
-reg                           o_cache_axi_op;              // 操作类型：0读取，1写入
-reg   [511 : 0]               o_cache_axi_wdata;           // 要写入的数据
-wire  [511 : 0]               i_cache_axi_rdata;           // 已读出的数据
-wire                          i_cache_axi_ack;             // 应答
-
 ysyx_210544_cache_axi Cache_axi(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
@@ -1419,7 +1457,6 @@ module ysyx_210544_cache_core (
   output  wire  [7:0]         o_axi_io_blks
 );
 
-// =============== cache 从机端 ===============
 
 reg   [63 : 0]                o_cache_basic_addr;         // 存储器地址（字节为单位），64字节对齐，低6位为0。
 reg   [63 : 0]                o_cache_basic_wdata;        // 要写入的数据
@@ -1429,6 +1466,23 @@ reg                           o_cache_basic_req;          // 请求
 wire  [63 : 0]                i_cache_basic_rdata;        // 已读出的数据
 reg                           i_cache_basic_ack;          // 应答
 
+wire  [59:0]                  i_addr_high;                // 输入地址的高60位
+wire  [3:0]                   i_addr_4;                   // 输入地址的低4位 (0~15)
+wire  [3:0]                   i_bytes_4;                  // 输入字节数扩展为4位
+
+wire                          en_second;                  // 第二次操作使能
+wire  [2 : 0]                 bytes[0:1];                 // 字节数
+wire  [63: 0]                 addr[0:1];                  // 地址
+wire  [63: 0]                 wdata[0:1];                 // 写数据
+reg   [63: 0]                 rdata[0:1];                 // 读数据
+
+reg   index;      // 操作的序号：0,1表示两个阶段
+
+wire hs_cache;
+
+
+
+// =============== cache 从机端 ===============
 assign o_cache_basic_op = i_cache_core_op;
 
 ysyx_210544_cache_basic Cache_basic(
@@ -1470,19 +1524,9 @@ ysyx_210544_cache_basic Cache_basic(
 
 // =============== 处理跨行问题 ===============
 
-wire  [59:0]                  i_addr_high;                // 输入地址的高60位
-wire  [3:0]                   i_addr_4;                   // 输入地址的低4位 (0~15)
-wire  [3:0]                   i_bytes_4;                  // 输入字节数扩展为4位
-
 assign i_addr_high = i_cache_core_addr[63:4];
 assign i_addr_4 = i_cache_core_addr[3:0];
 assign i_bytes_4 = {1'd0, i_cache_core_bytes};
-
-wire                          en_second;                  // 第二次操作使能
-wire  [2 : 0]                 bytes[0:1];                 // 字节数
-wire  [63: 0]                 addr[0:1];                  // 地址
-wire  [63: 0]                 wdata[0:1];                 // 写数据
-reg   [63: 0]                 rdata[0:1];                 // 读数据
 
 assign en_second = i_addr_4 + i_bytes_4 < i_addr_4;
 assign bytes[0] = en_second ? {4'd15 - i_addr_4}[2:0] : i_cache_core_bytes;
@@ -1492,13 +1536,12 @@ assign addr[1] = {i_addr_high + 60'd1, 4'd0};
 assign wdata[0] = i_cache_core_wdata;
 assign wdata[1] = i_cache_core_wdata >> (({3'd0,bytes[0]} + 1) << 3);
 
-wire hs_cache = i_cache_basic_ack & o_cache_basic_req;
+assign hs_cache = i_cache_basic_ack & o_cache_basic_req;
 
 assign o_cache_basic_addr = (index == 0) ? addr[0] : addr[1];
 assign o_cache_basic_bytes = (index == 0) ? bytes[0] : bytes[1];
 assign o_cache_basic_wdata = (index == 0) ? wdata[0] : wdata[1];
 
-reg   index;      // 操作的序号：0,1表示两个阶段
 always @(posedge clk) begin
   if (rst) begin
     index <= 0;
@@ -1581,9 +1624,13 @@ module ysyx_210544_cache_nocache (
   output  wire  [7:0]         o_axi_io_blks
 );
 
-wire hs_axi_io = o_axi_io_valid & i_axi_io_ready;
-
+wire hs_axi_io;
 reg [2:0] nocache_size;
+
+
+
+assign hs_axi_io = o_axi_io_valid & i_axi_io_ready;
+
 always @(*) begin
   case (i_cache_nocache_bytes)
     3'b000: nocache_size = `SIZE_B;
@@ -1676,7 +1723,6 @@ module ysyx_210544_cache_sync(
   output  wire  [511: 0]      o_sync_icache_wdata     // write cache_data
 );
 
-
 // =============== 状态机 ===============
 //  英文名称          中文名称    含义
 //  IDLE            空闲        无活动。有fencei请求进入 SYNC_READ
@@ -1689,10 +1735,14 @@ parameter [1:0] STATE_SYNC_WRITE        = 2'd2;
 parameter [1:0] STATE_SYNC_RPACK_ACK    = 2'd3;
 
 reg [1:0] state;
+wire hs_rd;
+wire hs_wr;
 
-wire hs_rd          = o_sync_dcache_rreq & i_sync_dcache_rack;
+
+
+assign hs_rd          = o_sync_dcache_rreq & i_sync_dcache_rack;
 // wire hs_rd_pack     = o_sync_dcache_rpackack & i_sync_dcache_rpackreq;
-wire hs_wr          = o_sync_icache_wreq & i_sync_icache_wack;
+assign hs_wr          = o_sync_icache_wreq & i_sync_icache_wack;
 
 always @(posedge clk) begin
   if (rst) begin
@@ -1732,10 +1782,6 @@ always @(posedge clk) begin
     endcase
   end
 end
-
-
-// =============== 处理用户请求 ===============
-
 
 always @(posedge clk) begin
   if (rst) begin
@@ -1783,7 +1829,6 @@ always @(posedge clk) begin
     endcase
   end
 end
-
 
 endmodule
 
@@ -1946,9 +1991,7 @@ ysyx_210544_cache_core DCache(
 );
 
 
-/////////////////////////////////////////////////
 // NoCache, access bus directly
-  
 wire              nocache_req;
 wire  [63:0]      nocache_addr;
 wire              nocache_op;
@@ -1964,31 +2007,7 @@ wire  [63:0]      nocache_axi_io_addr;
 wire  [2:0]       nocache_axi_io_size;
 wire  [7:0]       nocache_axi_io_blks;
 
-ysyx_210544_cache_nocache NoCache(
-  .clk                        (clk                        ),
-  .rst                        (rst                        ),
-	.i_cache_nocache_addr       (nocache_addr               ),
-	.i_cache_nocache_wdata      (nocache_wdata              ),
-	.i_cache_nocache_bytes      (nocache_bytes              ),
-	.i_cache_nocache_op         (nocache_op                 ),
-	.i_cache_nocache_req        (ch_nocache ? nocache_req : 0),
-	.o_cache_nocache_rdata      (nocache_rdata              ),
-	.o_cache_nocache_ack        (nocache_ack                ),
-
-  .i_axi_io_ready             (ch_nocache ? i_axi_io_ready : 0        ),
-  .i_axi_io_rdata             (ch_nocache ? i_axi_io_rdata : 0        ),
-  .o_axi_io_op                (nocache_axi_io_op          ),
-  .o_axi_io_valid             (nocache_axi_io_valid       ),
-  .o_axi_io_wdata             (nocache_axi_io_wdata       ),
-  .o_axi_io_addr              (nocache_axi_io_addr        ),
-  .o_axi_io_size              (nocache_axi_io_size        ),
-  .o_axi_io_blks              (nocache_axi_io_blks        )
-);
-
-
-/////////////////////////////////////////////////
 // Cache_sync, ICache and DCache auto exchange data
-
 wire              sync_dcache_rreq;
 wire              sync_dcache_rack;
 wire              sync_dcache_rpackreq;
@@ -2011,6 +2030,29 @@ wire  [  1: 0]    sync_icache_wwayid;
 wire  [  3: 0]    sync_icache_wblkid;
 wire  [ 25:0]     sync_icache_winfo;
 wire  [511:0]     sync_icache_wdata;
+
+
+ysyx_210544_cache_nocache NoCache(
+  .clk                        (clk                        ),
+  .rst                        (rst                        ),
+	.i_cache_nocache_addr       (nocache_addr               ),
+	.i_cache_nocache_wdata      (nocache_wdata              ),
+	.i_cache_nocache_bytes      (nocache_bytes              ),
+	.i_cache_nocache_op         (nocache_op                 ),
+	.i_cache_nocache_req        (ch_nocache ? nocache_req : 0),
+	.o_cache_nocache_rdata      (nocache_rdata              ),
+	.o_cache_nocache_ack        (nocache_ack                ),
+
+  .i_axi_io_ready             (ch_nocache ? i_axi_io_ready : 0        ),
+  .i_axi_io_rdata             (ch_nocache ? i_axi_io_rdata : 0        ),
+  .o_axi_io_op                (nocache_axi_io_op          ),
+  .o_axi_io_valid             (nocache_axi_io_valid       ),
+  .o_axi_io_wdata             (nocache_axi_io_wdata       ),
+  .o_axi_io_addr              (nocache_axi_io_addr        ),
+  .o_axi_io_size              (nocache_axi_io_size        ),
+  .o_axi_io_blks              (nocache_axi_io_blks        )
+);
+
 
 
 ysyx_210544_cache_sync Cache_sync(
@@ -2111,7 +2153,6 @@ always @(posedge clk) begin
   end
 end
 
-
 endmodule
 
 // ZhengpuShi
@@ -2128,7 +2169,6 @@ module ysyx_210544_rtc(
 );
 
 reg   [`BUS_64] clk_cnt     ;   // 内部计时器，用于控制秒的变化
-
 reg   [15: 0]   year        ;   // year: 0000 ~ 9999    2^16-1=65535
 reg   [3 : 0]   month       ;   // 2^4-1=15
 reg   [4 : 0]   day         ;   // 2^5-1=31
@@ -2136,7 +2176,10 @@ reg   [5 : 0]   hour        ;   // 2^6-1=63
 reg   [5 : 0]   minute      ;   // 2^6-1=63
 reg   [5 : 0]   second      ;   // 2^6-1=63
 
-wire  [`BUS_64] rtc_val = {21'b0, year, month, day, hour, minute, second};
+wire  [`BUS_64] rtc_val;
+
+
+assign rtc_val = {21'b0, year, month, day, hour, minute, second};
 
 // rtc simulate
 always @(posedge clk) begin
@@ -2207,9 +2250,13 @@ module ysyx_210544_clint(
 // reg   [7:0]       reg_mtime_cnt;
 reg   [`BUS_64]   reg_mtime;
 reg   [`BUS_64]   reg_mtimecmp;
+wire addr_mtime;
+wire addr_mtimecmp;
 
-wire addr_mtime = i_clint_addr == `DEV_MTIME;
-wire addr_mtimecmp = i_clint_addr == `DEV_MTIMECMP;
+
+
+assign addr_mtime = i_clint_addr == `DEV_MTIME;
+assign addr_mtimecmp = i_clint_addr == `DEV_MTIMECMP;
 
 always @(posedge clk) begin
   if (rst) begin
@@ -2266,40 +2313,74 @@ module ysyx_210544_regfile(
 reg   [`BUS_64]   regs[0 : 31];
 
 // register alias name
-wire  [`BUS_64]   x00_zero  = regs[00];
-wire  [`BUS_64]   x01_ra    = regs[01];
-wire  [`BUS_64]   x02_sp    = regs[02];
-wire  [`BUS_64]   x03_gp    = regs[03];
-wire  [`BUS_64]   x04_tp    = regs[04];
-wire  [`BUS_64]   x05_t0    = regs[05];
-wire  [`BUS_64]   x06_t1    = regs[06];
-wire  [`BUS_64]   x07_t2    = regs[07];
-wire  [`BUS_64]   x08_s0    = regs[08];
-wire  [`BUS_64]   x09_s1    = regs[09];
-wire  [`BUS_64]   x10_a0    = regs[10];
-wire  [`BUS_64]   x11_a1    = regs[11];
-wire  [`BUS_64]   x12_a2    = regs[12];
-wire  [`BUS_64]   x13_a3    = regs[13];
-wire  [`BUS_64]   x14_a4    = regs[14];
-wire  [`BUS_64]   x15_a5    = regs[15];
-wire  [`BUS_64]   x16_a6    = regs[16];
-wire  [`BUS_64]   x17_a7    = regs[17];
-wire  [`BUS_64]   x18_s2    = regs[18];
-wire  [`BUS_64]   x19_s3    = regs[19];
-wire  [`BUS_64]   x20_s4    = regs[20];
-wire  [`BUS_64]   x21_s5    = regs[21];
-wire  [`BUS_64]   x22_s6    = regs[22];
-wire  [`BUS_64]   x23_s7    = regs[23];
-wire  [`BUS_64]   x24_s8    = regs[24];
-wire  [`BUS_64]   x25_s9    = regs[25];
-wire  [`BUS_64]   x26_s10   = regs[26];
-wire  [`BUS_64]   x27_s11   = regs[27];
-wire  [`BUS_64]   x28_t3    = regs[28];
-wire  [`BUS_64]   x29_t4    = regs[29];
-wire  [`BUS_64]   x30_t5    = regs[30];
-wire  [`BUS_64]   x31_t6    = regs[31];
+wire  [`BUS_64]   x00_zero;
+wire  [`BUS_64]   x01_ra;
+wire  [`BUS_64]   x02_sp;
+wire  [`BUS_64]   x03_gp;
+wire  [`BUS_64]   x04_tp;
+wire  [`BUS_64]   x05_t0;
+wire  [`BUS_64]   x06_t1;
+wire  [`BUS_64]   x07_t2;
+wire  [`BUS_64]   x08_s0;
+wire  [`BUS_64]   x09_s1;
+wire  [`BUS_64]   x10_a0;
+wire  [`BUS_64]   x11_a1;
+wire  [`BUS_64]   x12_a2;
+wire  [`BUS_64]   x13_a3;
+wire  [`BUS_64]   x14_a4;
+wire  [`BUS_64]   x15_a5;
+wire  [`BUS_64]   x16_a6;
+wire  [`BUS_64]   x17_a7;
+wire  [`BUS_64]   x18_s2;
+wire  [`BUS_64]   x19_s3;
+wire  [`BUS_64]   x20_s4;
+wire  [`BUS_64]   x21_s5;
+wire  [`BUS_64]   x22_s6;
+wire  [`BUS_64]   x23_s7;
+wire  [`BUS_64]   x24_s8;
+wire  [`BUS_64]   x25_s9;
+wire  [`BUS_64]   x26_s10;
+wire  [`BUS_64]   x27_s11;
+wire  [`BUS_64]   x28_t3;
+wire  [`BUS_64]   x29_t4;
+wire  [`BUS_64]   x30_t5;
+wire  [`BUS_64]   x31_t6;
 
-	
+
+
+assign x00_zero = regs[00];
+assign x01_ra = regs[01];
+assign x02_sp = regs[02];
+assign x03_gp = regs[03];
+assign x04_tp = regs[04];
+assign x05_t0 = regs[05];
+assign x06_t1 = regs[06];
+assign x07_t2 = regs[07];
+assign x08_s0 = regs[08];
+assign x09_s1 = regs[09];
+assign x10_a0 = regs[10];
+assign x11_a1 = regs[11];
+assign x12_a2 = regs[12];
+assign x13_a3 = regs[13];
+assign x14_a4 = regs[14];
+assign x15_a5 = regs[15];
+assign x16_a6 = regs[16];
+assign x17_a7 = regs[17];
+assign x18_s2 = regs[18];
+assign x19_s3 = regs[19];
+assign x20_s4 = regs[20];
+assign x21_s5 = regs[21];
+assign x22_s6 = regs[22];
+assign x23_s7 = regs[23];
+assign x24_s8 = regs[24];
+assign x25_s9 = regs[25];
+assign x26_s10 = regs[26];
+assign x27_s11 = regs[27];
+assign x28_t3 = regs[28];
+assign x29_t4 = regs[29];
+assign x30_t5 = regs[30];
+assign x31_t6 = regs[31];
+
 // i_rd 写入
 always @(posedge clk) begin
   if ( rst == 1'b1 ) begin
@@ -2431,15 +2512,17 @@ module ysyx_210544_csrfile(
   output  wire  [`BUS_64]   o_csrs[0 : 15]
 );
 
+reg [`BUS_64]     csrs[0 : 15];
+reg  [3 : 0]      csr_idx;
+wire              mstatus_sd;
+
+
 
 // CSR
-reg [`BUS_64]   csrs[0 : 15];
-
 assign o_csr_clint_mstatus_mie = csrs[`CSR_IDX_MSTATUS][3];
 assign o_csr_clint_mie_mtie = csrs[`CSR_IDX_MIE][7];
 
 // i_csr_addr translate to csr_idx
-reg  [3 : 0]       csr_idx;
 always @(*) begin
   if (rst) begin
     csr_idx = `CSR_IDX_NONE;
@@ -2472,7 +2555,7 @@ always @(*) begin
   end
 end
 
-wire mstatus_sd = (i_csr_wdata[14:13] == 2'b11) | (i_csr_wdata[16:15] == 2'b11);
+assign mstatus_sd = (i_csr_wdata[14:13] == 2'b11) | (i_csr_wdata[16:15] == 2'b11);
 
 // csr写入
 always @(posedge clk) begin
@@ -2590,6 +2673,14 @@ module ysyx_210544_ifU(
   output  reg                 o_nocmt               // 由于冲刷流水线而不提交这条指令
 );
 
+wire              handshake_done;
+reg               ignore_next_inst;     // 忽略下一条取指
+reg [`BUS_64]     saved_pc_jmpaddr;     // 记忆的pc跳转指令
+reg               fetch_again;          // 再次取指
+reg [`BUS_64]     pc_pred;              // 预测的下一个PC
+
+
+
 assign o_nocmt = 0;
 
 // o_bus_req
@@ -2615,13 +2706,9 @@ always @(posedge clk) begin
   end
 end
 
-wire handshake_done = o_bus_req & i_bus_ack;
+assign handshake_done = o_bus_req & i_bus_ack;
 
 // 跳转指令处理
-reg           ignore_next_inst;     // 忽略下一条取指
-reg [`BUS_64] saved_pc_jmpaddr;     // 记忆的pc跳转指令
-reg           fetch_again;          // 再次取指
-reg [`BUS_64] pc_pred;              // 预测的下一个PC
 
 always @(posedge clk) begin
   if (rst) begin
@@ -2704,17 +2791,20 @@ module ysyx_210544_id_stage(
   output  wire                o_id_skipcmt
 );
 
-wire fetched_hs = i_id_fetched_req;
-wire decoded_hs = i_id_decoded_ack & o_id_decoded_req;
-
-// 是否使能组合逻辑单元部件
-reg                           i_ena;
-
-
+reg                           i_ena;    // 是否使能组合逻辑单元部件
+wire                          i_disable;
 // 保存输入信息
 reg   [`BUS_64]               tmp_i_id_pc;
 reg   [`BUS_32]               tmp_i_id_inst;
 reg                           tmp_i_id_nocmt;
+
+wire fetched_hs;
+wire decoded_hs;
+
+
+
+assign fetched_hs = i_id_fetched_req;
+assign decoded_hs = i_id_decoded_ack & o_id_decoded_req;
 
 always @(posedge clk) begin
   if (rst) begin
@@ -2743,12 +2833,11 @@ always @(posedge clk) begin
   end
 end
 
-wire i_disable = !i_ena;
+assign i_disable = !i_ena;
 
 assign o_id_pc      = i_disable ? 0 : tmp_i_id_pc;
 assign o_id_inst    = i_disable ? 0 : tmp_i_id_inst;
 assign o_id_nocmt   = i_disable ? 0 : tmp_i_id_nocmt;
-
 
 ysyx_210544_idU IdU(
   .rst                        (rst                        ),
@@ -2797,8 +2886,6 @@ module ysyx_210544_idU(
 
 wire [7  : 0] inst_opcode;
 
-assign o_inst_opcode = inst_opcode;
-
 wire [6  : 0] opcode;
 wire [4  : 0] rs1;
 wire [4  : 0] rs2;
@@ -2811,7 +2898,80 @@ wire [63 : 0] imm_S;
 wire [63 : 0] imm_B;
 wire [63 : 0] imm_U;
 wire [63 : 0] imm_J;
+wire inst_lui;     
+wire inst_auipc;   
+wire inst_jal;     
+wire inst_jalr;    
+wire inst_beq;     
+wire inst_bne;     
+wire inst_blt;     
+wire inst_bge;     
+wire inst_bltu;    
+wire inst_bgeu;    
+wire inst_lb;      
+wire inst_lh;      
+wire inst_lw;      
+wire inst_lbu;     
+wire inst_lhu;     
+wire inst_sb;      
+wire inst_sh;      
+wire inst_sw;      
+wire inst_addi;    
+wire inst_slti;    
+wire inst_sltiu;   
+wire inst_xori;    
+wire inst_ori;     
+wire inst_andi;    
+wire inst_slli;    
+wire inst_srli;    
+wire inst_srai;    
+wire inst_add;     
+wire inst_sub;     
+wire inst_sll;     
+wire inst_slt;     
+wire inst_sltu;    
+wire inst_xor;     
+wire inst_srl;     
+wire inst_sra;     
+wire inst_or;      
+wire inst_and;     
+wire inst_fence;   
+wire inst_fencei;  
+wire inst_ecall;   
+wire inst_ebreak;  
+wire inst_csrrw;   
+wire inst_csrrs;   
+wire inst_csrrc;   
+wire inst_csrrwi;  
+wire inst_csrrsi;  
+wire inst_csrrci;  
+wire inst_lwu;     
+wire inst_ld;      
+wire inst_sd;      
+wire inst_addiw;   
+wire inst_slliw;   
+wire inst_srliw;   
+wire inst_sraiw;   
+wire inst_addw;    
+wire inst_subw;    
+wire inst_sllw;    
+wire inst_srlw;    
+wire inst_sraw;    
+wire inst_mret;    
+wire inst_load;    
+wire inst_store;   
 
+wire inst_type_R;
+wire inst_type_I;
+wire inst_type_S;
+wire inst_type_B;
+wire inst_type_U;
+wire inst_type_J;
+wire inst_type_CSRI;  // csr immediate
+
+
+
+assign o_inst_opcode = inst_opcode;
 assign opcode     = i_inst[6  :  0];
 assign rs1        = i_inst[19 : 15];
 assign rs2        = i_inst[24 : 20];
@@ -2825,78 +2985,68 @@ assign imm_B      = { {52{i_inst[31]}}, i_inst[7], i_inst[30 : 25], i_inst[11 : 
 assign imm_U      = { {32{i_inst[31]}}, i_inst[31 : 12], 12'b0 };
 assign imm_J      = { {44{i_inst[31]}}, i_inst[19 : 12], i_inst[20], i_inst[30 : 21], 1'b0 };
 
-wire inst_lui     = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] &  opcode[2];
-wire inst_auipc   = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] &  opcode[2];
-wire inst_jal     =  opcode[6] &  opcode[5] & ~opcode[4] &  opcode[3] &  opcode[2];
-wire inst_jalr    =  opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] &  opcode[2] & ~func3[2] & ~func3[1] & ~func3[0];
-
-wire inst_beq     =  opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0];
-wire inst_bne     =  opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
-wire inst_blt     =  opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] & ~func3[0];
-wire inst_bge     =  opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0];
-wire inst_bltu    =  opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] &  func3[1] & ~func3[0];
-wire inst_bgeu    =  opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] &  func3[1] &  func3[0];
-
-wire inst_lb      = ~opcode[6] & ~opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0];
-wire inst_lh      = ~opcode[6] & ~opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
-wire inst_lw      = ~opcode[6] & ~opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] & ~func3[0];
-wire inst_lbu     = ~opcode[6] & ~opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] & ~func3[0];
-wire inst_lhu     = ~opcode[6] & ~opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0];
-
-wire inst_sb      = ~opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0];
-wire inst_sh      = ~opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
-wire inst_sw      = ~opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] & ~func3[0];
-
-wire inst_addi    = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0];
-wire inst_slti    = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] & ~func3[0];
-wire inst_sltiu   = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] &  func3[0];
-wire inst_xori    = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] & ~func3[0];
-wire inst_ori     = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] &  func3[1] & ~func3[0];
-wire inst_andi    = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] &  func3[1] &  func3[0];
-wire inst_slli    = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
-wire inst_srli    = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] & ~func7[5];
-wire inst_srai    = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] &  func7[5];
-
-wire inst_add     = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0] & ~func7[5];
-wire inst_sub     = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0] &  func7[5];
-wire inst_sll     = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
-wire inst_slt     = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] & ~func3[0];
-wire inst_sltu    = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] &  func3[0];
-wire inst_xor     = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] & ~func3[0];
-wire inst_srl     = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] & ~func7[5];
-wire inst_sra     = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] &  func7[5];
-wire inst_or      = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] &  func3[1] & ~func3[0];
-wire inst_and     = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] &  func3[1] &  func3[0];
-
-wire inst_fence   = ~opcode[6] & ~opcode[5] & ~opcode[4] &  opcode[3] &  opcode[2] & ~func3[2] & ~func3[1] & ~func3[0];
-wire inst_fencei  = ~opcode[6] & ~opcode[5] & ~opcode[4] &  opcode[3] &  opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
-wire inst_ecall   =  opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0] & ~func7[4] & ~func7[3] & ~func7[0] & ~rs2[1];
-wire inst_ebreak  =  opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0] & ~func7[4] & ~func7[3] &  func7[0] & ~rs2[1];
-
-wire inst_csrrw   =  opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
-wire inst_csrrs   =  opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] & ~func3[0];
-wire inst_csrrc   =  opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] &  func3[0];
-wire inst_csrrwi  =  opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0];
-wire inst_csrrsi  =  opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] &  func3[1] & ~func3[0];
-wire inst_csrrci  =  opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] &  func3[1] &  func3[0];
-
-wire inst_lwu     = ~opcode[6] & ~opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] &  func3[1] & ~func3[0];
-wire inst_ld      = ~opcode[6] & ~opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] &  func3[0];
-wire inst_sd      = ~opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] &  func3[0];
-wire inst_addiw   = ~opcode[6] & ~opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0];
-wire inst_slliw   = ~opcode[6] & ~opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
-wire inst_srliw   = ~opcode[6] & ~opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] & ~func7[5];
-wire inst_sraiw   = ~opcode[6] & ~opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] &  func7[5];
-wire inst_addw    = ~opcode[6] &  opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0] & ~func7[5];
-wire inst_subw    = ~opcode[6] &  opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0] &  func7[5];
-wire inst_sllw    = ~opcode[6] &  opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
-wire inst_srlw    = ~opcode[6] &  opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] & ~func7[5];
-wire inst_sraw    = ~opcode[6] &  opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] &  func7[5];
-
-wire inst_mret    =  opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0] &  func7[4] &  func7[3] & ~func7[0] & rs2[1];
-
-wire inst_load    = inst_lb | inst_lbu | inst_lh | inst_lhu | inst_lw | inst_lwu | inst_ld;
-wire inst_store   = inst_sb | inst_sh | inst_sw | inst_sd;
+assign inst_lui     = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] &  opcode[2];
+assign inst_auipc   = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] &  opcode[2];
+assign inst_jal     =  opcode[6] &  opcode[5] & ~opcode[4] &  opcode[3] &  opcode[2];
+assign inst_jalr    =  opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] &  opcode[2] & ~func3[2] & ~func3[1] & ~func3[0];
+assign inst_beq     =  opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0];
+assign inst_bne     =  opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
+assign inst_blt     =  opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] & ~func3[0];
+assign inst_bge     =  opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0];
+assign inst_bltu    =  opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] &  func3[1] & ~func3[0];
+assign inst_bgeu    =  opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] &  func3[1] &  func3[0];
+assign inst_lb      = ~opcode[6] & ~opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0];
+assign inst_lh      = ~opcode[6] & ~opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
+assign inst_lw      = ~opcode[6] & ~opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] & ~func3[0];
+assign inst_lbu     = ~opcode[6] & ~opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] & ~func3[0];
+assign inst_lhu     = ~opcode[6] & ~opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0];
+assign inst_sb      = ~opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0];
+assign inst_sh      = ~opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
+assign inst_sw      = ~opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] & ~func3[0];
+assign inst_addi    = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0];
+assign inst_slti    = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] & ~func3[0];
+assign inst_sltiu   = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] &  func3[0];
+assign inst_xori    = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] & ~func3[0];
+assign inst_ori     = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] &  func3[1] & ~func3[0];
+assign inst_andi    = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] &  func3[1] &  func3[0];
+assign inst_slli    = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
+assign inst_srli    = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] & ~func7[5];
+assign inst_srai    = ~opcode[6] & ~opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] &  func7[5];
+assign inst_add     = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0] & ~func7[5];
+assign inst_sub     = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0] &  func7[5];
+assign inst_sll     = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
+assign inst_slt     = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] & ~func3[0];
+assign inst_sltu    = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] &  func3[0];
+assign inst_xor     = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] & ~func3[0];
+assign inst_srl     = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] & ~func7[5];
+assign inst_sra     = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] &  func7[5];
+assign inst_or      = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] &  func3[1] & ~func3[0];
+assign inst_and     = ~opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] &  func3[1] &  func3[0];
+assign inst_fence   = ~opcode[6] & ~opcode[5] & ~opcode[4] &  opcode[3] &  opcode[2] & ~func3[2] & ~func3[1] & ~func3[0];
+assign inst_fencei  = ~opcode[6] & ~opcode[5] & ~opcode[4] &  opcode[3] &  opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
+assign inst_ecall   =  opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0] & ~func7[4] & ~func7[3] & ~func7[0] & ~rs2[1];
+assign inst_ebreak  =  opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0] & ~func7[4] & ~func7[3] &  func7[0] & ~rs2[1];
+assign inst_csrrw   =  opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
+assign inst_csrrs   =  opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] & ~func3[0];
+assign inst_csrrc   =  opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] &  func3[0];
+assign inst_csrrwi  =  opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0];
+assign inst_csrrsi  =  opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] &  func3[1] & ~func3[0];
+assign inst_csrrci  =  opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] &  func3[1] &  func3[0];
+assign inst_lwu     = ~opcode[6] & ~opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] &  func3[2] &  func3[1] & ~func3[0];
+assign inst_ld      = ~opcode[6] & ~opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] &  func3[0];
+assign inst_sd      = ~opcode[6] &  opcode[5] & ~opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] &  func3[1] &  func3[0];
+assign inst_addiw   = ~opcode[6] & ~opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0];
+assign inst_slliw   = ~opcode[6] & ~opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
+assign inst_srliw   = ~opcode[6] & ~opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] & ~func7[5];
+assign inst_sraiw   = ~opcode[6] & ~opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] &  func7[5];
+assign inst_addw    = ~opcode[6] &  opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0] & ~func7[5];
+assign inst_subw    = ~opcode[6] &  opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0] &  func7[5];
+assign inst_sllw    = ~opcode[6] &  opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] &  func3[0];
+assign inst_srlw    = ~opcode[6] &  opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] & ~func7[5];
+assign inst_sraw    = ~opcode[6] &  opcode[5] &  opcode[4] &  opcode[3] & ~opcode[2] &  func3[2] & ~func3[1] &  func3[0] &  func7[5];
+assign inst_mret    =  opcode[6] &  opcode[5] &  opcode[4] & ~opcode[3] & ~opcode[2] & ~func3[2] & ~func3[1] & ~func3[0] &  func7[4] &  func7[3] & ~func7[0] & rs2[1];
+assign inst_load    = inst_lb | inst_lbu | inst_lh | inst_lhu | inst_lw | inst_lwu | inst_ld;
+assign inst_store   = inst_sb | inst_sh | inst_sw | inst_sd;
 
 // arith inst: 10000; logic: 01000;
 // load-store: 00100; j: 00010;  sys: 000001
@@ -2956,14 +3106,6 @@ assign inst_opcode[0] = (  rst == 1'b1 ) ? 0 :
     inst_ebreak | inst_csrrs  | inst_csrrwi | inst_csrrci |
     inst_ld     | inst_addiw  | inst_srliw  | inst_addw   | 
     inst_sllw   | inst_sraw   ); 
-
-wire inst_type_R;
-wire inst_type_I;
-wire inst_type_S;
-wire inst_type_B;
-wire inst_type_U;
-wire inst_type_J;
-wire inst_type_CSRI;  // csr immediate
 
 assign inst_type_R    = ( rst == 1'b1 ) ? 0 : 
   ( inst_add    | inst_sub    | inst_sll    | inst_slt    | 
@@ -3027,7 +3169,6 @@ always @(*) begin
   end
 end
 
-
 always @(*) begin
   if (rst == 1'b1) begin
     o_op2 = 0;
@@ -3055,7 +3196,6 @@ always @(*) begin
     end
   end
 end
-
 
 // o_op3
 always @(*) begin
@@ -3088,7 +3228,6 @@ always @(*) begin
     end
   end
 end
-
 
 // 某些自定义指令，需要通知difftest跳过比对（提交，但不对比）
 assign o_skipcmt = 
@@ -3151,30 +3290,33 @@ module ysyx_210544_exe_stage(
   output  reg   [`BUS_32]     o_ex_intrNo
 );
 
-assign o_ex_decoded_ack = 1'b1;
+wire                          i_disable;
 
-wire decoded_hs = i_ex_decoded_req & o_ex_decoded_ack;
-wire executed_hs = i_ex_executed_ack & o_ex_executed_req;
+wire                          decoded_hs;
+wire                          executed_hs;
+wire                          exeU_skip_cmt;
 
-wire exeU_skip_cmt;
-
-// 是否为异常指令：ecall, mret
-wire is_inst_exceptionU = (i_ex_inst_opcode == `INST_ECALL) |
-  (i_ex_inst_opcode == `INST_MRET);
-// 是否产生了时钟中断？
-wire is_time_int_req = i_ex_clint_mstatus_mie & i_ex_clint_mie_mtie & i_ex_clint_mtime_overflow;
+wire                          is_inst_exceptionU;    // 是否为异常指令：ecall, mret
+wire                          is_time_int_req;       // 是否产生了时钟中断？
 
 // 通道选择
-reg o_ena_exeU;
-reg o_ena_exceptionU;
+reg                           o_ena_exeU;
+reg                           o_ena_exceptionU;
 
-wire            exeU_pc_jmp;
-wire [`BUS_64]  exeU_pc_jmpaddr;
+wire                          exeU_pc_jmp;
+wire [`BUS_64]                exeU_pc_jmpaddr;
+wire   [11 : 0]               exeU_csr_addr;
+wire                          exeU_csr_ren;
+wire                          exeU_csr_wen;
+wire   [`BUS_64]              exeU_csr_wdata;
 
-wire            exceptionU_req;
-wire            exceptionU_pc_jmp;
-wire [`BUS_64]  exceptionU_pc_jmpaddr;
-
+wire                          exceptionU_req;
+wire                          exceptionU_pc_jmp;
+wire [`BUS_64]                exceptionU_pc_jmpaddr;
+wire   [11 : 0]               exceptionU_csr_addr;
+wire                          exceptionU_csr_ren;
+wire                          exceptionU_csr_wen;
+wire   [`BUS_64]              exceptionU_csr_wdata;
 
 // 保存输入信息
 reg   [7 : 0]                 tmp_i_ex_inst_opcode;
@@ -3187,6 +3329,18 @@ reg   [4 : 0]                 tmp_i_ex_rd;
 reg                           tmp_i_ex_rd_wen;
 reg                           tmp_i_ex_nocmt;
 reg                           tmp_i_ex_skipcmt;
+
+
+
+assign i_disable = rst | (!executed_hs);
+
+assign o_ex_decoded_ack = 1'b1;
+
+assign decoded_hs = i_ex_decoded_req & o_ex_decoded_ack;
+assign executed_hs = i_ex_executed_ack & o_ex_executed_req;
+
+assign is_inst_exceptionU = (i_ex_inst_opcode == `INST_ECALL) | (i_ex_inst_opcode == `INST_MRET);
+assign is_time_int_req = i_ex_clint_mstatus_mie & i_ex_clint_mie_mtie & i_ex_clint_mtime_overflow;
 
 always @(posedge clk) begin
   if (rst) begin
@@ -3247,8 +3401,6 @@ always @(posedge clk) begin
   end
 end
 
-wire i_disable = rst | (!executed_hs);
-
 assign o_ex_pc            = i_disable ? 0 : tmp_i_ex_pc;
 assign o_ex_inst          = i_disable ? 0 : tmp_i_ex_inst;
 assign o_ex_rd            = i_disable ? 0 : tmp_i_ex_rd;
@@ -3260,17 +3412,6 @@ assign o_ex_rd            = i_disable ? 0 : (!o_ena_exeU ? 0 : tmp_i_ex_rd);
 assign o_ex_rd_wen        = i_disable ? 0 : (!o_ena_exeU ? 0 : tmp_i_ex_rd_wen);
 assign o_ex_nocmt         = i_disable ? 0 : tmp_i_ex_nocmt;
 assign o_ex_skipcmt       = i_disable ? 0 : (tmp_i_ex_skipcmt | exeU_skip_cmt);
-
-
-wire   [11 : 0]      exeU_csr_addr;
-wire                 exeU_csr_ren;
-wire                 exeU_csr_wen;
-wire   [`BUS_64]     exeU_csr_wdata;
-wire   [11 : 0]      exceptionU_csr_addr;
-wire                 exceptionU_csr_ren;
-wire                 exceptionU_csr_wen;
-wire   [`BUS_64]     exceptionU_csr_wdata;
-
 
 assign o_ex_pc_jmp      = rst ? 0 : (o_ena_exeU ? exeU_pc_jmp     : exceptionU_pc_jmp);
 assign o_ex_pc_jmpaddr  = rst ? 0 : (o_ena_exeU ? exeU_pc_jmpaddr : exceptionU_pc_jmpaddr);
@@ -3337,61 +3478,68 @@ module ysyx_210544_exeU(
   output  reg                 o_exeU_skip_cmt    // 这里也会发现需要跳过提交的指令，比如 csr mcycle
 );
 
-wire i_disable = !ena;
+wire i_disable;
+wire [63:0] reg64_t1;
+wire [63:0] reg64_t2;
+wire [63:0] reg64_t3;
+wire [63:0] reg64_t4;
+wire [31:0] reg32_t1;
+wire inst_csr;
 
-wire [63:0] reg64_t1 = i_op1 + i_op2;
-wire [63:0] reg64_t2 = i_op1 << i_op2[5:0];
-wire [63:0] reg64_t3 = i_op1 - $signed(i_op2);
-wire [63:0] reg64_t4 = i_op1 << i_op2[4:0];
-wire [31:0] reg32_t1 = i_op1[31:0] >> i_op2[4:0];
-always@( * )
-begin
-  if( i_disable )
-  begin
+
+
+assign i_disable = !ena;
+assign reg64_t1 = i_op1 + i_op2;
+assign reg64_t2 = i_op1 << i_op2[5:0];
+assign reg64_t3 = i_op1 - $signed(i_op2);
+assign reg64_t4 = i_op1 << i_op2[4:0];
+assign reg32_t1 = i_op1[31:0] >> i_op2[4:0];
+
+always @(*) begin
+  if( i_disable ) begin
     o_rd_wdata = `ZERO_WORD;
   end
-  else
-  begin
+  else begin
     case( i_inst_opcode )
-	  `INST_ADDI    : begin o_rd_wdata = i_op1 + i_op2;  end
-	  `INST_ADD     : begin o_rd_wdata = i_op1 + i_op2;  end
-	  `INST_SUB     : begin o_rd_wdata = i_op1 - i_op2;  end
-	  `INST_SUBW    : begin o_rd_wdata = {{33{reg64_t3[31]}}, reg64_t3[30:0]}; end
-	  `INST_ADDIW   : begin o_rd_wdata = {{33{reg64_t1[31]}}, reg64_t1[30:0]}; end
-	  `INST_AND     : begin o_rd_wdata = i_op1 & i_op2;  end
-	  `INST_ANDI    : begin o_rd_wdata = i_op1 & i_op2;  end
-	  `INST_OR      : begin o_rd_wdata = i_op1 | i_op2;  end
-	  `INST_ORI     : begin o_rd_wdata = i_op1 | i_op2;  end
-	  `INST_XOR     : begin o_rd_wdata = i_op1 ^ i_op2;  end
-	  `INST_XORI    : begin o_rd_wdata = i_op1 ^ i_op2;  end
-    `INST_SLL     : begin o_rd_wdata = i_op1 << i_op2[5:0]; end
-    `INST_SLLI    : begin o_rd_wdata = i_op1 << i_op2[5:0]; end
-    `INST_SLLIW   : begin o_rd_wdata = {{33{reg64_t2[31]}}, reg64_t2[30:0]}; end
-    `INST_SLLW    : begin o_rd_wdata = {{33{reg64_t4[31]}}, reg64_t4[30:0]}; end
-    `INST_SLT     : begin o_rd_wdata = ($signed(i_op1) < $signed(i_op2)) ? 1 : 0; end
-    `INST_SLTI    : begin o_rd_wdata = ($signed(i_op1) < $signed(i_op2)) ? 1 : 0; end
-    `INST_SLTIU   : begin o_rd_wdata = i_op1 < i_op2 ? 1 : 0; end
-    `INST_SLTU    : begin o_rd_wdata = (i_op1 < i_op2) ? 1 : 0; end
-    `INST_SRA     : begin o_rd_wdata = $signed(i_op1) >>> i_op2[5:0]; end
-    `INST_SRAW    : begin o_rd_wdata = $signed({{33{i_op1[31]}}, i_op1[30:0]}) >>> i_op2[4:0]; end
-    `INST_SRAI    : begin o_rd_wdata = $signed(i_op1) >>> i_op2[5:0]; end
-    `INST_SRAIW   : begin o_rd_wdata = $signed({{33{i_op1[31]}}, i_op1[30:0]}) >>> i_op2[4:0]; end
-    `INST_SRL     : begin o_rd_wdata = i_op1 >> i_op2[5:0]; end
-    `INST_SRLI    : begin o_rd_wdata = i_op1 >> i_op2[5:0]; end
-    `INST_SRLW    : begin o_rd_wdata = {{32{reg32_t1[31]}}, reg32_t1}; end
-    `INST_SRLIW   : begin o_rd_wdata = {{32{reg32_t1[31]}}, reg32_t1}; end
-    `INST_LUI     : begin o_rd_wdata = i_op1; end
-    `INST_AUIPC   : begin o_rd_wdata = i_op1 + i_op2; end
-    `INST_JAL     : begin o_rd_wdata = i_op1 + i_op2; end
-    `INST_JALR    : begin o_rd_wdata = i_op3; end
-    `INST_CSRRW   : begin o_rd_wdata = i_csr_rdata; end
-    `INST_CSRRS   : begin o_rd_wdata = i_csr_rdata; end
-    `INST_CSRRC   : begin o_rd_wdata = i_csr_rdata; end
-    `INST_CSRRWI  : begin o_rd_wdata = i_csr_rdata; end
-    `INST_CSRRSI  : begin o_rd_wdata = i_csr_rdata; end
-    `INST_CSRRCI  : begin o_rd_wdata = i_csr_rdata; end
-	  default       : begin o_rd_wdata = `ZERO_WORD; end
-	endcase
+      `INST_ADDI    : begin o_rd_wdata = i_op1 + i_op2;  end
+      `INST_ADD     : begin o_rd_wdata = i_op1 + i_op2;  end
+      `INST_SUB     : begin o_rd_wdata = i_op1 - i_op2;  end
+      `INST_SUBW    : begin o_rd_wdata = {{33{reg64_t3[31]}}, reg64_t3[30:0]}; end
+      `INST_ADDIW   : begin o_rd_wdata = {{33{reg64_t1[31]}}, reg64_t1[30:0]}; end
+      `INST_AND     : begin o_rd_wdata = i_op1 & i_op2;  end
+      `INST_ANDI    : begin o_rd_wdata = i_op1 & i_op2;  end
+      `INST_OR      : begin o_rd_wdata = i_op1 | i_op2;  end
+      `INST_ORI     : begin o_rd_wdata = i_op1 | i_op2;  end
+      `INST_XOR     : begin o_rd_wdata = i_op1 ^ i_op2;  end
+      `INST_XORI    : begin o_rd_wdata = i_op1 ^ i_op2;  end
+      `INST_SLL     : begin o_rd_wdata = i_op1 << i_op2[5:0]; end
+      `INST_SLLI    : begin o_rd_wdata = i_op1 << i_op2[5:0]; end
+      `INST_SLLIW   : begin o_rd_wdata = {{33{reg64_t2[31]}}, reg64_t2[30:0]}; end
+      `INST_SLLW    : begin o_rd_wdata = {{33{reg64_t4[31]}}, reg64_t4[30:0]}; end
+      `INST_SLT     : begin o_rd_wdata = ($signed(i_op1) < $signed(i_op2)) ? 1 : 0; end
+      `INST_SLTI    : begin o_rd_wdata = ($signed(i_op1) < $signed(i_op2)) ? 1 : 0; end
+      `INST_SLTIU   : begin o_rd_wdata = i_op1 < i_op2 ? 1 : 0; end
+      `INST_SLTU    : begin o_rd_wdata = (i_op1 < i_op2) ? 1 : 0; end
+      `INST_SRA     : begin o_rd_wdata = $signed(i_op1) >>> i_op2[5:0]; end
+      `INST_SRAW    : begin o_rd_wdata = $signed({{33{i_op1[31]}}, i_op1[30:0]}) >>> i_op2[4:0]; end
+      `INST_SRAI    : begin o_rd_wdata = $signed(i_op1) >>> i_op2[5:0]; end
+      `INST_SRAIW   : begin o_rd_wdata = $signed({{33{i_op1[31]}}, i_op1[30:0]}) >>> i_op2[4:0]; end
+      `INST_SRL     : begin o_rd_wdata = i_op1 >> i_op2[5:0]; end
+      `INST_SRLI    : begin o_rd_wdata = i_op1 >> i_op2[5:0]; end
+      `INST_SRLW    : begin o_rd_wdata = {{32{reg32_t1[31]}}, reg32_t1}; end
+      `INST_SRLIW   : begin o_rd_wdata = {{32{reg32_t1[31]}}, reg32_t1}; end
+      `INST_LUI     : begin o_rd_wdata = i_op1; end
+      `INST_AUIPC   : begin o_rd_wdata = i_op1 + i_op2; end
+      `INST_JAL     : begin o_rd_wdata = i_op1 + i_op2; end
+      `INST_JALR    : begin o_rd_wdata = i_op3; end
+      `INST_CSRRW   : begin o_rd_wdata = i_csr_rdata; end
+      `INST_CSRRS   : begin o_rd_wdata = i_csr_rdata; end
+      `INST_CSRRC   : begin o_rd_wdata = i_csr_rdata; end
+      `INST_CSRRWI  : begin o_rd_wdata = i_csr_rdata; end
+      `INST_CSRRSI  : begin o_rd_wdata = i_csr_rdata; end
+      `INST_CSRRCI  : begin o_rd_wdata = i_csr_rdata; end
+      default       : begin o_rd_wdata = `ZERO_WORD; end
+    endcase
   end
 end
 
@@ -3435,11 +3583,9 @@ always @(*) begin
   end
 end
 
-
-
 // ------------- csr -----------------
 
-wire inst_csr = 
+assign inst_csr = 
   (i_inst_opcode == `INST_CSRRW ) | (i_inst_opcode == `INST_CSRRS ) | 
   (i_inst_opcode == `INST_CSRRC ) | (i_inst_opcode == `INST_CSRRWI) | 
   (i_inst_opcode == `INST_CSRRSI) | (i_inst_opcode == `INST_CSRRCI) ;
@@ -3514,8 +3660,13 @@ reg [3:0] state;
 reg [1:0] step;
 // 在异常发生的第一个时钟周期就确定下来，因为有些输入信号只保持一个周期
 reg [63:0] exception_cause;     // 异常原因
+wire hs;
+reg [63:0] csr_rdata_save1;
+reg [63:0] csr_rdata_save2;
 
-wire hs = ack & req;
+
+
+assign hs = ack & req;
 
 always @(posedge clk) begin
   if (rst) begin
@@ -3613,9 +3764,6 @@ always @(posedge clk) begin
     
   end
 end
-
-reg [63:0] csr_rdata_save1;
-reg [63:0] csr_rdata_save2;
 
 always @(posedge clk) begin
   if (rst) begin
@@ -3836,31 +3984,61 @@ module ysyx_210544_mem_stage(
   input   wire  [63:0]        i_dcache_rdata
 );
 
+wire                          executed_hs;
+wire                          memoryed_hs;
+wire                          addr_is_mem;
+wire                          addr_is_mmio;
+wire                          ren_or_wen;
+wire                          ch_cachesync; 
+wire                          ch_mem;   
+wire                          ch_mmio;  
+wire                          ch_none;  
+
+// memoryed request for different slaves
+wire                          memoryed_req_cachesync;
+wire                          memoryed_req_mem;
+wire                          memoryed_req_mmio;
+wire                          memoryed_req_none;
+wire   [`BUS_64]              rdata_mem;      // readed data from mmio
+wire   [`BUS_64]              rdata_mmio;     // readed data from main memory
+reg    [`BUS_64]              rdata;          // readed data from main memory or mmio
+
+// 保存输入信息
+reg   [`BUS_64]               tmp_i_mem_pc;
+reg   [`BUS_32]               tmp_i_mem_inst;
+reg   [`BUS_RIDX]             tmp_i_mem_rd;
+reg                           tmp_i_mem_rd_wen;
+reg   [`BUS_64]               tmp_i_mem_rd_wdata;
+reg   [7 : 0]                 tmp_i_mem_inst_opcode;
+reg                           tmp_i_mem_nocmt;
+reg                           tmp_i_mem_skipcmt;
+reg                           tmp_ch_cachesync;
+reg                           tmp_ch_mem;
+reg                           tmp_ch_mmio;
+
+reg  [63:0]                   mem_addr;
+reg  [2:0]                    mem_bytes;
+reg                           mem_ren;
+reg                           mem_wen;
+wire [63:0]                   rdata_mem;
+reg  [63:0]                   mem_wdata;
+
 
 assign o_mem_executed_ack = 1'b1;
 
-wire executed_hs = i_mem_executed_req & o_mem_executed_ack;
-wire memoryed_hs = i_mem_memoryed_ack & o_mem_memoryed_req;
+assign executed_hs = i_mem_executed_req & o_mem_executed_ack;
+assign memoryed_hs = i_mem_memoryed_ack & o_mem_memoryed_req;
 
-wire addr_is_mem  = (mem_addr[31:28] != 4'b0);
-wire addr_is_mmio = (mem_addr[31:24] == 8'h02);// & (64'hFF000000)) == 64'h02000000;
+assign addr_is_mem  = (mem_addr[31:28] != 4'b0);
+assign addr_is_mmio = (mem_addr[31:24] == 8'h02);// & (64'hFF000000)) == 64'h02000000;
 
 // channel select, only valid in one pulse
-wire ren_or_wen = mem_ren | mem_wen;
+assign ren_or_wen = mem_ren | mem_wen;
 
-wire ch_cachesync = i_mem_inst_opcode == `INST_FENCEI;
-wire ch_mem   = addr_is_mem & ren_or_wen;
-wire ch_mmio  = addr_is_mmio & ren_or_wen;
-wire ch_none  = (!ch_cachesync) & ((!(addr_is_mem | addr_is_mmio)) | (!ren_or_wen));
-
-// memoryed request for different slaves
-wire                  memoryed_req_cachesync;
-wire                  memoryed_req_mem;
-wire                  memoryed_req_mmio;
-wire                  memoryed_req_none;
-wire   [`BUS_64]      rdata_mem;      // readed data from mmio
-wire   [`BUS_64]      rdata_mmio;     // readed data from main memory
-reg    [`BUS_64]      rdata;          // readed data from main memory or mmio
+assign ch_cachesync = i_mem_inst_opcode == `INST_FENCEI;
+assign ch_mem   = addr_is_mem & ren_or_wen;
+assign ch_mmio  = addr_is_mmio & ren_or_wen;
+assign ch_none  = (!ch_cachesync) & ((!(addr_is_mem | addr_is_mmio)) | (!ren_or_wen));
 
 // o_mem_memoryed_req
 always @(*) begin
@@ -3896,28 +4074,6 @@ always @(*) begin
     rdata = 0;
   end
 end
-
-// 保存输入信息
-reg   [`BUS_64]               tmp_i_mem_pc;
-reg   [`BUS_32]               tmp_i_mem_inst;
-reg   [`BUS_RIDX]             tmp_i_mem_rd;
-reg                           tmp_i_mem_rd_wen;
-reg   [`BUS_64]               tmp_i_mem_rd_wdata;
-reg   [7 : 0]                 tmp_i_mem_inst_opcode;
-reg                           tmp_i_mem_nocmt;
-reg                           tmp_i_mem_skipcmt;
-reg                           tmp_ch_cachesync;
-reg                           tmp_ch_mem;
-reg                           tmp_ch_mmio;
-
-reg  [63:0] mem_addr;
-reg  [2:0]  mem_bytes;
-reg         mem_ren;
-reg         mem_wen;
-wire [63:0] rdata_mem;
-reg  [63:0] mem_wdata;
-
-
 
 // o_mem_memoryed_req
 always @(posedge clk) begin
@@ -3973,7 +4129,6 @@ assign o_mem_rd_wen       = tmp_i_mem_rd_wen;
 assign o_mem_rd_wdata     = tmp_i_mem_rd_wdata;
 assign o_mem_nocmt        = tmp_i_mem_nocmt;
 assign o_mem_skipcmt      = tmp_i_mem_skipcmt | tmp_ch_mmio;
-
 
 // ren, only valid at one pulse
 always @(*) begin
@@ -4162,10 +4317,11 @@ module ysyx_210544_memU(
   input   wire  [63:0]        i_dcache_rdata
 );
 
-
-wire hs_dcache  = o_dcache_req & i_dcache_ack;
-
+wire hs_dcache;
 reg wait_finish;  // 是否等待访存完毕？
+
+
+assign hs_dcache  = o_dcache_req & i_dcache_ack;
 
 always @(posedge clk) begin
   if (rst) begin
@@ -4210,7 +4366,6 @@ end
 
 // assign o_rdata = i_dcache_rdata;
 
-
 endmodule
 
 // ZhengpuShi
@@ -4232,7 +4387,10 @@ module ysyx_210544_mem_mmio(
 );
 
 // rtc设备
-wire  [`BUS_64]     rtc_rdata;
+wire  [`BUS_64]               rtc_rdata;
+reg   [`BUS_64]               i_clint_rdata;
+
+
 
 ysyx_210544_rtc Rtc(
   .clk                (clk              ),
@@ -4240,9 +4398,6 @@ ysyx_210544_rtc Rtc(
   .ren                (ren & (addr == `DEV_RTC)),
   .rdata              (rtc_rdata        )
 );
-
-reg  [`BUS_64]                i_clint_rdata;
-
 
 // CLINT (Core Local Interrupt Controller)
 ysyx_210544_clint Clint(
@@ -4284,7 +4439,6 @@ always @(posedge clk) begin
     end
   end
 end
-
 
 endmodule
 
@@ -4338,8 +4492,11 @@ module ysyx_210544_mem_cachesync(
   input   wire                i_cachesync_ack
 );
 
+wire hs_cachesync;
 
-wire hs_cachesync  = o_cachesync_req & i_cachesync_ack;
+
+
+assign hs_cachesync  = o_cachesync_req & i_cachesync_ack;
 
 always @(posedge clk) begin
   if (rst) begin
@@ -4361,7 +4518,6 @@ always @(posedge clk) begin
     end
   end
 end
-
 
 endmodule
 
@@ -4395,13 +4551,7 @@ module ysyx_210544_wb_stage(
   output  reg   [`BUS_32]     o_wb_intrNo
 );
 
-
-assign o_wb_memoryed_ack = 1'b1;
-
-wire memoryed_hs = i_wb_memoryed_req & o_wb_memoryed_ack;
-
-// 是否使能组合逻辑单元部件
-reg                           i_ena;
+reg                           i_ena;    // 是否使能组合逻辑单元部件
 wire                          i_disable = !i_ena;
 
 // 保存输入信息
@@ -4412,6 +4562,12 @@ reg                           tmp_i_wb_rd_wen;
 reg   [`BUS_64]               tmp_i_wb_rd_wdata;
 reg                           tmp_i_wb_nocmt;
 reg                           tmp_i_wb_skipcmt;
+
+wire memoryed_hs;
+
+
+assign o_wb_memoryed_ack = 1'b1;
+assign memoryed_hs = i_wb_memoryed_req & o_wb_memoryed_ack;
 
 always @(posedge clk) begin
   if (rst) begin
@@ -4485,11 +4641,15 @@ module ysyx_210544_cmt_stage(
   input   wire [`BUS_32]      i_cmt_intrNo
 );
 
+wire writebacked_hs;
+wire i_cmtvalid;
+reg [63:0] cnt;
+
+
+
 assign o_cmt_writebacked_ack = 1'b1;
-
-wire writebacked_hs = i_cmt_writebacked_req & o_cmt_writebacked_ack;
-
-wire i_cmtvalid = writebacked_hs & (!i_cmt_nocmt);
+assign writebacked_hs = i_cmt_writebacked_req & o_cmt_writebacked_ack;
+assign i_cmtvalid = writebacked_hs & (!i_cmt_nocmt);
 
 ysyx_210544_cmtU CmtU(
   .clk                        (clk                        ),
@@ -4506,7 +4666,6 @@ ysyx_210544_cmtU CmtU(
   .i_intrNo                   (i_cmt_intrNo               )
 );
 
-reg [63:0] cnt;
 always @(posedge clk) begin
   if (rst) begin
     cnt <= 1;
@@ -4562,7 +4721,6 @@ module ysyx_210544_cmtU(
   input   wire                i_skipcmt
 );
 
-
 // Difftest
 reg                           cmt_wen;
 reg   [7:0]                   cmt_wdest;
@@ -4577,9 +4735,13 @@ reg   [`BUS_64]               cycleCnt;
 reg   [`BUS_64]               instrCnt;
 reg   [`BUS_64]               regs_diff [0 : 31];
 
-reg   [`BUS_64] instrCnt_inc = i_cmtvalid ? 1 : 0;
+reg   [`BUS_64] instrCnt_inc;
+wire  [`BUS_64] sstatus;
 
-wire  [`BUS_64] sstatus = i_csrs[`CSR_IDX_MSTATUS] & 64'h80000003_000DE122;
+
+
+assign instrCnt_inc = i_cmtvalid ? 1 : 0;
+assign sstatus = i_csrs[`CSR_IDX_MSTATUS] & 64'h80000003_000DE122;
 
 always @(negedge clk) begin
   if (rst) begin
@@ -4600,7 +4762,6 @@ always @(negedge clk) begin
     instrCnt      <= instrCnt + instrCnt_inc;
   end
 end
-
 
 `ifdef DIFFTEST_YSYX_210544
 
@@ -4774,34 +4935,6 @@ module ysyx_210544_cpu(
 );
 
 
-// Special Instruction: putch a0
-// wire                          putch_wen;
-// wire [7 : 0]                  putch_wdata;
-// assign putch_wen              = o_if_inst == 32'h7b;
-// assign putch_wdata            = (!putch_wen) ? 0 : (o_reg_regs[10][7:0]); 
-
-// 方式一：缓存一行后再$write打印。
-// putch Putch(
-//   .clk                (clk              ),
-//   .rst                (rst              ),
-//   .wen                (putch_wen        ),
-//   .wdata              (putch_wdata      ) 
-// );
-
-// 方式二：使用$write打印。
-always @(posedge clk) begin
-  if (o_if_inst == 32'h7b) begin
-    $write("%c", o_reg_regs[10][7:0]);
-    $fflush();
-  end
-end
-
-// 方式三：交给上层c++代码来打印
-// assign io_uart_out_valid = putch_wen;
-// assign io_uart_out_ch = putch_wdata;
-
-
-
 // handshake between five stages
 wire                          fetched_req;
 wire                          decoded_req;
@@ -4905,8 +5038,7 @@ wire                          o_clint_mstatus_mie;
 wire                          o_clint_mie_mtie;
 wire                          o_clint_mtime_overflow;
 
-/////////////////////////////////////////////////
-
+// cache
 wire                          o_icache_req;
 wire  [63:0]                  o_icache_addr;
 reg                           i_icache_ack;
@@ -4919,6 +5051,35 @@ wire  [2 :0]                  o_dcache_bytes;
 wire  [63:0]                  o_dcache_wdata;
 reg                           i_dcache_ack;
 reg   [63:0]                  i_dcache_rdata;
+
+
+
+// Special Instruction: putch a0
+// wire                          putch_wen;
+// wire [7 : 0]                  putch_wdata;
+// assign putch_wen              = o_if_inst == 32'h7b;
+// assign putch_wdata            = (!putch_wen) ? 0 : (o_reg_regs[10][7:0]); 
+
+// 方式一：缓存一行后再$write打印。
+// putch Putch(
+//   .clk                (clk              ),
+//   .rst                (rst              ),
+//   .wen                (putch_wen        ),
+//   .wdata              (putch_wdata      ) 
+// );
+
+// 方式二：使用$write打印。
+always @(posedge clk) begin
+  if (o_if_inst == 32'h7b) begin
+    $write("%c", o_reg_regs[10][7:0]);
+    $fflush();
+  end
+end
+
+// 方式三：交给上层c++代码来打印
+// assign io_uart_out_valid = putch_wen;
+// assign io_uart_out_ch = putch_wdata;
+
 
 ysyx_210544_cache Cache (
   .clk                        (clk                        ),
@@ -4954,9 +5115,6 @@ ysyx_210544_cache Cache (
   .o_axi_io_blks              (o_axi_io_blks              )
 );
 
-
-/////////////////////////////////////////////////
-// Stages
 ysyx_210544_if_stage If_stage(
   .rst                        (rst                        ),
   .clk                        (clk                        ),
@@ -5220,6 +5378,20 @@ module ysyx_210544(
 wire [63:0] axi_aw_addr_o;
 wire [63:0] axi_ar_addr_o;
 
+// axi_rw 接口
+wire                          i_user_axi_ready;
+wire [511:0]                  i_user_axi_rdata;
+wire                          o_user_axi_op;
+wire                          o_user_axi_valid;
+wire [511:0]                  o_user_axi_wdata;
+wire [63:0]                   o_user_axi_addr;
+wire [2:0]                    o_user_axi_size;
+wire [7:0]                    o_user_axi_blks;
+
+wire [1:0]                    o_user_axi_resp;
+
+
+
 assign io_master_awaddr = axi_aw_addr_o[31:0];
 assign io_master_araddr = axi_ar_addr_o[31:0];
 
@@ -5272,36 +5444,6 @@ ysyx_210544_axi_rw u_axi_rw (
     .axi_r_id_i                     (io_master_rid)
 );
 
-
-/////////////////////////////////////////////////
-// axi_rw 接口
-wire                          i_user_axi_ready;
-wire [511:0]                  i_user_axi_rdata;
-wire                          o_user_axi_op;
-wire                          o_user_axi_valid;
-wire [511:0]                  o_user_axi_wdata;
-wire [63:0]                   o_user_axi_addr;
-wire [2:0]                    o_user_axi_size;
-wire [7:0]                    o_user_axi_blks;
-
-wire [1:0]                    o_user_axi_resp;
-
-
-// // 使用Verilator快速编译的测试，尝试修改这里的内容，看看soc编译需要多久
-// reg tmp;
-// always @(posedge clock) begin
-//   if (reset) begin
-//     tmp <= 0;
-//   end
-//   else begin
-//     if (!tmp) begin
-//       tmp <= 1;
-//       $display("TEST by Steven. 2021.09.25 12:17\n");
-//     end
-//   end
-// end
-
-/////////////////////////////////////////////////
 // CPU核
 ysyx_210544_cpu u_cpu(
   .clk                        (clock                      ),
@@ -5316,9 +5458,7 @@ ysyx_210544_cpu u_cpu(
   .o_axi_io_blks              (o_user_axi_blks            )
 );
 
-
 // io_slave 处理
-
 assign io_slave_awready = 0;
 assign io_slave_wready = 0;
 assign io_slave_bvalid = 0;

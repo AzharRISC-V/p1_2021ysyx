@@ -46,30 +46,33 @@ module ysyx_210544_exe_stage(
   output  reg   [`BUS_32]     o_ex_intrNo
 );
 
-assign o_ex_decoded_ack = 1'b1;
+wire                          i_disable;
 
-wire decoded_hs = i_ex_decoded_req & o_ex_decoded_ack;
-wire executed_hs = i_ex_executed_ack & o_ex_executed_req;
+wire                          decoded_hs;
+wire                          executed_hs;
+wire                          exeU_skip_cmt;
 
-wire exeU_skip_cmt;
-
-// 是否为异常指令：ecall, mret
-wire is_inst_exceptionU = (i_ex_inst_opcode == `INST_ECALL) |
-  (i_ex_inst_opcode == `INST_MRET);
-// 是否产生了时钟中断？
-wire is_time_int_req = i_ex_clint_mstatus_mie & i_ex_clint_mie_mtie & i_ex_clint_mtime_overflow;
+wire                          is_inst_exceptionU;    // 是否为异常指令：ecall, mret
+wire                          is_time_int_req;       // 是否产生了时钟中断？
 
 // 通道选择
-reg o_ena_exeU;
-reg o_ena_exceptionU;
+reg                           o_ena_exeU;
+reg                           o_ena_exceptionU;
 
-wire            exeU_pc_jmp;
-wire [`BUS_64]  exeU_pc_jmpaddr;
+wire                          exeU_pc_jmp;
+wire [`BUS_64]                exeU_pc_jmpaddr;
+wire   [11 : 0]               exeU_csr_addr;
+wire                          exeU_csr_ren;
+wire                          exeU_csr_wen;
+wire   [`BUS_64]              exeU_csr_wdata;
 
-wire            exceptionU_req;
-wire            exceptionU_pc_jmp;
-wire [`BUS_64]  exceptionU_pc_jmpaddr;
-
+wire                          exceptionU_req;
+wire                          exceptionU_pc_jmp;
+wire [`BUS_64]                exceptionU_pc_jmpaddr;
+wire   [11 : 0]               exceptionU_csr_addr;
+wire                          exceptionU_csr_ren;
+wire                          exceptionU_csr_wen;
+wire   [`BUS_64]              exceptionU_csr_wdata;
 
 // 保存输入信息
 reg   [7 : 0]                 tmp_i_ex_inst_opcode;
@@ -82,6 +85,18 @@ reg   [4 : 0]                 tmp_i_ex_rd;
 reg                           tmp_i_ex_rd_wen;
 reg                           tmp_i_ex_nocmt;
 reg                           tmp_i_ex_skipcmt;
+
+
+
+assign i_disable = rst | (!executed_hs);
+
+assign o_ex_decoded_ack = 1'b1;
+
+assign decoded_hs = i_ex_decoded_req & o_ex_decoded_ack;
+assign executed_hs = i_ex_executed_ack & o_ex_executed_req;
+
+assign is_inst_exceptionU = (i_ex_inst_opcode == `INST_ECALL) | (i_ex_inst_opcode == `INST_MRET);
+assign is_time_int_req = i_ex_clint_mstatus_mie & i_ex_clint_mie_mtie & i_ex_clint_mtime_overflow;
 
 always @(posedge clk) begin
   if (rst) begin
@@ -142,8 +157,6 @@ always @(posedge clk) begin
   end
 end
 
-wire i_disable = rst | (!executed_hs);
-
 assign o_ex_pc            = i_disable ? 0 : tmp_i_ex_pc;
 assign o_ex_inst          = i_disable ? 0 : tmp_i_ex_inst;
 assign o_ex_rd            = i_disable ? 0 : tmp_i_ex_rd;
@@ -155,17 +168,6 @@ assign o_ex_rd            = i_disable ? 0 : (!o_ena_exeU ? 0 : tmp_i_ex_rd);
 assign o_ex_rd_wen        = i_disable ? 0 : (!o_ena_exeU ? 0 : tmp_i_ex_rd_wen);
 assign o_ex_nocmt         = i_disable ? 0 : tmp_i_ex_nocmt;
 assign o_ex_skipcmt       = i_disable ? 0 : (tmp_i_ex_skipcmt | exeU_skip_cmt);
-
-
-wire   [11 : 0]      exeU_csr_addr;
-wire                 exeU_csr_ren;
-wire                 exeU_csr_wen;
-wire   [`BUS_64]     exeU_csr_wdata;
-wire   [11 : 0]      exceptionU_csr_addr;
-wire                 exceptionU_csr_ren;
-wire                 exceptionU_csr_wen;
-wire   [`BUS_64]     exceptionU_csr_wdata;
-
 
 assign o_ex_pc_jmp      = rst ? 0 : (o_ena_exeU ? exeU_pc_jmp     : exceptionU_pc_jmp);
 assign o_ex_pc_jmpaddr  = rst ? 0 : (o_ena_exeU ? exeU_pc_jmpaddr : exceptionU_pc_jmpaddr);

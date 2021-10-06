@@ -22,15 +22,17 @@ module ysyx_210544_csrfile(
   output  wire  [`BUS_64]   o_csrs[0 : 15]
 );
 
+reg [`BUS_64]     csrs[0 : 15];
+reg  [3 : 0]      csr_idx;
+wire              mstatus_sd;
+
+
 
 // CSR
-reg [`BUS_64]   csrs[0 : 15];
-
 assign o_csr_clint_mstatus_mie = csrs[`CSR_IDX_MSTATUS][3];
 assign o_csr_clint_mie_mtie = csrs[`CSR_IDX_MIE][7];
 
 // i_csr_addr translate to csr_idx
-reg  [3 : 0]       csr_idx;
 always @(*) begin
   if (rst) begin
     csr_idx = `CSR_IDX_NONE;
@@ -63,7 +65,7 @@ always @(*) begin
   end
 end
 
-wire mstatus_sd = (i_csr_wdata[14:13] == 2'b11) | (i_csr_wdata[16:15] == 2'b11);
+assign mstatus_sd = (i_csr_wdata[14:13] == 2'b11) | (i_csr_wdata[16:15] == 2'b11);
 
 // csr写入
 always @(posedge clk) begin

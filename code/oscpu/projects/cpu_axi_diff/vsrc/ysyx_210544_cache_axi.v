@@ -33,11 +33,21 @@ module ysyx_210544_cache_axi(
   output        [7 : 0]             o_axi_io_blks
 );
 
-// 是否为Flash外设，此时只能4字节传输，且不能使用burst模式，所以64字节需要16次传输
-wire is_flash = i_cache_axi_addr[31:28] == 4'h3;
 
-// axi一次传输完成
-wire hs_ok = o_axi_io_valid & i_axi_io_ready;
+wire is_flash;    // 是否为Flash外设，此时只能4字节传输，且不能使用burst模式，所以64字节需要16次传输
+wire hs_ok;       // axi一次传输完成
+reg cache_req_his0;   // 跟踪req信号，连续两个周期的 req 才认为是开始信号，防止一结束就又开始了新的阶段
+wire  axi_start;    // axi请求开始
+
+reg [3:0] trans_cnt;          // 传输次数
+reg [3:0] trans_cnt_write;    // 传输次数（写入）
+wire [8:0] offset_bits;       // 偏移位数
+wire [8:0] offset_bits_write; // 偏移位数（写入）
+
+
+
+assign is_flash = i_cache_axi_addr[31:28] == 4'h3;
+assign hs_ok = o_axi_io_valid & i_axi_io_ready;
 
 // axi每次传输的大小：64bit
 assign o_axi_io_size = is_flash ? `SIZE_W : `SIZE_D;
@@ -48,11 +58,7 @@ assign o_axi_io_blks = is_flash ? 0 : 7;
 // 操作类型：0:read, 1:write
 assign o_axi_io_op = i_cache_axi_op;
 
-// 跟踪req信号，连续两个周期的 req 才认为是开始信号，防止一结束就又开始了新的阶段
-reg cache_req_his0;
-
-// axi请求开始
-wire  axi_start    = i_cache_axi_req & !cache_req_his0;
+assign axi_start    = i_cache_axi_req & !cache_req_his0;
 
 // 传输起始地址，64字节对齐
 // assign o_axi_io_addr = i_cache_axi_addr & (~64'h3F);
@@ -60,10 +66,8 @@ wire  axi_start    = i_cache_axi_req & !cache_req_his0;
 // 控制传输次数，
 // 如果是主存，  需要 1次AXI传输得512bit；
 // 如果是Flash，需要16次AXI传输得到512bit，每次传输32bit（64bit是否支持？？）；
-reg [3:0] trans_cnt;
-reg [3:0] trans_cnt_write;
-wire [8:0] offset_bits = {5'd0, trans_cnt} << 5;
-wire [8:0] offset_bits_write = {5'd0, trans_cnt_write} << 5;
+assign offset_bits = {5'd0, trans_cnt} << 5;
+assign offset_bits_write = {5'd0, trans_cnt_write} << 5;
 
 // 控制传输
 always @( posedge clk ) begin

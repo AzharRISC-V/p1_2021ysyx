@@ -67,6 +67,20 @@ module SimTop4Soc(
 wire [63:0] axi_aw_addr_o;
 wire [63:0] axi_ar_addr_o;
 
+// axi_rw 接口
+wire                          i_user_axi_ready;
+wire [511:0]                  i_user_axi_rdata;
+wire                          o_user_axi_op;
+wire                          o_user_axi_valid;
+wire [511:0]                  o_user_axi_wdata;
+wire [63:0]                   o_user_axi_addr;
+wire [2:0]                    o_user_axi_size;
+wire [7:0]                    o_user_axi_blks;
+
+wire [1:0]                    o_user_axi_resp;
+
+
+
 assign io_master_awaddr = axi_aw_addr_o[31:0];
 assign io_master_araddr = axi_ar_addr_o[31:0];
 
@@ -119,36 +133,6 @@ ysyx_210544_axi_rw u_axi_rw (
     .axi_r_id_i                     (io_master_rid)
 );
 
-
-/////////////////////////////////////////////////
-// axi_rw 接口
-wire                          i_user_axi_ready;
-wire [511:0]                  i_user_axi_rdata;
-wire                          o_user_axi_op;
-wire                          o_user_axi_valid;
-wire [511:0]                  o_user_axi_wdata;
-wire [63:0]                   o_user_axi_addr;
-wire [2:0]                    o_user_axi_size;
-wire [7:0]                    o_user_axi_blks;
-
-wire [1:0]                    o_user_axi_resp;
-
-
-// // 使用Verilator快速编译的测试，尝试修改这里的内容，看看soc编译需要多久
-// reg tmp;
-// always @(posedge clock) begin
-//   if (reset) begin
-//     tmp <= 0;
-//   end
-//   else begin
-//     if (!tmp) begin
-//       tmp <= 1;
-//       $display("TEST by Steven. 2021.09.25 12:17\n");
-//     end
-//   end
-// end
-
-/////////////////////////////////////////////////
 // CPU核
 ysyx_210544_cpu u_cpu(
   .clk                        (clock                      ),
@@ -163,9 +147,7 @@ ysyx_210544_cpu u_cpu(
   .o_axi_io_blks              (o_user_axi_blks            )
 );
 
-
 // io_slave 处理
-
 assign io_slave_awready = 0;
 assign io_slave_wready = 0;
 assign io_slave_bvalid = 0;

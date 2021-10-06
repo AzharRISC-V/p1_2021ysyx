@@ -46,7 +46,6 @@ module ysyx_210544_cache_sync(
   output  wire  [511: 0]      o_sync_icache_wdata     // write cache_data
 );
 
-
 // =============== 状态机 ===============
 //  英文名称          中文名称    含义
 //  IDLE            空闲        无活动。有fencei请求进入 SYNC_READ
@@ -59,10 +58,14 @@ parameter [1:0] STATE_SYNC_WRITE        = 2'd2;
 parameter [1:0] STATE_SYNC_RPACK_ACK    = 2'd3;
 
 reg [1:0] state;
+wire hs_rd;
+wire hs_wr;
 
-wire hs_rd          = o_sync_dcache_rreq & i_sync_dcache_rack;
+
+
+assign hs_rd          = o_sync_dcache_rreq & i_sync_dcache_rack;
 // wire hs_rd_pack     = o_sync_dcache_rpackack & i_sync_dcache_rpackreq;
-wire hs_wr          = o_sync_icache_wreq & i_sync_icache_wack;
+assign hs_wr          = o_sync_icache_wreq & i_sync_icache_wack;
 
 always @(posedge clk) begin
   if (rst) begin
@@ -102,10 +105,6 @@ always @(posedge clk) begin
     endcase
   end
 end
-
-
-// =============== 处理用户请求 ===============
-
 
 always @(posedge clk) begin
   if (rst) begin
@@ -153,6 +152,5 @@ always @(posedge clk) begin
     endcase
   end
 end
-
 
 endmodule

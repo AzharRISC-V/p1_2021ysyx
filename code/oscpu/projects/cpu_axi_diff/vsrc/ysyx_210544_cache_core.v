@@ -45,7 +45,6 @@ module ysyx_210544_cache_core (
   output  wire  [7:0]         o_axi_io_blks
 );
 
-// =============== cache 从机端 ===============
 
 reg   [63 : 0]                o_cache_basic_addr;         // 存储器地址（字节为单位），64字节对齐，低6位为0。
 reg   [63 : 0]                o_cache_basic_wdata;        // 要写入的数据
@@ -55,6 +54,23 @@ reg                           o_cache_basic_req;          // 请求
 wire  [63 : 0]                i_cache_basic_rdata;        // 已读出的数据
 reg                           i_cache_basic_ack;          // 应答
 
+wire  [59:0]                  i_addr_high;                // 输入地址的高60位
+wire  [3:0]                   i_addr_4;                   // 输入地址的低4位 (0~15)
+wire  [3:0]                   i_bytes_4;                  // 输入字节数扩展为4位
+
+wire                          en_second;                  // 第二次操作使能
+wire  [2 : 0]                 bytes[0:1];                 // 字节数
+wire  [63: 0]                 addr[0:1];                  // 地址
+wire  [63: 0]                 wdata[0:1];                 // 写数据
+reg   [63: 0]                 rdata[0:1];                 // 读数据
+
+reg   index;      // 操作的序号：0,1表示两个阶段
+
+wire hs_cache;
+
+
+
+// =============== cache 从机端 ===============
 assign o_cache_basic_op = i_cache_core_op;
 
 ysyx_210544_cache_basic Cache_basic(
@@ -96,19 +112,9 @@ ysyx_210544_cache_basic Cache_basic(
 
 // =============== 处理跨行问题 ===============
 
-wire  [59:0]                  i_addr_high;                // 输入地址的高60位
-wire  [3:0]                   i_addr_4;                   // 输入地址的低4位 (0~15)
-wire  [3:0]                   i_bytes_4;                  // 输入字节数扩展为4位
-
 assign i_addr_high = i_cache_core_addr[63:4];
 assign i_addr_4 = i_cache_core_addr[3:0];
 assign i_bytes_4 = {1'd0, i_cache_core_bytes};
-
-wire                          en_second;                  // 第二次操作使能
-wire  [2 : 0]                 bytes[0:1];                 // 字节数
-wire  [63: 0]                 addr[0:1];                  // 地址
-wire  [63: 0]                 wdata[0:1];                 // 写数据
-reg   [63: 0]                 rdata[0:1];                 // 读数据
 
 assign en_second = i_addr_4 + i_bytes_4 < i_addr_4;
 assign bytes[0] = en_second ? {4'd15 - i_addr_4}[2:0] : i_cache_core_bytes;
@@ -118,13 +124,12 @@ assign addr[1] = {i_addr_high + 60'd1, 4'd0};
 assign wdata[0] = i_cache_core_wdata;
 assign wdata[1] = i_cache_core_wdata >> (({3'd0,bytes[0]} + 1) << 3);
 
-wire hs_cache = i_cache_basic_ack & o_cache_basic_req;
+assign hs_cache = i_cache_basic_ack & o_cache_basic_req;
 
 assign o_cache_basic_addr = (index == 0) ? addr[0] : addr[1];
 assign o_cache_basic_bytes = (index == 0) ? bytes[0] : bytes[1];
 assign o_cache_basic_wdata = (index == 0) ? wdata[0] : wdata[1];
 
-reg   index;      // 操作的序号：0,1表示两个阶段
 always @(posedge clk) begin
   if (rst) begin
     index <= 0;

@@ -100,30 +100,83 @@ module ysyx_210544_axi_rw (
     input  [`AXI_ID_WIDTH-1:0]          axi_r_id_i
 );
 
-    wire w_trans    = user_req_i == `REQ_WRITE;
-    wire r_trans    = user_req_i == `REQ_READ;
-    wire w_valid    = user_valid_i & w_trans & (!rw_ready);
-    wire r_valid    = user_valid_i & r_trans & (!rw_ready);
+    parameter [1:0] W_STATE_IDLE = 2'b00, W_STATE_ADDR = 2'b01, W_STATE_WRITE = 2'b10, W_STATE_RESP = 2'b11;
+    parameter [1:0] R_STATE_IDLE = 2'b00, R_STATE_ADDR = 2'b01, R_STATE_READ  = 2'b10;
+    parameter TRANS_LEN_MAX = 8;
+
+    reg rw_ready;
+    wire w_trans;
+    wire r_trans;
+    wire w_valid;
+    wire r_valid;
+    wire aw_hs;
+    wire w_hs;
+    wire b_hs;
+    wire ar_hs;
+    wire r_hs;
+    wire w_done;
+    wire r_done;
+    wire trans_done;
+    reg [1:0] w_state;
+    reg [1:0] r_state;
+    wire w_state_idle;
+    wire w_state_addr;
+    wire w_state_write;
+    wire w_state_resp;
+    wire r_state_idle;
+    wire r_state_addr;
+    wire r_state_read;
+    reg [7:0] len;
+    wire [7:0] axi_len;
+    wire len_reset;
+    wire len_incr_en;
+    wire [2:0] axi_size;
+    wire [63:0] axi_addr;
+    wire [`AXI_ID_WIDTH-1:0] axi_id;
+    wire rw_ready_nxt;
+    wire rw_ready_en;
+    reg [1:0] rw_resp;
+    wire [1:0] rw_resp_nxt;
+    wire resp_en;
+    wire [2:0] axi_addr_offset_bytes;       // 输入地址的 字节偏移量(0~7)
+    wire [5:0] axi_addr_offset_bits;        // 输入地址的   位偏移量(0~56)
+    reg  [7:0] axi_w_strb_orig;
+
+    wire size_b;
+    wire size_h;
+    wire size_w;
+    wire size_d;
+    wire [63:0] mask_rdata;
+    wire [5:0] aligned_offset;                      // 移位的bit数。0~7 转换为 0~56
+    wire [63:0] axi_r_data_masked_unaligned;        // 已掩码，已移位后的数据
+
+
+
+    assign w_trans    = user_req_i == `REQ_WRITE;
+    assign r_trans    = user_req_i == `REQ_READ;
+    assign w_valid    = user_valid_i & w_trans & (!rw_ready);
+    assign r_valid    = user_valid_i & r_trans & (!rw_ready);
 
     // handshake
-    wire aw_hs      = axi_aw_ready_i & axi_aw_valid_o;
-    wire w_hs       = axi_w_ready_i  & axi_w_valid_o;
-    wire b_hs       = axi_b_ready_o  & axi_b_valid_i;
-    wire ar_hs      = axi_ar_ready_i & axi_ar_valid_o;
-    wire r_hs       = axi_r_ready_o  & axi_r_valid_i;
+    assign aw_hs      = axi_aw_ready_i & axi_aw_valid_o;
+    assign w_hs       = axi_w_ready_i  & axi_w_valid_o;
+    assign b_hs       = axi_b_ready_o  & axi_b_valid_i;
+    assign ar_hs      = axi_ar_ready_i & axi_ar_valid_o;
+    assign r_hs       = axi_r_ready_o  & axi_r_valid_i;
 
-    wire w_done     = w_hs & axi_w_last_o;
-    wire r_done     = r_hs & axi_r_last_i;
-    wire trans_done = w_trans ? b_hs : r_done;
+    assign w_done     = w_hs & axi_w_last_o;
+    assign r_done     = r_hs & axi_r_last_i;
+    assign trans_done = w_trans ? b_hs : r_done;
 
     
     // ------------------State Machine------------------
-    parameter [1:0] W_STATE_IDLE = 2'b00, W_STATE_ADDR = 2'b01, W_STATE_WRITE = 2'b10, W_STATE_RESP = 2'b11;
-    parameter [1:0] R_STATE_IDLE = 2'b00, R_STATE_ADDR = 2'b01, R_STATE_READ  = 2'b10;
-
-    reg [1:0] w_state, r_state;
-    wire w_state_idle = w_state == W_STATE_IDLE, w_state_addr = w_state == W_STATE_ADDR, w_state_write = w_state == W_STATE_WRITE, w_state_resp = w_state == W_STATE_RESP;
-    wire r_state_idle = r_state == R_STATE_IDLE, r_state_addr = r_state == R_STATE_ADDR, r_state_read  = r_state == R_STATE_READ;
+    assign w_state_idle = w_state == W_STATE_IDLE;
+    assign w_state_addr = w_state == W_STATE_ADDR;
+    assign w_state_write = w_state == W_STATE_WRITE;
+    assign w_state_resp = w_state == W_STATE_RESP;
+    assign r_state_idle = r_state == R_STATE_IDLE;
+    assign r_state_addr = r_state == R_STATE_ADDR;
+    assign r_state_read  = r_state == R_STATE_READ;
 
     // Wirte State Machine
     always @(posedge clock) begin
@@ -159,11 +212,9 @@ module ysyx_210544_axi_rw (
         end
     end
 
-
     // ------------------Number of transmission------------------
-    reg [7:0] len;
-    wire len_reset      = reset | (w_trans & w_state_idle) | (r_trans & r_state_idle);
-    wire len_incr_en    = (len != axi_len) & (w_hs | r_hs);
+    assign len_reset      = reset | (w_trans & w_state_idle) | (r_trans & r_state_idle);
+    assign len_incr_en    = (len != axi_len) & (w_hs | r_hs);
     always @(posedge clock) begin
         if (len_reset) begin
             len <= 0;
@@ -173,19 +224,14 @@ module ysyx_210544_axi_rw (
         end
     end
 
-
     // ------------------Process Data------------------
-    parameter TRANS_LEN_MAX = 8;
+    assign axi_len          = user_blks_i;
+    assign axi_size         = user_size_i;
+    assign axi_addr         = user_addr_i;
+    assign axi_id           = {`AXI_ID_WIDTH{1'b0}};
 
-    wire [7:0] axi_len      = user_blks_i;
-    wire [2:0] axi_size     = user_size_i;
-    
-    wire [63:0] axi_addr                         = user_addr_i;
-    wire [`AXI_ID_WIDTH-1:0] axi_id              = {`AXI_ID_WIDTH{1'b0}};
-
-    reg rw_ready;
-    wire rw_ready_nxt = trans_done;
-    wire rw_ready_en      = trans_done | rw_ready;
+    assign rw_ready_nxt = trans_done;
+    assign rw_ready_en      = trans_done | rw_ready;
     always @(posedge clock) begin
         if (reset) begin
             rw_ready <= 0;
@@ -196,9 +242,8 @@ module ysyx_210544_axi_rw (
     end
     assign user_ready_o     = rw_ready;
 
-    reg [1:0] rw_resp;
-    wire [1:0] rw_resp_nxt = w_trans ? axi_b_resp_i : axi_r_resp_i;
-    wire resp_en = trans_done;
+    assign rw_resp_nxt = w_trans ? axi_b_resp_i : axi_r_resp_i;
+    assign resp_en = trans_done;
     always @(posedge clock) begin
         if (reset) begin
             rw_resp <= 0;
@@ -243,7 +288,7 @@ module ysyx_210544_axi_rw (
     assign axi_w_last_o     = w_hs & (len == axi_len);
   
     // 仅根据size生成的wstrb，需要移位后使用，是吗？？
-    reg  [7:0] axi_w_strb_orig;
+
     always @(*) begin
       if (reset) begin
         axi_w_strb_orig = 0;
@@ -259,10 +304,8 @@ module ysyx_210544_axi_rw (
       end
     end
 
-    // 输入地址的 字节偏移量(0~7)
-    wire [2:0] axi_addr_offset_bytes  = user_addr_i[2:0];
-    // 输入地址的   位偏移量(0~56)
-    wire [5:0] axi_addr_offset_bits   = {3'b0, axi_addr_offset_bytes} << 3;
+    assign axi_addr_offset_bytes  = user_addr_i[2:0];
+    assign axi_addr_offset_bits   = {3'b0, axi_addr_offset_bytes} << 3;
 
     // 移位生成最终的 w_strb。wdata 和 wstrb 都需要移位
     // assign axi_w_strb_o     = 8'b1111_1111;     // 每个bit代表一个字节是否要写入
@@ -298,22 +341,23 @@ module ysyx_210544_axi_rw (
     assign axi_r_ready_o    = r_state_read;
 
     // User Data Size
-    wire size_b             = user_size_i == `SIZE_B;
-    wire size_h             = user_size_i == `SIZE_H;
-    wire size_w             = user_size_i == `SIZE_W;
-    wire size_d             = user_size_i == `SIZE_D;
+
+    assign size_b             = user_size_i == `SIZE_B;
+    assign size_h             = user_size_i == `SIZE_H;
+    assign size_w             = user_size_i == `SIZE_W;
+    assign size_d             = user_size_i == `SIZE_D;
     
     // Read data mask
-    wire [63:0] mask_rdata  = (({ 64{size_b}} & {{64- 8{1'b0}}, 8'hff})
+    assign mask_rdata  = (({ 64{size_b}} & {{64- 8{1'b0}}, 8'hff})
                               | ({64{size_h}} & {{64-16{1'b0}}, 16'hffff})
                               | ({64{size_w}} & {{64-32{1'b0}}, 32'hffffffff})
                               | ({64{size_d}} & {{64-64{1'b0}}, 64'hffffffff_ffffffff})
                               );
 
-    // 移位的bit数。0~7 转换为 0~56
-    wire [5:0] aligned_offset    = {3'b0, user_addr_i[2:0]} << 3;
-    // 已掩码，已移位后的数据
-    wire [63:0] axi_r_data_masked_unaligned = (axi_r_data_i >> aligned_offset) & mask_rdata;
+    
+    assign aligned_offset    = {3'b0, user_addr_i[2:0]} << 3;
+    
+    assign axi_r_data_masked_unaligned = (axi_r_data_i >> aligned_offset) & mask_rdata;
 
     generate
         for (genvar i = 0; i < TRANS_LEN_MAX; i += 1) begin

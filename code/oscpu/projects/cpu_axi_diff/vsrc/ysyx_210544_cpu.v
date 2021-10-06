@@ -19,34 +19,6 @@ module ysyx_210544_cpu(
 );
 
 
-// Special Instruction: putch a0
-// wire                          putch_wen;
-// wire [7 : 0]                  putch_wdata;
-// assign putch_wen              = o_if_inst == 32'h7b;
-// assign putch_wdata            = (!putch_wen) ? 0 : (o_reg_regs[10][7:0]); 
-
-// 方式一：缓存一行后再$write打印。
-// putch Putch(
-//   .clk                (clk              ),
-//   .rst                (rst              ),
-//   .wen                (putch_wen        ),
-//   .wdata              (putch_wdata      ) 
-// );
-
-// 方式二：使用$write打印。
-always @(posedge clk) begin
-  if (o_if_inst == 32'h7b) begin
-    $write("%c", o_reg_regs[10][7:0]);
-    $fflush();
-  end
-end
-
-// 方式三：交给上层c++代码来打印
-// assign io_uart_out_valid = putch_wen;
-// assign io_uart_out_ch = putch_wdata;
-
-
-
 // handshake between five stages
 wire                          fetched_req;
 wire                          decoded_req;
@@ -150,8 +122,7 @@ wire                          o_clint_mstatus_mie;
 wire                          o_clint_mie_mtie;
 wire                          o_clint_mtime_overflow;
 
-/////////////////////////////////////////////////
-
+// cache
 wire                          o_icache_req;
 wire  [63:0]                  o_icache_addr;
 reg                           i_icache_ack;
@@ -164,6 +135,35 @@ wire  [2 :0]                  o_dcache_bytes;
 wire  [63:0]                  o_dcache_wdata;
 reg                           i_dcache_ack;
 reg   [63:0]                  i_dcache_rdata;
+
+
+
+// Special Instruction: putch a0
+// wire                          putch_wen;
+// wire [7 : 0]                  putch_wdata;
+// assign putch_wen              = o_if_inst == 32'h7b;
+// assign putch_wdata            = (!putch_wen) ? 0 : (o_reg_regs[10][7:0]); 
+
+// 方式一：缓存一行后再$write打印。
+// putch Putch(
+//   .clk                (clk              ),
+//   .rst                (rst              ),
+//   .wen                (putch_wen        ),
+//   .wdata              (putch_wdata      ) 
+// );
+
+// 方式二：使用$write打印。
+always @(posedge clk) begin
+  if (o_if_inst == 32'h7b) begin
+    $write("%c", o_reg_regs[10][7:0]);
+    $fflush();
+  end
+end
+
+// 方式三：交给上层c++代码来打印
+// assign io_uart_out_valid = putch_wen;
+// assign io_uart_out_ch = putch_wdata;
+
 
 ysyx_210544_cache Cache (
   .clk                        (clk                        ),
@@ -199,9 +199,6 @@ ysyx_210544_cache Cache (
   .o_axi_io_blks              (o_axi_io_blks              )
 );
 
-
-/////////////////////////////////////////////////
-// Stages
 ysyx_210544_if_stage If_stage(
   .rst                        (rst                        ),
   .clk                        (clk                        ),

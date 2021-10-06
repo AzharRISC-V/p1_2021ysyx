@@ -20,9 +20,13 @@ module ysyx_210544_clint(
 // reg   [7:0]       reg_mtime_cnt;
 reg   [`BUS_64]   reg_mtime;
 reg   [`BUS_64]   reg_mtimecmp;
+wire addr_mtime;
+wire addr_mtimecmp;
 
-wire addr_mtime = i_clint_addr == `DEV_MTIME;
-wire addr_mtimecmp = i_clint_addr == `DEV_MTIMECMP;
+
+
+assign addr_mtime = i_clint_addr == `DEV_MTIME;
+assign addr_mtimecmp = i_clint_addr == `DEV_MTIMECMP;
 
 always @(posedge clk) begin
   if (rst) begin

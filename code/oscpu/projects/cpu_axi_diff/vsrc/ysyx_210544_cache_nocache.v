@@ -28,9 +28,13 @@ module ysyx_210544_cache_nocache (
   output  wire  [7:0]         o_axi_io_blks
 );
 
-wire hs_axi_io = o_axi_io_valid & i_axi_io_ready;
-
+wire hs_axi_io;
 reg [2:0] nocache_size;
+
+
+
+assign hs_axi_io = o_axi_io_valid & i_axi_io_ready;
+
 always @(*) begin
   case (i_cache_nocache_bytes)
     3'b000: nocache_size = `SIZE_B;

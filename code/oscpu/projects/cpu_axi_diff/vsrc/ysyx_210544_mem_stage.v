@@ -47,31 +47,61 @@ module ysyx_210544_mem_stage(
   input   wire  [63:0]        i_dcache_rdata
 );
 
+wire                          executed_hs;
+wire                          memoryed_hs;
+wire                          addr_is_mem;
+wire                          addr_is_mmio;
+wire                          ren_or_wen;
+wire                          ch_cachesync; 
+wire                          ch_mem;   
+wire                          ch_mmio;  
+wire                          ch_none;  
+
+// memoryed request for different slaves
+wire                          memoryed_req_cachesync;
+wire                          memoryed_req_mem;
+wire                          memoryed_req_mmio;
+wire                          memoryed_req_none;
+wire   [`BUS_64]              rdata_mem;      // readed data from mmio
+wire   [`BUS_64]              rdata_mmio;     // readed data from main memory
+reg    [`BUS_64]              rdata;          // readed data from main memory or mmio
+
+// 保存输入信息
+reg   [`BUS_64]               tmp_i_mem_pc;
+reg   [`BUS_32]               tmp_i_mem_inst;
+reg   [`BUS_RIDX]             tmp_i_mem_rd;
+reg                           tmp_i_mem_rd_wen;
+reg   [`BUS_64]               tmp_i_mem_rd_wdata;
+reg   [7 : 0]                 tmp_i_mem_inst_opcode;
+reg                           tmp_i_mem_nocmt;
+reg                           tmp_i_mem_skipcmt;
+reg                           tmp_ch_cachesync;
+reg                           tmp_ch_mem;
+reg                           tmp_ch_mmio;
+
+reg  [63:0]                   mem_addr;
+reg  [2:0]                    mem_bytes;
+reg                           mem_ren;
+reg                           mem_wen;
+wire [63:0]                   rdata_mem;
+reg  [63:0]                   mem_wdata;
+
 
 assign o_mem_executed_ack = 1'b1;
 
-wire executed_hs = i_mem_executed_req & o_mem_executed_ack;
-wire memoryed_hs = i_mem_memoryed_ack & o_mem_memoryed_req;
+assign executed_hs = i_mem_executed_req & o_mem_executed_ack;
+assign memoryed_hs = i_mem_memoryed_ack & o_mem_memoryed_req;
 
-wire addr_is_mem  = (mem_addr[31:28] != 4'b0);
-wire addr_is_mmio = (mem_addr[31:24] == 8'h02);// & (64'hFF000000)) == 64'h02000000;
+assign addr_is_mem  = (mem_addr[31:28] != 4'b0);
+assign addr_is_mmio = (mem_addr[31:24] == 8'h02);// & (64'hFF000000)) == 64'h02000000;
 
 // channel select, only valid in one pulse
-wire ren_or_wen = mem_ren | mem_wen;
+assign ren_or_wen = mem_ren | mem_wen;
 
-wire ch_cachesync = i_mem_inst_opcode == `INST_FENCEI;
-wire ch_mem   = addr_is_mem & ren_or_wen;
-wire ch_mmio  = addr_is_mmio & ren_or_wen;
-wire ch_none  = (!ch_cachesync) & ((!(addr_is_mem | addr_is_mmio)) | (!ren_or_wen));
-
-// memoryed request for different slaves
-wire                  memoryed_req_cachesync;
-wire                  memoryed_req_mem;
-wire                  memoryed_req_mmio;
-wire                  memoryed_req_none;
-wire   [`BUS_64]      rdata_mem;      // readed data from mmio
-wire   [`BUS_64]      rdata_mmio;     // readed data from main memory
-reg    [`BUS_64]      rdata;          // readed data from main memory or mmio
+assign ch_cachesync = i_mem_inst_opcode == `INST_FENCEI;
+assign ch_mem   = addr_is_mem & ren_or_wen;
+assign ch_mmio  = addr_is_mmio & ren_or_wen;
+assign ch_none  = (!ch_cachesync) & ((!(addr_is_mem | addr_is_mmio)) | (!ren_or_wen));
 
 // o_mem_memoryed_req
 always @(*) begin
@@ -107,28 +137,6 @@ always @(*) begin
     rdata = 0;
   end
 end
-
-// 保存输入信息
-reg   [`BUS_64]               tmp_i_mem_pc;
-reg   [`BUS_32]               tmp_i_mem_inst;
-reg   [`BUS_RIDX]             tmp_i_mem_rd;
-reg                           tmp_i_mem_rd_wen;
-reg   [`BUS_64]               tmp_i_mem_rd_wdata;
-reg   [7 : 0]                 tmp_i_mem_inst_opcode;
-reg                           tmp_i_mem_nocmt;
-reg                           tmp_i_mem_skipcmt;
-reg                           tmp_ch_cachesync;
-reg                           tmp_ch_mem;
-reg                           tmp_ch_mmio;
-
-reg  [63:0] mem_addr;
-reg  [2:0]  mem_bytes;
-reg         mem_ren;
-reg         mem_wen;
-wire [63:0] rdata_mem;
-reg  [63:0] mem_wdata;
-
-
 
 // o_mem_memoryed_req
 always @(posedge clk) begin
@@ -184,7 +192,6 @@ assign o_mem_rd_wen       = tmp_i_mem_rd_wen;
 assign o_mem_rd_wdata     = tmp_i_mem_rd_wdata;
 assign o_mem_nocmt        = tmp_i_mem_nocmt;
 assign o_mem_skipcmt      = tmp_i_mem_skipcmt | tmp_ch_mmio;
-
 
 // ren, only valid at one pulse
 always @(*) begin

@@ -32,17 +32,20 @@ module ysyx_210544_id_stage(
   output  wire                o_id_skipcmt
 );
 
-wire fetched_hs = i_id_fetched_req;
-wire decoded_hs = i_id_decoded_ack & o_id_decoded_req;
-
-// 是否使能组合逻辑单元部件
-reg                           i_ena;
-
-
+reg                           i_ena;    // 是否使能组合逻辑单元部件
+wire                          i_disable;
 // 保存输入信息
 reg   [`BUS_64]               tmp_i_id_pc;
 reg   [`BUS_32]               tmp_i_id_inst;
 reg                           tmp_i_id_nocmt;
+
+wire fetched_hs;
+wire decoded_hs;
+
+
+
+assign fetched_hs = i_id_fetched_req;
+assign decoded_hs = i_id_decoded_ack & o_id_decoded_req;
 
 always @(posedge clk) begin
   if (rst) begin
@@ -71,12 +74,11 @@ always @(posedge clk) begin
   end
 end
 
-wire i_disable = !i_ena;
+assign i_disable = !i_ena;
 
 assign o_id_pc      = i_disable ? 0 : tmp_i_id_pc;
 assign o_id_inst    = i_disable ? 0 : tmp_i_id_inst;
 assign o_id_nocmt   = i_disable ? 0 : tmp_i_id_nocmt;
-
 
 ysyx_210544_idU IdU(
   .rst                        (rst                        ),

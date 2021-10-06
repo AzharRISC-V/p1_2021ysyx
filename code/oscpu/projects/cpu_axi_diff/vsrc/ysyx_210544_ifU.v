@@ -26,6 +26,14 @@ module ysyx_210544_ifU(
   output  reg                 o_nocmt               // 由于冲刷流水线而不提交这条指令
 );
 
+wire              handshake_done;
+reg               ignore_next_inst;     // 忽略下一条取指
+reg [`BUS_64]     saved_pc_jmpaddr;     // 记忆的pc跳转指令
+reg               fetch_again;          // 再次取指
+reg [`BUS_64]     pc_pred;              // 预测的下一个PC
+
+
+
 assign o_nocmt = 0;
 
 // o_bus_req
@@ -51,13 +59,9 @@ always @(posedge clk) begin
   end
 end
 
-wire handshake_done = o_bus_req & i_bus_ack;
+assign handshake_done = o_bus_req & i_bus_ack;
 
 // 跳转指令处理
-reg           ignore_next_inst;     // 忽略下一条取指
-reg [`BUS_64] saved_pc_jmpaddr;     // 记忆的pc跳转指令
-reg           fetch_again;          // 再次取指
-reg [`BUS_64] pc_pred;              // 预测的下一个PC
 
 always @(posedge clk) begin
   if (rst) begin

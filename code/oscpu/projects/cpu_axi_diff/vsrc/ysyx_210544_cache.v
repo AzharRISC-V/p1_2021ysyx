@@ -159,9 +159,7 @@ ysyx_210544_cache_core DCache(
 );
 
 
-/////////////////////////////////////////////////
 // NoCache, access bus directly
-  
 wire              nocache_req;
 wire  [63:0]      nocache_addr;
 wire              nocache_op;
@@ -177,31 +175,7 @@ wire  [63:0]      nocache_axi_io_addr;
 wire  [2:0]       nocache_axi_io_size;
 wire  [7:0]       nocache_axi_io_blks;
 
-ysyx_210544_cache_nocache NoCache(
-  .clk                        (clk                        ),
-  .rst                        (rst                        ),
-	.i_cache_nocache_addr       (nocache_addr               ),
-	.i_cache_nocache_wdata      (nocache_wdata              ),
-	.i_cache_nocache_bytes      (nocache_bytes              ),
-	.i_cache_nocache_op         (nocache_op                 ),
-	.i_cache_nocache_req        (ch_nocache ? nocache_req : 0),
-	.o_cache_nocache_rdata      (nocache_rdata              ),
-	.o_cache_nocache_ack        (nocache_ack                ),
-
-  .i_axi_io_ready             (ch_nocache ? i_axi_io_ready : 0        ),
-  .i_axi_io_rdata             (ch_nocache ? i_axi_io_rdata : 0        ),
-  .o_axi_io_op                (nocache_axi_io_op          ),
-  .o_axi_io_valid             (nocache_axi_io_valid       ),
-  .o_axi_io_wdata             (nocache_axi_io_wdata       ),
-  .o_axi_io_addr              (nocache_axi_io_addr        ),
-  .o_axi_io_size              (nocache_axi_io_size        ),
-  .o_axi_io_blks              (nocache_axi_io_blks        )
-);
-
-
-/////////////////////////////////////////////////
 // Cache_sync, ICache and DCache auto exchange data
-
 wire              sync_dcache_rreq;
 wire              sync_dcache_rack;
 wire              sync_dcache_rpackreq;
@@ -224,6 +198,29 @@ wire  [  1: 0]    sync_icache_wwayid;
 wire  [  3: 0]    sync_icache_wblkid;
 wire  [ 25:0]     sync_icache_winfo;
 wire  [511:0]     sync_icache_wdata;
+
+
+ysyx_210544_cache_nocache NoCache(
+  .clk                        (clk                        ),
+  .rst                        (rst                        ),
+	.i_cache_nocache_addr       (nocache_addr               ),
+	.i_cache_nocache_wdata      (nocache_wdata              ),
+	.i_cache_nocache_bytes      (nocache_bytes              ),
+	.i_cache_nocache_op         (nocache_op                 ),
+	.i_cache_nocache_req        (ch_nocache ? nocache_req : 0),
+	.o_cache_nocache_rdata      (nocache_rdata              ),
+	.o_cache_nocache_ack        (nocache_ack                ),
+
+  .i_axi_io_ready             (ch_nocache ? i_axi_io_ready : 0        ),
+  .i_axi_io_rdata             (ch_nocache ? i_axi_io_rdata : 0        ),
+  .o_axi_io_op                (nocache_axi_io_op          ),
+  .o_axi_io_valid             (nocache_axi_io_valid       ),
+  .o_axi_io_wdata             (nocache_axi_io_wdata       ),
+  .o_axi_io_addr              (nocache_axi_io_addr        ),
+  .o_axi_io_size              (nocache_axi_io_size        ),
+  .o_axi_io_blks              (nocache_axi_io_blks        )
+);
+
 
 
 ysyx_210544_cache_sync Cache_sync(

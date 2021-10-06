@@ -38,8 +38,13 @@ reg [3:0] state;
 reg [1:0] step;
 // 在异常发生的第一个时钟周期就确定下来，因为有些输入信号只保持一个周期
 reg [63:0] exception_cause;     // 异常原因
+wire hs;
+reg [63:0] csr_rdata_save1;
+reg [63:0] csr_rdata_save2;
 
-wire hs = ack & req;
+
+
+assign hs = ack & req;
 
 always @(posedge clk) begin
   if (rst) begin
@@ -137,9 +142,6 @@ always @(posedge clk) begin
     
   end
 end
-
-reg [63:0] csr_rdata_save1;
-reg [63:0] csr_rdata_save2;
 
 always @(posedge clk) begin
   if (rst) begin

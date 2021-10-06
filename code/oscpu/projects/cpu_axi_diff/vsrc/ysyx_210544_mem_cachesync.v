@@ -19,8 +19,11 @@ module ysyx_210544_mem_cachesync(
   input   wire                i_cachesync_ack
 );
 
+wire hs_cachesync;
 
-wire hs_cachesync  = o_cachesync_req & i_cachesync_ack;
+
+
+assign hs_cachesync  = o_cachesync_req & i_cachesync_ack;
 
 always @(posedge clk) begin
   if (rst) begin
@@ -42,6 +45,5 @@ always @(posedge clk) begin
     end
   end
 end
-
 
 endmodule

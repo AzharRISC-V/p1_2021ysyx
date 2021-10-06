@@ -22,11 +22,15 @@ module ysyx_210544_cmt_stage(
   input   wire [`BUS_32]      i_cmt_intrNo
 );
 
+wire writebacked_hs;
+wire i_cmtvalid;
+reg [63:0] cnt;
+
+
+
 assign o_cmt_writebacked_ack = 1'b1;
-
-wire writebacked_hs = i_cmt_writebacked_req & o_cmt_writebacked_ack;
-
-wire i_cmtvalid = writebacked_hs & (!i_cmt_nocmt);
+assign writebacked_hs = i_cmt_writebacked_req & o_cmt_writebacked_ack;
+assign i_cmtvalid = writebacked_hs & (!i_cmt_nocmt);
 
 ysyx_210544_cmtU CmtU(
   .clk                        (clk                        ),
@@ -43,7 +47,6 @@ ysyx_210544_cmtU CmtU(
   .i_intrNo                   (i_cmt_intrNo               )
 );
 
-reg [63:0] cnt;
 always @(posedge clk) begin
   if (rst) begin
     cnt <= 1;

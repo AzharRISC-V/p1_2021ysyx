@@ -64,6 +64,20 @@ module SimTop(
     input                               `AXI_TOP_INTERFACE(r_bits_user)
 );
 
+// axi_rw 接口
+wire                          i_user_axi_ready;
+wire [511:0]                  i_user_axi_rdata;
+wire                          o_user_axi_op;
+wire                          o_user_axi_valid;
+wire [511:0]                  o_user_axi_wdata;
+wire [63:0]                   o_user_axi_addr;
+wire [2:0]                    o_user_axi_size;
+wire [7:0]                    o_user_axi_blks;
+
+wire [1:0]                    o_user_axi_resp;
+
+
+
 ysyx_210544_axi_rw u_axi_rw (
     .clock                          (clock),
     .reset                          (reset),
@@ -109,23 +123,6 @@ ysyx_210544_axi_rw u_axi_rw (
     .axi_r_id_i                     (`AXI_TOP_INTERFACE(r_bits_id))
 );
 
-
-/////////////////////////////////////////////////
-// axi_rw 接口
-wire                          i_user_axi_ready;
-wire [511:0]                  i_user_axi_rdata;
-wire                          o_user_axi_op;
-wire                          o_user_axi_valid;
-wire [511:0]                  o_user_axi_wdata;
-wire [63:0]                   o_user_axi_addr;
-wire [2:0]                    o_user_axi_size;
-wire [7:0]                    o_user_axi_blks;
-
-wire [1:0]                    o_user_axi_resp;
-
-
-
-/////////////////////////////////////////////////
 // CPU核
 ysyx_210544_cpu u_cpu(
   .clk                        (clock                      ),

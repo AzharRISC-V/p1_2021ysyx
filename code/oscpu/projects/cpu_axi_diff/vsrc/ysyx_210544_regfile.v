@@ -23,40 +23,74 @@ module ysyx_210544_regfile(
 reg   [`BUS_64]   regs[0 : 31];
 
 // register alias name
-wire  [`BUS_64]   x00_zero  = regs[00];
-wire  [`BUS_64]   x01_ra    = regs[01];
-wire  [`BUS_64]   x02_sp    = regs[02];
-wire  [`BUS_64]   x03_gp    = regs[03];
-wire  [`BUS_64]   x04_tp    = regs[04];
-wire  [`BUS_64]   x05_t0    = regs[05];
-wire  [`BUS_64]   x06_t1    = regs[06];
-wire  [`BUS_64]   x07_t2    = regs[07];
-wire  [`BUS_64]   x08_s0    = regs[08];
-wire  [`BUS_64]   x09_s1    = regs[09];
-wire  [`BUS_64]   x10_a0    = regs[10];
-wire  [`BUS_64]   x11_a1    = regs[11];
-wire  [`BUS_64]   x12_a2    = regs[12];
-wire  [`BUS_64]   x13_a3    = regs[13];
-wire  [`BUS_64]   x14_a4    = regs[14];
-wire  [`BUS_64]   x15_a5    = regs[15];
-wire  [`BUS_64]   x16_a6    = regs[16];
-wire  [`BUS_64]   x17_a7    = regs[17];
-wire  [`BUS_64]   x18_s2    = regs[18];
-wire  [`BUS_64]   x19_s3    = regs[19];
-wire  [`BUS_64]   x20_s4    = regs[20];
-wire  [`BUS_64]   x21_s5    = regs[21];
-wire  [`BUS_64]   x22_s6    = regs[22];
-wire  [`BUS_64]   x23_s7    = regs[23];
-wire  [`BUS_64]   x24_s8    = regs[24];
-wire  [`BUS_64]   x25_s9    = regs[25];
-wire  [`BUS_64]   x26_s10   = regs[26];
-wire  [`BUS_64]   x27_s11   = regs[27];
-wire  [`BUS_64]   x28_t3    = regs[28];
-wire  [`BUS_64]   x29_t4    = regs[29];
-wire  [`BUS_64]   x30_t5    = regs[30];
-wire  [`BUS_64]   x31_t6    = regs[31];
+wire  [`BUS_64]   x00_zero;
+wire  [`BUS_64]   x01_ra;
+wire  [`BUS_64]   x02_sp;
+wire  [`BUS_64]   x03_gp;
+wire  [`BUS_64]   x04_tp;
+wire  [`BUS_64]   x05_t0;
+wire  [`BUS_64]   x06_t1;
+wire  [`BUS_64]   x07_t2;
+wire  [`BUS_64]   x08_s0;
+wire  [`BUS_64]   x09_s1;
+wire  [`BUS_64]   x10_a0;
+wire  [`BUS_64]   x11_a1;
+wire  [`BUS_64]   x12_a2;
+wire  [`BUS_64]   x13_a3;
+wire  [`BUS_64]   x14_a4;
+wire  [`BUS_64]   x15_a5;
+wire  [`BUS_64]   x16_a6;
+wire  [`BUS_64]   x17_a7;
+wire  [`BUS_64]   x18_s2;
+wire  [`BUS_64]   x19_s3;
+wire  [`BUS_64]   x20_s4;
+wire  [`BUS_64]   x21_s5;
+wire  [`BUS_64]   x22_s6;
+wire  [`BUS_64]   x23_s7;
+wire  [`BUS_64]   x24_s8;
+wire  [`BUS_64]   x25_s9;
+wire  [`BUS_64]   x26_s10;
+wire  [`BUS_64]   x27_s11;
+wire  [`BUS_64]   x28_t3;
+wire  [`BUS_64]   x29_t4;
+wire  [`BUS_64]   x30_t5;
+wire  [`BUS_64]   x31_t6;
 
-	
+
+
+assign x00_zero = regs[00];
+assign x01_ra = regs[01];
+assign x02_sp = regs[02];
+assign x03_gp = regs[03];
+assign x04_tp = regs[04];
+assign x05_t0 = regs[05];
+assign x06_t1 = regs[06];
+assign x07_t2 = regs[07];
+assign x08_s0 = regs[08];
+assign x09_s1 = regs[09];
+assign x10_a0 = regs[10];
+assign x11_a1 = regs[11];
+assign x12_a2 = regs[12];
+assign x13_a3 = regs[13];
+assign x14_a4 = regs[14];
+assign x15_a5 = regs[15];
+assign x16_a6 = regs[16];
+assign x17_a7 = regs[17];
+assign x18_s2 = regs[18];
+assign x19_s3 = regs[19];
+assign x20_s4 = regs[20];
+assign x21_s5 = regs[21];
+assign x22_s6 = regs[22];
+assign x23_s7 = regs[23];
+assign x24_s8 = regs[24];
+assign x25_s9 = regs[25];
+assign x26_s10 = regs[26];
+assign x27_s11 = regs[27];
+assign x28_t3 = regs[28];
+assign x29_t4 = regs[29];
+assign x30_t5 = regs[30];
+assign x31_t6 = regs[31];
+
 // i_rd 写入
 always @(posedge clk) begin
   if ( rst == 1'b1 ) begin

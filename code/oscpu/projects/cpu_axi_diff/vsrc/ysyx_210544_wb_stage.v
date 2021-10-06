@@ -30,13 +30,7 @@ module ysyx_210544_wb_stage(
   output  reg   [`BUS_32]     o_wb_intrNo
 );
 
-
-assign o_wb_memoryed_ack = 1'b1;
-
-wire memoryed_hs = i_wb_memoryed_req & o_wb_memoryed_ack;
-
-// 是否使能组合逻辑单元部件
-reg                           i_ena;
+reg                           i_ena;    // 是否使能组合逻辑单元部件
 wire                          i_disable = !i_ena;
 
 // 保存输入信息
@@ -47,6 +41,12 @@ reg                           tmp_i_wb_rd_wen;
 reg   [`BUS_64]               tmp_i_wb_rd_wdata;
 reg                           tmp_i_wb_nocmt;
 reg                           tmp_i_wb_skipcmt;
+
+wire memoryed_hs;
+
+
+assign o_wb_memoryed_ack = 1'b1;
+assign memoryed_hs = i_wb_memoryed_req & o_wb_memoryed_ack;
 
 always @(posedge clk) begin
   if (rst) begin

@@ -31,10 +31,11 @@ module ysyx_210544_memU(
   input   wire  [63:0]        i_dcache_rdata
 );
 
-
-wire hs_dcache  = o_dcache_req & i_dcache_ack;
-
+wire hs_dcache;
 reg wait_finish;  // 是否等待访存完毕？
+
+
+assign hs_dcache  = o_dcache_req & i_dcache_ack;
 
 always @(posedge clk) begin
   if (rst) begin
@@ -78,6 +79,5 @@ always @(posedge clk) begin
 end
 
 // assign o_rdata = i_dcache_rdata;
-
 
 endmodule

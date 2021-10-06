@@ -20,7 +20,6 @@ module ysyx_210544_cmtU(
   input   wire                i_skipcmt
 );
 
-
 // Difftest
 reg                           cmt_wen;
 reg   [7:0]                   cmt_wdest;
@@ -35,9 +34,13 @@ reg   [`BUS_64]               cycleCnt;
 reg   [`BUS_64]               instrCnt;
 reg   [`BUS_64]               regs_diff [0 : 31];
 
-reg   [`BUS_64] instrCnt_inc = i_cmtvalid ? 1 : 0;
+reg   [`BUS_64] instrCnt_inc;
+wire  [`BUS_64] sstatus;
 
-wire  [`BUS_64] sstatus = i_csrs[`CSR_IDX_MSTATUS] & 64'h80000003_000DE122;
+
+
+assign instrCnt_inc = i_cmtvalid ? 1 : 0;
+assign sstatus = i_csrs[`CSR_IDX_MSTATUS] & 64'h80000003_000DE122;
 
 always @(negedge clk) begin
   if (rst) begin
@@ -58,7 +61,6 @@ always @(negedge clk) begin
     instrCnt      <= instrCnt + instrCnt_inc;
   end
 end
-
 
 `ifdef DIFFTEST_YSYX_210544
 

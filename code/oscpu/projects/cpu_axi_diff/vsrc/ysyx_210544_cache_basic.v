@@ -92,7 +92,6 @@ module ysyx_210544_cache_basic (
   output  wire  [7:0]         o_axi_io_blks
 );
 
-
 `define WAYS                  4             // 路数
 `define BLKS                  16            // 块数
 `define BUS_WAYS              0:3           // 各路的总线。4路
@@ -103,7 +102,15 @@ module ysyx_210544_cache_basic (
 `define c_d_BUS               23            // cache的d所在的总线 
 `define c_s_BUS               25:24         // cache的s所在的总线
 
-// =============== 同步功能用到的变量 ===========
+
+reg                           o_cache_axi_req;            // 请求
+reg   [63 : 0]                o_cache_axi_addr;           // 存储器地址（字节为单位），64字节对齐，低6位为0。
+reg                           o_cache_axi_op;             // 操作类型：0读取，1写入
+reg   [511 : 0]               o_cache_axi_wdata;          // 要写入的数据
+wire  [511 : 0]               i_cache_axi_rdata;          // 已读出的数据
+wire                          i_cache_axi_ack;            // 应答
+
+// =============== 同步 ===============
 wire                          sync_rreq;                  // 同步操作读请求
 reg                           sync_rack;                  // 同步操作读应答
 reg                           sync_rpackreq;              // 同步操作读包请求
@@ -122,6 +129,85 @@ wire  [1  : 0]                sync_wwayid;                // 要写入的路id: 
 wire  [3  : 0]                sync_wblkid;                // 要写入的块id: 0~15
 wire  [25 : 0]                sync_winfo;                 // 要写入的cache_info
 wire  [511: 0]                sync_wdata;                 // 要写入的cache_data
+
+// =============== 物理地址解码 ===============
+wire  [63: 0]                 user_blk_aligned_bytes;     // 用户地址的按块对齐地址(按字节)（64字节对齐，低6位为0）
+reg   [63: 0]                 user_wmask;                 // 用户数据的写入掩码，由bytes决定，高电平有效
+wire  [3 : 0]                 mem_blkno;                  // mem块号，0~15
+wire  [5 : 0]                 mem_offset_bytes;           // mem块内偏移(按字节)，0~63
+wire  [8 : 0]                 mem_offset_bits;            // mem块内偏移(按位)，0~511
+wire  [21: 0]                 mem_tag;                    // mem标记
+
+// =============== Cache Info 缓存信息 ===============
+reg   [25 : 0]                cache_info[`BUS_WAYS][0:`BLKS-1];   // cache信息块
+wire  [5 : 0]                 c_data_lineno;                      // cache数据行号(0~63)
+wire  [3 : 0]                 c_offset_bytes;                     // cache行内偏移(按字节)(0~15)
+wire  [6 : 0]                 c_offset_bits;                      // cache行内偏移(按位)(0~127)
+wire  [127:0]                 c_wdata;                            // cache行要写入的数据
+wire  [127:0]                 c_wmask;                            // cache行要写入的掩码
+
+wire                          c_v[`BUS_WAYS];                     // cache valid bit 有效位，1位有效
+wire                          c_d[`BUS_WAYS];                     // cache dirty bit 脏位，1为脏
+wire  [1 : 0]                 c_s[`BUS_WAYS];                     // cache seqence bit 顺序位，越大越需要先被替换走
+wire  [21: 0]                 c_tag[`BUS_WAYS];                   // cache标记
+
+// =============== cache选中 ===============
+wire                          hit[`BUS_WAYS];     // 各路是否命中
+wire                          hit_any;            // 是否有任意一路命中？
+wire [1:0]                    wayID_smin;         // s最小的是哪一路？
+wire [1:0]                    wayID_hit;          // 已命中的是哪一路（至多有一路命中） 
+wire [1:0]                    wayID_select;       // 选择了哪一路？方法：若命中则就是命中的那一路；否则选择smax所在的那一路
+
+// =============== Cache Data 缓存数据 ===============
+// 根据实际硬件模型设置有效电平
+parameter bit CHIP_DATA_CEN = 0;        // cen有效的电平
+parameter bit CHIP_DATA_WEN = 0;        // wen有效的电平
+parameter bit CHIP_DATA_WMASK_EN = 0;   // 写掩码有效的电平
+
+reg                           chip_data_cen[`BUS_WAYS];               // RAM 使能，低电平有效
+reg                           chip_data_wen[`BUS_WAYS];               // RAM 写使能，低电平有效
+reg   [5  : 0]                chip_data_addr[`BUS_WAYS];              // RAM 地址
+reg   [127: 0]                chip_data_wdata[`BUS_WAYS];             // RAM 写入数据
+reg   [127: 0]                chip_data_wmask[`BUS_WAYS];             // RAM 写入掩码
+wire  [127: 0]                chip_data_rdata[`BUS_WAYS];             // RAM 读出数据
+
+// =============== 状态机 ===============
+//  英文名称          中文名称               含义
+//  IDLE              空闲                 无活动。有用户请求则进入 READY / STORE_FROM_RAM / LOAD_FROM_BUS 这三种情况
+//  READY             就绪                  命中，则直接读写。读写完毕回到IDLE。
+//  STORE_FROM_RAM    存储(从RAM读取数据)    不命中并选择脏的数据块，则需要写回。先以128bit为单位分4次从RAM读入数据，读取完毕跳转到 StoreToBUS
+//  STORE_TO_BUS      存储(写入总线)         不命中并选择脏的数据块，则需要写回。再将512bit数据写入总线，写入完毕跳转到 LoadFromBUS
+//  LOAD_FROM_BUS     加载(从总线读取数据)    不命中并选择不脏的数据块，则需要读入新数据。先从总线读取512bit数据，读取完毕跳转到 LoadToRAM
+//  LOAD_TO_RAM       加载(写入RAM)         不命中并选择不脏的数据块，则需要读入新数据。再以128bit为单位分4次写入RAM，写入完毕跳转到READY
+//  FENCE_RD          同步读               有fence请求，读取vlaid的数据，送出
+//  FENCE_WR          同步写               有fence请求，收到数据包，写入。
+parameter [2:0] STATE_IDLE              = 3'd0;
+parameter [2:0] STATE_READY             = 3'd1;
+parameter [2:0] STATE_STORE_FROM_RAM    = 3'd2;
+parameter [2:0] STATE_STORE_TO_BUS      = 3'd3;
+parameter [2:0] STATE_LOAD_FROM_BUS     = 3'd4;
+parameter [2:0] STATE_LOAD_TO_RAM       = 3'd5;
+parameter [2:0] STATE_FENCE_RD          = 3'd6;
+parameter [2:0] STATE_FENCE_WR          = 3'd7;
+
+reg [2:0] state;
+reg   [1  : 0]                sync_step;                  // sync操作的不同阶段
+
+// =============== 处理用户请求 ===============
+reg   [2:0]         ram_op_cnt;                 // RAM操作计数器(0~3表示1~4次，剩余的位数用于大于4的计数)
+wire  [8:0]         ram_op_offset_128;          // RAM操作的128位偏移量（延迟2个时钟周期后输出）
+wire                hs_cache;                   // cache操作 握手
+wire                hs_sync_rd;                 // sync读操作 握手
+wire                hs_sync_rpack;              // sync读包操作 握手
+wire                hs_sync_wr;                 // sync写操作 握手
+wire                hs_cache_axi;               // cache_axi操作 握手
+wire                hs_ramwrite;                // ram操作 握手（完成4行写入）
+wire                hs_ramread;                 // ram操作 握手（完成4行读取）
+wire                hs_ramline;                 // ram操作 握手（完成指定1行读写）
+reg   [127: 0]      rdata_line;                 // 读取一行数据
+reg   [63: 0]       rdata_out;                  // 输出的数据
+
+
 
 assign sync_rreq                    = i_cache_basic_sync_rreq;
 assign o_cache_basic_sync_rack      = sync_rack;
@@ -155,16 +241,6 @@ assign sync_wdata                   = i_cache_basic_sync_wdata;
 // assign sync_wblkid                  = !sync_wreq ? 0 : {sync_wlineid >> 2}[3:0];
 // assign sync_wdata                   = !sync_wreq ? 0 : i_cache_basic_sync_wdata;
 
-
-// =============== 物理地址解码 ===============
-
-wire  [63: 0]                 user_blk_aligned_bytes;     // 用户地址的按块对齐地址(按字节)（64字节对齐，低6位为0）
-reg   [63: 0]                 user_wmask;                 // 用户数据的写入掩码，由bytes决定，高电平有效
-wire  [3 : 0]                 mem_blkno;                  // mem块号，0~15
-wire  [5 : 0]                 mem_offset_bytes;           // mem块内偏移(按字节)，0~63
-wire  [8 : 0]                 mem_offset_bits;            // mem块内偏移(按位)，0~511
-wire  [21: 0]                 mem_tag;                    // mem标记
-
 assign user_blk_aligned_bytes = {32'd0, i_cache_basic_addr[31:6], 6'd0};
 
 always @(*) begin
@@ -186,26 +262,11 @@ assign mem_offset_bits    = {3'b0, i_cache_basic_addr[5:0]} << 3;
 assign mem_blkno          = i_cache_basic_addr[9:6];
 assign mem_tag            = i_cache_basic_addr[31:10];
 
-
-// =============== Cache Info 缓存信息 ===============
-
-wire  [5 : 0]                 c_data_lineno;                      // cache数据行号(0~63)
-wire  [3 : 0]                 c_offset_bytes;                     // cache行内偏移(按字节)(0~15)
-wire  [6 : 0]                 c_offset_bits;                      // cache行内偏移(按位)(0~127)
-wire  [127:0]                 c_wdata;                            // cache行要写入的数据
-wire  [127:0]                 c_wmask;                            // cache行要写入的掩码
-
 assign c_data_lineno    = i_cache_basic_addr[9:4];
 assign c_offset_bytes   = mem_offset_bits[6:3]; 
 assign c_offset_bits    = mem_offset_bits[6:0];
 assign c_wmask          = {64'd0, user_wmask} << c_offset_bits;
 assign c_wdata          = {64'd0, i_cache_basic_wdata} << c_offset_bits;
-
-reg   [25 : 0]                cache_info[`BUS_WAYS][0:`BLKS-1];   // cache信息块
-wire                          c_v[`BUS_WAYS];                     // cache valid bit 有效位，1位有效
-wire                          c_d[`BUS_WAYS];                     // cache dirty bit 脏位，1为脏
-wire  [1 : 0]                 c_s[`BUS_WAYS];                     // cache seqence bit 顺序位，越大越需要先被替换走
-wire  [21: 0]                 c_tag[`BUS_WAYS];                   // cache标记
 
 // cache_info
 generate
@@ -232,15 +293,6 @@ generate
   end
 endgenerate
 
-
-// =============== cache选中 ===============
-
-wire                          hit[`BUS_WAYS];     // 各路是否命中
-wire                          hit_any;            // 是否有任意一路命中？
-wire [1:0]                    wayID_smin;         // s最小的是哪一路？
-wire [1:0]                    wayID_hit;          // 已命中的是哪一路（至多有一路命中） 
-wire [1:0]                    wayID_select;       // 选择了哪一路？方法：若命中则就是命中的那一路；否则选择smax所在的那一路
-
 // hit
 generate
   for (genvar way = 0; way < `WAYS; way += 1) begin
@@ -253,21 +305,6 @@ assign hit_any = hit[0] | hit[1] | hit[2] | hit[3];
 assign wayID_hit = (hit[1] ? 1 : 0) | (hit[2] ? 2 : 0) | (hit[3] ? 3 : 0);
 assign wayID_smin = (c_s[1] == 0 ? 1 : 0) | (c_s[2] == 0 ? 2 : 0) | (c_s[3] == 0 ? 3 : 0);
 assign wayID_select = hit_any ? wayID_hit : wayID_smin;
-
-
-// =============== Cache Data 缓存数据 ===============
-
-// 根据实际硬件模型设置有效电平
-parameter bit CHIP_DATA_CEN = 0;        // cen有效的电平
-parameter bit CHIP_DATA_WEN = 0;        // wen有效的电平
-parameter bit CHIP_DATA_WMASK_EN = 0;   // 写掩码有效的电平
-
-reg                           chip_data_cen[`BUS_WAYS];               // RAM 使能，低电平有效
-reg                           chip_data_wen[`BUS_WAYS];               // RAM 写使能，低电平有效
-reg   [5  : 0]                chip_data_addr[`BUS_WAYS];              // RAM 地址
-reg   [127: 0]                chip_data_wdata[`BUS_WAYS];             // RAM 写入数据
-reg   [127: 0]                chip_data_wmask[`BUS_WAYS];             // RAM 写入掩码
-wire  [127: 0]                chip_data_rdata[`BUS_WAYS];             // RAM 读出数据
 
 // RAM instantiate
 generate
@@ -298,28 +335,6 @@ generate
   end
 endgenerate
 
-
-// =============== 状态机 ===============
-//  英文名称          中文名称               含义
-//  IDLE              空闲                 无活动。有用户请求则进入 READY / STORE_FROM_RAM / LOAD_FROM_BUS 这三种情况
-//  READY             就绪                  命中，则直接读写。读写完毕回到IDLE。
-//  STORE_FROM_RAM    存储(从RAM读取数据)    不命中并选择脏的数据块，则需要写回。先以128bit为单位分4次从RAM读入数据，读取完毕跳转到 StoreToBUS
-//  STORE_TO_BUS      存储(写入总线)         不命中并选择脏的数据块，则需要写回。再将512bit数据写入总线，写入完毕跳转到 LoadFromBUS
-//  LOAD_FROM_BUS     加载(从总线读取数据)    不命中并选择不脏的数据块，则需要读入新数据。先从总线读取512bit数据，读取完毕跳转到 LoadToRAM
-//  LOAD_TO_RAM       加载(写入RAM)         不命中并选择不脏的数据块，则需要读入新数据。再以128bit为单位分4次写入RAM，写入完毕跳转到READY
-//  FENCE_RD          同步读               有fence请求，读取vlaid的数据，送出
-//  FENCE_WR          同步写               有fence请求，收到数据包，写入。
-parameter [2:0] STATE_IDLE              = 3'd0;
-parameter [2:0] STATE_READY             = 3'd1;
-parameter [2:0] STATE_STORE_FROM_RAM    = 3'd2;
-parameter [2:0] STATE_STORE_TO_BUS      = 3'd3;
-parameter [2:0] STATE_LOAD_FROM_BUS     = 3'd4;
-parameter [2:0] STATE_LOAD_TO_RAM       = 3'd5;
-parameter [2:0] STATE_FENCE_RD          = 3'd6;
-parameter [2:0] STATE_FENCE_WR          = 3'd7;
-
-reg [2:0] state;
-reg   [1  : 0]                sync_step;                  // sync操作的不同阶段
 // wire state_idle             = state == STATE_IDLE;
 // wire state_ready            = state == STATE_READY;
 // wire state_store_from_ram   = state == STATE_STORE_FROM_RAM;
@@ -327,6 +342,17 @@ reg   [1  : 0]                sync_step;                  // sync操作的不同
 // wire state_load_from_bus    = state == STATE_LOAD_FROM_BUS;
 // wire state_load_to_ram      = state == STATE_LOAD_TO_RAM;
 
+assign ram_op_offset_128 = ({6'd0, ram_op_cnt} - 2) << 7;
+assign hs_cache = i_cache_basic_req & o_cache_basic_ack;
+assign hs_sync_rd = sync_rreq & sync_rack;
+assign hs_sync_rpack = sync_rpackack & sync_rpackreq;
+assign hs_sync_wr = sync_wreq & sync_wack;
+assign hs_cache_axi = o_cache_axi_req & i_cache_axi_ack;
+assign hs_ramwrite = ram_op_cnt == 3'd4;
+assign hs_ramread = ram_op_cnt == 3'd6;
+assign hs_ramline = ram_op_cnt == 3'd3;
+assign rdata_line = chip_data_rdata[wayID_select];
+assign rdata_out = rdata_line[c_offset_bits +:64] & user_wmask;
 
 always @(posedge clk) begin
     if (rst) begin
@@ -403,35 +429,6 @@ always @(posedge clk) begin
       endcase
     end
 end
-
-
-// =============== 处理用户请求 ===============
-
-reg   [2:0]         ram_op_cnt;                 // RAM操作计数器(0~3表示1~4次，剩余的位数用于大于4的计数)
-wire  [8:0]         ram_op_offset_128;          // RAM操作的128位偏移量（延迟2个时钟周期后输出）
-wire                hs_cache;                   // cache操作 握手
-wire                hs_sync_rd;                 // sync读操作 握手
-wire                hs_sync_rpack;              // sync读包操作 握手
-wire                hs_sync_wr;                 // sync写操作 握手
-wire                hs_cache_axi;               // cache_axi操作 握手
-wire                hs_ramwrite;                // ram操作 握手（完成4行写入）
-wire                hs_ramread;                 // ram操作 握手（完成4行读取）
-wire                hs_ramline;                 // ram操作 握手（完成指定1行读写）
-reg   [127: 0]      rdata_line;                 // 读取一行数据
-reg   [63: 0]       rdata_out;                  // 输出的数据
-
-
-assign ram_op_offset_128 = ({6'd0, ram_op_cnt} - 2) << 7;
-assign hs_cache = i_cache_basic_req & o_cache_basic_ack;
-assign hs_sync_rd = sync_rreq & sync_rack;
-assign hs_sync_rpack = sync_rpackack & sync_rpackreq;
-assign hs_sync_wr = sync_wreq & sync_wack;
-assign hs_cache_axi = o_cache_axi_req & i_cache_axi_ack;
-assign hs_ramwrite = ram_op_cnt == 3'd4;
-assign hs_ramread = ram_op_cnt == 3'd6;
-assign hs_ramline = ram_op_cnt == 3'd3;
-assign rdata_line = chip_data_rdata[wayID_select];
-assign rdata_out = rdata_line[c_offset_bits +:64] & user_wmask;
 
 always @(posedge clk) begin
   if (rst) begin
@@ -672,13 +669,6 @@ always @(posedge clk) begin
 end
 
 // =============== cache_axi 从机端，请求传输数据 ===============
-
-reg                           o_cache_axi_req;             // 请求
-reg   [63 : 0]                o_cache_axi_addr;            // 存储器地址（字节为单位），64字节对齐，低6位为0。
-reg                           o_cache_axi_op;              // 操作类型：0读取，1写入
-reg   [511 : 0]               o_cache_axi_wdata;           // 要写入的数据
-wire  [511 : 0]               i_cache_axi_rdata;           // 已读出的数据
-wire                          i_cache_axi_ack;             // 应答
 
 ysyx_210544_cache_axi Cache_axi(
   .clk                        (clk                        ),

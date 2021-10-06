@@ -14,7 +14,6 @@ module ysyx_210544_rtc(
 );
 
 reg   [`BUS_64] clk_cnt     ;   // 内部计时器，用于控制秒的变化
-
 reg   [15: 0]   year        ;   // year: 0000 ~ 9999    2^16-1=65535
 reg   [3 : 0]   month       ;   // 2^4-1=15
 reg   [4 : 0]   day         ;   // 2^5-1=31
@@ -22,7 +21,10 @@ reg   [5 : 0]   hour        ;   // 2^6-1=63
 reg   [5 : 0]   minute      ;   // 2^6-1=63
 reg   [5 : 0]   second      ;   // 2^6-1=63
 
-wire  [`BUS_64] rtc_val = {21'b0, year, month, day, hour, minute, second};
+wire  [`BUS_64] rtc_val;
+
+
+assign rtc_val = {21'b0, year, month, day, hour, minute, second};
 
 // rtc simulate
 always @(posedge clk) begin

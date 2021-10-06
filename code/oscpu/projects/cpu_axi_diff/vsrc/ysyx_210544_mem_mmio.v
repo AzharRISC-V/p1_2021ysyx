@@ -19,7 +19,10 @@ module ysyx_210544_mem_mmio(
 );
 
 // rtc设备
-wire  [`BUS_64]     rtc_rdata;
+wire  [`BUS_64]               rtc_rdata;
+reg   [`BUS_64]               i_clint_rdata;
+
+
 
 ysyx_210544_rtc Rtc(
   .clk                (clk              ),
@@ -27,9 +30,6 @@ ysyx_210544_rtc Rtc(
   .ren                (ren & (addr == `DEV_RTC)),
   .rdata              (rtc_rdata        )
 );
-
-reg  [`BUS_64]                i_clint_rdata;
-
 
 // CLINT (Core Local Interrupt Controller)
 ysyx_210544_clint Clint(
@@ -71,6 +71,5 @@ always @(posedge clk) begin
     end
   end
 end
-
 
 endmodule
