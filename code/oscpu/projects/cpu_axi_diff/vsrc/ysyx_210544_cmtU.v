@@ -78,6 +78,7 @@ DifftestInstrCommit DifftestInstrCommit(
   .valid              (cmt_valid),
   .pc                 (cmt_pc),
   .instr              (cmt_inst),
+  .special            (0),
   .skip               (cmt_skip),
   .isRVC              (0),
   .scFailed           (0),

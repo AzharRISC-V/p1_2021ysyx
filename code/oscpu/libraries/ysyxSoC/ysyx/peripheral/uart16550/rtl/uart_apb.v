@@ -44,9 +44,6 @@ module uart_apb (
    assign reg_adr = in_paddr[2:0]; //assign adr_o   = in_paddr[2:0];
    assign in_prdata  = (in_psel) ? {4{reg_dat8_r}} : 'h0;
    always @ (in_paddr[1:0] or in_pwdata) begin
-     `ifdef DATA_BUS_WIDTH_8
-            reg_dat8_w =  in_pwdata[7:0];
-     `else
              case (in_paddr[1:0])
              `ifdef ENDIAN_BIG
              2'b00: reg_dat8_w =  in_pwdata[31:24];
@@ -60,8 +57,6 @@ module uart_apb (
              2'b11: reg_dat8_w =  in_pwdata[31:24];
              `endif
              endcase
-     `endif
-
    end
    always @ (posedge clk) begin
      reg_dat8_w_reg <= reg_dat8_w;

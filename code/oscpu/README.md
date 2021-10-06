@@ -115,8 +115,8 @@ Enter the test cycle:
 ```shell
 # 编译仿真
 ./build.sh -e cpu_diff -d -b -s -a "-i inst_diff.bin"
-# 编译仿真，并从CPU上报至difftest的时钟周期0开始输出波形
-./build.sh -e cpu_diff -d -b -s -a "-i inst_diff.bin --dump-wave -b 0" -m "EMU_TRACE=1"
+# 编译仿真，并从CPU上报至difftest的时钟周期0开始输出波形至wave.vcd文件
+./build.sh -e cpu_diff -d -b -s -a "-i inst_diff.bin --wave-path=wave.vcd --dump-wave -b 0" -m "EMU_TRACE=1"
 ```
 
 仿真程序运行后，终端将打印绿色的提示内容`HIT GOOD TRAP at pc = 0x8000000c`。说明程序运行到自定义的`0x6b`指令，并且此时存放错误码的`a0`寄存器的值为0，即程序按照预期结果成功退出。关于`0x6b`自定义指令作用，可参考[讲座-AM运行环境介绍](https://oscpu.github.io/ysyx/events/events.html?EID=2021-07-13_AM_Difftest)。如果指定输出波形，将在`projects/cpu_diff/build/`路径下生成`.vcd`波形文件。
@@ -126,7 +126,7 @@ Enter the test cycle:
 `projects/cpu_diff`目录下存放了通过`AXI总线`接入`香山difftest框架`的`verilog`版本单周期`RISC-V`CPU例程源码，源码实现了`RV64I`指令`addi`和`AXI总线`读逻辑。可以使用下面的命令编译和仿真。
 
 ```shell
-./build.sh -e cpu_axi_diff -d -s -a "-i inst_diff.bin --dump-wave -b 0" -m "EMU_TRACE=1 WITH_DRAMSIM3=1" -b
+./build.sh -e cpu_axi_diff -d -s -a "-i inst_diff.bin --wave-path=wave.vcd --dump-wave -b 0" -m "EMU_TRACE=1 WITH_DRAMSIM3=1" -b
 ```
 
 ### chisel_cpu_diff
@@ -186,6 +186,20 @@ Usage: ./emu [OPTION...]
 ```
 
 通过测试的用例，将打印`PASS`。测试失败的用例，打印`FAIL`并生成对应的log文件，可以查看log文件来调试，也可以另外开启波形输出来调试。
+
+# 代码上传
+
+在本框架中接入`ysyxSoC` 并完成所有测试后，可以开始代码上传流程。**上传前请确保所有触发器可复位。** 
+
+1. 将成功运行正常模式`rtthread-loader.bin`的截图文件`rtthread-loader.png`放置于`submit`目录下。
+1. 如果实现了`cache`，填写`doc`目录下的`cache规格.xlsx`并拷贝至`submit`目录下。
+1. 根据[代码规范检查步骤](https://github.com/OSCPU/ysyxSoC/blob/master/ysyx/lint/README.md)填写`Verilator中Warning无法清理说明.xlsx`文件并拷贝至`submit`目录下。
+1. 制作一份带数据流向的处理器架构图，并对图中各模块做简单说明，整理成`ysyx_21xxxx.pdf`文件并放置于`submit`目录下。
+1. 创建自己的`gitee`开源仓库。
+1. 进入`oscpu`目录下，运行`./submit.sh`，根据提示将代码上传至创建的`gitee`开源仓库。
+1. 将自己仓库的`HTTPS`格式的`URL`和学号发送给组内助教以完成第一次代码提交。后续提交只需要重新运行`./submit.sh`即可。
+
+后续提交不可修改cache规格，只能根据report反馈修复bug。SoC和后端团队将定期检查新提交的代码，进行综合和仿真测试，并将结果以日志报告的形式上传至ysyx_submit仓库，具体说明请参考[ysyx_submit仓库](https://github.com/OSCPU/ysyx_submit/)的说明文档。
 
 # 扩展
 

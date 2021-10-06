@@ -21,6 +21,10 @@
 #define NUM_CORES 1
 #endif
 
+// -----------------------------------------------------------------------
+// Memory and device config
+// -----------------------------------------------------------------------
+
 // emulated memory size (Byte)
 #define EMU_RAM_SIZE (256 * 1024 * 1024UL) // 256 MB
 // #define EMU_RAM_SIZE (8 * 1024 * 1024 * 1024UL) // 8 GB
@@ -29,7 +33,17 @@
 #define FIRST_INST_ADDRESS 0x80000000
 
 // sdcard image to be used in simulation
+// uncomment the follwing line to enable this feature
 // #define SDCARD_IMAGE "/home/xyn/workloads/debian/riscv-debian.img"
+
+// Use sdl to show screen
+// Note: It does not work well with clang, to use that, switch to gcc
+// uncomment the follwing line to enable this feature
+// #define SHOW_SCREEN
+
+// -----------------------------------------------------------------------
+// Difftest interface config
+// -----------------------------------------------------------------------
 
 // max commit width
 #define DIFFTEST_COMMIT_WIDTH 6
@@ -43,6 +57,10 @@
 // commit inst group history length 
 #define DEBUG_GROUP_TRACE_SIZE 16
 
+// -----------------------------------------------------------------------
+// Checkpoint config
+// -----------------------------------------------------------------------
+
 // time to fork a new checkpoint process
 #define FORK_INTERVAL 1 // unit: second
 
@@ -55,7 +73,31 @@
 // process sleep time  
 #define WAIT_INTERVAL 5
 
-//time to save a snapshot
+// time to save a snapshot
 #define SNAPSHOT_INTERVAL 60 // unit: second
+
+// -----------------------------------------------------------------------
+// Memory difftest config
+// -----------------------------------------------------------------------
+
+// whether to check memory coherence during refilling
+// #define DEBUG_REFILL
+
+// dump all tilelink trace to a database
+// uncomment the follwing line to enable this feature
+//#define DEBUG_TILELINK
+
+// -----------------------------------------------------------------------
+// Do not touch
+// -----------------------------------------------------------------------
+
+// whether to maintain goldenmem
+#if NUM_CORES>1
+    #define DEBUG_GOLDENMEM
+#endif
+
+#ifdef DEBUG_REFILL
+    #define DEBUG_GOLDENMEM
+#endif
 
 #endif

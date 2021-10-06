@@ -28,7 +28,7 @@ help() {
 create_soft_link() {
     mkdir ${1} 1>/dev/null 2>&1
     find -L ${1} -type l -delete 1>/dev/null 2>&1
-    FILES=`eval "find ${2} -mindepth 1 -maxdepth 4 -name ${3}"`
+    FILES=`eval "find ${2} -mindepth 1 -maxdepth 1 -name ${3}"`
     for FILE in ${FILES[@]}
     do
         eval "ln -s \"`realpath --relative-to="${1}" "$FILE"`\" \"${1}/${FILE##*/}\" 1>/dev/null 2>&1"
@@ -36,8 +36,8 @@ create_soft_link() {
 }
 
 create_bin_soft_link() {
-    find -L $BUILD_PATH -maxdepth 4 -type l -delete 1>/dev/null 2>&1
-    FOLDERS=`find bin -mindepth 1 -maxdepth 4 -type d`
+    find -L $BUILD_PATH -maxdepth 1 -type l -delete 1>/dev/null 2>&1
+    FOLDERS=`find bin -mindepth 1 -maxdepth 1 -type d`
     for FOLDER in ${FOLDERS[@]}
     do
         SUBFOLDER=${FOLDER##*/}
@@ -135,12 +135,12 @@ build_soc_proj() {
     fi
 
     if [[ ! -f $BUILD_PATH/vsrc/ysyxSoCFull.v ]]; then
-       cp $YSYXSOC_HOME/ysyx/soc/ysyxSoCFull.v $BUILD_PATH/vsrc/
-       sed -i -e "s/ysyx_000000/ysyx_${ID:0-6}/g" $BUILD_PATH/vsrc/ysyxSoCFull.v
+        cp $YSYXSOC_HOME/ysyx/soc/ysyxSoCFull.v $BUILD_PATH/vsrc/
+        sed -i -e "s/ysyx_000000/ysyx_${ID:0-6}/g" $BUILD_PATH/vsrc/ysyxSoCFull.v
     fi
 
-    ln -s $YSYXSOC_HOME/ysyx/ram $BUILD_PATH/vsrc/
     ln -s $YSYXSOC_HOME/ysyx/peripheral $BUILD_PATH/vsrc/
+    ln -s $YSYXSOC_HOME/ysyx/ram $BUILD_PATH/vsrc/
     ln -s $YSYXSOC_HOME/ysyx/peripheral/spiFlash $BUILD_PATH/csrc/
     VSRC_FOLDER+=" $BUILD_PATH/vsrc"
     CSRC_FOLDER+=" $BUILD_PATH/csrc"
