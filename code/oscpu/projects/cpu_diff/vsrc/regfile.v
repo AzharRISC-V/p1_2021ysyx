@@ -93,7 +93,8 @@ end
 // difftest regs接口
 genvar i;
 generate
-  for (i = 0; i < 32; i = i + 1) begin
+  for (i = 0; i < 32; i = i + 1) 
+  begin: REGS_O_GEN
     assign regs_o[i] = (rd_wen & rd == i & i != 0) ? rd_data : regs[i];
   end
 endgenerate

@@ -65,7 +65,8 @@ end
 // difftest csr_regs接口
 genvar i;
 generate
-  for (i = 0; i < 8; i = i + 1) begin
+  for (i = 0; i < 8; i = i + 1) 
+  begin: CSRS_O_GEN
     assign csrs_o[i] = csrs[i];
   end
 endgenerate

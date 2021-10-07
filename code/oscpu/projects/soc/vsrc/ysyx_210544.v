@@ -517,7 +517,8 @@ module ysyx_210544_axi_rw (
     
     genvar i;
     generate
-        for (i = 0; i < TRANS_LEN_MAX - 1; i += 1) begin
+        for (i = 0; i < TRANS_LEN_MAX - 1; i += 1)
+        begin: AXI_W_DATA_O_GEN
             always @(posedge clock) begin
                 if (w_hs) begin
                   if (len == i) begin
@@ -562,7 +563,8 @@ module ysyx_210544_axi_rw (
     assign axi_r_data_masked_unaligned = (axi_r_data_i >> aligned_offset) & mask_rdata;
 
     generate
-        for (i = 0; i < TRANS_LEN_MAX; i += 1) begin
+        for (i = 0; i < TRANS_LEN_MAX; i += 1) 
+        begin: USER_RDATA_O_GEN
             always @(posedge clock) begin
                 if (reset) begin
                     user_rdata_o <= 0;
@@ -985,9 +987,11 @@ assign c_wdata          = {64'd0, i_cache_basic_wdata} << c_offset_bits;
 // cache_info
 genvar way,i;
 generate
-  for (way = 0; way < `WAYS; way += 1) begin
+  for (way = 0; way < `WAYS; way += 1) 
+  begin: CACHE_INFO_GEN1
     parameter [1:0] w = way;
-    for (i = 0; i < `BLKS; i += 1) begin
+    for (i = 0; i < `BLKS; i += 1) 
+    begin: CAHCE_INFO_GEN2
       always @(posedge clk) begin
         if (rst) begin
           cache_info[w][i] <= {w, 1'b0, 1'b0, 22'b0};
@@ -999,7 +1003,8 @@ endgenerate
 
 // c_tag, c_v, c_d, c_s
 generate
-  for (way = 0; way < `WAYS; way += 1) begin
+  for (way = 0; way < `WAYS; way += 1) 
+  begin: CACHE_INFO_DETAILS_GEN
     parameter [1:0] w = way;
     assign c_tag[w]   = cache_info[w][mem_blkno][`c_tag_BUS];
     assign c_v[w]     = cache_info[w][mem_blkno][`c_v_BUS];
@@ -1010,7 +1015,8 @@ endgenerate
 
 // hit
 generate
-  for (way = 0; way < `WAYS; way += 1) begin
+  for (way = 0; way < `WAYS; way += 1) 
+  begin: HIT_GEN
     parameter [1:0] w = way;
     assign hit[w] = c_v[w] && (c_tag[w] == mem_tag);
   end
@@ -1023,7 +1029,8 @@ assign wayID_select = hit_any ? wayID_hit : wayID_smin;
 
 // RAM instantiate
 generate
-  for (way = 0; way < `WAYS; way += 1) begin: gen_cache_data
+  for (way = 0; way < `WAYS; way += 1) 
+  begin: CACHE_DATA_GEN
     parameter [1:0] w = way;
     S011HD1P_X32Y2D128_BW  chip_data(
       .CLK                        (clk                  ),
@@ -1039,7 +1046,8 @@ endgenerate
 
 // cen, addr
 generate
-  for (way = 0; way < `WAYS; way += 1) begin
+  for (way = 0; way < `WAYS; way += 1) 
+  begin: CHIP_DATA_CEN_WEN_GEN
     parameter [1:0] w = way;
     always @(posedge clk) begin
       if (rst) begin
@@ -2118,47 +2126,6 @@ endmodule
 
 // ZhengpuShi
 
-// 带有缓冲区的 putch 改进版，在收到 \n 时输出，否则存入缓冲区
-
-
-module ysyx_210544_putch(
-  input   wire                  clk,
-  input   wire                  rst,
-  input   wire                  wen,
-  input   wire  [`BUS_8]        wdata
-);
-
-parameter SIZE = 255;
-reg [7:0]   cnt;
-reg [7:0]   str [0 : SIZE - 1];
-
-always @(posedge clk) begin
-  if (rst) begin
-    cnt = 0;
-  end
-  else begin
-    if (wen) begin
-      // 存入数据
-      if (cnt < (SIZE - 1)) begin
-        str[cnt] = wdata;
-        cnt++;
-      end
-      // 输出
-      if (wdata == 10) begin
-        str[cnt] = 0;
-        for (integer i = 0; (i < 255 && str[i] != 0); i++) begin
-          $write("%s", str[i]);
-        end
-        cnt = 0;
-      end
-    end
-  end
-end
-
-endmodule
-
-// ZhengpuShi
-
 // Simple RTC module
 
 
@@ -2450,7 +2417,8 @@ end
 // difftest regs接口
 genvar i;
 generate
-  for (i = 0; i < 32; i = i + 1) begin
+  for (i = 0; i < 32; i = i + 1) 
+  begin: O_REGS_GEN
     assign o_regs[i] = (i_rd_wen & i_rd == i & i != 0) ? i_rd_data : regs[i];
   end
 endgenerate
@@ -2587,7 +2555,8 @@ end
 // difftest csr_regs接口
 genvar i;
 generate
-  for (i = 0; i < 8; i = i + 1) begin
+  for (i = 0; i < 8; i = i + 1) 
+  begin: O_CSRS_GEN
     assign o_csrs[i] = csrs[i];
   end
 endgenerate

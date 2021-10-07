@@ -316,7 +316,8 @@ module ysyx_210544_axi_rw (
     
     genvar i;
     generate
-        for (i = 0; i < TRANS_LEN_MAX - 1; i += 1) begin
+        for (i = 0; i < TRANS_LEN_MAX - 1; i += 1)
+        begin: AXI_W_DATA_O_GEN
             always @(posedge clock) begin
                 if (w_hs) begin
                   if (len == i) begin
@@ -361,7 +362,8 @@ module ysyx_210544_axi_rw (
     assign axi_r_data_masked_unaligned = (axi_r_data_i >> aligned_offset) & mask_rdata;
 
     generate
-        for (i = 0; i < TRANS_LEN_MAX; i += 1) begin
+        for (i = 0; i < TRANS_LEN_MAX; i += 1) 
+        begin: USER_RDATA_O_GEN
             always @(posedge clock) begin
                 if (reset) begin
                     user_rdata_o <= 0;
