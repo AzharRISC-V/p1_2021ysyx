@@ -313,9 +313,10 @@ module ysyx_210544_axi_rw (
 
     // Wreite response channel signals
     assign axi_b_ready_o    = w_state_resp;
-
+    
+    genvar i;
     generate
-        for (genvar i = 0; i < TRANS_LEN_MAX - 1; i += 1) begin
+        for (i = 0; i < TRANS_LEN_MAX - 1; i += 1) begin
             always @(posedge clock) begin
                 if (w_hs) begin
                   if (len == i) begin
@@ -360,7 +361,7 @@ module ysyx_210544_axi_rw (
     assign axi_r_data_masked_unaligned = (axi_r_data_i >> aligned_offset) & mask_rdata;
 
     generate
-        for (genvar i = 0; i < TRANS_LEN_MAX; i += 1) begin
+        for (i = 0; i < TRANS_LEN_MAX; i += 1) begin
             always @(posedge clock) begin
                 if (reset) begin
                     user_rdata_o <= 0;

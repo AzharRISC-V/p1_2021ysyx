@@ -514,9 +514,10 @@ module ysyx_210544_axi_rw (
 
     // Wreite response channel signals
     assign axi_b_ready_o    = w_state_resp;
-
+    
+    genvar i;
     generate
-        for (genvar i = 0; i < TRANS_LEN_MAX - 1; i += 1) begin
+        for (i = 0; i < TRANS_LEN_MAX - 1; i += 1) begin
             always @(posedge clock) begin
                 if (w_hs) begin
                   if (len == i) begin
@@ -561,7 +562,7 @@ module ysyx_210544_axi_rw (
     assign axi_r_data_masked_unaligned = (axi_r_data_i >> aligned_offset) & mask_rdata;
 
     generate
-        for (genvar i = 0; i < TRANS_LEN_MAX; i += 1) begin
+        for (i = 0; i < TRANS_LEN_MAX; i += 1) begin
             always @(posedge clock) begin
                 if (reset) begin
                     user_rdata_o <= 0;
@@ -982,10 +983,11 @@ assign c_wmask          = {64'd0, user_wmask} << c_offset_bits;
 assign c_wdata          = {64'd0, i_cache_basic_wdata} << c_offset_bits;
 
 // cache_info
+genvar way,i;
 generate
-  for (genvar way = 0; way < `WAYS; way += 1) begin
+  for (way = 0; way < `WAYS; way += 1) begin
     parameter [1:0] w = way;
-    for (genvar i = 0; i < `BLKS; i += 1) begin
+    for (i = 0; i < `BLKS; i += 1) begin
       always @(posedge clk) begin
         if (rst) begin
           cache_info[w][i] <= {w, 1'b0, 1'b0, 22'b0};
@@ -997,7 +999,7 @@ endgenerate
 
 // c_tag, c_v, c_d, c_s
 generate
-  for (genvar way = 0; way < `WAYS; way += 1) begin
+  for (way = 0; way < `WAYS; way += 1) begin
     parameter [1:0] w = way;
     assign c_tag[w]   = cache_info[w][mem_blkno][`c_tag_BUS];
     assign c_v[w]     = cache_info[w][mem_blkno][`c_v_BUS];
@@ -1008,7 +1010,7 @@ endgenerate
 
 // hit
 generate
-  for (genvar way = 0; way < `WAYS; way += 1) begin
+  for (way = 0; way < `WAYS; way += 1) begin
     parameter [1:0] w = way;
     assign hit[w] = c_v[w] && (c_tag[w] == mem_tag);
   end
@@ -1021,7 +1023,7 @@ assign wayID_select = hit_any ? wayID_hit : wayID_smin;
 
 // RAM instantiate
 generate
-  for (genvar way = 0; way < `WAYS; way += 1) begin: gen_cache_data
+  for (way = 0; way < `WAYS; way += 1) begin: gen_cache_data
     parameter [1:0] w = way;
     S011HD1P_X32Y2D128_BW  chip_data(
       .CLK                        (clk                  ),
@@ -1037,7 +1039,7 @@ endgenerate
 
 // cen, addr
 generate
-  for (genvar way = 0; way < `WAYS; way += 1) begin
+  for (way = 0; way < `WAYS; way += 1) begin
     parameter [1:0] w = way;
     always @(posedge clk) begin
       if (rst) begin
