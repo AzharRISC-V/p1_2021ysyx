@@ -13,7 +13,7 @@ module ysyx_210544_mem_mmio(
   input   wire                ren,
   input   wire                wen,
   input   wire [`BUS_64]      addr,
-  input   reg  [`BUS_64]      wdata,
+  input   wire [`BUS_64]      wdata,
   output  reg  [`BUS_64]      rdata,
   output  wire                o_clint_mtime_overflow
 );

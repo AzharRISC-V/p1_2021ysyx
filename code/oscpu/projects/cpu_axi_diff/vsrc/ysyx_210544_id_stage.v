@@ -8,8 +8,8 @@
 module ysyx_210544_id_stage(
   input   wire                clk,
   input   wire                rst,
-  input   reg                 i_id_fetched_req,
-  input   reg                 i_id_decoded_ack,
+  input   wire                i_id_fetched_req,
+  input   wire                i_id_decoded_ack,
   output  reg                 o_id_decoded_req,
   input   wire  [`BUS_64]     i_id_pc,
   input   wire  [`BUS_32]     i_id_inst,

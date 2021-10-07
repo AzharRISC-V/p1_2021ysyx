@@ -13,7 +13,7 @@ module ysyx_210544_clint(
   input   wire                i_clint_ren,
   output  reg  [`BUS_64]      o_clint_rdata,
   input   wire                i_clint_wen,
-  input   reg  [`BUS_64]      i_clint_wdata,
+  input   wire [`BUS_64]      i_clint_wdata,
   output  wire                o_clint_mtime_overflow
 );
 

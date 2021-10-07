@@ -8,7 +8,7 @@
 module ysyx_210544_cmt_stage(
   input   wire                clk,
   input   wire                rst,
-  input   reg                 i_cmt_writebacked_req,
+  input   wire                i_cmt_writebacked_req,
   output  reg                 o_cmt_writebacked_ack,
   input   wire [4 : 0]        i_cmt_rd,
   input   wire                i_cmt_rd_wen,

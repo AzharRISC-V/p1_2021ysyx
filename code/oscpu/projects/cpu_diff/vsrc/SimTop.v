@@ -22,7 +22,7 @@ module SimTop(
 // Global counter
 reg [`BUS_64]           clk_cnt;
 always @(posedge clock) begin
-  clk_cnt += 1;
+  clk_cnt = clk_cnt + 1;
 end
 
 // Special Instruction: putch a0

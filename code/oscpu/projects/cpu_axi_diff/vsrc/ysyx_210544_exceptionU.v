@@ -15,7 +15,7 @@ module ysyx_210544_exceptionU(
   input   wire  [`BUS_64]     i_pc,
   output  reg                 o_pc_jmp,
   output  reg   [`BUS_64]     o_pc_jmpaddr,
-  input   reg   [`BUS_64]     i_csr_rdata,
+  input   wire  [`BUS_64]     i_csr_rdata,
   output  reg   [11 : 0]      o_csr_addr,
   output  reg                 o_csr_ren,
   output  reg                 o_csr_wen,

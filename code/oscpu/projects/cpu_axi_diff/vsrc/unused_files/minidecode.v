@@ -6,8 +6,8 @@
 module minidecode(
   input   wire                  clk,
   input   wire                  rst,
-  input   reg   [`BUS_64]       pc,
-  input   reg   [`BUS_32]       inst,
+  input   wire  [`BUS_64]       pc,
+  input   wire  [`BUS_32]       inst,
 
   // 从寄存器取出数据
   output  wire  [4 : 0]         rs1,

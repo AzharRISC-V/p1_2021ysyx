@@ -8,10 +8,10 @@
 module ysyx_210544_wb_stage(
   input   wire                clk,
   input   wire                rst,
-  input   reg                 i_wb_memoryed_req,
+  input   wire                i_wb_memoryed_req,
   output  reg                 o_wb_memoryed_ack,
   output  reg                 o_wb_writebacked_req,
-  input   reg                 i_wb_writebacked_ack,
+  input   wire                i_wb_writebacked_ack,
   input   wire  [`BUS_64]     i_wb_pc,
   input   wire  [`BUS_32]     i_wb_inst,
   input   wire  [`BUS_RIDX]   i_wb_rd,

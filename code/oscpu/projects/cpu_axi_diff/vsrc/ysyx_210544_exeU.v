@@ -11,7 +11,7 @@ module ysyx_210544_exeU(
   input   wire  [`BUS_64]     i_op1,
   input   wire  [`BUS_64]     i_op2,
   input   wire  [`BUS_64]     i_op3,
-  input   reg   [`BUS_64]     i_csr_rdata,
+  input   wire  [`BUS_64]     i_csr_rdata,
   output  reg   [11 : 0]      o_csr_addr,
   output  reg                 o_csr_ren,
   output  reg                 o_csr_wen,

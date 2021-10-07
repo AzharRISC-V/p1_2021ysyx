@@ -1,5 +1,5 @@
 /* verilator lint_off DECLFILENAME */
-
+// 2021.10.07 23:07
 // ZhengpuShi
 
 // Definitions
@@ -517,7 +517,7 @@ module ysyx_210544_axi_rw (
     
     genvar i;
     generate
-        for (i = 0; i < TRANS_LEN_MAX - 1; i += 1)
+        for (i = 0; i < TRANS_LEN_MAX - 1; i = i + 1)
         begin: AXI_W_DATA_O_GEN
             always @(posedge clock) begin
                 if (w_hs) begin
@@ -563,7 +563,7 @@ module ysyx_210544_axi_rw (
     assign axi_r_data_masked_unaligned = (axi_r_data_i >> aligned_offset) & mask_rdata;
 
     generate
-        for (i = 0; i < TRANS_LEN_MAX; i += 1) 
+        for (i = 0; i < TRANS_LEN_MAX; i = i + 1) 
         begin: USER_RDATA_O_GEN
             always @(posedge clock) begin
                 if (reset) begin
@@ -602,7 +602,7 @@ module ysyx_210544_cache_axi(
 	input                             i_cache_axi_req,        // 请求读写
   input   wire  [63 : 0]            i_cache_axi_addr,       // 存储器地址（字节为单位），128字节对齐，低7位为0。
   input   wire                      i_cache_axi_op,         // 操作类型：0读取，1写入
-  input   reg   [511 : 0]           i_cache_axi_wdata,      // 写入的数据
+  input   wire  [511 : 0]           i_cache_axi_wdata,      // 写入的数据
   output  reg   [511 : 0]           o_cache_axi_rdata,      // 读出的数据
 	output  reg                       o_cache_axi_ack,        // 读写完成应答
 
@@ -808,6 +808,30 @@ module ysyx_210544_cache_basic (
   output  wire  [7:0]         o_axi_io_blks
 );
 
+// 根据实际硬件模型设置有效电平
+parameter bit CHIP_DATA_CEN = 0;        // cen有效的电平
+parameter bit CHIP_DATA_WEN = 0;        // wen有效的电平
+parameter bit CHIP_DATA_WMASK_EN = 0;   // 写掩码有效的电平
+
+// =============== 状态机 ===============
+//  英文名称          中文名称               含义
+//  IDLE              空闲                 无活动。有用户请求则进入 READY / STORE_FROM_RAM / LOAD_FROM_BUS 这三种情况
+//  READY             就绪                  命中，则直接读写。读写完毕回到IDLE。
+//  STORE_FROM_RAM    存储(从RAM读取数据)    不命中并选择脏的数据块，则需要写回。先以128bit为单位分4次从RAM读入数据，读取完毕跳转到 StoreToBUS
+//  STORE_TO_BUS      存储(写入总线)         不命中并选择脏的数据块，则需要写回。再将512bit数据写入总线，写入完毕跳转到 LoadFromBUS
+//  LOAD_FROM_BUS     加载(从总线读取数据)    不命中并选择不脏的数据块，则需要读入新数据。先从总线读取512bit数据，读取完毕跳转到 LoadToRAM
+//  LOAD_TO_RAM       加载(写入RAM)         不命中并选择不脏的数据块，则需要读入新数据。再以128bit为单位分4次写入RAM，写入完毕跳转到READY
+//  FENCE_RD          同步读               有fence请求，读取vlaid的数据，送出
+//  FENCE_WR          同步写               有fence请求，收到数据包，写入。
+parameter [2:0] STATE_IDLE              = 3'd0;
+parameter [2:0] STATE_READY             = 3'd1;
+parameter [2:0] STATE_STORE_FROM_RAM    = 3'd2;
+parameter [2:0] STATE_STORE_TO_BUS      = 3'd3;
+parameter [2:0] STATE_LOAD_FROM_BUS     = 3'd4;
+parameter [2:0] STATE_LOAD_TO_RAM       = 3'd5;
+parameter [2:0] STATE_FENCE_RD          = 3'd6;
+parameter [2:0] STATE_FENCE_WR          = 3'd7;
+
 `define WAYS                  4             // 路数
 `define BLKS                  16            // 块数
 `define BUS_WAYS              0:3           // 各路的总线。4路
@@ -875,10 +899,6 @@ wire [1:0]                    wayID_hit;          // 已命中的是哪一路（
 wire [1:0]                    wayID_select;       // 选择了哪一路？方法：若命中则就是命中的那一路；否则选择smax所在的那一路
 
 // =============== Cache Data 缓存数据 ===============
-// 根据实际硬件模型设置有效电平
-parameter bit CHIP_DATA_CEN = 0;        // cen有效的电平
-parameter bit CHIP_DATA_WEN = 0;        // wen有效的电平
-parameter bit CHIP_DATA_WMASK_EN = 0;   // 写掩码有效的电平
 
 reg                           chip_data_cen[`BUS_WAYS];               // RAM 使能，低电平有效
 reg                           chip_data_wen[`BUS_WAYS];               // RAM 写使能，低电平有效
@@ -887,24 +907,6 @@ reg   [127: 0]                chip_data_wdata[`BUS_WAYS];             // RAM 写
 reg   [127: 0]                chip_data_wmask[`BUS_WAYS];             // RAM 写入掩码
 wire  [127: 0]                chip_data_rdata[`BUS_WAYS];             // RAM 读出数据
 
-// =============== 状态机 ===============
-//  英文名称          中文名称               含义
-//  IDLE              空闲                 无活动。有用户请求则进入 READY / STORE_FROM_RAM / LOAD_FROM_BUS 这三种情况
-//  READY             就绪                  命中，则直接读写。读写完毕回到IDLE。
-//  STORE_FROM_RAM    存储(从RAM读取数据)    不命中并选择脏的数据块，则需要写回。先以128bit为单位分4次从RAM读入数据，读取完毕跳转到 StoreToBUS
-//  STORE_TO_BUS      存储(写入总线)         不命中并选择脏的数据块，则需要写回。再将512bit数据写入总线，写入完毕跳转到 LoadFromBUS
-//  LOAD_FROM_BUS     加载(从总线读取数据)    不命中并选择不脏的数据块，则需要读入新数据。先从总线读取512bit数据，读取完毕跳转到 LoadToRAM
-//  LOAD_TO_RAM       加载(写入RAM)         不命中并选择不脏的数据块，则需要读入新数据。再以128bit为单位分4次写入RAM，写入完毕跳转到READY
-//  FENCE_RD          同步读               有fence请求，读取vlaid的数据，送出
-//  FENCE_WR          同步写               有fence请求，收到数据包，写入。
-parameter [2:0] STATE_IDLE              = 3'd0;
-parameter [2:0] STATE_READY             = 3'd1;
-parameter [2:0] STATE_STORE_FROM_RAM    = 3'd2;
-parameter [2:0] STATE_STORE_TO_BUS      = 3'd3;
-parameter [2:0] STATE_LOAD_FROM_BUS     = 3'd4;
-parameter [2:0] STATE_LOAD_TO_RAM       = 3'd5;
-parameter [2:0] STATE_FENCE_RD          = 3'd6;
-parameter [2:0] STATE_FENCE_WR          = 3'd7;
 
 reg [2:0] state;
 reg   [1  : 0]                sync_step;                  // sync操作的不同阶段
@@ -987,10 +989,10 @@ assign c_wdata          = {64'd0, i_cache_basic_wdata} << c_offset_bits;
 // cache_info
 genvar way,i;
 generate
-  for (way = 0; way < `WAYS; way += 1) 
+  for (way = 0; way < `WAYS; way = way + 1) 
   begin: CACHE_INFO_GEN1
-    parameter [1:0] w = way;
-    for (i = 0; i < `BLKS; i += 1) 
+    localparam [1:0] w = way;
+    for (i = 0; i < `BLKS; i = i + 1) 
     begin: CAHCE_INFO_GEN2
       always @(posedge clk) begin
         if (rst) begin
@@ -1003,9 +1005,9 @@ endgenerate
 
 // c_tag, c_v, c_d, c_s
 generate
-  for (way = 0; way < `WAYS; way += 1) 
+  for (way = 0; way < `WAYS; way = way + 1) 
   begin: CACHE_INFO_DETAILS_GEN
-    parameter [1:0] w = way;
+    localparam [1:0] w = way;
     assign c_tag[w]   = cache_info[w][mem_blkno][`c_tag_BUS];
     assign c_v[w]     = cache_info[w][mem_blkno][`c_v_BUS];
     assign c_d[w]     = cache_info[w][mem_blkno][`c_d_BUS];
@@ -1015,9 +1017,9 @@ endgenerate
 
 // hit
 generate
-  for (way = 0; way < `WAYS; way += 1) 
+  for (way = 0; way < `WAYS; way = way + 1) 
   begin: HIT_GEN
-    parameter [1:0] w = way;
+    localparam [1:0] w = way;
     assign hit[w] = c_v[w] && (c_tag[w] == mem_tag);
   end
 endgenerate
@@ -1029,9 +1031,9 @@ assign wayID_select = hit_any ? wayID_hit : wayID_smin;
 
 // RAM instantiate
 generate
-  for (way = 0; way < `WAYS; way += 1) 
+  for (way = 0; way < `WAYS; way = way + 1) 
   begin: CACHE_DATA_GEN
-    parameter [1:0] w = way;
+    localparam [1:0] w = way;
     S011HD1P_X32Y2D128_BW  chip_data(
       .CLK                        (clk                  ),
       .CEN                        (chip_data_cen[w]     ),
@@ -1046,9 +1048,9 @@ endgenerate
 
 // cen, addr
 generate
-  for (way = 0; way < `WAYS; way += 1) 
+  for (way = 0; way < `WAYS; way = way + 1) 
   begin: CHIP_DATA_CEN_WEN_GEN
-    parameter [1:0] w = way;
+    localparam [1:0] w = way;
     always @(posedge clk) begin
       if (rst) begin
         chip_data_cen[w] <= !CHIP_DATA_CEN;
@@ -2212,7 +2214,7 @@ module ysyx_210544_clint(
   input   wire                i_clint_ren,
   output  reg  [`BUS_64]      o_clint_rdata,
   input   wire                i_clint_wen,
-  input   reg  [`BUS_64]      i_clint_wdata,
+  input   wire [`BUS_64]      i_clint_wdata,
   output  wire                o_clint_mtime_overflow
 );
 
@@ -2738,8 +2740,8 @@ endmodule
 module ysyx_210544_id_stage(
   input   wire                clk,
   input   wire                rst,
-  input   reg                 i_id_fetched_req,
-  input   reg                 i_id_decoded_ack,
+  input   wire                i_id_fetched_req,
+  input   wire                i_id_decoded_ack,
   output  reg                 o_id_decoded_req,
   input   wire  [`BUS_64]     i_id_pc,
   input   wire  [`BUS_32]     i_id_inst,
@@ -3223,10 +3225,10 @@ endmodule
 module ysyx_210544_exe_stage(
   input   wire                rst,
   input   wire                clk,
-  input   reg                 i_ex_decoded_req,
+  input   wire                i_ex_decoded_req,
   output  reg                 o_ex_decoded_ack,
   output  reg                 o_ex_executed_req,
-  input   reg                 i_ex_executed_ack,
+  input   wire                i_ex_executed_ack,
   input   wire  [7 : 0]       i_ex_inst_opcode,
   input   wire  [`BUS_64]     i_ex_pc,
   input   wire  [`BUS_32]     i_ex_inst,
@@ -3234,13 +3236,13 @@ module ysyx_210544_exe_stage(
   input   wire  [`BUS_64]     i_ex_op2,
   input   wire  [`BUS_64]     i_ex_op3,
   input   wire  [`BUS_RIDX]   i_ex_rd,
-  input   reg                 i_ex_rd_wen,
+  input   wire                i_ex_rd_wen,
   input   wire                i_ex_nocmt,
   input   wire                i_ex_clint_mstatus_mie,
   input   wire                i_ex_clint_mie_mtie,
   input   wire                i_ex_clint_mtime_overflow,
   input   wire                i_ex_skipcmt,
-  input   reg   [`BUS_64]     i_ex_csr_rdata,
+  input   wire  [`BUS_64]     i_ex_csr_rdata,
   output  reg   [11 : 0]      o_ex_csr_addr,
   output  reg                 o_ex_csr_ren,
   output  reg                 o_ex_csr_wen,
@@ -3438,7 +3440,7 @@ module ysyx_210544_exeU(
   input   wire  [`BUS_64]     i_op1,
   input   wire  [`BUS_64]     i_op2,
   input   wire  [`BUS_64]     i_op3,
-  input   reg   [`BUS_64]     i_csr_rdata,
+  input   wire  [`BUS_64]     i_csr_rdata,
   output  reg   [11 : 0]      o_csr_addr,
   output  reg                 o_csr_ren,
   output  reg                 o_csr_wen,
@@ -3608,7 +3610,7 @@ module ysyx_210544_exceptionU(
   input   wire  [`BUS_64]     i_pc,
   output  reg                 o_pc_jmp,
   output  reg   [`BUS_64]     o_pc_jmpaddr,
-  input   reg   [`BUS_64]     i_csr_rdata,
+  input   wire  [`BUS_64]     i_csr_rdata,
   output  reg   [11 : 0]      o_csr_addr,
   output  reg                 o_csr_ren,
   output  reg                 o_csr_wen,
@@ -3916,10 +3918,10 @@ endmodule
 module ysyx_210544_mem_stage(
   input   wire                clk,
   input   wire                rst,
-  input   reg                 i_mem_executed_req,
+  input   wire                i_mem_executed_req,
   output  reg                 o_mem_executed_ack,
   output  reg                 o_mem_memoryed_req,
-  input   reg                 i_mem_memoryed_ack,
+  input   wire                i_mem_memoryed_ack,
   input   wire  [`BUS_64]     i_mem_pc,
   input   wire  [`BUS_32]     i_mem_inst,
   input   wire  [`BUS_RIDX]   i_mem_rd,
@@ -4352,7 +4354,7 @@ module ysyx_210544_mem_mmio(
   input   wire                ren,
   input   wire                wen,
   input   wire [`BUS_64]      addr,
-  input   reg  [`BUS_64]      wdata,
+  input   wire [`BUS_64]      wdata,
   output  reg  [`BUS_64]      rdata,
   output  wire                o_clint_mtime_overflow
 );
@@ -4500,10 +4502,10 @@ endmodule
 module ysyx_210544_wb_stage(
   input   wire                clk,
   input   wire                rst,
-  input   reg                 i_wb_memoryed_req,
+  input   wire                i_wb_memoryed_req,
   output  reg                 o_wb_memoryed_ack,
   output  reg                 o_wb_writebacked_req,
-  input   reg                 i_wb_writebacked_ack,
+  input   wire                i_wb_writebacked_ack,
   input   wire  [`BUS_64]     i_wb_pc,
   input   wire  [`BUS_32]     i_wb_inst,
   input   wire  [`BUS_RIDX]   i_wb_rd,
@@ -4598,7 +4600,7 @@ endmodule
 module ysyx_210544_cmt_stage(
   input   wire                clk,
   input   wire                rst,
-  input   reg                 i_cmt_writebacked_req,
+  input   wire                i_cmt_writebacked_req,
   output  reg                 o_cmt_writebacked_ack,
   input   wire [4 : 0]        i_cmt_rd,
   input   wire                i_cmt_rd_wen,

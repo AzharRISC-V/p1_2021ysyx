@@ -77,7 +77,7 @@ always @(posedge clk) begin
     csrs[`CSR_IDX_MCYCLE] = 0;
   end
   else begin
-    csrs[`CSR_IDX_MCYCLE] += 1;
+    csrs[`CSR_IDX_MCYCLE] = csrs[`CSR_IDX_MCYCLE] + 1;
   end
 end
 

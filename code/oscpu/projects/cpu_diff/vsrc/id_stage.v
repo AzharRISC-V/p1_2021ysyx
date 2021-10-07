@@ -27,7 +27,7 @@ module id_stage(
   output  reg   [11 : 0]        csr_addr,
   output  reg   [1 : 0]         csr_op,
   output  reg   [`BUS_64]       csr_wdata,
-  input   reg   [`BUS_64]       csr_rdata,
+  input   wire  [`BUS_64]       csr_rdata,
   
   output  wire  [2 : 0]         itype,
   output  wire  [4 : 0]         opcode,
