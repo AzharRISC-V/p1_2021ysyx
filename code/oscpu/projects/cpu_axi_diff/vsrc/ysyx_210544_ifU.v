@@ -22,7 +22,7 @@ module ysyx_210544_ifU(
   input   wire  [`BUS_64]     i_pc_jmpaddr,
   output  reg   [`BUS_64]     o_pc,
   output  reg   [`BUS_32]     o_inst,
-  output                      o_fetched,            // 取到指令的通知
+  output  reg                 o_fetched,            // 取到指令的通知
   output  reg                 o_nocmt               // 由于冲刷流水线而不提交这条指令
 );
 

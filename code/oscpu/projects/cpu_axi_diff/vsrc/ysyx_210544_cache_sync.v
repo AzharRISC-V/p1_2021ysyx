@@ -28,22 +28,22 @@ module ysyx_210544_cache_sync(
   output  reg                 o_fencei_ack,
   
   // DCache
-  output  wire                o_sync_dcache_rreq,     // 读请求
+  output  reg                 o_sync_dcache_rreq,     // 读请求
   input   wire                i_sync_dcache_rack,     // 读应答
   input   wire                i_sync_dcache_rpackreq, // 读包请求
-  output  wire                o_sync_dcache_rpackack, // 读包应答
+  output  reg                 o_sync_dcache_rpackack, // 读包应答
   input   wire  [  1: 0]      i_sync_dcache_rwayid,   // read way_id
   input   wire  [  3: 0]      i_sync_dcache_rblkid,   // read blk_id
   input   wire  [ 25: 0]      i_sync_dcache_rinfo,    // read cache_info
   input   wire  [511: 0]      i_sync_dcache_rdata,    // read cache_data
 
   // ICache
-  output  wire                o_sync_icache_wreq,     // 写请求
+  output  reg                 o_sync_icache_wreq,     // 写请求
   input   wire                i_sync_icache_wack,     // 写应答
-  output  wire  [  1: 0]      o_sync_icache_wwayid,   // write way_id
-  output  wire  [  3: 0]      o_sync_icache_wblkid,   // write blk_id
-  output  wire  [ 25: 0]      o_sync_icache_winfo,    // write cache_info
-  output  wire  [511: 0]      o_sync_icache_wdata     // write cache_data
+  output  reg   [  1: 0]      o_sync_icache_wwayid,   // write way_id
+  output  reg   [  3: 0]      o_sync_icache_wblkid,   // write blk_id
+  output  reg   [ 25: 0]      o_sync_icache_winfo,    // write cache_info
+  output  reg   [511: 0]      o_sync_icache_wdata     // write cache_data
 );
 
 // =============== 状态机 ===============
@@ -109,6 +109,11 @@ end
 always @(posedge clk) begin
   if (rst) begin
     o_fencei_ack <= 0;
+    o_sync_dcache_rreq <= 0;
+    o_sync_icache_wwayid <= 0;
+    o_sync_icache_wblkid <= 0;
+    o_sync_icache_winfo <= 0;
+    o_sync_icache_wdata <= 0;
   end
   else begin
     case (state)

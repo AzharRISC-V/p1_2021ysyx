@@ -207,7 +207,7 @@ wire _unused_ok = &{1'b0,
   cmt_valid,
   cmt_skip,
   trap_code,
-  regs_diff,
+  // regs_diff,
   sstatus,
   1'b0};
 

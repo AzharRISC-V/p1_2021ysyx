@@ -20,12 +20,12 @@ module ysyx_210544_cache_nocache (
   // AXI interface
   input   wire  [511:0]       i_axi_io_rdata,
   input   wire                i_axi_io_ready,
-  output  wire                o_axi_io_valid,
-  output  wire                o_axi_io_op,
-  output  wire  [511:0]       o_axi_io_wdata,
-  output  wire  [63:0]        o_axi_io_addr,
-  output  wire  [2:0]         o_axi_io_size,
-  output  wire  [7:0]         o_axi_io_blks
+  output  reg                 o_axi_io_valid,
+  output  reg                 o_axi_io_op,
+  output  reg   [511:0]       o_axi_io_wdata,
+  output  reg   [63:0]        o_axi_io_addr,
+  output  reg   [2:0]         o_axi_io_size,
+  output  reg   [7:0]         o_axi_io_blks
 );
 
 wire hs_axi_io;
@@ -48,6 +48,11 @@ end
 always @(posedge clk) begin
   if (rst) begin
     o_axi_io_valid <= 0;
+    o_axi_io_op <= 0;
+    o_axi_io_wdata <= 0;
+    o_axi_io_addr <= 0;
+    o_axi_io_size <= 0;
+    o_axi_io_blks <= 0;
   end
   else begin
     // 发现用户请求

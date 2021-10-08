@@ -28,7 +28,7 @@ module ysyx_210544_cache_axi(
   input         [511 : 0]           i_axi_io_rdata,
 	output reg                        o_axi_io_valid,
   output reg    [63 : 0]            o_axi_io_addr,
-  output        [511 : 0]           o_axi_io_wdata,
+  output reg    [511 : 0]           o_axi_io_wdata,
   output        [2 : 0]             o_axi_io_size,
   output        [7 : 0]             o_axi_io_blks
 );
@@ -53,7 +53,7 @@ assign hs_ok = o_axi_io_valid & i_axi_io_ready;
 assign o_axi_io_size = is_flash ? `SIZE_W : `SIZE_D;
 
 // 块数：0~7表示1~8块
-assign o_axi_io_blks = is_flash ? 0 : 7;
+assign o_axi_io_blks = is_flash ? 8'd0 : 8'd7;
 
 // 操作类型：0:read, 1:write
 assign o_axi_io_op = i_cache_axi_op;
@@ -66,16 +66,18 @@ assign axi_start    = i_cache_axi_req & !cache_req_his0;
 // 控制传输次数，
 // 如果是主存，  需要 1次AXI传输得512bit；
 // 如果是Flash，需要16次AXI传输得到512bit，每次传输32bit（64bit是否支持？？）；
-assign offset_bits = {5'd0, trans_cnt} << 5;
-assign offset_bits_write = {5'd0, trans_cnt_write} << 5;
+assign offset_bits = {5'd0, trans_cnt} << 3'd5;
+assign offset_bits_write = {5'd0, trans_cnt_write} << 3'd5;
 
 // 控制传输
 always @( posedge clk ) begin
   if (rst) begin
-    o_cache_axi_ack         <= 0;
-    o_axi_io_valid          <= 0;
-    cache_req_his0          <= 0;
-    trans_cnt               <= 0;
+    o_cache_axi_ack         <= 1'd0;
+    o_axi_io_valid          <= 1'd0;
+    o_axi_io_addr           <= 64'd0;
+    o_axi_io_wdata          <= 512'd0;
+    cache_req_his0          <= 1'd0;
+    trans_cnt               <= 4'd0;
   end
   else begin
     // 追踪开始信号
@@ -85,23 +87,23 @@ always @( posedge clk ) begin
     if (hs_ok) begin
       if (is_flash) begin
           o_cache_axi_rdata[offset_bits +:32] <= i_axi_io_rdata[0+:32]; // 保存数据
-        if (trans_cnt < 15) begin
+        if (trans_cnt < 4'd15) begin
           o_axi_io_wdata    <= {480'd0, i_cache_axi_wdata[offset_bits_write +:32]}; // 准备数据
-          o_axi_io_addr <= o_axi_io_addr + 4;     // 地址递增
-          trans_cnt <= trans_cnt + 1;             // 次数递增
-          trans_cnt_write <= trans_cnt_write + 1;
+          o_axi_io_addr <= o_axi_io_addr + 64'd4;     // 地址递增
+          trans_cnt <= trans_cnt + 4'd1;             // 次数递增
+          trans_cnt_write <= trans_cnt_write + 4'd1;
         end
         else begin
-          o_cache_axi_ack   <= 1;   // 完成
-          o_axi_io_valid    <= 0;   // 关闭axi请求
-          trans_cnt <= 0;   // 清零计数，准备下次继续
-          trans_cnt_write <= 1; // 初始为1，方便计算偏移量
+          o_cache_axi_ack   <= 1'd1;   // 完成
+          o_axi_io_valid    <= 1'd0;   // 关闭axi请求
+          trans_cnt <= 4'd0;   // 清零计数，准备下次继续
+          trans_cnt_write <= 4'd1; // 初始为1，方便计算偏移量
         end
       end
       else begin
         o_cache_axi_rdata <= i_axi_io_rdata;    // 保存数据
-        o_cache_axi_ack   <= 1;   // 完成
-        o_axi_io_valid    <= 0;   // 关闭axi请求
+        o_cache_axi_ack   <= 1'd1;   // 完成
+        o_axi_io_valid    <= 1'd0;   // 关闭axi请求
       end
     end
     else begin
@@ -118,10 +120,10 @@ always @( posedge clk ) begin
             o_axi_io_wdata    <= i_cache_axi_wdata;         // 准备数据
           end
         end
-        o_axi_io_valid <= 1;
+        o_axi_io_valid <= 1'd1;
       end
       // 清除信号   
-      o_cache_axi_ack    <= 0;
+      o_cache_axi_ack <= 1'd0;
     end
   end
 end

@@ -114,7 +114,7 @@ assign i_bytes_4 = {1'd0, i_cache_core_bytes};
 
 assign en_second = i_addr_4 + i_bytes_4 < i_addr_4;
 assign bytes[0] = en_second ? {4'd15 - i_addr_4}[2:0] : i_cache_core_bytes;
-assign bytes[1] = en_second ? {i_addr_4 + i_bytes_4}[2:0] : 0;
+assign bytes[1] = en_second ? {i_addr_4 + i_bytes_4}[2:0] : 3'd0;
 assign addr[0] = i_cache_core_addr;
 assign addr[1] = {i_addr_high + 60'd1, 4'd0};
 assign wdata[0] = i_cache_core_wdata;
@@ -128,8 +128,8 @@ assign o_cache_basic_wdata = (index == 0) ? wdata[0] : wdata[1];
 
 always @(posedge clk) begin
   if (rst) begin
-    index <= 0;
-    o_cache_basic_req <= 0;
+    index <= 1'd0;
+    o_cache_basic_req <= 1'd0;
   end
   else begin
     // 发现用户请求

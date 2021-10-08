@@ -15,7 +15,7 @@ module ysyx_210544_mem_cachesync(
 
   ///////////////////////////////////////////////
   // Cache Sync interface
-  output  wire                o_cachesync_req,
+  output  reg                 o_cachesync_req,
   input   wire                i_cachesync_ack
 );
 
@@ -28,6 +28,7 @@ assign hs_cachesync  = o_cachesync_req & i_cachesync_ack;
 always @(posedge clk) begin
   if (rst) begin
     req <= 0;
+    o_cachesync_req <= 0;
   end
   else begin
     if (start) begin

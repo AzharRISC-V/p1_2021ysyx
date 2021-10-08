@@ -1,5 +1,6 @@
 /* verilator lint_off DECLFILENAME */
-// 2021.10.08 10:08
+
+// 2021.10.08 15:31
 // ZhengpuShi
 
 // Definitions
@@ -275,8 +276,8 @@ module ysyx_210544_axi_rw (
     output [1:0]                        axi_aw_burst_o,
 
     input                               axi_w_ready_i,
-    output                              axi_w_valid_o,
-    output [63:0]                       axi_w_data_o,
+    output reg                          axi_w_valid_o,
+    output reg  [63:0]                  axi_w_data_o,
     output [7:0]                        axi_w_strb_o,
     output                              axi_w_last_o,
     
@@ -470,7 +471,8 @@ assign axi_aw_burst_o   = `AXI_BURST_TYPE_INCR;
 // 由于 w_valid 使能之时需要同时送出 wdata，所以改用时序逻辑
 always @(posedge clock) begin
     if (reset) begin
-    axi_w_valid_o <= 0;
+        axi_w_valid_o <= 0;
+        axi_w_data_o <= 0;
     end
     else begin
     if (w_state_write) begin
@@ -612,7 +614,7 @@ module ysyx_210544_cache_axi(
   input         [511 : 0]           i_axi_io_rdata,
 	output reg                        o_axi_io_valid,
   output reg    [63 : 0]            o_axi_io_addr,
-  output        [511 : 0]           o_axi_io_wdata,
+  output reg    [511 : 0]           o_axi_io_wdata,
   output        [2 : 0]             o_axi_io_size,
   output        [7 : 0]             o_axi_io_blks
 );
@@ -658,6 +660,8 @@ always @( posedge clk ) begin
   if (rst) begin
     o_cache_axi_ack         <= 0;
     o_axi_io_valid          <= 0;
+    o_axi_io_addr           <= 0;
+    o_axi_io_wdata          <= 0;
     cache_req_his0          <= 0;
     trans_cnt               <= 0;
   end
@@ -1054,6 +1058,8 @@ generate
       if (rst) begin
         chip_data_cen[w] <= !CHIP_DATA_CEN;
         chip_data_wen[w] <= !CHIP_DATA_WEN;
+        chip_data_addr[w] <= 0;
+        chip_data_wdata[w] <= 0;
       end
     end
   end
@@ -1469,9 +1475,9 @@ module ysyx_210544_cache_core (
 );
 
 // =============== cache 从机端 ===============
-reg   [63 : 0]                o_cache_basic_addr;         // 存储器地址（字节为单位），64字节对齐，低6位为0。
-reg   [63 : 0]                o_cache_basic_wdata;        // 要写入的数据
-reg   [2  : 0]                o_cache_basic_bytes;        // 字节数
+wire  [63 : 0]                o_cache_basic_addr;         // 存储器地址（字节为单位），64字节对齐，低6位为0。
+wire  [63 : 0]                o_cache_basic_wdata;        // 要写入的数据
+wire  [2  : 0]                o_cache_basic_bytes;        // 字节数
 wire                          o_cache_basic_op;           // 操作类型：0读取，1写入
 reg                           o_cache_basic_req;          // 请求
 wire  [63 : 0]                i_cache_basic_rdata;        // 已读出的数据
@@ -1623,12 +1629,12 @@ module ysyx_210544_cache_nocache (
   // AXI interface
   input   wire  [511:0]       i_axi_io_rdata,
   input   wire                i_axi_io_ready,
-  output  wire                o_axi_io_valid,
-  output  wire                o_axi_io_op,
-  output  wire  [511:0]       o_axi_io_wdata,
-  output  wire  [63:0]        o_axi_io_addr,
-  output  wire  [2:0]         o_axi_io_size,
-  output  wire  [7:0]         o_axi_io_blks
+  output  reg                 o_axi_io_valid,
+  output  reg                 o_axi_io_op,
+  output  reg   [511:0]       o_axi_io_wdata,
+  output  reg   [63:0]        o_axi_io_addr,
+  output  reg   [2:0]         o_axi_io_size,
+  output  reg   [7:0]         o_axi_io_blks
 );
 
 wire hs_axi_io;
@@ -1651,6 +1657,11 @@ end
 always @(posedge clk) begin
   if (rst) begin
     o_axi_io_valid <= 0;
+    o_axi_io_op <= 0;
+    o_axi_io_wdata <= 0;
+    o_axi_io_addr <= 0;
+    o_axi_io_size <= 0;
+    o_axi_io_blks <= 0;
   end
   else begin
     // 发现用户请求
@@ -1712,22 +1723,22 @@ module ysyx_210544_cache_sync(
   output  reg                 o_fencei_ack,
   
   // DCache
-  output  wire                o_sync_dcache_rreq,     // 读请求
+  output  reg                 o_sync_dcache_rreq,     // 读请求
   input   wire                i_sync_dcache_rack,     // 读应答
   input   wire                i_sync_dcache_rpackreq, // 读包请求
-  output  wire                o_sync_dcache_rpackack, // 读包应答
+  output  reg                 o_sync_dcache_rpackack, // 读包应答
   input   wire  [  1: 0]      i_sync_dcache_rwayid,   // read way_id
   input   wire  [  3: 0]      i_sync_dcache_rblkid,   // read blk_id
   input   wire  [ 25: 0]      i_sync_dcache_rinfo,    // read cache_info
   input   wire  [511: 0]      i_sync_dcache_rdata,    // read cache_data
 
   // ICache
-  output  wire                o_sync_icache_wreq,     // 写请求
+  output  reg                 o_sync_icache_wreq,     // 写请求
   input   wire                i_sync_icache_wack,     // 写应答
-  output  wire  [  1: 0]      o_sync_icache_wwayid,   // write way_id
-  output  wire  [  3: 0]      o_sync_icache_wblkid,   // write blk_id
-  output  wire  [ 25: 0]      o_sync_icache_winfo,    // write cache_info
-  output  wire  [511: 0]      o_sync_icache_wdata     // write cache_data
+  output  reg   [  1: 0]      o_sync_icache_wwayid,   // write way_id
+  output  reg   [  3: 0]      o_sync_icache_wblkid,   // write blk_id
+  output  reg   [ 25: 0]      o_sync_icache_winfo,    // write cache_info
+  output  reg   [511: 0]      o_sync_icache_wdata     // write cache_data
 );
 
 // =============== 状态机 ===============
@@ -1793,6 +1804,11 @@ end
 always @(posedge clk) begin
   if (rst) begin
     o_fencei_ack <= 0;
+    o_sync_dcache_rreq <= 0;
+    o_sync_icache_wwayid <= 0;
+    o_sync_icache_wblkid <= 0;
+    o_sync_icache_winfo <= 0;
+    o_sync_icache_wdata <= 0;
   end
   else begin
     case (state)
@@ -2350,7 +2366,7 @@ assign x31_t6 = regs[31];
 
 // i_rd 写入
 always @(posedge clk) begin
-  if ( rst == 1'b1 ) begin
+  if (rst) begin
     regs[ 0] <= `ZERO_WORD;
     regs[ 1] <= `ZERO_WORD;
     regs[ 2] <= `ZERO_WORD;
@@ -2383,8 +2399,9 @@ always @(posedge clk) begin
     regs[29] <= `ZERO_WORD;
     regs[30] <= `ZERO_WORD;
     regs[31] <= `ZERO_WORD;
-  end else begin
-    // if ((w_ena == 1'b1) && (w_addr != 5'h00))	
+  end
+  else begin
+    // if ((w_ena) && (w_addr != 5'h00))	
     // 	regs[w_addr] <= w_data;
       
     if (i_rd_wen && (i_rd != 5'h00))
@@ -2394,9 +2411,9 @@ end
 
 // i_rs1 读取
 always @(*) begin
-  if (rst == 1'b1)
+  if (rst)
     o_rs1_data = `ZERO_WORD;
-  else if (i_rs1_ren == 1'b1)
+  else if (i_rs1_ren)
     o_rs1_data = regs[i_rs1];
   else
     o_rs1_data = `ZERO_WORD;
@@ -2404,9 +2421,9 @@ end
 
 // i_rs2 读取
 always @(*) begin
-  if (rst == 1'b1)
+  if (rst)
     o_rs2_data = `ZERO_WORD;
-  else if (i_rs2_ren == 1'b1)
+  else if (i_rs2_ren)
     o_rs2_data = regs[i_rs2];
   else
     o_rs2_data = `ZERO_WORD;
@@ -2417,7 +2434,7 @@ genvar i;
 generate
   for (i = 0; i < 32; i = i + 1) 
   begin: O_REGS_GEN
-    assign o_regs[i] = (i_rd_wen & i_rd == i & i != 0) ? i_rd_data : regs[i];
+    assign o_regs[i] = ((i_rd_wen) && (i_rd == i) && (i != 0)) ? i_rd_data : regs[i];
   end
 endgenerate
 
@@ -2512,10 +2529,10 @@ end
 
 // csr读取
 always @(*) begin
-  if (rst == 1'b1) begin
+  if (rst) begin
     o_csr_rdata   = 0;
   end
-  else if (i_csr_ren == 1'b1) begin
+  else if (i_csr_ren) begin
     o_csr_rdata = csrs[csr_idx];
   end
   else begin
@@ -2527,7 +2544,7 @@ assign mstatus_sd = (i_csr_wdata[14:13] == 2'b11) | (i_csr_wdata[16:15] == 2'b11
 
 // csr写入
 always @(posedge clk) begin
-  if (rst == 1'b1) begin
+  if (rst) begin
     csrs[`CSR_IDX_NONE]     <= 0;
     csrs[`CSR_IDX_MCYCLE]   <= 0;
     csrs[`CSR_IDX_MSTATUS]  <= 64'h1800;// 64'h1808;
@@ -2581,7 +2598,7 @@ module ysyx_210544_if_stage(
   input   wire                clk,
   input   wire                rst,
   input                       i_if_writebacked_req,
-  output  reg                 o_if_fetched_req,
+  output  wire                o_if_fetched_req,
 
   ///////////////////////////////////////////////
   // AXI interface for Fetch
@@ -2593,8 +2610,8 @@ module ysyx_210544_if_stage(
   ///////////////////////////////////////////////
   input   wire                i_if_pc_jmp,
   input   wire  [`BUS_64]     i_if_pc_jmpaddr,
-  output  reg   [`BUS_64]     o_if_pc,
-  output  reg   [`BUS_32]     o_if_inst,
+  output  wire  [`BUS_64]     o_if_pc,
+  output  wire  [`BUS_32]     o_if_inst,
   output                      o_if_nocmt
 );
 
@@ -2638,7 +2655,7 @@ module ysyx_210544_ifU(
   input   wire  [`BUS_64]     i_pc_jmpaddr,
   output  reg   [`BUS_64]     o_pc,
   output  reg   [`BUS_32]     o_inst,
-  output                      o_fetched,            // 取到指令的通知
+  output  reg                 o_fetched,            // 取到指令的通知
   output  reg                 o_nocmt               // 由于冲刷流水线而不提交这条指令
 );
 
@@ -2745,7 +2762,7 @@ module ysyx_210544_id_stage(
   input   wire                i_id_nocmt,
   output  wire  [`BUS_64]     o_id_pc,
   output  wire  [`BUS_32]     o_id_inst,
-  output  reg                 o_id_rs1_ren,
+  output  wire                o_id_rs1_ren,
   output  wire  [`BUS_RIDX]   o_id_rs1,
   output  wire                o_id_rs2_ren,
   output  wire  [`BUS_RIDX]   o_id_rs2,
@@ -2839,16 +2856,16 @@ module ysyx_210544_idU(
   input   wire  [`BUS_64]     i_rs1_data,
   input   wire  [`BUS_64]     i_rs2_data,
   input   wire  [`BUS_64]     i_pc,
-  output  reg                 o_rs1_ren,
+  output  wire                o_rs1_ren,
   output  wire  [`BUS_RIDX]   o_rs1,
   output  wire                o_rs2_ren,
   output  wire  [`BUS_RIDX]   o_rs2,
   output  wire  [`BUS_RIDX]   o_rd,
   output  wire                o_rd_wen,
   output  wire  [7 : 0]       o_inst_opcode,
-  output  wire  [`BUS_64]     o_op1,
-  output  wire  [`BUS_64]     o_op2,
-  output  wire  [`BUS_64]     o_op3,
+  output  reg   [`BUS_64]     o_op1,
+  output  reg   [`BUS_64]     o_op2,
+  output  reg   [`BUS_64]     o_op3,
   output  wire                o_skipcmt
 );
 
@@ -3019,9 +3036,9 @@ assign inst_store   = inst_sb | inst_sh | inst_sw | inst_sd;
 // arith inst: 10000; logic: 01000;
 // load-store: 00100; j: 00010;  sys: 000001
 // === I don't use the logic above!
-assign inst_opcode[7] = (  rst == 1'b1 ) ? 0 : 0;
-assign inst_opcode[6] = (  rst == 1'b1 ) ? 0 : 0;
-assign inst_opcode[5] = (  rst == 1'b1 ) ? 0 : 
+assign inst_opcode[7] = rst ? 0 : 0;
+assign inst_opcode[6] = rst ? 0 : 0;
+assign inst_opcode[5] = rst ? 0 : 
   ( inst_sltu   | inst_xor    | inst_srl    | inst_sra    | 
     inst_or     | inst_and    | inst_fence  | inst_fencei | 
     inst_ecall  | inst_ebreak | inst_csrrw  | inst_csrrs  | 
@@ -3030,7 +3047,7 @@ assign inst_opcode[5] = (  rst == 1'b1 ) ? 0 :
     inst_slliw  | inst_srliw  | inst_sraiw  | inst_addw   | 
     inst_subw   | inst_sllw   | inst_srlw   | inst_sraw   |
     inst_mret   );
-assign inst_opcode[4] = (  rst == 1'b1 ) ? 0 : 
+assign inst_opcode[4] = rst ? 0 : 
   ( inst_sb     | inst_sh     | inst_sw     | inst_addi   | 
     inst_slti   | inst_sltiu  | inst_xori   | inst_ori    | 
     inst_andi   | inst_slli   | inst_srli   | inst_srai   | 
@@ -3039,7 +3056,7 @@ assign inst_opcode[4] = (  rst == 1'b1 ) ? 0 :
     inst_slliw  | inst_srliw  | inst_sraiw  | inst_addw   | 
     inst_subw   | inst_sllw   | inst_srlw   | inst_sraw   |
     inst_mret   );
-assign inst_opcode[3] = (  rst == 1'b1 ) ? 0 : 
+assign inst_opcode[3] = rst ? 0 : 
   ( inst_bge    | inst_bltu   | inst_bgeu   | inst_lb     | 
     inst_lh     | inst_lw     | inst_lbu    | inst_lhu    | 
     inst_andi   | inst_slli   | inst_srli   | inst_srai   | 
@@ -3048,7 +3065,7 @@ assign inst_opcode[3] = (  rst == 1'b1 ) ? 0 :
     inst_csrrc  | inst_csrrwi | inst_csrrsi | inst_csrrci |
     inst_sllw   | inst_srlw   | inst_sraw   | inst_subw   |
     inst_mret   );
-assign inst_opcode[2] = (  rst == 1'b1 ) ? 0 : 
+assign inst_opcode[2] = rst ? 0 : 
   ( inst_jalr   | inst_beq    | inst_bne    | inst_blt    | 
     inst_lh     | inst_lw     | inst_lbu    | inst_lhu    | 
     inst_slti   | inst_sltiu  | inst_xori   | inst_ori    | 
@@ -3056,7 +3073,7 @@ assign inst_opcode[2] = (  rst == 1'b1 ) ? 0 :
     inst_or     | inst_and    | inst_fence  | inst_fencei | 
     inst_csrrc  | inst_csrrwi | inst_csrrsi | inst_csrrci |
     inst_slliw  | inst_srliw  | inst_sraiw  | inst_mret   );
-assign inst_opcode[1] = (  rst == 1'b1 ) ? 0 : 
+assign inst_opcode[1] = rst ? 0 : 
   ( inst_auipc  | inst_jal    | inst_bne    | inst_blt    | 
     inst_bgeu   | inst_lb     | inst_lbu    | inst_lhu    | 
     inst_sw     | inst_addi   | inst_xori   | inst_ori    | 
@@ -3065,7 +3082,7 @@ assign inst_opcode[1] = (  rst == 1'b1 ) ? 0 :
     inst_csrrw  | inst_csrrs  | inst_csrrsi | inst_csrrci |
     inst_sd     | inst_addiw  | inst_sraiw  | inst_addw   | 
     inst_srlw   | inst_sraw   );
-assign inst_opcode[0] = (  rst == 1'b1 ) ? 0 : 
+assign inst_opcode[0] = rst ? 0 : 
   ( inst_lui    | inst_jal    | inst_beq    | inst_blt    | 
     inst_bltu   | inst_lb     | inst_lw     | inst_lhu    | 
     inst_sh     | inst_addi   | inst_sltiu  | inst_ori    | 
@@ -3075,12 +3092,12 @@ assign inst_opcode[0] = (  rst == 1'b1 ) ? 0 :
     inst_ld     | inst_addiw  | inst_srliw  | inst_addw   | 
     inst_sllw   | inst_sraw   ); 
 
-assign inst_type_R    = ( rst == 1'b1 ) ? 0 : 
+assign inst_type_R    = rst ? 0 : 
   ( inst_add    | inst_sub    | inst_sll    | inst_slt    | 
     inst_sltu   | inst_xor    | inst_srl    | inst_sra    | 
     inst_or     | inst_and    | inst_addw   | inst_subw   | 
     inst_sllw   | inst_srlw   | inst_sraw   );
-assign inst_type_I    = ( rst == 1'b1 ) ? 0 : 
+assign inst_type_I    = rst ? 0 : 
   ( inst_jalr   | inst_lb     | inst_lh     | inst_lw     | 
     inst_ld     | inst_lbu    | inst_lhu    | inst_lwu    | 
     inst_addi   | inst_slti   | inst_sltiu  | inst_xori   | 
@@ -3089,28 +3106,28 @@ assign inst_type_I    = ( rst == 1'b1 ) ? 0 :
     inst_lwu    | inst_ld     | inst_addiw  | inst_slliw  | 
     inst_srliw  | inst_sraiw  | inst_csrrwi | inst_csrrsi | 
     inst_csrrci );
-assign inst_type_S    = ( rst == 1'b1 ) ? 0 : 
+assign inst_type_S    = rst ? 0 : 
   ( inst_sb     | inst_sh     | inst_sw     | inst_sd     );
-assign inst_type_B    = ( rst == 1'b1 ) ? 0 : 
+assign inst_type_B    = rst ? 0 : 
   ( inst_beq    | inst_bne    | inst_blt    | inst_bge   | 
     inst_bltu   | inst_bgeu   );
-assign inst_type_U    = ( rst == 1'b1 ) ? 0 : 
+assign inst_type_U    = rst ? 0 : 
   ( inst_lui    | inst_auipc  );
-assign inst_type_J    = ( rst == 1'b1 ) ? 0 : 
+assign inst_type_J    = rst ? 0 : 
   ( inst_jal    );
-assign inst_type_CSRI = ( rst == 1'b1 ) ? 0 : 
+assign inst_type_CSRI = rst ? 0 : 
   ( inst_csrrwi | inst_csrrsi | inst_csrrci );
 
-assign o_rs1_ren  = ( rst == 1'b1 ) ? 0 : ( inst_type_R | inst_type_I | inst_type_S | inst_type_B);
-assign o_rs1      = ( rst == 1'b1 ) ? 0 : ((inst_type_R | inst_type_I | inst_type_S | inst_type_B) ? rs1 : 0 );
-assign o_rs2_ren  = ( rst == 1'b1 ) ? 0 : ( inst_type_R | inst_type_S | inst_type_B);
-assign o_rs2      = ( rst == 1'b1 ) ? 0 : ((inst_type_R | inst_type_S | inst_type_B) ? rs2 : 0 );
+assign o_rs1_ren  = rst ? 0 : ( inst_type_R | inst_type_I | inst_type_S | inst_type_B);
+assign o_rs1      = rst ? 0 : ((inst_type_R | inst_type_I | inst_type_S | inst_type_B) ? rs1 : 0 );
+assign o_rs2_ren  = rst ? 0 : ( inst_type_R | inst_type_S | inst_type_B);
+assign o_rs2      = rst ? 0 : ((inst_type_R | inst_type_S | inst_type_B) ? rs2 : 0 );
 
-assign o_rd_wen   = ( rst == 1'b1 ) ? 0 : ( inst_type_R | inst_type_I | inst_type_U | inst_type_J | inst_type_CSRI);
-assign o_rd       = ( rst == 1'b1 ) ? 0 : ((inst_type_R | inst_type_I | inst_type_U | inst_type_J | inst_type_CSRI) ? rd  : 0 );
+assign o_rd_wen   = rst ? 0 : ( inst_type_R | inst_type_I | inst_type_U | inst_type_J | inst_type_CSRI);
+assign o_rd       = rst ? 0 : ((inst_type_R | inst_type_I | inst_type_U | inst_type_J | inst_type_CSRI) ? rd  : 0 );
 
 always @(*) begin
-  if (rst == 1'b1) begin
+  if (rst) begin
     o_op1 = 0;
   end
   else begin
@@ -3138,7 +3155,7 @@ always @(*) begin
 end
 
 always @(*) begin
-  if (rst == 1'b1) begin
+  if (rst) begin
     o_op2 = 0;
   end
   else begin
@@ -3167,7 +3184,7 @@ end
 
 // o_op3
 always @(*) begin
-  if (rst == 1'b1) begin
+  if (rst) begin
     o_op3 = 0;
   end
   else begin
@@ -3238,17 +3255,17 @@ module ysyx_210544_exe_stage(
   input   wire                i_ex_clint_mtime_overflow,
   input   wire                i_ex_skipcmt,
   input   wire  [`BUS_64]     i_ex_csr_rdata,
-  output  reg   [11 : 0]      o_ex_csr_addr,
-  output  reg                 o_ex_csr_ren,
-  output  reg                 o_ex_csr_wen,
-  output  reg   [`BUS_64]     o_ex_csr_wdata,
-  output  reg   [`BUS_64]     o_ex_pc,
-  output  reg   [`BUS_32]     o_ex_inst,
-  output  reg                 o_ex_pc_jmp,
-  output  reg   [`BUS_64]     o_ex_pc_jmpaddr,
-  output  reg   [`BUS_RIDX]   o_ex_rd,
-  output  reg                 o_ex_rd_wen,
-  output  reg   [`BUS_64]     o_ex_rd_wdata,
+  output  wire  [11 : 0]      o_ex_csr_addr,
+  output  wire                o_ex_csr_ren,
+  output  wire                o_ex_csr_wen,
+  output  wire  [`BUS_64]     o_ex_csr_wdata,
+  output  wire  [`BUS_64]     o_ex_pc,
+  output  wire  [`BUS_32]     o_ex_inst,
+  output  wire                o_ex_pc_jmp,
+  output  wire  [`BUS_64]     o_ex_pc_jmpaddr,
+  output  wire  [`BUS_RIDX]   o_ex_rd,
+  output  wire                o_ex_rd_wen,
+  output  wire  [`BUS_64]     o_ex_rd_wdata,
   output  wire  [7 : 0]       o_ex_inst_opcode,
   output  wire  [`BUS_64]     o_ex_op1,
   output  wire  [`BUS_64]     o_ex_op2,
@@ -3436,14 +3453,14 @@ module ysyx_210544_exeU(
   input   wire  [`BUS_64]     i_op2,
   input   wire  [`BUS_64]     i_op3,
   input   wire  [`BUS_64]     i_csr_rdata,
-  output  reg   [11 : 0]      o_csr_addr,
-  output  reg                 o_csr_ren,
-  output  reg                 o_csr_wen,
+  output  wire  [11 : 0]      o_csr_addr,
+  output  wire                o_csr_ren,
+  output  wire                o_csr_wen,
   output  reg   [`BUS_64]     o_csr_wdata,
   output  reg                 o_pc_jmp,
   output  reg   [`BUS_64]     o_pc_jmpaddr,
-  output  wire  [`BUS_64]     o_rd_wdata,
-  output  reg                 o_exeU_skip_cmt    // 这里也会发现需要跳过提交的指令，比如 csr mcycle
+  output  reg   [`BUS_64]     o_rd_wdata,
+  output  wire                o_exeU_skip_cmt    // 这里也会发现需要跳过提交的指令，比如 csr mcycle
 );
 
 wire i_disable;
@@ -3930,7 +3947,7 @@ module ysyx_210544_mem_stage(
   input   wire  [`BUS_64]     i_mem_op3,
   output  wire  [`BUS_RIDX]   o_mem_rd,
   output  wire                o_mem_rd_wen,
-  output  wire  [`BUS_64]     o_mem_rd_wdata,
+  output  reg   [`BUS_64]     o_mem_rd_wdata,
   output  wire  [`BUS_64]     o_mem_pc,
   output  wire  [`BUS_32]     o_mem_inst,
   output  wire                o_mem_nocmt,
@@ -3984,7 +4001,7 @@ reg                           tmp_ch_cachesync;
 reg                           tmp_ch_mem;
 reg                           tmp_ch_mmio;
 
-reg  [63:0]                   mem_addr;
+wire [63:0]                   mem_addr;
 reg  [2:0]                    mem_bytes;
 reg                           mem_ren;
 reg                           mem_wen;
@@ -4094,13 +4111,13 @@ assign o_mem_pc           = tmp_i_mem_pc;
 assign o_mem_inst         = tmp_i_mem_inst;
 assign o_mem_rd           = tmp_i_mem_rd;
 assign o_mem_rd_wen       = tmp_i_mem_rd_wen;
-assign o_mem_rd_wdata     = tmp_i_mem_rd_wdata;
+// assign o_mem_rd_wdata     = tmp_i_mem_rd_wdata;
 assign o_mem_nocmt        = tmp_i_mem_nocmt;
 assign o_mem_skipcmt      = tmp_i_mem_skipcmt | tmp_ch_mmio;
 
 // ren, only valid at one pulse
 always @(*) begin
-  if ( rst == 1'b1) begin
+  if (rst) begin
     mem_ren = 0;
   end
   else begin
@@ -4119,7 +4136,7 @@ end
 
 // wen, only valid at one pulse
 always @(*) begin
-  if ( rst == 1'b1) begin
+  if (rst) begin
     mem_wen = 0;
   end
   else begin
@@ -4138,7 +4155,7 @@ assign mem_addr = i_mem_op1 + i_mem_op3;
 
 // bytes, only valid at one pulse
 always @(*) begin
-  if ( rst == 1'b1) begin
+  if (rst) begin
     mem_bytes = 0;
   end
   else begin
@@ -4161,7 +4178,7 @@ end
 
 // wdata, only valid at one pulse
 always @(*) begin
-  if ( rst == 1'b1) begin
+  if (rst) begin
     mem_wdata = 0;
   end
   else begin
@@ -4177,7 +4194,7 @@ end
 
 // rdata, valid at several pulses
 always @(*) begin
-  if ( rst == 1'b1) begin
+  if (rst) begin
     o_mem_rd_wdata = 0;
   end
   else begin
@@ -4272,15 +4289,15 @@ module ysyx_210544_memU(
   input   wire                i_ren,
   input   wire                i_wen,
   input   wire  [`BUS_64]     i_wdata,
-  output  wire  [`BUS_64]     o_rdata,
+  output  reg   [`BUS_64]     o_rdata,
 
   ///////////////////////////////////////////////
   // DCache interface
-  output  wire                o_dcache_req,
-  output  wire  [63:0]        o_dcache_addr,
-  output  wire                o_dcache_op,
-  output  wire  [2 :0]        o_dcache_bytes,
-  output  wire  [63:0]        o_dcache_wdata,
+  output  reg                 o_dcache_req,
+  output  reg   [63:0]        o_dcache_addr,
+  output  reg                 o_dcache_op,
+  output  reg   [2 :0]        o_dcache_bytes,
+  output  reg   [63:0]        o_dcache_wdata,
   input   wire                i_dcache_ack,
   input   wire  [63:0]        i_dcache_rdata
 );
@@ -4295,6 +4312,12 @@ always @(posedge clk) begin
   if (rst) begin
     wait_finish    <= 0;
     req <= 0;
+    o_rdata <= 0;
+    o_dcache_req <= 0;
+    o_dcache_addr <= 0;
+    o_dcache_op <= 0;
+    o_dcache_bytes <= 0;
+    o_dcache_wdata <= 0;
   end
   else begin
     if (start) begin
@@ -4356,7 +4379,7 @@ module ysyx_210544_mem_mmio(
 
 // rtc设备
 wire  [`BUS_64]               rtc_rdata;
-reg   [`BUS_64]               i_clint_rdata;
+wire  [`BUS_64]               i_clint_rdata;
 
 
 
@@ -4455,7 +4478,7 @@ module ysyx_210544_mem_cachesync(
 
   ///////////////////////////////////////////////
   // Cache Sync interface
-  output  wire                o_cachesync_req,
+  output  reg                 o_cachesync_req,
   input   wire                i_cachesync_ack
 );
 
@@ -4468,6 +4491,7 @@ assign hs_cachesync  = o_cachesync_req & i_cachesync_ack;
 always @(posedge clk) begin
   if (rst) begin
     req <= 0;
+    o_cachesync_req <= 0;
   end
   else begin
     if (start) begin
@@ -4509,11 +4533,11 @@ module ysyx_210544_wb_stage(
   input   wire                i_wb_skipcmt,
   output  wire  [`BUS_64]     o_wb_pc,
   output  wire  [`BUS_32]     o_wb_inst,
-  output  reg   [`BUS_RIDX]   o_wb_rd,
-  output  reg                 o_wb_rd_wen,
+  output  wire  [`BUS_RIDX]   o_wb_rd,
+  output  wire                o_wb_rd_wen,
   output  wire  [`BUS_64]     o_wb_rd_wdata,
-  output  reg                 o_wb_nocmt,
-  output  reg                 o_wb_skipcmt,
+  output  wire                o_wb_nocmt,
+  output  wire                o_wb_skipcmt,
   input   wire  [`BUS_32]     i_wb_intrNo,
   output  reg   [`BUS_32]     o_wb_intrNo
 );
@@ -4611,7 +4635,6 @@ module ysyx_210544_cmt_stage(
 
 wire writebacked_hs;
 wire i_cmtvalid;
-reg [63:0] cnt;
 
 
 
@@ -4634,6 +4657,9 @@ ysyx_210544_cmtU CmtU(
   .i_intrNo                   (i_cmt_intrNo               )
 );
 
+`ifdef DIFFTEST_YSYX_210544
+
+reg [63:0] cnt;
 always @(posedge clk) begin
   if (rst) begin
     cnt <= 1;
@@ -4666,6 +4692,8 @@ end
 wire _unused_ok = &{1'b0,
   cnt,
   1'b0};
+
+`endif
 
 endmodule
 
@@ -4703,7 +4731,7 @@ reg   [`BUS_64]               cycleCnt;
 reg   [`BUS_64]               instrCnt;
 reg   [`BUS_64]               regs_diff [0 : 31];
 
-reg   [`BUS_64] instrCnt_inc;
+wire  [`BUS_64] instrCnt_inc;
 wire  [`BUS_64] sstatus;
 
 
@@ -4876,7 +4904,7 @@ wire _unused_ok = &{1'b0,
   cmt_valid,
   cmt_skip,
   trap_code,
-  regs_diff,
+  // regs_diff,
   sstatus,
   1'b0};
 
@@ -4984,7 +5012,7 @@ wire                          o_wb_skipcmt;
 wire  [`BUS_32]               o_wb_intrNo;
 // wb_stage -> regfile
 wire  [`BUS_RIDX]             o_wb_rd;
-reg                           o_wb_rd_wen;
+wire                          o_wb_rd_wen;
 wire  [`BUS_64]               o_wb_rd_wdata;
 
 // regfile
@@ -5008,16 +5036,16 @@ wire                          o_clint_mtime_overflow;
 // cache
 wire                          o_icache_req;
 wire  [63:0]                  o_icache_addr;
-reg                           i_icache_ack;
-reg   [31:0]                  i_icache_rdata;
+wire                          i_icache_ack;
+wire  [31:0]                  i_icache_rdata;
 
 wire                          o_dcache_req;
 wire  [63:0]                  o_dcache_addr;
 wire                          o_dcache_op;
 wire  [2 :0]                  o_dcache_bytes;
 wire  [63:0]                  o_dcache_wdata;
-reg                           i_dcache_ack;
-reg   [63:0]                  i_dcache_rdata;
+wire                          i_dcache_ack;
+wire  [63:0]                  i_dcache_rdata;
 
 
 `ifdef DIFFTEST_YSYX_210544

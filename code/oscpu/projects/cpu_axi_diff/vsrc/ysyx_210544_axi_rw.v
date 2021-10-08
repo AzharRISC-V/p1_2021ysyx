@@ -74,8 +74,8 @@ module ysyx_210544_axi_rw (
     output [1:0]                        axi_aw_burst_o,
 
     input                               axi_w_ready_i,
-    output                              axi_w_valid_o,
-    output [63:0]                       axi_w_data_o,
+    output reg                          axi_w_valid_o,
+    output reg  [63:0]                  axi_w_data_o,
     output [7:0]                        axi_w_strb_o,
     output                              axi_w_last_o,
     
@@ -233,7 +233,7 @@ assign rw_ready_nxt = trans_done;
 assign rw_ready_en      = trans_done | rw_ready;
 always @(posedge clock) begin
     if (reset) begin
-        rw_ready <= 0;
+        rw_ready <= 1'b0;
     end
     else if (rw_ready_en) begin
         rw_ready <= rw_ready_nxt;
@@ -245,7 +245,7 @@ assign rw_resp_nxt = w_trans ? axi_b_resp_i : axi_r_resp_i;
 assign resp_en = trans_done;
 always @(posedge clock) begin
     if (reset) begin
-        rw_resp <= 0;
+        rw_resp <= 2'b0;
     end
     else if (resp_en) begin
         rw_resp <= rw_resp_nxt;
@@ -269,17 +269,18 @@ assign axi_aw_burst_o   = `AXI_BURST_TYPE_INCR;
 // 由于 w_valid 使能之时需要同时送出 wdata，所以改用时序逻辑
 always @(posedge clock) begin
     if (reset) begin
-    axi_w_valid_o <= 0;
+        axi_w_valid_o <= 1'b0;
+        axi_w_data_o <= 64'd0;
     end
     else begin
     if (w_state_write) begin
         if (!axi_w_valid_o) begin
         axi_w_data_o  <= user_wdata_i[63:0] << axi_addr_offset_bits;
-        axi_w_valid_o <= 1;
+        axi_w_valid_o <= 1'b1;
         end
     end
     else if (w_state_resp) begin// (w_state_resp) begin
-        axi_w_valid_o <= 0;
+        axi_w_valid_o <= 1'b0;
     end
     end
 end
@@ -290,7 +291,7 @@ assign axi_w_last_o     = w_hs & (len == axi_len);
 
 always @(*) begin
     if (reset) begin
-    axi_w_strb_orig = 0;
+    axi_w_strb_orig = 8'd0;
     end
     else begin
     case (user_size_i)
@@ -304,7 +305,7 @@ always @(*) begin
 end
 
 assign axi_addr_offset_bytes  = user_addr_i[2:0];
-assign axi_addr_offset_bits   = {3'b0, axi_addr_offset_bytes} << 3;
+assign axi_addr_offset_bits   = {3'b0, axi_addr_offset_bytes} << 2'd3;
 
 // 移位生成最终的 w_strb。wdata 和 wstrb 都需要移位
 // assign axi_w_strb_o     = 8'b1111_1111;     // 每个bit代表一个字节是否要写入
@@ -356,7 +357,7 @@ assign mask_rdata  = (({ 64{size_b}} & {{64- 8{1'b0}}, 8'hff})
                             );
 
 
-assign aligned_offset    = {3'b0, user_addr_i[2:0]} << 3;
+assign aligned_offset    = {3'b0, user_addr_i[2:0]} << 2'd3;
 
 assign axi_r_data_masked_unaligned = (axi_r_data_i >> aligned_offset) & mask_rdata;
 
@@ -365,7 +366,7 @@ generate
     begin: USER_RDATA_O_GEN
         always @(posedge clock) begin
             if (reset) begin
-                user_rdata_o <= 0;
+                user_rdata_o <= 512'd0;
             end
             else if (r_hs) begin
                 if (len == i) begin

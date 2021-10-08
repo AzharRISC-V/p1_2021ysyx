@@ -25,7 +25,7 @@ module ysyx_210544_mem_stage(
   input   wire  [`BUS_64]     i_mem_op3,
   output  wire  [`BUS_RIDX]   o_mem_rd,
   output  wire                o_mem_rd_wen,
-  output  wire  [`BUS_64]     o_mem_rd_wdata,
+  output  reg   [`BUS_64]     o_mem_rd_wdata,
   output  wire  [`BUS_64]     o_mem_pc,
   output  wire  [`BUS_32]     o_mem_inst,
   output  wire                o_mem_nocmt,
@@ -189,7 +189,7 @@ assign o_mem_pc           = tmp_i_mem_pc;
 assign o_mem_inst         = tmp_i_mem_inst;
 assign o_mem_rd           = tmp_i_mem_rd;
 assign o_mem_rd_wen       = tmp_i_mem_rd_wen;
-assign o_mem_rd_wdata     = tmp_i_mem_rd_wdata;
+// assign o_mem_rd_wdata     = tmp_i_mem_rd_wdata;
 assign o_mem_nocmt        = tmp_i_mem_nocmt;
 assign o_mem_skipcmt      = tmp_i_mem_skipcmt | tmp_ch_mmio;
 

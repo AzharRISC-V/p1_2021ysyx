@@ -18,7 +18,7 @@ module ysyx_210544_exeU(
   output  reg   [`BUS_64]     o_csr_wdata,
   output  reg                 o_pc_jmp,
   output  reg   [`BUS_64]     o_pc_jmpaddr,
-  output  wire  [`BUS_64]     o_rd_wdata,
+  output  reg   [`BUS_64]     o_rd_wdata,
   output  wire                o_exeU_skip_cmt    // 这里也会发现需要跳过提交的指令，比如 csr mcycle
 );
 

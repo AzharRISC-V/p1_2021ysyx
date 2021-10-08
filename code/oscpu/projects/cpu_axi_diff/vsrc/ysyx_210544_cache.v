@@ -134,17 +134,17 @@ ysyx_210544_cache_core ICache(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
 	.i_cache_core_addr          (i_icache_addr              ),
-	.i_cache_core_wdata         (0                          ),
-	.i_cache_core_bytes         (3                          ),
+	.i_cache_core_wdata         (64'd0                      ),
+	.i_cache_core_bytes         (3'd3                       ),
 	.i_cache_core_op            (`REQ_READ                  ),
-	.i_cache_core_req           (ch_icache ? i_icache_req : 0),
+	.i_cache_core_req           (ch_icache ? i_icache_req : 1'b0),
 	.o_cache_core_rdata         (icache_rdata               ),
 	.o_cache_core_ack           (icache_ack                 ),
 
 
-  .i_cache_core_sync_rreq     (0                          ),
+  .i_cache_core_sync_rreq     (1'b0                       ),
   .o_cache_core_sync_rack     (sync_icache_rack           ),
-  .i_cache_core_sync_rpackack (0                          ),
+  .i_cache_core_sync_rpackack (1'b0                       ),
   .o_cache_core_sync_rpackreq (sync_icache_rpackreq       ),
   .i_cache_core_sync_wreq     (sync_icache_wreq           ),
   .o_cache_core_sync_wack     (sync_icache_wack           ),
@@ -157,8 +157,8 @@ ysyx_210544_cache_core ICache(
   .i_cache_core_sync_winfo    (sync_icache_winfo          ),
   .i_cache_core_sync_wdata    (sync_icache_wdata          ),
 
-  .i_axi_io_ready             (ch_icache ? i_axi_io_ready : 0        ),
-  .i_axi_io_rdata             (ch_icache ? i_axi_io_rdata : 0        ),
+  .i_axi_io_ready             (ch_icache ? i_axi_io_ready : 1'b0 ),
+  .i_axi_io_rdata             (ch_icache ? i_axi_io_rdata : 512'd0 ),
   .o_axi_io_op                (icache_axi_io_op           ),
   .o_axi_io_valid             (icache_axi_io_valid        ),
   .o_axi_io_wdata             (icache_axi_io_wdata        ),
@@ -174,7 +174,7 @@ ysyx_210544_cache_core DCache(
 	.i_cache_core_wdata         (i_dcache_wdata             ),
 	.i_cache_core_bytes         (i_dcache_bytes             ),
 	.i_cache_core_op            (i_dcache_op                ),
-	.i_cache_core_req           (ch_dcache ? i_dcache_req : 0),
+	.i_cache_core_req           (ch_dcache ? i_dcache_req : 1'b0),
 	.o_cache_core_rdata         (dcache_rdata               ),
 	.o_cache_core_ack           (dcache_ack                 ),
 
@@ -182,19 +182,19 @@ ysyx_210544_cache_core DCache(
   .o_cache_core_sync_rack     (sync_dcache_rack           ),
   .i_cache_core_sync_rpackack (sync_dcache_rpackack       ),
   .o_cache_core_sync_rpackreq (sync_dcache_rpackreq       ),
-  .i_cache_core_sync_wreq     (0                          ),
+  .i_cache_core_sync_wreq     (1'b0                       ),
   .o_cache_core_sync_wack     (sync_dcache_wack           ),
   .o_cache_core_sync_rwayid   (sync_dcache_rwayid         ),
   .o_cache_core_sync_rblkid   (sync_dcache_rblkid         ),
   .o_cache_core_sync_rinfo    (sync_dcache_rinfo          ),
   .o_cache_core_sync_rdata    (sync_dcache_rdata          ),
-  .i_cache_core_sync_wwayid   (0                          ),
-  .i_cache_core_sync_wblkid   (0                          ),
-  .i_cache_core_sync_winfo    (0                          ),
-  .i_cache_core_sync_wdata    (0                          ),
+  .i_cache_core_sync_wwayid   (2'd0                       ),
+  .i_cache_core_sync_wblkid   (4'd0                       ),
+  .i_cache_core_sync_winfo    (26'd0                      ),
+  .i_cache_core_sync_wdata    (512'd0                     ),
 
-  .i_axi_io_ready             (ch_dcache ? i_axi_io_ready : 0        ),
-  .i_axi_io_rdata             (ch_dcache ? i_axi_io_rdata : 0        ),
+  .i_axi_io_ready             (ch_dcache ? i_axi_io_ready : 1'b0),
+  .i_axi_io_rdata             (ch_dcache ? i_axi_io_rdata : 512'd0),
   .o_axi_io_op                (dcache_axi_io_op           ),
   .o_axi_io_valid             (dcache_axi_io_valid        ),
   .o_axi_io_wdata             (dcache_axi_io_wdata        ),
@@ -210,12 +210,12 @@ ysyx_210544_cache_nocache NoCache(
 	.i_cache_nocache_wdata      (nocache_wdata              ),
 	.i_cache_nocache_bytes      (nocache_bytes              ),
 	.i_cache_nocache_op         (nocache_op                 ),
-	.i_cache_nocache_req        (ch_nocache ? nocache_req : 0),
+	.i_cache_nocache_req        (ch_nocache ? nocache_req : 1'b0),
 	.o_cache_nocache_rdata      (nocache_rdata              ),
 	.o_cache_nocache_ack        (nocache_ack                ),
 
-  .i_axi_io_ready             (ch_nocache ? i_axi_io_ready : 0        ),
-  .i_axi_io_rdata             (ch_nocache ? i_axi_io_rdata : 0        ),
+  .i_axi_io_ready             (ch_nocache ? i_axi_io_ready : 1'b0        ),
+  .i_axi_io_rdata             (ch_nocache ? i_axi_io_rdata : 512'd0      ),
   .o_axi_io_op                (nocache_axi_io_op          ),
   .o_axi_io_valid             (nocache_axi_io_valid       ),
   .o_axi_io_wdata             (nocache_axi_io_wdata       ),
@@ -249,11 +249,11 @@ ysyx_210544_cache_sync Cache_sync(
 /////////////////////////////////////////////////
 // 信号互联
 
-assign nocache_req      = ch_nocache ? (i_icache_req | i_dcache_req                     ) : 0;
-assign nocache_addr     = ch_nocache ? (i_icache_req ? i_icache_addr  : i_dcache_addr   ) : 0;
-assign nocache_wdata    = ch_nocache ? (i_icache_req ? 0              : i_dcache_wdata  ) : 0;
-assign nocache_bytes    = ch_nocache ? (i_icache_req ? 3              : i_dcache_bytes  ) : 0;
-assign nocache_op       = ch_nocache ? (i_icache_req ? `REQ_READ      : i_dcache_op     ) : 0;
+assign nocache_req      = ch_nocache ? (i_icache_req | i_dcache_req                     ) : 1'b0;
+assign nocache_addr     = ch_nocache ? (i_icache_req ? i_icache_addr  : i_dcache_addr   ) : 64'd0;
+assign nocache_wdata    = ch_nocache ? (i_icache_req ? 0              : i_dcache_wdata  ) : 64'd0;
+assign nocache_bytes    = ch_nocache ? (i_icache_req ? 3              : i_dcache_bytes  ) : 3'd0;
+assign nocache_op       = ch_nocache ? (i_icache_req ? `REQ_READ      : i_dcache_op     ) : `REQ_READ;
 
 assign o_axi_io_valid   = ch_icache ? icache_axi_io_valid   : (ch_dcache ? dcache_axi_io_valid  : nocache_axi_io_valid);
 assign o_axi_io_op      = ch_icache ? icache_axi_io_op      : (ch_dcache ? dcache_axi_io_op     : nocache_axi_io_op);
