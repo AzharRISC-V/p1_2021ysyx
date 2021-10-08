@@ -93,9 +93,9 @@ module ysyx_210544_cache_basic (
 );
 
 // 根据实际硬件模型设置有效电平
-parameter bit CHIP_DATA_CEN = 0;        // cen有效的电平
-parameter bit CHIP_DATA_WEN = 0;        // wen有效的电平
-parameter bit CHIP_DATA_WMASK_EN = 0;   // 写掩码有效的电平
+parameter CHIP_DATA_CEN = 1'b0;        // cen有效的电平
+parameter CHIP_DATA_WEN = 1'b0;        // wen有效的电平
+parameter CHIP_DATA_WMASK_EN = 1'b0;   // 写掩码有效的电平
 
 // =============== 状态机 ===============
 //  英文名称          中文名称               含义
