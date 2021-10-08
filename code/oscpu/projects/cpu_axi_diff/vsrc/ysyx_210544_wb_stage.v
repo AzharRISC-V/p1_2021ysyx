@@ -45,6 +45,7 @@ reg                           tmp_i_wb_skipcmt;
 wire memoryed_hs;
 
 
+
 assign o_wb_memoryed_ack = 1'b1;
 assign memoryed_hs = i_wb_memoryed_req & o_wb_memoryed_ack;
 

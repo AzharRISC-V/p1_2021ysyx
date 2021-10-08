@@ -19,7 +19,7 @@ module ysyx_210544_regfile(
   output  wire  [`BUS_64]       o_regs[0 : 31]
 );
 
-  // 32 registers
+// 32 registers
 reg   [`BUS_64]   regs[0 : 31];
 
 // register alias name

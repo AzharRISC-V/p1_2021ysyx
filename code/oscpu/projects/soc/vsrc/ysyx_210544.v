@@ -255,8 +255,8 @@ module ysyx_210544_axi_rw (
     input                               clock,
     input                               reset,
 
-	  input                               user_valid_i,
-	  output                              user_ready_o,
+	input                               user_valid_i,
+	output                              user_ready_o,
     input                               user_req_i,         // read or write
     input  [7:0]                        user_blks_i,          // blocks: 0 ~ 7， means 1~8 (后端硬件资源限制为8)
     output reg [`RW_DATA_WIDTH-1:0]     user_rdata_o,
@@ -301,282 +301,281 @@ module ysyx_210544_axi_rw (
     input  [`AXI_ID_WIDTH-1:0]          axi_r_id_i
 );
 
-    parameter [1:0] W_STATE_IDLE = 2'b00, W_STATE_ADDR = 2'b01, W_STATE_WRITE = 2'b10, W_STATE_RESP = 2'b11;
-    parameter [1:0] R_STATE_IDLE = 2'b00, R_STATE_ADDR = 2'b01, R_STATE_READ  = 2'b10;
-    parameter TRANS_LEN_MAX = 8;
+parameter [1:0] W_STATE_IDLE = 2'b00, W_STATE_ADDR = 2'b01, W_STATE_WRITE = 2'b10, W_STATE_RESP = 2'b11;
+parameter [1:0] R_STATE_IDLE = 2'b00, R_STATE_ADDR = 2'b01, R_STATE_READ  = 2'b10;
+parameter TRANS_LEN_MAX = 8;
 
-    reg rw_ready;
-    wire w_trans;
-    wire r_trans;
-    wire w_valid;
-    wire r_valid;
-    wire aw_hs;
-    wire w_hs;
-    wire b_hs;
-    wire ar_hs;
-    wire r_hs;
-    wire w_done;
-    wire r_done;
-    wire trans_done;
-    reg [1:0] w_state;
-    reg [1:0] r_state;
-    wire w_state_idle;
-    wire w_state_addr;
-    wire w_state_write;
-    wire w_state_resp;
-    wire r_state_idle;
-    wire r_state_addr;
-    wire r_state_read;
-    reg [7:0] len;
-    wire [7:0] axi_len;
-    wire len_reset;
-    wire len_incr_en;
-    wire [2:0] axi_size;
-    wire [63:0] axi_addr;
-    wire [`AXI_ID_WIDTH-1:0] axi_id;
-    wire rw_ready_nxt;
-    wire rw_ready_en;
-    reg [1:0] rw_resp;
-    wire [1:0] rw_resp_nxt;
-    wire resp_en;
-    wire [2:0] axi_addr_offset_bytes;       // 输入地址的 字节偏移量(0~7)
-    wire [5:0] axi_addr_offset_bits;        // 输入地址的   位偏移量(0~56)
-    reg  [7:0] axi_w_strb_orig;
+reg rw_ready;
+wire w_trans;
+wire r_trans;
+wire w_valid;
+wire r_valid;
+wire aw_hs;
+wire w_hs;
+wire b_hs;
+wire ar_hs;
+wire r_hs;
+wire w_done;
+wire r_done;
+wire trans_done;
+reg [1:0] w_state;
+reg [1:0] r_state;
+wire w_state_idle;
+wire w_state_addr;
+wire w_state_write;
+wire w_state_resp;
+wire r_state_idle;
+wire r_state_addr;
+wire r_state_read;
+reg [7:0] len;
+wire [7:0] axi_len;
+wire len_reset;
+wire len_incr_en;
+wire [2:0] axi_size;
+wire [63:0] axi_addr;
+wire [`AXI_ID_WIDTH-1:0] axi_id;
+wire rw_ready_nxt;
+wire rw_ready_en;
+reg [1:0] rw_resp;
+wire [1:0] rw_resp_nxt;
+wire resp_en;
+wire [2:0] axi_addr_offset_bytes;       // 输入地址的 字节偏移量(0~7)
+wire [5:0] axi_addr_offset_bits;        // 输入地址的   位偏移量(0~56)
+reg  [7:0] axi_w_strb_orig;
 
-    wire size_b;
-    wire size_h;
-    wire size_w;
-    wire size_d;
-    wire [63:0] mask_rdata;
-    wire [5:0] aligned_offset;                      // 移位的bit数。0~7 转换为 0~56
-    wire [63:0] axi_r_data_masked_unaligned;        // 已掩码，已移位后的数据
+wire size_b;
+wire size_h;
+wire size_w;
+wire size_d;
+wire [63:0] mask_rdata;
+wire [5:0] aligned_offset;                      // 移位的bit数。0~7 转换为 0~56
+wire [63:0] axi_r_data_masked_unaligned;        // 已掩码，已移位后的数据
 
 
 
-    assign w_trans    = user_req_i == `REQ_WRITE;
-    assign r_trans    = user_req_i == `REQ_READ;
-    assign w_valid    = user_valid_i & w_trans & (!rw_ready);
-    assign r_valid    = user_valid_i & r_trans & (!rw_ready);
+assign w_trans    = user_req_i == `REQ_WRITE;
+assign r_trans    = user_req_i == `REQ_READ;
+assign w_valid    = user_valid_i & w_trans & (!rw_ready);
+assign r_valid    = user_valid_i & r_trans & (!rw_ready);
 
-    // handshake
-    assign aw_hs      = axi_aw_ready_i & axi_aw_valid_o;
-    assign w_hs       = axi_w_ready_i  & axi_w_valid_o;
-    assign b_hs       = axi_b_ready_o  & axi_b_valid_i;
-    assign ar_hs      = axi_ar_ready_i & axi_ar_valid_o;
-    assign r_hs       = axi_r_ready_o  & axi_r_valid_i;
+// handshake
+assign aw_hs      = axi_aw_ready_i & axi_aw_valid_o;
+assign w_hs       = axi_w_ready_i  & axi_w_valid_o;
+assign b_hs       = axi_b_ready_o  & axi_b_valid_i;
+assign ar_hs      = axi_ar_ready_i & axi_ar_valid_o;
+assign r_hs       = axi_r_ready_o  & axi_r_valid_i;
 
-    assign w_done     = w_hs & axi_w_last_o;
-    assign r_done     = r_hs & axi_r_last_i;
-    assign trans_done = w_trans ? b_hs : r_done;
+assign w_done     = w_hs & axi_w_last_o;
+assign r_done     = r_hs & axi_r_last_i;
+assign trans_done = w_trans ? b_hs : r_done;
 
-    
-    // ------------------State Machine------------------
-    assign w_state_idle = w_state == W_STATE_IDLE;
-    assign w_state_addr = w_state == W_STATE_ADDR;
-    assign w_state_write = w_state == W_STATE_WRITE;
-    assign w_state_resp = w_state == W_STATE_RESP;
-    assign r_state_idle = r_state == R_STATE_IDLE;
-    assign r_state_addr = r_state == R_STATE_ADDR;
-    assign r_state_read  = r_state == R_STATE_READ;
+// ------------------State Machine------------------
+assign w_state_idle = w_state == W_STATE_IDLE;
+assign w_state_addr = w_state == W_STATE_ADDR;
+assign w_state_write = w_state == W_STATE_WRITE;
+assign w_state_resp = w_state == W_STATE_RESP;
+assign r_state_idle = r_state == R_STATE_IDLE;
+assign r_state_addr = r_state == R_STATE_ADDR;
+assign r_state_read  = r_state == R_STATE_READ;
 
-    // Wirte State Machine
-    always @(posedge clock) begin
-        if (reset) begin
-            w_state <= W_STATE_IDLE;
-        end
-        else begin
-            if (w_valid) begin
-                case (w_state)
-                    W_STATE_IDLE:               w_state <= W_STATE_ADDR;
-                    W_STATE_ADDR:  if (aw_hs)   w_state <= W_STATE_WRITE;
-                    W_STATE_WRITE: if (w_done)  w_state <= W_STATE_RESP;
-                    W_STATE_RESP:  if (b_hs)    w_state <= W_STATE_IDLE;
-                endcase
-            end
+// Wirte State Machine
+always @(posedge clock) begin
+    if (reset) begin
+        w_state <= W_STATE_IDLE;
+    end
+    else begin
+        if (w_valid) begin
+            case (w_state)
+                W_STATE_IDLE:               w_state <= W_STATE_ADDR;
+                W_STATE_ADDR:  if (aw_hs)   w_state <= W_STATE_WRITE;
+                W_STATE_WRITE: if (w_done)  w_state <= W_STATE_RESP;
+                W_STATE_RESP:  if (b_hs)    w_state <= W_STATE_IDLE;
+            endcase
         end
     end
+end
 
-    // Read State Machine
-    always @(posedge clock) begin
-        if (reset) begin
-            r_state <= R_STATE_IDLE;
-        end
-        else begin
-            if (r_valid) begin
-                case (r_state)
-                    R_STATE_IDLE:               r_state <= R_STATE_ADDR;
-                    R_STATE_ADDR: if (ar_hs)    r_state <= R_STATE_READ;
-                    R_STATE_READ: if (r_done)   r_state <= R_STATE_IDLE;
-                    default:;
-                endcase
-            end
+// Read State Machine
+always @(posedge clock) begin
+    if (reset) begin
+        r_state <= R_STATE_IDLE;
+    end
+    else begin
+        if (r_valid) begin
+            case (r_state)
+                R_STATE_IDLE:               r_state <= R_STATE_ADDR;
+                R_STATE_ADDR: if (ar_hs)    r_state <= R_STATE_READ;
+                R_STATE_READ: if (r_done)   r_state <= R_STATE_IDLE;
+                default:;
+            endcase
         end
     end
+end
 
-    // ------------------Number of transmission------------------
-    assign len_reset      = reset | (w_trans & w_state_idle) | (r_trans & r_state_idle);
-    assign len_incr_en    = (len != axi_len) & (w_hs | r_hs);
-    always @(posedge clock) begin
-        if (len_reset) begin
-            len <= 0;
-        end
-        else if (len_incr_en) begin
-            len <= len + 1;
+// ------------------Number of transmission------------------
+assign len_reset      = reset | (w_trans & w_state_idle) | (r_trans & r_state_idle);
+assign len_incr_en    = (len != axi_len) & (w_hs | r_hs);
+always @(posedge clock) begin
+    if (len_reset) begin
+        len <= 0;
+    end
+    else if (len_incr_en) begin
+        len <= len + 1;
+    end
+end
+
+// ------------------Process Data------------------
+assign axi_len          = user_blks_i;
+assign axi_size         = user_size_i;
+assign axi_addr         = user_addr_i;
+assign axi_id           = {`AXI_ID_WIDTH{1'b0}};
+
+assign rw_ready_nxt = trans_done;
+assign rw_ready_en      = trans_done | rw_ready;
+always @(posedge clock) begin
+    if (reset) begin
+        rw_ready <= 0;
+    end
+    else if (rw_ready_en) begin
+        rw_ready <= rw_ready_nxt;
+    end
+end
+assign user_ready_o     = rw_ready;
+
+assign rw_resp_nxt = w_trans ? axi_b_resp_i : axi_r_resp_i;
+assign resp_en = trans_done;
+always @(posedge clock) begin
+    if (reset) begin
+        rw_resp <= 0;
+    end
+    else if (resp_en) begin
+        rw_resp <= rw_resp_nxt;
+    end
+end
+assign user_resp_o      = rw_resp;
+
+
+// ------------------Write Transaction------------------
+
+// Read address channel signals
+assign axi_aw_valid_o   = w_state_addr & user_valid_i;
+assign axi_aw_addr_o    = axi_addr;
+assign axi_aw_id_o      = axi_id;
+assign axi_aw_len_o     = axi_len;
+assign axi_aw_size_o    = axi_size;
+assign axi_aw_burst_o   = `AXI_BURST_TYPE_INCR;
+
+// Write data channel signals
+
+// 由于 w_valid 使能之时需要同时送出 wdata，所以改用时序逻辑
+always @(posedge clock) begin
+    if (reset) begin
+    axi_w_valid_o <= 0;
+    end
+    else begin
+    if (w_state_write) begin
+        if (!axi_w_valid_o) begin
+        axi_w_data_o  <= user_wdata_i[63:0] << axi_addr_offset_bits;
+        axi_w_valid_o <= 1;
         end
     end
-
-    // ------------------Process Data------------------
-    assign axi_len          = user_blks_i;
-    assign axi_size         = user_size_i;
-    assign axi_addr         = user_addr_i;
-    assign axi_id           = {`AXI_ID_WIDTH{1'b0}};
-
-    assign rw_ready_nxt = trans_done;
-    assign rw_ready_en      = trans_done | rw_ready;
-    always @(posedge clock) begin
-        if (reset) begin
-            rw_ready <= 0;
-        end
-        else if (rw_ready_en) begin
-            rw_ready <= rw_ready_nxt;
-        end
-    end
-    assign user_ready_o     = rw_ready;
-
-    assign rw_resp_nxt = w_trans ? axi_b_resp_i : axi_r_resp_i;
-    assign resp_en = trans_done;
-    always @(posedge clock) begin
-        if (reset) begin
-            rw_resp <= 0;
-        end
-        else if (resp_en) begin
-            rw_resp <= rw_resp_nxt;
-        end
-    end
-    assign user_resp_o      = rw_resp;
-
-
-    // ------------------Write Transaction------------------
-
-    // Read address channel signals
-    assign axi_aw_valid_o   = w_state_addr & user_valid_i;
-    assign axi_aw_addr_o    = axi_addr;
-    assign axi_aw_id_o      = axi_id;
-    assign axi_aw_len_o     = axi_len;
-    assign axi_aw_size_o    = axi_size;
-    assign axi_aw_burst_o   = `AXI_BURST_TYPE_INCR;
-
-    // Write data channel signals
-
-    // 由于 w_valid 使能之时需要同时送出 wdata，所以改用时序逻辑
-    always @(posedge clock) begin
-      if (reset) begin
+    else if (w_state_resp) begin// (w_state_resp) begin
         axi_w_valid_o <= 0;
-      end
-      else begin
-        if (w_state_write) begin
-          if (!axi_w_valid_o) begin
-            axi_w_data_o  <= user_wdata_i[63:0] << axi_addr_offset_bits;
-            axi_w_valid_o <= 1;
-          end
-        end
-        else if (w_state_resp) begin// (w_state_resp) begin
-          axi_w_valid_o <= 0;
-        end
-      end
     end
-
-    assign axi_w_last_o     = w_hs & (len == axi_len);
-  
-    // 仅根据size生成的wstrb，需要移位后使用，是吗？？
-
-    always @(*) begin
-      if (reset) begin
-        axi_w_strb_orig = 0;
-      end
-      else begin
-        case (user_size_i)
-          `SIZE_B: axi_w_strb_orig = 8'b0000_0001;
-          `SIZE_H: axi_w_strb_orig = 8'b0000_0011;
-          `SIZE_W: axi_w_strb_orig = 8'b0000_1111;
-          `SIZE_D: axi_w_strb_orig = 8'b1111_1111;
-          default: axi_w_strb_orig = 8'b0000_0000; // 不支持
-        endcase 
-      end
     end
+end
 
-    assign axi_addr_offset_bytes  = user_addr_i[2:0];
-    assign axi_addr_offset_bits   = {3'b0, axi_addr_offset_bytes} << 3;
+assign axi_w_last_o     = w_hs & (len == axi_len);
 
-    // 移位生成最终的 w_strb。wdata 和 wstrb 都需要移位
-    // assign axi_w_strb_o     = 8'b1111_1111;     // 每个bit代表一个字节是否要写入
-    assign axi_w_strb_o = axi_w_strb_orig << axi_addr_offset_bytes;
+// 仅根据size生成的wstrb，需要移位后使用，是吗？？
 
-    // Wreite response channel signals
-    assign axi_b_ready_o    = w_state_resp;
-    
-    genvar i;
-    generate
-        for (i = 0; i < TRANS_LEN_MAX - 1; i = i + 1)
-        begin: AXI_W_DATA_O_GEN
-            always @(posedge clock) begin
-                if (w_hs) begin
-                  if (len == i) begin
-                    axi_w_data_o <= user_wdata_i[(i+1)*64+:64] << axi_addr_offset_bits;
-                  end
+always @(*) begin
+    if (reset) begin
+    axi_w_strb_orig = 0;
+    end
+    else begin
+    case (user_size_i)
+        `SIZE_B: axi_w_strb_orig = 8'b0000_0001;
+        `SIZE_H: axi_w_strb_orig = 8'b0000_0011;
+        `SIZE_W: axi_w_strb_orig = 8'b0000_1111;
+        `SIZE_D: axi_w_strb_orig = 8'b1111_1111;
+        default: axi_w_strb_orig = 8'b0000_0000; // 不支持
+    endcase 
+    end
+end
+
+assign axi_addr_offset_bytes  = user_addr_i[2:0];
+assign axi_addr_offset_bits   = {3'b0, axi_addr_offset_bytes} << 3;
+
+// 移位生成最终的 w_strb。wdata 和 wstrb 都需要移位
+// assign axi_w_strb_o     = 8'b1111_1111;     // 每个bit代表一个字节是否要写入
+assign axi_w_strb_o = axi_w_strb_orig << axi_addr_offset_bytes;
+
+// Wreite response channel signals
+assign axi_b_ready_o    = w_state_resp;
+
+genvar i;
+generate
+    for (i = 0; i < TRANS_LEN_MAX - 1; i = i + 1)
+    begin: AXI_W_DATA_O_GEN
+        always @(posedge clock) begin
+            if (w_hs) begin
+                if (len == i) begin
+                axi_w_data_o <= user_wdata_i[(i+1)*64+:64] << axi_addr_offset_bits;
                 end
             end
         end
-    endgenerate
+    end
+endgenerate
 
-    
-    // ------------------Read Transaction------------------
 
-    // Read address channel signals
-    assign axi_ar_valid_o   = r_state_addr & user_valid_i;
-    assign axi_ar_addr_o    = axi_addr;
-    assign axi_ar_id_o      = axi_id;
-    assign axi_ar_len_o     = axi_len;
-    assign axi_ar_size_o    = axi_size;
-    assign axi_ar_burst_o   = `AXI_BURST_TYPE_INCR;
+// ------------------Read Transaction------------------
 
-    // Read data channel signals
-    assign axi_r_ready_o    = r_state_read;
+// Read address channel signals
+assign axi_ar_valid_o   = r_state_addr & user_valid_i;
+assign axi_ar_addr_o    = axi_addr;
+assign axi_ar_id_o      = axi_id;
+assign axi_ar_len_o     = axi_len;
+assign axi_ar_size_o    = axi_size;
+assign axi_ar_burst_o   = `AXI_BURST_TYPE_INCR;
 
-    // User Data Size
+// Read data channel signals
+assign axi_r_ready_o    = r_state_read;
 
-    assign size_b             = user_size_i == `SIZE_B;
-    assign size_h             = user_size_i == `SIZE_H;
-    assign size_w             = user_size_i == `SIZE_W;
-    assign size_d             = user_size_i == `SIZE_D;
-    
-    // Read data mask
-    assign mask_rdata  = (({ 64{size_b}} & {{64- 8{1'b0}}, 8'hff})
-                              | ({64{size_h}} & {{64-16{1'b0}}, 16'hffff})
-                              | ({64{size_w}} & {{64-32{1'b0}}, 32'hffffffff})
-                              | ({64{size_d}} & {{64-64{1'b0}}, 64'hffffffff_ffffffff})
-                              );
+// User Data Size
 
-    
-    assign aligned_offset    = {3'b0, user_addr_i[2:0]} << 3;
-    
-    assign axi_r_data_masked_unaligned = (axi_r_data_i >> aligned_offset) & mask_rdata;
+assign size_b             = user_size_i == `SIZE_B;
+assign size_h             = user_size_i == `SIZE_H;
+assign size_w             = user_size_i == `SIZE_W;
+assign size_d             = user_size_i == `SIZE_D;
 
-    generate
-        for (i = 0; i < TRANS_LEN_MAX; i = i + 1) 
-        begin: USER_RDATA_O_GEN
-            always @(posedge clock) begin
-                if (reset) begin
-                    user_rdata_o <= 0;
-                end
-                else if (r_hs) begin
-                    if (len == i) begin
-                        user_rdata_o[i*64+:64] <= axi_r_data_masked_unaligned;
-                    end
+// Read data mask
+assign mask_rdata  = (({ 64{size_b}} & {{64- 8{1'b0}}, 8'hff})
+                            | ({64{size_h}} & {{64-16{1'b0}}, 16'hffff})
+                            | ({64{size_w}} & {{64-32{1'b0}}, 32'hffffffff})
+                            | ({64{size_d}} & {{64-64{1'b0}}, 64'hffffffff_ffffffff})
+                            );
+
+
+assign aligned_offset    = {3'b0, user_addr_i[2:0]} << 3;
+
+assign axi_r_data_masked_unaligned = (axi_r_data_i >> aligned_offset) & mask_rdata;
+
+generate
+    for (i = 0; i < TRANS_LEN_MAX; i = i + 1) 
+    begin: USER_RDATA_O_GEN
+        always @(posedge clock) begin
+            if (reset) begin
+                user_rdata_o <= 0;
+            end
+            else if (r_hs) begin
+                if (len == i) begin
+                    user_rdata_o[i*64+:64] <= axi_r_data_masked_unaligned;
                 end
             end
         end
-    endgenerate
+    end
+endgenerate
 
 wire _unused_ok = &{1'b0,
   axi_b_id_i,
@@ -1469,7 +1468,7 @@ module ysyx_210544_cache_core (
   output  wire  [7:0]         o_axi_io_blks
 );
 
-
+// =============== cache 从机端 ===============
 reg   [63 : 0]                o_cache_basic_addr;         // 存储器地址（字节为单位），64字节对齐，低6位为0。
 reg   [63 : 0]                o_cache_basic_wdata;        // 要写入的数据
 reg   [2  : 0]                o_cache_basic_bytes;        // 字节数
@@ -1478,6 +1477,7 @@ reg                           o_cache_basic_req;          // 请求
 wire  [63 : 0]                i_cache_basic_rdata;        // 已读出的数据
 reg                           i_cache_basic_ack;          // 应答
 
+// =============== 处理跨行问题 ===============
 wire  [59:0]                  i_addr_high;                // 输入地址的高60位
 wire  [3:0]                   i_addr_4;                   // 输入地址的低4位 (0~15)
 wire  [3:0]                   i_bytes_4;                  // 输入字节数扩展为4位
@@ -1488,13 +1488,11 @@ wire  [63: 0]                 addr[0:1];                  // 地址
 wire  [63: 0]                 wdata[0:1];                 // 写数据
 reg   [63: 0]                 rdata[0:1];                 // 读数据
 
-reg   index;      // 操作的序号：0,1表示两个阶段
-
-wire hs_cache;
-
+reg                           index;      // 操作的序号：0,1表示两个阶段
+wire                          hs_cache;
 
 
-// =============== cache 从机端 ===============
+
 assign o_cache_basic_op = i_cache_core_op;
 
 ysyx_210544_cache_basic Cache_basic(
@@ -1532,9 +1530,6 @@ ysyx_210544_cache_basic Cache_basic(
   .o_axi_io_size              (o_axi_io_size              ),
   .o_axi_io_blks              (o_axi_io_blks              )
 );
-
-
-// =============== 处理跨行问题 ===============
 
 assign i_addr_high = i_cache_core_addr[63:4];
 assign i_addr_4 = i_cache_core_addr[3:0];
@@ -1886,27 +1881,17 @@ module ysyx_210544_cache(
 
 /////////////////////////////////////////////////
 // 数据通路选择
+wire              iaddr_PERI;
+wire              iaddr_FLASH;
+wire              iaddr_MEM;
+wire              daddr_PERI;
+wire              daddr_FLASH;
+wire              daddr_MEM;
+wire              ch_icache;
+wire              ch_dcache;
+wire              ch_nocache;
 
-// 0x1000_0000 ~ 0x2FFF_FFFF, 是UART/SPI等外设
-// 0x3000_0000 ~ 0x3FFF_FFFF, 是Flash
-// 0x8000_0000 ~ 0xFFFF_FFFF, 是主存
-wire iaddr_PERI   = i_icache_req && ((i_icache_addr[31:28] == 4'h1) || (i_icache_addr[31:28] == 4'h2));
-wire iaddr_FLASH  = i_icache_req && (i_icache_addr[31:28] == 4'h3);
-wire iaddr_MEM    = i_icache_req && (i_icache_addr[31] == 1'b1);
-
-wire daddr_PERI   = i_dcache_req && ((i_dcache_addr[31:28] == 4'h1) || (i_dcache_addr[31:28] == 4'h2));
-wire daddr_FLASH  = i_dcache_req && (i_dcache_addr[31:28] == 4'h3);
-wire daddr_MEM    = i_dcache_req && (i_dcache_addr[31] == 1'b1);
-
-// 注意： FLASH可选的使用Cache或不使用Cache，Cache已做适配。
-wire ch_icache    = iaddr_MEM | iaddr_FLASH;
-wire ch_dcache    = daddr_MEM | daddr_FLASH;
-wire ch_nocache   = daddr_PERI | daddr_PERI;// | iaddr_FLASH | daddr_FLASH;
-
-
-/////////////////////////////////////////////////
 // Instruction Cache
-
 wire  [63:0]      icache_rdata;
 wire              icache_ack;
 wire              icache_axi_io_valid;
@@ -1916,47 +1901,7 @@ wire  [63:0]      icache_axi_io_addr;
 wire  [2:0]       icache_axi_io_size;
 wire  [7:0]       icache_axi_io_blks;
 
-ysyx_210544_cache_core ICache(
-  .clk                        (clk                        ),
-  .rst                        (rst                        ),
-	.i_cache_core_addr          (i_icache_addr              ),
-	.i_cache_core_wdata         (0                          ),
-	.i_cache_core_bytes         (3                          ),
-	.i_cache_core_op            (`REQ_READ                  ),
-	.i_cache_core_req           (ch_icache ? i_icache_req : 0),
-	.o_cache_core_rdata         (icache_rdata               ),
-	.o_cache_core_ack           (icache_ack                 ),
-
-
-  .i_cache_core_sync_rreq     (0                          ),
-  .o_cache_core_sync_rack     (sync_icache_rack           ),
-  .i_cache_core_sync_rpackack (0                          ),
-  .o_cache_core_sync_rpackreq (sync_icache_rpackreq       ),
-  .i_cache_core_sync_wreq     (sync_icache_wreq           ),
-  .o_cache_core_sync_wack     (sync_icache_wack           ),
-  .o_cache_core_sync_rwayid   (sync_icache_rwayid         ),
-  .o_cache_core_sync_rblkid   (sync_icache_rblkid         ),
-  .o_cache_core_sync_rinfo    (sync_icache_rinfo          ),
-  .o_cache_core_sync_rdata    (sync_icache_rdata          ),
-  .i_cache_core_sync_wwayid   (sync_icache_wwayid         ),
-  .i_cache_core_sync_wblkid   (sync_icache_wblkid         ),
-  .i_cache_core_sync_winfo    (sync_icache_winfo          ),
-  .i_cache_core_sync_wdata    (sync_icache_wdata          ),
-
-  .i_axi_io_ready             (ch_icache ? i_axi_io_ready : 0        ),
-  .i_axi_io_rdata             (ch_icache ? i_axi_io_rdata : 0        ),
-  .o_axi_io_op                (icache_axi_io_op           ),
-  .o_axi_io_valid             (icache_axi_io_valid        ),
-  .o_axi_io_wdata             (icache_axi_io_wdata        ),
-  .o_axi_io_addr              (icache_axi_io_addr         ),
-  .o_axi_io_size              (icache_axi_io_size         ),
-  .o_axi_io_blks              (icache_axi_io_blks         )
-);
-
-
-/////////////////////////////////////////////////
 // Data Cache
-
 wire [63:0]       dcache_rdata;
 wire              dcache_ack;
 wire              dcache_axi_io_valid;
@@ -1965,43 +1910,6 @@ wire  [511:0]     dcache_axi_io_wdata;
 wire  [63:0]      dcache_axi_io_addr;
 wire  [2:0]       dcache_axi_io_size;
 wire  [7:0]       dcache_axi_io_blks;
-
-ysyx_210544_cache_core DCache(
-  .clk                        (clk                        ),
-  .rst                        (rst                        ),
-	.i_cache_core_addr          (i_dcache_addr              ),
-	.i_cache_core_wdata         (i_dcache_wdata             ),
-	.i_cache_core_bytes         (i_dcache_bytes             ),
-	.i_cache_core_op            (i_dcache_op                ),
-	.i_cache_core_req           (ch_dcache ? i_dcache_req : 0),
-	.o_cache_core_rdata         (dcache_rdata               ),
-	.o_cache_core_ack           (dcache_ack                 ),
-
-  .i_cache_core_sync_rreq     (sync_dcache_rreq           ),
-  .o_cache_core_sync_rack     (sync_dcache_rack           ),
-  .i_cache_core_sync_rpackack (sync_dcache_rpackack       ),
-  .o_cache_core_sync_rpackreq (sync_dcache_rpackreq       ),
-  .i_cache_core_sync_wreq     (0                          ),
-  .o_cache_core_sync_wack     (sync_dcache_wack           ),
-  .o_cache_core_sync_rwayid   (sync_dcache_rwayid         ),
-  .o_cache_core_sync_rblkid   (sync_dcache_rblkid         ),
-  .o_cache_core_sync_rinfo    (sync_dcache_rinfo          ),
-  .o_cache_core_sync_rdata    (sync_dcache_rdata          ),
-  .i_cache_core_sync_wwayid   (0                          ),
-  .i_cache_core_sync_wblkid   (0                          ),
-  .i_cache_core_sync_winfo    (0                          ),
-  .i_cache_core_sync_wdata    (0                          ),
-
-  .i_axi_io_ready             (ch_dcache ? i_axi_io_ready : 0        ),
-  .i_axi_io_rdata             (ch_dcache ? i_axi_io_rdata : 0        ),
-  .o_axi_io_op                (dcache_axi_io_op           ),
-  .o_axi_io_valid             (dcache_axi_io_valid        ),
-  .o_axi_io_wdata             (dcache_axi_io_wdata        ),
-  .o_axi_io_addr              (dcache_axi_io_addr         ),
-  .o_axi_io_size              (dcache_axi_io_size         ),
-  .o_axi_io_blks              (dcache_axi_io_blks         )
-);
-
 
 // NoCache, access bus directly
 wire              nocache_req;
@@ -2044,6 +1952,96 @@ wire  [ 25:0]     sync_icache_winfo;
 wire  [511:0]     sync_icache_wdata;
 
 
+
+// 0x1000_0000 ~ 0x2FFF_FFFF, 是UART/SPI等外设
+// 0x3000_0000 ~ 0x3FFF_FFFF, 是Flash
+// 0x8000_0000 ~ 0xFFFF_FFFF, 是主存
+assign iaddr_PERI   = i_icache_req && ((i_icache_addr[31:28] == 4'h1) || (i_icache_addr[31:28] == 4'h2));
+assign iaddr_FLASH  = i_icache_req && (i_icache_addr[31:28] == 4'h3);
+assign iaddr_MEM    = i_icache_req && (i_icache_addr[31] == 1'b1);
+
+assign daddr_PERI   = i_dcache_req && ((i_dcache_addr[31:28] == 4'h1) || (i_dcache_addr[31:28] == 4'h2));
+assign daddr_FLASH  = i_dcache_req && (i_dcache_addr[31:28] == 4'h3);
+assign daddr_MEM    = i_dcache_req && (i_dcache_addr[31] == 1'b1);
+
+// 注意： FLASH可选的使用Cache或不使用Cache，Cache已做适配。
+assign ch_icache    = iaddr_MEM | iaddr_FLASH;
+assign ch_dcache    = daddr_MEM | daddr_FLASH;
+assign ch_nocache   = daddr_PERI | daddr_PERI;// | iaddr_FLASH | daddr_FLASH;
+
+ysyx_210544_cache_core ICache(
+  .clk                        (clk                        ),
+  .rst                        (rst                        ),
+	.i_cache_core_addr          (i_icache_addr              ),
+	.i_cache_core_wdata         (0                          ),
+	.i_cache_core_bytes         (3                          ),
+	.i_cache_core_op            (`REQ_READ                  ),
+	.i_cache_core_req           (ch_icache ? i_icache_req : 0),
+	.o_cache_core_rdata         (icache_rdata               ),
+	.o_cache_core_ack           (icache_ack                 ),
+
+
+  .i_cache_core_sync_rreq     (0                          ),
+  .o_cache_core_sync_rack     (sync_icache_rack           ),
+  .i_cache_core_sync_rpackack (0                          ),
+  .o_cache_core_sync_rpackreq (sync_icache_rpackreq       ),
+  .i_cache_core_sync_wreq     (sync_icache_wreq           ),
+  .o_cache_core_sync_wack     (sync_icache_wack           ),
+  .o_cache_core_sync_rwayid   (sync_icache_rwayid         ),
+  .o_cache_core_sync_rblkid   (sync_icache_rblkid         ),
+  .o_cache_core_sync_rinfo    (sync_icache_rinfo          ),
+  .o_cache_core_sync_rdata    (sync_icache_rdata          ),
+  .i_cache_core_sync_wwayid   (sync_icache_wwayid         ),
+  .i_cache_core_sync_wblkid   (sync_icache_wblkid         ),
+  .i_cache_core_sync_winfo    (sync_icache_winfo          ),
+  .i_cache_core_sync_wdata    (sync_icache_wdata          ),
+
+  .i_axi_io_ready             (ch_icache ? i_axi_io_ready : 0        ),
+  .i_axi_io_rdata             (ch_icache ? i_axi_io_rdata : 0        ),
+  .o_axi_io_op                (icache_axi_io_op           ),
+  .o_axi_io_valid             (icache_axi_io_valid        ),
+  .o_axi_io_wdata             (icache_axi_io_wdata        ),
+  .o_axi_io_addr              (icache_axi_io_addr         ),
+  .o_axi_io_size              (icache_axi_io_size         ),
+  .o_axi_io_blks              (icache_axi_io_blks         )
+);
+
+ysyx_210544_cache_core DCache(
+  .clk                        (clk                        ),
+  .rst                        (rst                        ),
+	.i_cache_core_addr          (i_dcache_addr              ),
+	.i_cache_core_wdata         (i_dcache_wdata             ),
+	.i_cache_core_bytes         (i_dcache_bytes             ),
+	.i_cache_core_op            (i_dcache_op                ),
+	.i_cache_core_req           (ch_dcache ? i_dcache_req : 0),
+	.o_cache_core_rdata         (dcache_rdata               ),
+	.o_cache_core_ack           (dcache_ack                 ),
+
+  .i_cache_core_sync_rreq     (sync_dcache_rreq           ),
+  .o_cache_core_sync_rack     (sync_dcache_rack           ),
+  .i_cache_core_sync_rpackack (sync_dcache_rpackack       ),
+  .o_cache_core_sync_rpackreq (sync_dcache_rpackreq       ),
+  .i_cache_core_sync_wreq     (0                          ),
+  .o_cache_core_sync_wack     (sync_dcache_wack           ),
+  .o_cache_core_sync_rwayid   (sync_dcache_rwayid         ),
+  .o_cache_core_sync_rblkid   (sync_dcache_rblkid         ),
+  .o_cache_core_sync_rinfo    (sync_dcache_rinfo          ),
+  .o_cache_core_sync_rdata    (sync_dcache_rdata          ),
+  .i_cache_core_sync_wwayid   (0                          ),
+  .i_cache_core_sync_wblkid   (0                          ),
+  .i_cache_core_sync_winfo    (0                          ),
+  .i_cache_core_sync_wdata    (0                          ),
+
+  .i_axi_io_ready             (ch_dcache ? i_axi_io_ready : 0        ),
+  .i_axi_io_rdata             (ch_dcache ? i_axi_io_rdata : 0        ),
+  .o_axi_io_op                (dcache_axi_io_op           ),
+  .o_axi_io_valid             (dcache_axi_io_valid        ),
+  .o_axi_io_wdata             (dcache_axi_io_wdata        ),
+  .o_axi_io_addr              (dcache_axi_io_addr         ),
+  .o_axi_io_size              (dcache_axi_io_size         ),
+  .o_axi_io_blks              (dcache_axi_io_blks         )
+);
+
 ysyx_210544_cache_nocache NoCache(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
@@ -2064,8 +2062,6 @@ ysyx_210544_cache_nocache NoCache(
   .o_axi_io_size              (nocache_axi_io_size        ),
   .o_axi_io_blks              (nocache_axi_io_blks        )
 );
-
-
 
 ysyx_210544_cache_sync Cache_sync(
   .clk                        (clk                        ),
@@ -2280,7 +2276,7 @@ module ysyx_210544_regfile(
   output  wire  [`BUS_64]       o_regs[0 : 31]
 );
 
-  // 32 registers
+// 32 registers
 reg   [`BUS_64]   regs[0 : 31];
 
 // register alias name
@@ -2682,7 +2678,6 @@ end
 assign handshake_done = o_bus_req & i_bus_ack;
 
 // 跳转指令处理
-
 always @(posedge clk) begin
   if (rst) begin
     ignore_next_inst <= 0;
@@ -3993,8 +3988,8 @@ reg  [63:0]                   mem_addr;
 reg  [2:0]                    mem_bytes;
 reg                           mem_ren;
 reg                           mem_wen;
-wire [63:0]                   rdata_mem;
 reg  [63:0]                   mem_wdata;
+
 
 
 assign o_mem_executed_ack = 1'b1;
@@ -4290,8 +4285,8 @@ module ysyx_210544_memU(
   input   wire  [63:0]        i_dcache_rdata
 );
 
-wire hs_dcache;
-reg wait_finish;  // 是否等待访存完毕？
+wire                          hs_dcache;
+reg                           wait_finish;  // 是否等待访存完毕？
 
 
 assign hs_dcache  = o_dcache_req & i_dcache_ack;
@@ -4443,7 +4438,6 @@ always @(posedge clk) begin
   end
 end
 
-
 endmodule
 
 // ZhengpuShi
@@ -4537,6 +4531,7 @@ reg                           tmp_i_wb_nocmt;
 reg                           tmp_i_wb_skipcmt;
 
 wire memoryed_hs;
+
 
 
 assign o_wb_memoryed_ack = 1'b1;
@@ -4964,7 +4959,6 @@ wire  [`BUS_32]               o_ex_intrNo;
 wire  [11 : 0]                o_ex_csr_addr;
 wire                          o_ex_csr_ren;
 wire                          o_ex_csr_wen;
-wire                          o_ex_csr_wen;
 wire  [`BUS_64]               o_ex_csr_wdata;
 
 // mem_stage
@@ -5026,6 +5020,7 @@ reg                           i_dcache_ack;
 reg   [63:0]                  i_dcache_rdata;
 
 
+`ifdef DIFFTEST_YSYX_210544
 
 // Special Instruction: putch a0
 // wire                          putch_wen;
@@ -5053,6 +5048,7 @@ end
 // assign io_uart_out_valid = putch_wen;
 // assign io_uart_out_ch = putch_wdata;
 
+`endif
 
 ysyx_210544_cache Cache (
   .clk                        (clk                        ),

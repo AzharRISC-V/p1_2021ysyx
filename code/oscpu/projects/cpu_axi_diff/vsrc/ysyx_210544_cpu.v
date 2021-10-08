@@ -75,7 +75,6 @@ wire  [`BUS_32]               o_ex_intrNo;
 wire  [11 : 0]                o_ex_csr_addr;
 wire                          o_ex_csr_ren;
 wire                          o_ex_csr_wen;
-wire                          o_ex_csr_wen;
 wire  [`BUS_64]               o_ex_csr_wdata;
 
 // mem_stage
@@ -137,6 +136,7 @@ reg                           i_dcache_ack;
 reg   [63:0]                  i_dcache_rdata;
 
 
+`ifdef DIFFTEST_YSYX_210544
 
 // Special Instruction: putch a0
 // wire                          putch_wen;
@@ -164,6 +164,7 @@ end
 // assign io_uart_out_valid = putch_wen;
 // assign io_uart_out_ch = putch_wdata;
 
+`endif
 
 ysyx_210544_cache Cache (
   .clk                        (clk                        ),

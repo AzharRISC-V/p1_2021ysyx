@@ -62,7 +62,6 @@ end
 assign handshake_done = o_bus_req & i_bus_ack;
 
 // 跳转指令处理
-
 always @(posedge clk) begin
   if (rst) begin
     ignore_next_inst <= 0;

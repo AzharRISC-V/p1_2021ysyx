@@ -45,7 +45,7 @@ module ysyx_210544_cache_core (
   output  wire  [7:0]         o_axi_io_blks
 );
 
-
+// =============== cache 从机端 ===============
 reg   [63 : 0]                o_cache_basic_addr;         // 存储器地址（字节为单位），64字节对齐，低6位为0。
 reg   [63 : 0]                o_cache_basic_wdata;        // 要写入的数据
 reg   [2  : 0]                o_cache_basic_bytes;        // 字节数
@@ -54,6 +54,7 @@ reg                           o_cache_basic_req;          // 请求
 wire  [63 : 0]                i_cache_basic_rdata;        // 已读出的数据
 reg                           i_cache_basic_ack;          // 应答
 
+// =============== 处理跨行问题 ===============
 wire  [59:0]                  i_addr_high;                // 输入地址的高60位
 wire  [3:0]                   i_addr_4;                   // 输入地址的低4位 (0~15)
 wire  [3:0]                   i_bytes_4;                  // 输入字节数扩展为4位
@@ -64,13 +65,11 @@ wire  [63: 0]                 addr[0:1];                  // 地址
 wire  [63: 0]                 wdata[0:1];                 // 写数据
 reg   [63: 0]                 rdata[0:1];                 // 读数据
 
-reg   index;      // 操作的序号：0,1表示两个阶段
-
-wire hs_cache;
-
+reg                           index;      // 操作的序号：0,1表示两个阶段
+wire                          hs_cache;
 
 
-// =============== cache 从机端 ===============
+
 assign o_cache_basic_op = i_cache_core_op;
 
 ysyx_210544_cache_basic Cache_basic(
@@ -108,9 +107,6 @@ ysyx_210544_cache_basic Cache_basic(
   .o_axi_io_size              (o_axi_io_size              ),
   .o_axi_io_blks              (o_axi_io_blks              )
 );
-
-
-// =============== 处理跨行问题 ===============
 
 assign i_addr_high = i_cache_core_addr[63:4];
 assign i_addr_4 = i_cache_core_addr[3:0];

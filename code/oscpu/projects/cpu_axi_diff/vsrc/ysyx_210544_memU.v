@@ -31,8 +31,8 @@ module ysyx_210544_memU(
   input   wire  [63:0]        i_dcache_rdata
 );
 
-wire hs_dcache;
-reg wait_finish;  // 是否等待访存完毕？
+wire                          hs_dcache;
+reg                           wait_finish;  // 是否等待访存完毕？
 
 
 assign hs_dcache  = o_dcache_req & i_dcache_ack;

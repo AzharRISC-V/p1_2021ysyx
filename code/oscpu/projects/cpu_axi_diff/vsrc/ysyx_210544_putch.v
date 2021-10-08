@@ -13,8 +13,8 @@ module ysyx_210544_putch(
 );
 
 parameter SIZE = 255;
-reg [7:0]   cnt;
-reg [7:0]   str [0 : SIZE - 1];
+reg [7:0]                     cnt;
+reg [7:0]                     str [0 : SIZE - 1];
 
 always @(posedge clk) begin
   if (rst) begin

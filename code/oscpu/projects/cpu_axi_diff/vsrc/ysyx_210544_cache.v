@@ -42,27 +42,17 @@ module ysyx_210544_cache(
 
 /////////////////////////////////////////////////
 // 数据通路选择
+wire              iaddr_PERI;
+wire              iaddr_FLASH;
+wire              iaddr_MEM;
+wire              daddr_PERI;
+wire              daddr_FLASH;
+wire              daddr_MEM;
+wire              ch_icache;
+wire              ch_dcache;
+wire              ch_nocache;
 
-// 0x1000_0000 ~ 0x2FFF_FFFF, 是UART/SPI等外设
-// 0x3000_0000 ~ 0x3FFF_FFFF, 是Flash
-// 0x8000_0000 ~ 0xFFFF_FFFF, 是主存
-wire iaddr_PERI   = i_icache_req && ((i_icache_addr[31:28] == 4'h1) || (i_icache_addr[31:28] == 4'h2));
-wire iaddr_FLASH  = i_icache_req && (i_icache_addr[31:28] == 4'h3);
-wire iaddr_MEM    = i_icache_req && (i_icache_addr[31] == 1'b1);
-
-wire daddr_PERI   = i_dcache_req && ((i_dcache_addr[31:28] == 4'h1) || (i_dcache_addr[31:28] == 4'h2));
-wire daddr_FLASH  = i_dcache_req && (i_dcache_addr[31:28] == 4'h3);
-wire daddr_MEM    = i_dcache_req && (i_dcache_addr[31] == 1'b1);
-
-// 注意： FLASH可选的使用Cache或不使用Cache，Cache已做适配。
-wire ch_icache    = iaddr_MEM | iaddr_FLASH;
-wire ch_dcache    = daddr_MEM | daddr_FLASH;
-wire ch_nocache   = daddr_PERI | daddr_PERI;// | iaddr_FLASH | daddr_FLASH;
-
-
-/////////////////////////////////////////////////
 // Instruction Cache
-
 wire  [63:0]      icache_rdata;
 wire              icache_ack;
 wire              icache_axi_io_valid;
@@ -72,47 +62,7 @@ wire  [63:0]      icache_axi_io_addr;
 wire  [2:0]       icache_axi_io_size;
 wire  [7:0]       icache_axi_io_blks;
 
-ysyx_210544_cache_core ICache(
-  .clk                        (clk                        ),
-  .rst                        (rst                        ),
-	.i_cache_core_addr          (i_icache_addr              ),
-	.i_cache_core_wdata         (0                          ),
-	.i_cache_core_bytes         (3                          ),
-	.i_cache_core_op            (`REQ_READ                  ),
-	.i_cache_core_req           (ch_icache ? i_icache_req : 0),
-	.o_cache_core_rdata         (icache_rdata               ),
-	.o_cache_core_ack           (icache_ack                 ),
-
-
-  .i_cache_core_sync_rreq     (0                          ),
-  .o_cache_core_sync_rack     (sync_icache_rack           ),
-  .i_cache_core_sync_rpackack (0                          ),
-  .o_cache_core_sync_rpackreq (sync_icache_rpackreq       ),
-  .i_cache_core_sync_wreq     (sync_icache_wreq           ),
-  .o_cache_core_sync_wack     (sync_icache_wack           ),
-  .o_cache_core_sync_rwayid   (sync_icache_rwayid         ),
-  .o_cache_core_sync_rblkid   (sync_icache_rblkid         ),
-  .o_cache_core_sync_rinfo    (sync_icache_rinfo          ),
-  .o_cache_core_sync_rdata    (sync_icache_rdata          ),
-  .i_cache_core_sync_wwayid   (sync_icache_wwayid         ),
-  .i_cache_core_sync_wblkid   (sync_icache_wblkid         ),
-  .i_cache_core_sync_winfo    (sync_icache_winfo          ),
-  .i_cache_core_sync_wdata    (sync_icache_wdata          ),
-
-  .i_axi_io_ready             (ch_icache ? i_axi_io_ready : 0        ),
-  .i_axi_io_rdata             (ch_icache ? i_axi_io_rdata : 0        ),
-  .o_axi_io_op                (icache_axi_io_op           ),
-  .o_axi_io_valid             (icache_axi_io_valid        ),
-  .o_axi_io_wdata             (icache_axi_io_wdata        ),
-  .o_axi_io_addr              (icache_axi_io_addr         ),
-  .o_axi_io_size              (icache_axi_io_size         ),
-  .o_axi_io_blks              (icache_axi_io_blks         )
-);
-
-
-/////////////////////////////////////////////////
 // Data Cache
-
 wire [63:0]       dcache_rdata;
 wire              dcache_ack;
 wire              dcache_axi_io_valid;
@@ -121,43 +71,6 @@ wire  [511:0]     dcache_axi_io_wdata;
 wire  [63:0]      dcache_axi_io_addr;
 wire  [2:0]       dcache_axi_io_size;
 wire  [7:0]       dcache_axi_io_blks;
-
-ysyx_210544_cache_core DCache(
-  .clk                        (clk                        ),
-  .rst                        (rst                        ),
-	.i_cache_core_addr          (i_dcache_addr              ),
-	.i_cache_core_wdata         (i_dcache_wdata             ),
-	.i_cache_core_bytes         (i_dcache_bytes             ),
-	.i_cache_core_op            (i_dcache_op                ),
-	.i_cache_core_req           (ch_dcache ? i_dcache_req : 0),
-	.o_cache_core_rdata         (dcache_rdata               ),
-	.o_cache_core_ack           (dcache_ack                 ),
-
-  .i_cache_core_sync_rreq     (sync_dcache_rreq           ),
-  .o_cache_core_sync_rack     (sync_dcache_rack           ),
-  .i_cache_core_sync_rpackack (sync_dcache_rpackack       ),
-  .o_cache_core_sync_rpackreq (sync_dcache_rpackreq       ),
-  .i_cache_core_sync_wreq     (0                          ),
-  .o_cache_core_sync_wack     (sync_dcache_wack           ),
-  .o_cache_core_sync_rwayid   (sync_dcache_rwayid         ),
-  .o_cache_core_sync_rblkid   (sync_dcache_rblkid         ),
-  .o_cache_core_sync_rinfo    (sync_dcache_rinfo          ),
-  .o_cache_core_sync_rdata    (sync_dcache_rdata          ),
-  .i_cache_core_sync_wwayid   (0                          ),
-  .i_cache_core_sync_wblkid   (0                          ),
-  .i_cache_core_sync_winfo    (0                          ),
-  .i_cache_core_sync_wdata    (0                          ),
-
-  .i_axi_io_ready             (ch_dcache ? i_axi_io_ready : 0        ),
-  .i_axi_io_rdata             (ch_dcache ? i_axi_io_rdata : 0        ),
-  .o_axi_io_op                (dcache_axi_io_op           ),
-  .o_axi_io_valid             (dcache_axi_io_valid        ),
-  .o_axi_io_wdata             (dcache_axi_io_wdata        ),
-  .o_axi_io_addr              (dcache_axi_io_addr         ),
-  .o_axi_io_size              (dcache_axi_io_size         ),
-  .o_axi_io_blks              (dcache_axi_io_blks         )
-);
-
 
 // NoCache, access bus directly
 wire              nocache_req;
@@ -200,6 +113,96 @@ wire  [ 25:0]     sync_icache_winfo;
 wire  [511:0]     sync_icache_wdata;
 
 
+
+// 0x1000_0000 ~ 0x2FFF_FFFF, 是UART/SPI等外设
+// 0x3000_0000 ~ 0x3FFF_FFFF, 是Flash
+// 0x8000_0000 ~ 0xFFFF_FFFF, 是主存
+assign iaddr_PERI   = i_icache_req && ((i_icache_addr[31:28] == 4'h1) || (i_icache_addr[31:28] == 4'h2));
+assign iaddr_FLASH  = i_icache_req && (i_icache_addr[31:28] == 4'h3);
+assign iaddr_MEM    = i_icache_req && (i_icache_addr[31] == 1'b1);
+
+assign daddr_PERI   = i_dcache_req && ((i_dcache_addr[31:28] == 4'h1) || (i_dcache_addr[31:28] == 4'h2));
+assign daddr_FLASH  = i_dcache_req && (i_dcache_addr[31:28] == 4'h3);
+assign daddr_MEM    = i_dcache_req && (i_dcache_addr[31] == 1'b1);
+
+// 注意： FLASH可选的使用Cache或不使用Cache，Cache已做适配。
+assign ch_icache    = iaddr_MEM | iaddr_FLASH;
+assign ch_dcache    = daddr_MEM | daddr_FLASH;
+assign ch_nocache   = daddr_PERI | daddr_PERI;// | iaddr_FLASH | daddr_FLASH;
+
+ysyx_210544_cache_core ICache(
+  .clk                        (clk                        ),
+  .rst                        (rst                        ),
+	.i_cache_core_addr          (i_icache_addr              ),
+	.i_cache_core_wdata         (0                          ),
+	.i_cache_core_bytes         (3                          ),
+	.i_cache_core_op            (`REQ_READ                  ),
+	.i_cache_core_req           (ch_icache ? i_icache_req : 0),
+	.o_cache_core_rdata         (icache_rdata               ),
+	.o_cache_core_ack           (icache_ack                 ),
+
+
+  .i_cache_core_sync_rreq     (0                          ),
+  .o_cache_core_sync_rack     (sync_icache_rack           ),
+  .i_cache_core_sync_rpackack (0                          ),
+  .o_cache_core_sync_rpackreq (sync_icache_rpackreq       ),
+  .i_cache_core_sync_wreq     (sync_icache_wreq           ),
+  .o_cache_core_sync_wack     (sync_icache_wack           ),
+  .o_cache_core_sync_rwayid   (sync_icache_rwayid         ),
+  .o_cache_core_sync_rblkid   (sync_icache_rblkid         ),
+  .o_cache_core_sync_rinfo    (sync_icache_rinfo          ),
+  .o_cache_core_sync_rdata    (sync_icache_rdata          ),
+  .i_cache_core_sync_wwayid   (sync_icache_wwayid         ),
+  .i_cache_core_sync_wblkid   (sync_icache_wblkid         ),
+  .i_cache_core_sync_winfo    (sync_icache_winfo          ),
+  .i_cache_core_sync_wdata    (sync_icache_wdata          ),
+
+  .i_axi_io_ready             (ch_icache ? i_axi_io_ready : 0        ),
+  .i_axi_io_rdata             (ch_icache ? i_axi_io_rdata : 0        ),
+  .o_axi_io_op                (icache_axi_io_op           ),
+  .o_axi_io_valid             (icache_axi_io_valid        ),
+  .o_axi_io_wdata             (icache_axi_io_wdata        ),
+  .o_axi_io_addr              (icache_axi_io_addr         ),
+  .o_axi_io_size              (icache_axi_io_size         ),
+  .o_axi_io_blks              (icache_axi_io_blks         )
+);
+
+ysyx_210544_cache_core DCache(
+  .clk                        (clk                        ),
+  .rst                        (rst                        ),
+	.i_cache_core_addr          (i_dcache_addr              ),
+	.i_cache_core_wdata         (i_dcache_wdata             ),
+	.i_cache_core_bytes         (i_dcache_bytes             ),
+	.i_cache_core_op            (i_dcache_op                ),
+	.i_cache_core_req           (ch_dcache ? i_dcache_req : 0),
+	.o_cache_core_rdata         (dcache_rdata               ),
+	.o_cache_core_ack           (dcache_ack                 ),
+
+  .i_cache_core_sync_rreq     (sync_dcache_rreq           ),
+  .o_cache_core_sync_rack     (sync_dcache_rack           ),
+  .i_cache_core_sync_rpackack (sync_dcache_rpackack       ),
+  .o_cache_core_sync_rpackreq (sync_dcache_rpackreq       ),
+  .i_cache_core_sync_wreq     (0                          ),
+  .o_cache_core_sync_wack     (sync_dcache_wack           ),
+  .o_cache_core_sync_rwayid   (sync_dcache_rwayid         ),
+  .o_cache_core_sync_rblkid   (sync_dcache_rblkid         ),
+  .o_cache_core_sync_rinfo    (sync_dcache_rinfo          ),
+  .o_cache_core_sync_rdata    (sync_dcache_rdata          ),
+  .i_cache_core_sync_wwayid   (0                          ),
+  .i_cache_core_sync_wblkid   (0                          ),
+  .i_cache_core_sync_winfo    (0                          ),
+  .i_cache_core_sync_wdata    (0                          ),
+
+  .i_axi_io_ready             (ch_dcache ? i_axi_io_ready : 0        ),
+  .i_axi_io_rdata             (ch_dcache ? i_axi_io_rdata : 0        ),
+  .o_axi_io_op                (dcache_axi_io_op           ),
+  .o_axi_io_valid             (dcache_axi_io_valid        ),
+  .o_axi_io_wdata             (dcache_axi_io_wdata        ),
+  .o_axi_io_addr              (dcache_axi_io_addr         ),
+  .o_axi_io_size              (dcache_axi_io_size         ),
+  .o_axi_io_blks              (dcache_axi_io_blks         )
+);
+
 ysyx_210544_cache_nocache NoCache(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
@@ -220,8 +223,6 @@ ysyx_210544_cache_nocache NoCache(
   .o_axi_io_size              (nocache_axi_io_size        ),
   .o_axi_io_blks              (nocache_axi_io_blks        )
 );
-
-
 
 ysyx_210544_cache_sync Cache_sync(
   .clk                        (clk                        ),

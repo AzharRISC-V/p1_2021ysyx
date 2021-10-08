@@ -83,8 +83,8 @@ reg  [63:0]                   mem_addr;
 reg  [2:0]                    mem_bytes;
 reg                           mem_ren;
 reg                           mem_wen;
-wire [63:0]                   rdata_mem;
 reg  [63:0]                   mem_wdata;
+
 
 
 assign o_mem_executed_ack = 1'b1;
