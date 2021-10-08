@@ -21,11 +21,11 @@ module ysyx_210544_wb_stage(
   input   wire                i_wb_skipcmt,
   output  wire  [`BUS_64]     o_wb_pc,
   output  wire  [`BUS_32]     o_wb_inst,
-  output  reg   [`BUS_RIDX]   o_wb_rd,
-  output  reg                 o_wb_rd_wen,
+  output  wire  [`BUS_RIDX]   o_wb_rd,
+  output  wire                o_wb_rd_wen,
   output  wire  [`BUS_64]     o_wb_rd_wdata,
-  output  reg                 o_wb_nocmt,
-  output  reg                 o_wb_skipcmt,
+  output  wire                o_wb_nocmt,
+  output  wire                o_wb_skipcmt,
   input   wire  [`BUS_32]     i_wb_intrNo,
   output  reg   [`BUS_32]     o_wb_intrNo
 );

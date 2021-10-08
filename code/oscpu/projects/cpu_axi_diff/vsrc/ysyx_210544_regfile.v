@@ -93,7 +93,7 @@ assign x31_t6 = regs[31];
 
 // i_rd 写入
 always @(posedge clk) begin
-  if ( rst == 1'b1 ) begin
+  if (rst) begin
     regs[ 0] <= `ZERO_WORD;
     regs[ 1] <= `ZERO_WORD;
     regs[ 2] <= `ZERO_WORD;
@@ -126,8 +126,9 @@ always @(posedge clk) begin
     regs[29] <= `ZERO_WORD;
     regs[30] <= `ZERO_WORD;
     regs[31] <= `ZERO_WORD;
-  end else begin
-    // if ((w_ena == 1'b1) && (w_addr != 5'h00))	
+  end
+  else begin
+    // if ((w_ena) && (w_addr != 5'h00))	
     // 	regs[w_addr] <= w_data;
       
     if (i_rd_wen && (i_rd != 5'h00))
@@ -137,9 +138,9 @@ end
 
 // i_rs1 读取
 always @(*) begin
-  if (rst == 1'b1)
+  if (rst)
     o_rs1_data = `ZERO_WORD;
-  else if (i_rs1_ren == 1'b1)
+  else if (i_rs1_ren)
     o_rs1_data = regs[i_rs1];
   else
     o_rs1_data = `ZERO_WORD;
@@ -147,9 +148,9 @@ end
 
 // i_rs2 读取
 always @(*) begin
-  if (rst == 1'b1)
+  if (rst)
     o_rs2_data = `ZERO_WORD;
-  else if (i_rs2_ren == 1'b1)
+  else if (i_rs2_ren)
     o_rs2_data = regs[i_rs2];
   else
     o_rs2_data = `ZERO_WORD;
@@ -160,7 +161,7 @@ genvar i;
 generate
   for (i = 0; i < 32; i = i + 1) 
   begin: O_REGS_GEN
-    assign o_regs[i] = (i_rd_wen & i_rd == i & i != 0) ? i_rd_data : regs[i];
+    assign o_regs[i] = ((i_rd_wen) && (i_rd == i) && (i != 0)) ? i_rd_data : regs[i];
   end
 endgenerate
 

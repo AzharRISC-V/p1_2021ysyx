@@ -20,7 +20,7 @@ module ysyx_210544_mem_mmio(
 
 // rtc设备
 wire  [`BUS_64]               rtc_rdata;
-reg   [`BUS_64]               i_clint_rdata;
+wire  [`BUS_64]               i_clint_rdata;
 
 
 

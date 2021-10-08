@@ -79,7 +79,7 @@ reg                           tmp_ch_cachesync;
 reg                           tmp_ch_mem;
 reg                           tmp_ch_mmio;
 
-reg  [63:0]                   mem_addr;
+wire [63:0]                   mem_addr;
 reg  [2:0]                    mem_bytes;
 reg                           mem_ren;
 reg                           mem_wen;
@@ -195,7 +195,7 @@ assign o_mem_skipcmt      = tmp_i_mem_skipcmt | tmp_ch_mmio;
 
 // ren, only valid at one pulse
 always @(*) begin
-  if ( rst == 1'b1) begin
+  if (rst) begin
     mem_ren = 0;
   end
   else begin
@@ -214,7 +214,7 @@ end
 
 // wen, only valid at one pulse
 always @(*) begin
-  if ( rst == 1'b1) begin
+  if (rst) begin
     mem_wen = 0;
   end
   else begin
@@ -233,7 +233,7 @@ assign mem_addr = i_mem_op1 + i_mem_op3;
 
 // bytes, only valid at one pulse
 always @(*) begin
-  if ( rst == 1'b1) begin
+  if (rst) begin
     mem_bytes = 0;
   end
   else begin
@@ -256,7 +256,7 @@ end
 
 // wdata, only valid at one pulse
 always @(*) begin
-  if ( rst == 1'b1) begin
+  if (rst) begin
     mem_wdata = 0;
   end
   else begin
@@ -272,7 +272,7 @@ end
 
 // rdata, valid at several pulses
 always @(*) begin
-  if ( rst == 1'b1) begin
+  if (rst) begin
     o_mem_rd_wdata = 0;
   end
   else begin

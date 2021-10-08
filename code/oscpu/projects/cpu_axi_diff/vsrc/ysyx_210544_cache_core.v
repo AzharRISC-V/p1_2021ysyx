@@ -46,9 +46,9 @@ module ysyx_210544_cache_core (
 );
 
 // =============== cache 从机端 ===============
-reg   [63 : 0]                o_cache_basic_addr;         // 存储器地址（字节为单位），64字节对齐，低6位为0。
-reg   [63 : 0]                o_cache_basic_wdata;        // 要写入的数据
-reg   [2  : 0]                o_cache_basic_bytes;        // 字节数
+wire  [63 : 0]                o_cache_basic_addr;         // 存储器地址（字节为单位），64字节对齐，低6位为0。
+wire  [63 : 0]                o_cache_basic_wdata;        // 要写入的数据
+wire  [2  : 0]                o_cache_basic_bytes;        // 字节数
 wire                          o_cache_basic_op;           // 操作类型：0读取，1写入
 reg                           o_cache_basic_req;          // 请求
 wire  [63 : 0]                i_cache_basic_rdata;        // 已读出的数据

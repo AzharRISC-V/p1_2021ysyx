@@ -24,7 +24,6 @@ module ysyx_210544_cmt_stage(
 
 wire writebacked_hs;
 wire i_cmtvalid;
-reg [63:0] cnt;
 
 
 
@@ -47,6 +46,9 @@ ysyx_210544_cmtU CmtU(
   .i_intrNo                   (i_cmt_intrNo               )
 );
 
+`ifdef DIFFTEST_YSYX_210544
+
+reg [63:0] cnt;
 always @(posedge clk) begin
   if (rst) begin
     cnt <= 1;
@@ -79,5 +81,7 @@ end
 wire _unused_ok = &{1'b0,
   cnt,
   1'b0};
+
+`endif
 
 endmodule

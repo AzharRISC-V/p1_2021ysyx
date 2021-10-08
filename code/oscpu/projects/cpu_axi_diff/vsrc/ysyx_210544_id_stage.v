@@ -18,7 +18,7 @@ module ysyx_210544_id_stage(
   input   wire                i_id_nocmt,
   output  wire  [`BUS_64]     o_id_pc,
   output  wire  [`BUS_32]     o_id_inst,
-  output  reg                 o_id_rs1_ren,
+  output  wire                o_id_rs1_ren,
   output  wire  [`BUS_RIDX]   o_id_rs1,
   output  wire                o_id_rs2_ren,
   output  wire  [`BUS_RIDX]   o_id_rs2,

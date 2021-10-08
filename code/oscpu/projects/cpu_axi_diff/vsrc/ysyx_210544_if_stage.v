@@ -9,7 +9,7 @@ module ysyx_210544_if_stage(
   input   wire                clk,
   input   wire                rst,
   input                       i_if_writebacked_req,
-  output  reg                 o_if_fetched_req,
+  output  wire                o_if_fetched_req,
 
   ///////////////////////////////////////////////
   // AXI interface for Fetch
@@ -21,8 +21,8 @@ module ysyx_210544_if_stage(
   ///////////////////////////////////////////////
   input   wire                i_if_pc_jmp,
   input   wire  [`BUS_64]     i_if_pc_jmpaddr,
-  output  reg   [`BUS_64]     o_if_pc,
-  output  reg   [`BUS_32]     o_if_inst,
+  output  wire  [`BUS_64]     o_if_pc,
+  output  wire  [`BUS_32]     o_if_inst,
   output                      o_if_nocmt
 );
 

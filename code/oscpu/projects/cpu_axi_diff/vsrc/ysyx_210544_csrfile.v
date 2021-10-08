@@ -54,10 +54,10 @@ end
 
 // csr读取
 always @(*) begin
-  if (rst == 1'b1) begin
+  if (rst) begin
     o_csr_rdata   = 0;
   end
-  else if (i_csr_ren == 1'b1) begin
+  else if (i_csr_ren) begin
     o_csr_rdata = csrs[csr_idx];
   end
   else begin
@@ -69,7 +69,7 @@ assign mstatus_sd = (i_csr_wdata[14:13] == 2'b11) | (i_csr_wdata[16:15] == 2'b11
 
 // csr写入
 always @(posedge clk) begin
-  if (rst == 1'b1) begin
+  if (rst) begin
     csrs[`CSR_IDX_NONE]     <= 0;
     csrs[`CSR_IDX_MCYCLE]   <= 0;
     csrs[`CSR_IDX_MSTATUS]  <= 64'h1800;// 64'h1808;

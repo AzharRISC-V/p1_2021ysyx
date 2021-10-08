@@ -100,7 +100,7 @@ wire                          o_wb_skipcmt;
 wire  [`BUS_32]               o_wb_intrNo;
 // wb_stage -> regfile
 wire  [`BUS_RIDX]             o_wb_rd;
-reg                           o_wb_rd_wen;
+wire                          o_wb_rd_wen;
 wire  [`BUS_64]               o_wb_rd_wdata;
 
 // regfile
@@ -124,16 +124,16 @@ wire                          o_clint_mtime_overflow;
 // cache
 wire                          o_icache_req;
 wire  [63:0]                  o_icache_addr;
-reg                           i_icache_ack;
-reg   [31:0]                  i_icache_rdata;
+wire                          i_icache_ack;
+wire  [31:0]                  i_icache_rdata;
 
 wire                          o_dcache_req;
 wire  [63:0]                  o_dcache_addr;
 wire                          o_dcache_op;
 wire  [2 :0]                  o_dcache_bytes;
 wire  [63:0]                  o_dcache_wdata;
-reg                           i_dcache_ack;
-reg   [63:0]                  i_dcache_rdata;
+wire                          i_dcache_ack;
+wire  [63:0]                  i_dcache_rdata;
 
 
 `ifdef DIFFTEST_YSYX_210544

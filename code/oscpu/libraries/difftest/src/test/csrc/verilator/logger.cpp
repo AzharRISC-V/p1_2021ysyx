@@ -21,7 +21,7 @@ void init_logger(bool dump) {
     } else {
         printf("Open database successfully\n");
     }
-    char* sql =  "CREATE TABLE TL_LOG("  \
+    char const * sql =  "CREATE TABLE TL_LOG("  \
                  "ID                INTEGER     PRIMARY KEY AUTOINCREMENT," \
                  "NAME              TEXT    NOT NULL," \
                  "CHANNEL           INT     NOT NULL," \

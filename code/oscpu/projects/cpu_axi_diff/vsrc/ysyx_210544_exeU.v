@@ -12,14 +12,14 @@ module ysyx_210544_exeU(
   input   wire  [`BUS_64]     i_op2,
   input   wire  [`BUS_64]     i_op3,
   input   wire  [`BUS_64]     i_csr_rdata,
-  output  reg   [11 : 0]      o_csr_addr,
-  output  reg                 o_csr_ren,
-  output  reg                 o_csr_wen,
+  output  wire  [11 : 0]      o_csr_addr,
+  output  wire                o_csr_ren,
+  output  wire                o_csr_wen,
   output  reg   [`BUS_64]     o_csr_wdata,
   output  reg                 o_pc_jmp,
   output  reg   [`BUS_64]     o_pc_jmpaddr,
   output  wire  [`BUS_64]     o_rd_wdata,
-  output  reg                 o_exeU_skip_cmt    // 这里也会发现需要跳过提交的指令，比如 csr mcycle
+  output  wire                o_exeU_skip_cmt    // 这里也会发现需要跳过提交的指令，比如 csr mcycle
 );
 
 wire i_disable;

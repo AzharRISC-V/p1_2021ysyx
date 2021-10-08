@@ -34,7 +34,7 @@ reg   [`BUS_64]               cycleCnt;
 reg   [`BUS_64]               instrCnt;
 reg   [`BUS_64]               regs_diff [0 : 31];
 
-reg   [`BUS_64] instrCnt_inc;
+wire  [`BUS_64] instrCnt_inc;
 wire  [`BUS_64] sstatus;
 
 

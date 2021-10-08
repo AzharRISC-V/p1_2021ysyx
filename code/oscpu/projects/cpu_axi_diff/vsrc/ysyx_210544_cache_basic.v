@@ -339,6 +339,8 @@ generate
       if (rst) begin
         chip_data_cen[w] <= !CHIP_DATA_CEN;
         chip_data_wen[w] <= !CHIP_DATA_WEN;
+        chip_data_addr[w] <= 0;
+        chip_data_wdata[w] <= 0;
       end
     end
   end
