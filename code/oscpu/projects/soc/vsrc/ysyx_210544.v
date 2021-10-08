@@ -1,6 +1,6 @@
 /* verilator lint_off DECLFILENAME */
 
-// 2021.10.08 15:31
+// 2021.10.08 21:16
 // ZhengpuShi
 
 // Definitions
@@ -435,7 +435,7 @@ assign rw_ready_nxt = trans_done;
 assign rw_ready_en      = trans_done | rw_ready;
 always @(posedge clock) begin
     if (reset) begin
-        rw_ready <= 0;
+        rw_ready <= 1'b0;
     end
     else if (rw_ready_en) begin
         rw_ready <= rw_ready_nxt;
@@ -447,7 +447,7 @@ assign rw_resp_nxt = w_trans ? axi_b_resp_i : axi_r_resp_i;
 assign resp_en = trans_done;
 always @(posedge clock) begin
     if (reset) begin
-        rw_resp <= 0;
+        rw_resp <= 2'b0;
     end
     else if (resp_en) begin
         rw_resp <= rw_resp_nxt;
@@ -471,18 +471,18 @@ assign axi_aw_burst_o   = `AXI_BURST_TYPE_INCR;
 // 由于 w_valid 使能之时需要同时送出 wdata，所以改用时序逻辑
 always @(posedge clock) begin
     if (reset) begin
-        axi_w_valid_o <= 0;
-        axi_w_data_o <= 0;
+        axi_w_valid_o <= 1'b0;
+        axi_w_data_o <= 64'd0;
     end
     else begin
     if (w_state_write) begin
         if (!axi_w_valid_o) begin
         axi_w_data_o  <= user_wdata_i[63:0] << axi_addr_offset_bits;
-        axi_w_valid_o <= 1;
+        axi_w_valid_o <= 1'b1;
         end
     end
     else if (w_state_resp) begin// (w_state_resp) begin
-        axi_w_valid_o <= 0;
+        axi_w_valid_o <= 1'b0;
     end
     end
 end
@@ -493,7 +493,7 @@ assign axi_w_last_o     = w_hs & (len == axi_len);
 
 always @(*) begin
     if (reset) begin
-    axi_w_strb_orig = 0;
+    axi_w_strb_orig = 8'd0;
     end
     else begin
     case (user_size_i)
@@ -507,7 +507,7 @@ always @(*) begin
 end
 
 assign axi_addr_offset_bytes  = user_addr_i[2:0];
-assign axi_addr_offset_bits   = {3'b0, axi_addr_offset_bytes} << 3;
+assign axi_addr_offset_bits   = {3'b0, axi_addr_offset_bytes} << 2'd3;
 
 // 移位生成最终的 w_strb。wdata 和 wstrb 都需要移位
 // assign axi_w_strb_o     = 8'b1111_1111;     // 每个bit代表一个字节是否要写入
@@ -559,7 +559,7 @@ assign mask_rdata  = (({ 64{size_b}} & {{64- 8{1'b0}}, 8'hff})
                             );
 
 
-assign aligned_offset    = {3'b0, user_addr_i[2:0]} << 3;
+assign aligned_offset    = {3'b0, user_addr_i[2:0]} << 2'd3;
 
 assign axi_r_data_masked_unaligned = (axi_r_data_i >> aligned_offset) & mask_rdata;
 
@@ -568,7 +568,7 @@ generate
     begin: USER_RDATA_O_GEN
         always @(posedge clock) begin
             if (reset) begin
-                user_rdata_o <= 0;
+                user_rdata_o <= 512'd0;
             end
             else if (r_hs) begin
                 if (len == i) begin
@@ -639,7 +639,7 @@ assign hs_ok = o_axi_io_valid & i_axi_io_ready;
 assign o_axi_io_size = is_flash ? `SIZE_W : `SIZE_D;
 
 // 块数：0~7表示1~8块
-assign o_axi_io_blks = is_flash ? 0 : 7;
+assign o_axi_io_blks = is_flash ? 8'd0 : 8'd7;
 
 // 操作类型：0:read, 1:write
 assign o_axi_io_op = i_cache_axi_op;
@@ -652,18 +652,18 @@ assign axi_start    = i_cache_axi_req & !cache_req_his0;
 // 控制传输次数，
 // 如果是主存，  需要 1次AXI传输得512bit；
 // 如果是Flash，需要16次AXI传输得到512bit，每次传输32bit（64bit是否支持？？）；
-assign offset_bits = {5'd0, trans_cnt} << 5;
-assign offset_bits_write = {5'd0, trans_cnt_write} << 5;
+assign offset_bits = {5'd0, trans_cnt} << 3'd5;
+assign offset_bits_write = {5'd0, trans_cnt_write} << 3'd5;
 
 // 控制传输
 always @( posedge clk ) begin
   if (rst) begin
-    o_cache_axi_ack         <= 0;
-    o_axi_io_valid          <= 0;
-    o_axi_io_addr           <= 0;
-    o_axi_io_wdata          <= 0;
-    cache_req_his0          <= 0;
-    trans_cnt               <= 0;
+    o_cache_axi_ack         <= 1'd0;
+    o_axi_io_valid          <= 1'd0;
+    o_axi_io_addr           <= 64'd0;
+    o_axi_io_wdata          <= 512'd0;
+    cache_req_his0          <= 1'd0;
+    trans_cnt               <= 4'd0;
   end
   else begin
     // 追踪开始信号
@@ -673,23 +673,23 @@ always @( posedge clk ) begin
     if (hs_ok) begin
       if (is_flash) begin
           o_cache_axi_rdata[offset_bits +:32] <= i_axi_io_rdata[0+:32]; // 保存数据
-        if (trans_cnt < 15) begin
+        if (trans_cnt < 4'd15) begin
           o_axi_io_wdata    <= {480'd0, i_cache_axi_wdata[offset_bits_write +:32]}; // 准备数据
-          o_axi_io_addr <= o_axi_io_addr + 4;     // 地址递增
-          trans_cnt <= trans_cnt + 1;             // 次数递增
-          trans_cnt_write <= trans_cnt_write + 1;
+          o_axi_io_addr <= o_axi_io_addr + 64'd4;     // 地址递增
+          trans_cnt <= trans_cnt + 4'd1;             // 次数递增
+          trans_cnt_write <= trans_cnt_write + 4'd1;
         end
         else begin
-          o_cache_axi_ack   <= 1;   // 完成
-          o_axi_io_valid    <= 0;   // 关闭axi请求
-          trans_cnt <= 0;   // 清零计数，准备下次继续
-          trans_cnt_write <= 1; // 初始为1，方便计算偏移量
+          o_cache_axi_ack   <= 1'd1;   // 完成
+          o_axi_io_valid    <= 1'd0;   // 关闭axi请求
+          trans_cnt <= 4'd0;   // 清零计数，准备下次继续
+          trans_cnt_write <= 4'd1; // 初始为1，方便计算偏移量
         end
       end
       else begin
         o_cache_axi_rdata <= i_axi_io_rdata;    // 保存数据
-        o_cache_axi_ack   <= 1;   // 完成
-        o_axi_io_valid    <= 0;   // 关闭axi请求
+        o_cache_axi_ack   <= 1'd1;   // 完成
+        o_axi_io_valid    <= 1'd0;   // 关闭axi请求
       end
     end
     else begin
@@ -706,10 +706,10 @@ always @( posedge clk ) begin
             o_axi_io_wdata    <= i_cache_axi_wdata;         // 准备数据
           end
         end
-        o_axi_io_valid <= 1;
+        o_axi_io_valid <= 1'd1;
       end
       // 清除信号   
-      o_cache_axi_ack    <= 0;
+      o_cache_axi_ack <= 1'd0;
     end
   end
 end
@@ -812,9 +812,9 @@ module ysyx_210544_cache_basic (
 );
 
 // 根据实际硬件模型设置有效电平
-parameter bit CHIP_DATA_CEN = 0;        // cen有效的电平
-parameter bit CHIP_DATA_WEN = 0;        // wen有效的电平
-parameter bit CHIP_DATA_WMASK_EN = 0;   // 写掩码有效的电平
+parameter CHIP_DATA_CEN = 1'b0;        // cen有效的电平
+parameter CHIP_DATA_WEN = 1'b0;        // wen有效的电平
+parameter CHIP_DATA_WMASK_EN = 1'b0;   // 写掩码有效的电平
 
 // =============== 状态机 ===============
 //  英文名称          中文名称               含义
@@ -943,7 +943,7 @@ assign o_cache_basic_sync_rblkid    = sync_rblkid;
 assign o_cache_basic_sync_rinfo     = sync_rinfo;
 assign o_cache_basic_sync_rdata     = sync_rdata;
 
-assign sync_rlast                   = !sync_rreq ? 0 : (sync_rwayid == 2'd3) && (sync_rblkid == 4'd15);
+assign sync_rlast                   = !sync_rreq ? 1'd0 : (sync_rwayid == 2'd3) && (sync_rblkid == 4'd15);
 assign sync_r_need                  = sync_rinfo[`c_v_BUS] & sync_rinfo[`c_tag_msb_BUS];
 
 assign sync_wwayid                  = i_cache_basic_sync_wwayid;
@@ -979,7 +979,7 @@ always @(*) begin
 end
 
 assign mem_offset_bytes   = i_cache_basic_addr[5:0];
-assign mem_offset_bits    = {3'b0, i_cache_basic_addr[5:0]} << 3;
+assign mem_offset_bits    = {3'b0, i_cache_basic_addr[5:0]} << 2'd3;
 assign mem_blkno          = i_cache_basic_addr[9:6];
 assign mem_tag            = i_cache_basic_addr[31:10];
 
@@ -1028,8 +1028,8 @@ generate
 endgenerate
 
 assign hit_any = hit[0] | hit[1] | hit[2] | hit[3];
-assign wayID_hit = (hit[1] ? 1 : 0) | (hit[2] ? 2 : 0) | (hit[3] ? 3 : 0);
-assign wayID_smin = (c_s[1] == 0 ? 1 : 0) | (c_s[2] == 0 ? 2 : 0) | (c_s[3] == 0 ? 3 : 0);
+assign wayID_hit = (hit[1] ? 2'd1 : 2'd0) | (hit[2] ? 2'd2 : 2'd0) | (hit[3] ? 2'd3 : 2'd0);
+assign wayID_smin = (c_s[1] == 0 ? 2'd1 : 2'd0) | (c_s[2] == 0 ? 2'd2 : 2'd0) | (c_s[3] == 0 ? 2'd3 : 2'd0);
 assign wayID_select = hit_any ? wayID_hit : wayID_smin;
 
 // RAM instantiate
@@ -1058,8 +1058,8 @@ generate
       if (rst) begin
         chip_data_cen[w] <= !CHIP_DATA_CEN;
         chip_data_wen[w] <= !CHIP_DATA_WEN;
-        chip_data_addr[w] <= 0;
-        chip_data_wdata[w] <= 0;
+        chip_data_addr[w] <= 6'd0;
+        chip_data_wdata[w] <= 128'd0;
       end
     end
   end
@@ -1072,7 +1072,7 @@ endgenerate
 // wire state_load_from_bus    = state == STATE_LOAD_FROM_BUS;
 // wire state_load_to_ram      = state == STATE_LOAD_TO_RAM;
 
-assign ram_op_offset_128 = ({6'd0, ram_op_cnt} - 2) << 7;
+assign ram_op_offset_128 = ({6'd0, ram_op_cnt} - 2) << 3'd7;
 assign hs_cache = i_cache_basic_req & o_cache_basic_ack;
 assign hs_sync_rd = sync_rreq & sync_rack;
 assign hs_sync_rpack = sync_rpackack & sync_rpackreq;
@@ -1162,21 +1162,21 @@ end
 
 always @(posedge clk) begin
   if (rst) begin
-    o_cache_basic_ack <= 0;
-    sync_rpackreq <= 0;
-    sync_rack <= 0;
-    sync_wack <= 0;
-    sync_rwayid <= 0;
-    sync_rblkid <= 0;
-    sync_rdata <= 0;
+    o_cache_basic_ack <= 1'd0;
+    sync_rpackreq <= 1'd0;
+    sync_rack <= 1'd0;
+    sync_wack <= 1'd0;
+    sync_rwayid <= 2'd0;
+    sync_rblkid <= 4'd0;
+    sync_rdata <= 512'd0;
   end
   else begin
     case (state)
       STATE_IDLE: begin;
-        o_cache_basic_ack <= 0;
-        sync_rack <= 0;
-        sync_rpackreq <= 0;
-        sync_wack <= 0;
+        o_cache_basic_ack <= 1'd0;
+        sync_rack <= 1'd0;
+        sync_rpackreq <= 1'd0;
+        sync_wack <= 1'd0;
       end
 
       STATE_READY: begin
@@ -1186,12 +1186,12 @@ always @(posedge clk) begin
             if (!hs_ramline) begin
               chip_data_cen[wayID_select] <= CHIP_DATA_CEN;
               chip_data_addr[wayID_select] <= c_data_lineno;
-              ram_op_cnt <= ram_op_cnt + 1;
+              ram_op_cnt <= ram_op_cnt + 3'd1;
             end
             else begin
               chip_data_cen[wayID_select] <= !CHIP_DATA_CEN;
               o_cache_basic_rdata <= rdata_out; // ToDo: 在跳转指令时，这一步可以用组合电路实现，更早得到新的数据
-              o_cache_basic_ack <= 1;
+              o_cache_basic_ack <= 1'd1;
             end
           end
           else begin
@@ -1202,29 +1202,29 @@ always @(posedge clk) begin
               chip_data_addr[wayID_select] <= c_data_lineno;
               chip_data_wdata[wayID_select] <= c_wdata;
               chip_data_wmask[wayID_select] <= ~c_wmask;  // 芯片的写入掩码低电平有效，需要取反
-              ram_op_cnt <= ram_op_cnt + 1;
+              ram_op_cnt <= ram_op_cnt + 3'd1;
             end
             else begin
               chip_data_cen[wayID_select] <= !CHIP_DATA_CEN;
               chip_data_wen[wayID_select] <= !CHIP_DATA_WEN;
-              o_cache_basic_ack <= 1;
+              o_cache_basic_ack <= 1'd1;
               // cache更新记录
-              cache_info[wayID_select][mem_blkno][`c_d_BUS]  <= 1;
+              cache_info[wayID_select][mem_blkno][`c_d_BUS]  <= 1'd1;
             end
           end
         end
         else begin
-          ram_op_cnt <= 0;
+          ram_op_cnt <= 3'd0;
         end
       end
 
       STATE_LOAD_FROM_BUS: begin
         // 读取主存一个块
-        o_cache_axi_req <= 1;
+        o_cache_axi_req <= 1'd1;
         o_cache_axi_addr <= user_blk_aligned_bytes;
         o_cache_axi_op <= `REQ_READ;
         if (hs_cache_axi) begin
-          o_cache_axi_req <= 0;
+          o_cache_axi_req <= 1'd0;
         end
       end
 
@@ -1245,8 +1245,8 @@ always @(posedge clk) begin
           chip_data_wen[wayID_select] <= !CHIP_DATA_WEN;
           // 更新cache记录一行的 tag,v,d 位
           cache_info[wayID_select][mem_blkno][`c_tag_BUS]      <= mem_tag; // c_tag
-          cache_info[wayID_select][mem_blkno][`c_v_BUS]        <= 1;       // 有效位
-          cache_info[wayID_select][mem_blkno][`c_d_BUS]        <= 0;       // 脏位
+          cache_info[wayID_select][mem_blkno][`c_v_BUS]        <= 1'd1;       // 有效位
+          cache_info[wayID_select][mem_blkno][`c_d_BUS]        <= 1'd0;       // 脏位
           // 更新cache记录四行的 s 位，循环移动
           cache_info[3][mem_blkno][`c_s_BUS] <= cache_info[2][mem_blkno][`c_s_BUS];
           cache_info[2][mem_blkno][`c_s_BUS] <= cache_info[1][mem_blkno][`c_s_BUS];
@@ -1258,110 +1258,110 @@ always @(posedge clk) begin
       STATE_STORE_FROM_RAM: begin
         // 读取RAM一个块
         if (!hs_ramread) begin
-          ram_op_cnt <= ram_op_cnt + 1;
+          ram_op_cnt <= ram_op_cnt + 3'd1;
           // RAM控制信号在前4个周期有效
-          if (ram_op_cnt <= 3) begin
+          if (ram_op_cnt <= 3'd3) begin
             chip_data_cen[wayID_select] <= CHIP_DATA_CEN;
             chip_data_addr[wayID_select] <= {{2'd0, mem_blkno} << 2} | {4'd0, ram_op_cnt[1:0]};
           end
           // 延迟2个周期后保存RAM读出的数据
-          if (ram_op_cnt >= 2) begin
+          if (ram_op_cnt >= 3'd2) begin
             o_cache_axi_wdata[ram_op_offset_128+:128] <= chip_data_rdata[wayID_select];   // 128的倍数
           end
         end
         else begin
-          ram_op_cnt <= 0;
+          ram_op_cnt <= 3'd0;
           chip_data_cen[wayID_select] <= !CHIP_DATA_CEN;
           // 更新cache记录一行的 d 位。
-          cache_info[wayID_select][mem_blkno][`c_d_BUS]        <= 0;       // 脏位
+          cache_info[wayID_select][mem_blkno][`c_d_BUS]        <= 1'd0;       // 脏位
         end
       end
 
       STATE_STORE_TO_BUS: begin
         // 写入主存一个块
-        o_cache_axi_req <= 1;
+        o_cache_axi_req <= 1'd1;
         o_cache_axi_addr <= {32'd0, c_tag[wayID_select], mem_blkno, 6'd0 };
         o_cache_axi_op <= `REQ_WRITE;
 
         if (hs_cache_axi) begin
-          o_cache_axi_wdata <= 0;
-          o_cache_axi_req <= 0;
+          o_cache_axi_wdata <= 512'd0;
+          o_cache_axi_req <= 1'd0;
         end
       end
 
       STATE_FENCE_RD: begin
         if (!hs_sync_rd) begin
           // step0: 找到一个空位置
-          if (sync_step == 0) begin
+          if (sync_step == 2'd0) begin
             // 若是主存地址，且存在，则开始搬运数据
             if (sync_r_need) begin
-              sync_step <= 1;
+              sync_step <= 2'd1;
             end
             // 若不命中则移动指针，或者完成任务
             else begin
               if (!sync_rlast) begin
-                sync_rblkid <= sync_rblkid + 1;
+                sync_rblkid <= sync_rblkid + 4'd1;
                 if (sync_rblkid == 4'd15) begin
-                  sync_rblkid <= 0;
-                  sync_rwayid <= sync_rwayid + 1;
+                  sync_rblkid <= 4'd0;
+                  sync_rwayid <= sync_rwayid + 2'd1;
                 end
               end
               else begin
-                sync_step <= 3;
+                sync_step <= 2'd3;
               end
             end
           end
           // step1: 读取数据
-          else if (sync_step == 1) begin
+          else if (sync_step == 2'd1) begin
             // 读取RAM一个块
             if (!hs_ramread) begin
-              ram_op_cnt <= ram_op_cnt + 1;
+              ram_op_cnt <= ram_op_cnt + 3'd1;
               // RAM控制信号在前4个周期有效
-              if (ram_op_cnt <= 3) begin
+              if (ram_op_cnt <= 3'd3) begin
                 chip_data_cen[sync_rwayid]  <= CHIP_DATA_CEN;
                 chip_data_addr[sync_rwayid] <= {{2'd0, sync_rblkid} << 2} | {4'd0, ram_op_cnt[1:0]};
               end
               // 延迟2个周期后保存RAM读出的数据
-              if (ram_op_cnt >= 2) begin
+              if (ram_op_cnt >= 3'd2) begin
                 sync_rdata[ram_op_offset_128+:128] <= chip_data_rdata[sync_rwayid];   // 128的倍数
               end
             end
             else begin
-              ram_op_cnt <= 0;
+              ram_op_cnt <= 3'd0;
               chip_data_cen[sync_rwayid] <= !CHIP_DATA_CEN;
               sync_rpackreq <= 1;
-              sync_step <= 2;
+              sync_step <= 2'd2;
             end
           end
           // step2: 等待数据包应答
-          else if (sync_step == 2) begin
+          else if (sync_step == 2'd2) begin
             if (hs_sync_rpack) begin
-              sync_rpackreq <= 0; // 撤销请求
+              sync_rpackreq <= 1'd0; // 撤销请求
               // 若不是最后一包，则移动指针继续工作，否则完成任务
               if (!sync_rlast) begin
-                sync_rblkid <= sync_rblkid + 1;
+                sync_rblkid <= sync_rblkid + 4'd1;
                 if (sync_rblkid == 4'd15) begin
-                  sync_rblkid <= 0;
-                  sync_rwayid <= sync_rwayid + 1;
+                  sync_rblkid <= 4'd0;
+                  sync_rwayid <= sync_rwayid + 2'd1;
                 end
-                sync_step <= 0;
+                sync_step <= 2'd0;
               end
               else begin
-                sync_step <= 3;
+                sync_step <= 2'd3;
               end
             end
           end
           // step3: 完成任务
-          else if (sync_step == 3) begin
+          else if (sync_step == 2'd3) begin
             if (!hs_sync_rd) begin
-              sync_rack <= 1;
+              sync_rack <= 1'd1;
             end
             else begin
               // 清零所有信号
-              sync_step <= 0;
-              sync_rack <= 0;
-              sync_rblkid <= 0;
-              sync_rwayid <= 0;
+              sync_step <= 2'd0;
+              sync_rack <= 1'd0;
+              sync_rwayid <= 2'd0;
+              sync_rblkid <= 4'd0;
             end
           end
         end
@@ -1372,7 +1372,7 @@ always @(posedge clk) begin
 
           // 写入RAM一个块
           if (!hs_ramwrite) begin
-            ram_op_cnt <= ram_op_cnt + 1;
+            ram_op_cnt <= ram_op_cnt + 3'd1;
             // 写入cache数据一行
             chip_data_cen[sync_wwayid] <= CHIP_DATA_CEN;
             chip_data_wen[sync_wwayid] <= CHIP_DATA_WEN;
@@ -1381,14 +1381,14 @@ always @(posedge clk) begin
             chip_data_wmask[sync_wwayid] <= {128{CHIP_DATA_WMASK_EN}};
           end
           else begin
-            ram_op_cnt <= 0;
+            ram_op_cnt <= 3'd0;
             chip_data_cen[sync_wwayid] <= !CHIP_DATA_CEN;
             chip_data_wen[sync_wwayid] <= !CHIP_DATA_WEN;
             // 更新cache记录一行，并强行置位dirty位，保证在调换时能被写入主存
             // 这里cache s位是否需要考虑？如果是DCache全部搬运，则不需要考虑。如果是搬运v=1的块，则要考虑吧
             cache_info[sync_wwayid][sync_wblkid] <= sync_winfo | (1 << `c_d_BUS);
 
-            sync_wack <= 1;
+            sync_wack <= 1'd1;
           end
         end
       end
@@ -1543,7 +1543,7 @@ assign i_bytes_4 = {1'd0, i_cache_core_bytes};
 
 assign en_second = i_addr_4 + i_bytes_4 < i_addr_4;
 assign bytes[0] = en_second ? {4'd15 - i_addr_4}[2:0] : i_cache_core_bytes;
-assign bytes[1] = en_second ? {i_addr_4 + i_bytes_4}[2:0] : 0;
+assign bytes[1] = en_second ? {i_addr_4 + i_bytes_4}[2:0] : 3'd0;
 assign addr[0] = i_cache_core_addr;
 assign addr[1] = {i_addr_high + 60'd1, 4'd0};
 assign wdata[0] = i_cache_core_wdata;
@@ -1557,8 +1557,8 @@ assign o_cache_basic_wdata = (index == 0) ? wdata[0] : wdata[1];
 
 always @(posedge clk) begin
   if (rst) begin
-    index <= 0;
-    o_cache_basic_req <= 0;
+    index <= 1'd0;
+    o_cache_basic_req <= 1'd0;
   end
   else begin
     // 发现用户请求
@@ -1989,17 +1989,17 @@ ysyx_210544_cache_core ICache(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
 	.i_cache_core_addr          (i_icache_addr              ),
-	.i_cache_core_wdata         (0                          ),
-	.i_cache_core_bytes         (3                          ),
+	.i_cache_core_wdata         (64'd0                      ),
+	.i_cache_core_bytes         (3'd3                       ),
 	.i_cache_core_op            (`REQ_READ                  ),
-	.i_cache_core_req           (ch_icache ? i_icache_req : 0),
+	.i_cache_core_req           (ch_icache ? i_icache_req : 1'b0),
 	.o_cache_core_rdata         (icache_rdata               ),
 	.o_cache_core_ack           (icache_ack                 ),
 
 
-  .i_cache_core_sync_rreq     (0                          ),
+  .i_cache_core_sync_rreq     (1'b0                       ),
   .o_cache_core_sync_rack     (sync_icache_rack           ),
-  .i_cache_core_sync_rpackack (0                          ),
+  .i_cache_core_sync_rpackack (1'b0                       ),
   .o_cache_core_sync_rpackreq (sync_icache_rpackreq       ),
   .i_cache_core_sync_wreq     (sync_icache_wreq           ),
   .o_cache_core_sync_wack     (sync_icache_wack           ),
@@ -2012,8 +2012,8 @@ ysyx_210544_cache_core ICache(
   .i_cache_core_sync_winfo    (sync_icache_winfo          ),
   .i_cache_core_sync_wdata    (sync_icache_wdata          ),
 
-  .i_axi_io_ready             (ch_icache ? i_axi_io_ready : 0        ),
-  .i_axi_io_rdata             (ch_icache ? i_axi_io_rdata : 0        ),
+  .i_axi_io_ready             (ch_icache ? i_axi_io_ready : 1'b0 ),
+  .i_axi_io_rdata             (ch_icache ? i_axi_io_rdata : 512'd0 ),
   .o_axi_io_op                (icache_axi_io_op           ),
   .o_axi_io_valid             (icache_axi_io_valid        ),
   .o_axi_io_wdata             (icache_axi_io_wdata        ),
@@ -2029,7 +2029,7 @@ ysyx_210544_cache_core DCache(
 	.i_cache_core_wdata         (i_dcache_wdata             ),
 	.i_cache_core_bytes         (i_dcache_bytes             ),
 	.i_cache_core_op            (i_dcache_op                ),
-	.i_cache_core_req           (ch_dcache ? i_dcache_req : 0),
+	.i_cache_core_req           (ch_dcache ? i_dcache_req : 1'b0),
 	.o_cache_core_rdata         (dcache_rdata               ),
 	.o_cache_core_ack           (dcache_ack                 ),
 
@@ -2037,19 +2037,19 @@ ysyx_210544_cache_core DCache(
   .o_cache_core_sync_rack     (sync_dcache_rack           ),
   .i_cache_core_sync_rpackack (sync_dcache_rpackack       ),
   .o_cache_core_sync_rpackreq (sync_dcache_rpackreq       ),
-  .i_cache_core_sync_wreq     (0                          ),
+  .i_cache_core_sync_wreq     (1'b0                       ),
   .o_cache_core_sync_wack     (sync_dcache_wack           ),
   .o_cache_core_sync_rwayid   (sync_dcache_rwayid         ),
   .o_cache_core_sync_rblkid   (sync_dcache_rblkid         ),
   .o_cache_core_sync_rinfo    (sync_dcache_rinfo          ),
   .o_cache_core_sync_rdata    (sync_dcache_rdata          ),
-  .i_cache_core_sync_wwayid   (0                          ),
-  .i_cache_core_sync_wblkid   (0                          ),
-  .i_cache_core_sync_winfo    (0                          ),
-  .i_cache_core_sync_wdata    (0                          ),
+  .i_cache_core_sync_wwayid   (2'd0                       ),
+  .i_cache_core_sync_wblkid   (4'd0                       ),
+  .i_cache_core_sync_winfo    (26'd0                      ),
+  .i_cache_core_sync_wdata    (512'd0                     ),
 
-  .i_axi_io_ready             (ch_dcache ? i_axi_io_ready : 0        ),
-  .i_axi_io_rdata             (ch_dcache ? i_axi_io_rdata : 0        ),
+  .i_axi_io_ready             (ch_dcache ? i_axi_io_ready : 1'b0),
+  .i_axi_io_rdata             (ch_dcache ? i_axi_io_rdata : 512'd0),
   .o_axi_io_op                (dcache_axi_io_op           ),
   .o_axi_io_valid             (dcache_axi_io_valid        ),
   .o_axi_io_wdata             (dcache_axi_io_wdata        ),
@@ -2065,12 +2065,12 @@ ysyx_210544_cache_nocache NoCache(
 	.i_cache_nocache_wdata      (nocache_wdata              ),
 	.i_cache_nocache_bytes      (nocache_bytes              ),
 	.i_cache_nocache_op         (nocache_op                 ),
-	.i_cache_nocache_req        (ch_nocache ? nocache_req : 0),
+	.i_cache_nocache_req        (ch_nocache ? nocache_req : 1'b0),
 	.o_cache_nocache_rdata      (nocache_rdata              ),
 	.o_cache_nocache_ack        (nocache_ack                ),
 
-  .i_axi_io_ready             (ch_nocache ? i_axi_io_ready : 0        ),
-  .i_axi_io_rdata             (ch_nocache ? i_axi_io_rdata : 0        ),
+  .i_axi_io_ready             (ch_nocache ? i_axi_io_ready : 1'b0        ),
+  .i_axi_io_rdata             (ch_nocache ? i_axi_io_rdata : 512'd0      ),
   .o_axi_io_op                (nocache_axi_io_op          ),
   .o_axi_io_valid             (nocache_axi_io_valid       ),
   .o_axi_io_wdata             (nocache_axi_io_wdata       ),
@@ -2104,11 +2104,11 @@ ysyx_210544_cache_sync Cache_sync(
 /////////////////////////////////////////////////
 // 信号互联
 
-assign nocache_req      = ch_nocache ? (i_icache_req | i_dcache_req                     ) : 0;
-assign nocache_addr     = ch_nocache ? (i_icache_req ? i_icache_addr  : i_dcache_addr   ) : 0;
-assign nocache_wdata    = ch_nocache ? (i_icache_req ? 0              : i_dcache_wdata  ) : 0;
-assign nocache_bytes    = ch_nocache ? (i_icache_req ? 3              : i_dcache_bytes  ) : 0;
-assign nocache_op       = ch_nocache ? (i_icache_req ? `REQ_READ      : i_dcache_op     ) : 0;
+assign nocache_req      = ch_nocache ? (i_icache_req | i_dcache_req                     ) : 1'b0;
+assign nocache_addr     = ch_nocache ? (i_icache_req ? i_icache_addr  : i_dcache_addr   ) : 64'd0;
+assign nocache_wdata    = ch_nocache ? (i_icache_req ? 0              : i_dcache_wdata  ) : 64'd0;
+assign nocache_bytes    = ch_nocache ? (i_icache_req ? 3              : i_dcache_bytes  ) : 3'd0;
+assign nocache_op       = ch_nocache ? (i_icache_req ? `REQ_READ      : i_dcache_op     ) : `REQ_READ;
 
 assign o_axi_io_valid   = ch_icache ? icache_axi_io_valid   : (ch_dcache ? dcache_axi_io_valid  : nocache_axi_io_valid);
 assign o_axi_io_op      = ch_icache ? icache_axi_io_op      : (ch_dcache ? dcache_axi_io_op     : nocache_axi_io_op);
