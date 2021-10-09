@@ -9,9 +9,9 @@
 `define ZERO_WORD           64'h00000000_00000000
 
 `ifdef DIFFTEST_YSYX_210544
-  `define PC_START            64'h00000000_80000000 
+`define PC_START            64'h00000000_80000000
 `else
-  `define PC_START            64'h00000000_30000000 
+`define PC_START            64'h00000000_30000000
 `endif
 
 `define SIZE_B              3'b000
@@ -116,7 +116,7 @@
 `define INST_LUI            8'b0000_0001    // d1
 `define INST_AUIPC          8'b0000_0010    //
 `define INST_JAL            8'b0000_0011    //
-`define INST_JALR           8'b0000_0100    // 
+`define INST_JALR           8'b0000_0100    //
 `define INST_BEQ            8'b0000_0101    //
 `define INST_BNE            8'b0000_0110    //
 `define INST_BLT            8'b0000_0111    //
@@ -127,7 +127,7 @@
 `define INST_LH             8'b0000_1100    //
 `define INST_LW             8'b0000_1101    //
 `define INST_LBU            8'b0000_1110    //
-`define INST_LHU            8'b0000_1111    // 
+`define INST_LHU            8'b0000_1111    //
 `define INST_SB             8'b0001_0000    //
 `define INST_SH             8'b0001_0001    //
 `define INST_SW             8'b0001_0010    //
@@ -181,7 +181,7 @@
 `define CSROP_READ_SET      2'b10     // read and set
 `define CSROP_READ_CLEAR    2'b11     // read and clear
 
-// === Devices
+// ==  = Devices
 
 `define DEV_BASEADDR        64'h0200_0000
 
@@ -196,7 +196,7 @@
 `define DEV_MTIME_OFFSET    64'hbff8
 `define DEV_MTIME           (`DEV_BASEADDR + `DEV_MTIME_OFFSET)
 // Machien time compare register
-// 当 mtime >= mtimecmp 时，产生计时器中断
+// 当 mtime > = mtimecmp 时，产生计时器中断
 // mip的MTIP位置1。
 `define DEV_MTIMECMP_OFFSET 64'h4000
 `define DEV_MTIMECMP        (`DEV_BASEADDR + `DEV_MTIMECMP_OFFSET)

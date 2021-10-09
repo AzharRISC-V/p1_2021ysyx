@@ -128,8 +128,8 @@ always @(posedge clk) begin
     regs[31] <= `ZERO_WORD;
   end
   else begin
-    // if ((w_ena) && (w_addr != 5'h00))	
-    // 	regs[w_addr] <= w_data;
+    // if ((w_ena) && (w_addr != 5'h00))    
+    //     regs[w_addr] <= w_data;
       
     if (i_rd_wen && (i_rd != 5'h00))
       regs[i_rd] <= i_rd_data;

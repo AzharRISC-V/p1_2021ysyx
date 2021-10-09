@@ -9,9 +9,9 @@
 `define ZERO_WORD           64'h00000000_00000000
 
 `ifdef DIFFTEST_YSYX_210544
-  `define PC_START            64'h00000000_80000000 
+`define PC_START            64'h00000000_80000000
 `else
-  `define PC_START            64'h00000000_30000000 
+`define PC_START            64'h00000000_30000000
 `endif
 
 `define SIZE_B              3'b000
@@ -116,7 +116,7 @@
 `define INST_LUI            8'b0000_0001    // d1
 `define INST_AUIPC          8'b0000_0010    //
 `define INST_JAL            8'b0000_0011    //
-`define INST_JALR           8'b0000_0100    // 
+`define INST_JALR           8'b0000_0100    //
 `define INST_BEQ            8'b0000_0101    //
 `define INST_BNE            8'b0000_0110    //
 `define INST_BLT            8'b0000_0111    //
@@ -127,7 +127,7 @@
 `define INST_LH             8'b0000_1100    //
 `define INST_LW             8'b0000_1101    //
 `define INST_LBU            8'b0000_1110    //
-`define INST_LHU            8'b0000_1111    // 
+`define INST_LHU            8'b0000_1111    //
 `define INST_SB             8'b0001_0000    //
 `define INST_SH             8'b0001_0001    //
 `define INST_SW             8'b0001_0010    //
@@ -181,7 +181,7 @@
 `define CSROP_READ_SET      2'b10     // read and set
 `define CSROP_READ_CLEAR    2'b11     // read and clear
 
-// === Devices
+// ==  = Devices
 
 `define DEV_BASEADDR        64'h0200_0000
 
@@ -196,7 +196,7 @@
 `define DEV_MTIME_OFFSET    64'hbff8
 `define DEV_MTIME           (`DEV_BASEADDR + `DEV_MTIME_OFFSET)
 // Machien time compare register
-// 当 mtime >= mtimecmp 时，产生计时器中断
+// 当 mtime > = mtimecmp 时，产生计时器中断
 // mip的MTIP位置1。
 `define DEV_MTIMECMP_OFFSET 64'h4000
 `define DEV_MTIMECMP        (`DEV_BASEADDR + `DEV_MTIMECMP_OFFSET)
@@ -304,7 +304,6 @@ module ysyx_210544_axi_rw (
 
 parameter [1:0] W_STATE_IDLE = 2'b00, W_STATE_ADDR = 2'b01, W_STATE_WRITE = 2'b10, W_STATE_RESP = 2'b11;
 parameter [1:0] R_STATE_IDLE = 2'b00, R_STATE_ADDR = 2'b01, R_STATE_READ  = 2'b10;
-parameter TRANS_LEN_MAX = 8;
 
 reg rw_ready;
 wire w_trans;
@@ -472,13 +471,11 @@ assign axi_aw_burst_o   = `AXI_BURST_TYPE_INCR;
 always @(posedge clock) begin
     if (reset) begin
         axi_w_valid_o <= 1'b0;
-        axi_w_data_o <= 64'd0;
     end
     else begin
     if (w_state_write) begin
         if (!axi_w_valid_o) begin
-        axi_w_data_o  <= user_wdata_i[63:0] << axi_addr_offset_bits;
-        axi_w_valid_o <= 1'b1;
+				axi_w_valid_o <= 1'b1;
         end
     end
     else if (w_state_resp) begin// (w_state_resp) begin
@@ -516,19 +513,27 @@ assign axi_w_strb_o = axi_w_strb_orig << axi_addr_offset_bytes;
 // Wreite response channel signals
 assign axi_b_ready_o    = w_state_resp;
 
-genvar i;
-generate
-    for (i = 0; i < TRANS_LEN_MAX - 1; i = i + 1)
-    begin: AXI_W_DATA_O_GEN
-        always @(posedge clock) begin
-            if (w_hs) begin
-                if (len == i) begin
-                axi_w_data_o <= user_wdata_i[(i+1)*64+:64] << axi_addr_offset_bits;
-                end
-            end
+always @(posedge clock) begin
+    // sent first wdata
+    if (w_state_write && (!axi_w_valid_o)) begin
+        axi_w_data_o  <= user_wdata_i[63:0] << axi_addr_offset_bits;
+    end
+    else begin
+        // sent remain wdata
+        if (w_hs) begin
+            case (len)
+                8'd0: axi_w_data_o <= user_wdata_i[64*1 +:64] << axi_addr_offset_bits;
+                8'd1: axi_w_data_o <= user_wdata_i[64*2 +:64] << axi_addr_offset_bits;
+                8'd2: axi_w_data_o <= user_wdata_i[64*3 +:64] << axi_addr_offset_bits;
+                8'd3: axi_w_data_o <= user_wdata_i[64*4 +:64] << axi_addr_offset_bits;
+                8'd4: axi_w_data_o <= user_wdata_i[64*5 +:64] << axi_addr_offset_bits;
+                8'd5: axi_w_data_o <= user_wdata_i[64*6 +:64] << axi_addr_offset_bits;
+                8'd6: axi_w_data_o <= user_wdata_i[64*7 +:64] << axi_addr_offset_bits;
+                default: ;
+            endcase
         end
     end
-endgenerate
+ end
 
 
 // ------------------Read Transaction------------------
@@ -563,21 +568,25 @@ assign aligned_offset    = {3'b0, user_addr_i[2:0]} << 2'd3;
 
 assign axi_r_data_masked_unaligned = (axi_r_data_i >> aligned_offset) & mask_rdata;
 
-generate
-    for (i = 0; i < TRANS_LEN_MAX; i = i + 1) 
-    begin: USER_RDATA_O_GEN
-        always @(posedge clock) begin
-            if (reset) begin
-                user_rdata_o <= 512'd0;
-            end
-            else if (r_hs) begin
-                if (len == i) begin
-                    user_rdata_o[i*64+:64] <= axi_r_data_masked_unaligned;
-                end
-            end
-        end
+always @(posedge clock) begin
+    if (reset) begin
+        user_rdata_o <= 512'd0;
     end
-endgenerate
+    else if (r_hs) begin
+        case (len)
+            8'd0: user_rdata_o[0*64+:64] <= axi_r_data_masked_unaligned;
+            8'd1: user_rdata_o[1*64+:64] <= axi_r_data_masked_unaligned;
+            8'd2: user_rdata_o[2*64+:64] <= axi_r_data_masked_unaligned;
+            8'd3: user_rdata_o[3*64+:64] <= axi_r_data_masked_unaligned;
+            8'd4: user_rdata_o[4*64+:64] <= axi_r_data_masked_unaligned;
+            8'd5: user_rdata_o[5*64+:64] <= axi_r_data_masked_unaligned;
+            8'd6: user_rdata_o[6*64+:64] <= axi_r_data_masked_unaligned;
+            8'd7: user_rdata_o[7*64+:64] <= axi_r_data_masked_unaligned;
+            default: ;
+        endcase
+    end
+ end
+
 
 wire _unused_ok = &{1'b0,
   axi_b_id_i,
@@ -2409,8 +2418,8 @@ always @(posedge clk) begin
     regs[31] <= `ZERO_WORD;
   end
   else begin
-    // if ((w_ena) && (w_addr != 5'h00))	
-    // 	regs[w_addr] <= w_data;
+    // if ((w_ena) && (w_addr != 5'h00))    
+    //     regs[w_addr] <= w_data;
       
     if (i_rd_wen && (i_rd != 5'h00))
       regs[i_rd] <= i_rd_data;

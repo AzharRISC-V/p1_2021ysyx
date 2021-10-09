@@ -26,7 +26,6 @@ module ysyx_210544_ifU(
 );
 
 wire              handshake_done;
-reg               ignore_next_inst;     // 忽略下一条取指
 reg [`BUS_64]     saved_pc_jmpaddr;     // 记忆的pc跳转指令
 reg               fetch_again;          // 再次取指
 reg [`BUS_64]     pc_pred;              // 预测的下一个PC
@@ -41,11 +40,8 @@ always @(posedge clk) begin
   else begin
     // 停止信号
     if (handshake_done) begin
-      // 若要求再次取指，则这次不要停止
-      if (fetch_again) begin
-        fetch_again <= 0;
-      end
-      else begin
+		// if fetch_again, won't stop
+      if (!fetch_again) begin
         o_bus_req <= 0;
       end
     end
@@ -61,16 +57,8 @@ assign handshake_done = o_bus_req & i_bus_ack;
 // 跳转指令处理
 always @(posedge clk) begin
   if (rst) begin
-    ignore_next_inst <= 0;
-    saved_pc_jmpaddr <= 0;
-    fetch_again <= 0;
   end
   else begin
-    if (i_pc_jmp & (i_pc_jmpaddr != pc_pred)) begin
-      ignore_next_inst <= 1;
-      fetch_again <= 1;
-      saved_pc_jmpaddr <= i_pc_jmpaddr;
-    end
   end
 end
 
@@ -81,11 +69,18 @@ always @( posedge clk ) begin
     o_pc                    <= 0;
     pc_pred                 <= 0;
     o_fetched               <= 0;
+	 fetch_again             <= 0;
+    saved_pc_jmpaddr        <= 0;
   end
   else begin
+	 // if jmp, fetch again once
+    if (i_pc_jmp & (i_pc_jmpaddr != pc_pred)) begin
+      fetch_again 			<= 1;
+      saved_pc_jmpaddr 		<= i_pc_jmpaddr;
+    end
     if (handshake_done) begin
-      if (ignore_next_inst) begin
-        ignore_next_inst        <= 0;
+      if (fetch_again) begin
+        fetch_again             <= 0;
         o_bus_addr              <= saved_pc_jmpaddr;
         o_pc                    <= saved_pc_jmpaddr;
         pc_pred                 <= saved_pc_jmpaddr + 4;

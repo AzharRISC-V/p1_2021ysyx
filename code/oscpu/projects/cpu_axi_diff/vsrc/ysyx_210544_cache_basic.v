@@ -270,43 +270,32 @@ assign c_offset_bits    = mem_offset_bits[6:0];
 assign c_wmask          = {64'd0, user_wmask} << c_offset_bits;
 assign c_wdata          = {64'd0, i_cache_basic_wdata} << c_offset_bits;
 
-// cache_info
-genvar way,i;
-generate
-  for (way = 0; way < `WAYS; way = way + 1) 
-  begin: CACHE_INFO_GEN1
-    localparam [1:0] w = way;
-    for (i = 0; i < `BLKS; i = i + 1) 
-    begin: CAHCE_INFO_GEN2
-      always @(posedge clk) begin
-        if (rst) begin
-          cache_info[w][i] <= {w, 1'b0, 1'b0, 22'b0};
-        end
-      end
-    end
-  end
-endgenerate
-
 // c_tag, c_v, c_d, c_s
-generate
-  for (way = 0; way < `WAYS; way = way + 1) 
-  begin: CACHE_INFO_DETAILS_GEN
-    localparam [1:0] w = way;
-    assign c_tag[w]   = cache_info[w][mem_blkno][`c_tag_BUS];
-    assign c_v[w]     = cache_info[w][mem_blkno][`c_v_BUS];
-    assign c_d[w]     = cache_info[w][mem_blkno][`c_d_BUS];
-    assign c_s[w]     = cache_info[w][mem_blkno][`c_s_BUS];
-  end
-endgenerate
+assign c_tag[0]   = cache_info[0][mem_blkno][`c_tag_BUS];
+assign c_tag[1]   = cache_info[1][mem_blkno][`c_tag_BUS];
+assign c_tag[2]   = cache_info[2][mem_blkno][`c_tag_BUS];
+assign c_tag[3]   = cache_info[3][mem_blkno][`c_tag_BUS];
+
+assign c_v[0]     = cache_info[0][mem_blkno][`c_v_BUS];
+assign c_v[1]     = cache_info[1][mem_blkno][`c_v_BUS];
+assign c_v[2]     = cache_info[2][mem_blkno][`c_v_BUS];
+assign c_v[3]     = cache_info[3][mem_blkno][`c_v_BUS];
+
+assign c_d[0]     = cache_info[0][mem_blkno][`c_d_BUS];
+assign c_d[1]     = cache_info[1][mem_blkno][`c_d_BUS];
+assign c_d[2]     = cache_info[2][mem_blkno][`c_d_BUS];
+assign c_d[3]     = cache_info[3][mem_blkno][`c_d_BUS];
+
+assign c_s[0]     = cache_info[0][mem_blkno][`c_s_BUS];
+assign c_s[1]     = cache_info[1][mem_blkno][`c_s_BUS];
+assign c_s[2]     = cache_info[2][mem_blkno][`c_s_BUS];
+assign c_s[3]     = cache_info[3][mem_blkno][`c_s_BUS];
 
 // hit
-generate
-  for (way = 0; way < `WAYS; way = way + 1) 
-  begin: HIT_GEN
-    localparam [1:0] w = way;
-    assign hit[w] = c_v[w] && (c_tag[w] == mem_tag);
-  end
-endgenerate
+assign hit[0] = c_v[0] && (c_tag[0] == mem_tag);
+assign hit[1] = c_v[1] && (c_tag[1] == mem_tag);
+assign hit[2] = c_v[2] && (c_tag[2] == mem_tag);
+assign hit[3] = c_v[3] && (c_tag[3] == mem_tag);
 
 assign hit_any = hit[0] | hit[1] | hit[2] | hit[3];
 assign wayID_hit = (hit[1] ? 2'd1 : 2'd0) | (hit[2] ? 2'd2 : 2'd0) | (hit[3] ? 2'd3 : 2'd0);
@@ -314,6 +303,7 @@ assign wayID_smin = (c_s[1] == 0 ? 2'd1 : 2'd0) | (c_s[2] == 0 ? 2'd2 : 2'd0) | 
 assign wayID_select = hit_any ? wayID_hit : wayID_smin;
 
 // RAM instantiate
+genvar way;
 generate
   for (way = 0; way < `WAYS; way = way + 1) 
   begin: CACHE_DATA_GEN
@@ -327,22 +317,6 @@ generate
       .BWEN                       (chip_data_wmask[w]   ),
       .Q                          (chip_data_rdata[w]   )
     );
-  end
-endgenerate
-
-// cen, addr
-generate
-  for (way = 0; way < `WAYS; way = way + 1) 
-  begin: CHIP_DATA_CEN_WEN_GEN
-    localparam [1:0] w = way;
-    always @(posedge clk) begin
-      if (rst) begin
-        chip_data_cen[w] <= !CHIP_DATA_CEN;
-        chip_data_wen[w] <= !CHIP_DATA_WEN;
-        chip_data_addr[w] <= 6'd0;
-        chip_data_wdata[w] <= 128'd0;
-      end
-    end
   end
 endgenerate
 
@@ -443,6 +417,88 @@ end
 
 always @(posedge clk) begin
   if (rst) begin
+    cache_info[0][ 0] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][ 1] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][ 2] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][ 3] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][ 4] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][ 5] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][ 6] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][ 7] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][ 8] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][ 9] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][10] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][11] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][12] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][13] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][14] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][15] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[1][ 0] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][ 1] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][ 2] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][ 3] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][ 4] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][ 5] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][ 6] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][ 7] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][ 8] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][ 9] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][10] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][11] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][12] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][13] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][14] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][15] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[2][ 0] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][ 1] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][ 2] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][ 3] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][ 4] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][ 5] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][ 6] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][ 7] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][ 8] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][ 9] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][10] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][11] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][12] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][13] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][14] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][15] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[3][ 0] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][ 1] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][ 2] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][ 3] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][ 4] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][ 5] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][ 6] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][ 7] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][ 8] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][ 9] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][10] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][11] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][12] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][13] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][14] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][15] <= {2'd3, 1'b0, 1'b0, 22'b0};
+
+    chip_data_cen[0] <= !CHIP_DATA_CEN;
+    chip_data_cen[1] <= !CHIP_DATA_CEN;
+    chip_data_cen[2] <= !CHIP_DATA_CEN;
+    chip_data_cen[3] <= !CHIP_DATA_CEN;
+    chip_data_wen[0] <= !CHIP_DATA_WEN;
+    chip_data_wen[1] <= !CHIP_DATA_WEN;
+    chip_data_wen[2] <= !CHIP_DATA_WEN;
+    chip_data_wen[3] <= !CHIP_DATA_WEN;
+    chip_data_addr[0] <= 6'd0;
+    chip_data_addr[1] <= 6'd0;
+    chip_data_addr[2] <= 6'd0;
+    chip_data_addr[3] <= 6'd0;
+    chip_data_wdata[0] <= 128'd0;
+    chip_data_wdata[1] <= 128'd0;
+    chip_data_wdata[2] <= 128'd0;
+    chip_data_wdata[3] <= 128'd0;
+
     o_cache_basic_ack <= 1'd0;
     sync_rpackreq <= 1'd0;
     sync_rack <= 1'd0;

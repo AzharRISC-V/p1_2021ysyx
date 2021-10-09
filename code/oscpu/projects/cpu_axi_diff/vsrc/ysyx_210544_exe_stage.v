@@ -154,7 +154,6 @@ end
 
 assign o_ex_pc            = i_disable ? 0 : tmp_i_ex_pc;
 assign o_ex_inst          = i_disable ? 0 : tmp_i_ex_inst;
-assign o_ex_rd            = i_disable ? 0 : tmp_i_ex_rd;
 assign o_ex_op1           = i_disable ? 0 : tmp_i_ex_op1;
 assign o_ex_op2           = i_disable ? 0 : tmp_i_ex_op2;
 assign o_ex_op3           = i_disable ? 0 : tmp_i_ex_op3;
