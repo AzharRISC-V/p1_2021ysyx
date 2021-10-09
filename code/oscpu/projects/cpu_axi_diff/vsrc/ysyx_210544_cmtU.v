@@ -65,12 +65,12 @@ end
 `ifdef DIFFTEST_YSYX_210544
 
 DifftestArchEvent DifftestArchEvent(
-  .clock              (clk),		// 时钟
-  .coreid             (0),		  // cpu id，单核时固定为0
-  .intrNO             (i_intrNo),		  // 中断号，非零有效
-  .cause              (0),			// 异常号，非零有效
-  .exceptionPC        (i_intrNo > 0 ? i_pc : 0),	// 产生异常或中断时的PC
-  .exceptionInst      (0)	  // 产生异常时的指令，未使用
+  .clock              (clk),    // 时钟
+  .coreid             (0),      // cpu id，单核时固定为0
+  .intrNO             (i_intrNo),      // 中断号，非零有效
+  .cause              (0),      // 异常号，非零有效
+  .exceptionPC        (i_intrNo > 0 ? i_pc : 0),  // 产生异常或中断时的PC
+  .exceptionInst      (0)    // 产生异常时的指令，未使用
 );
 
 DifftestInstrCommit DifftestInstrCommit(

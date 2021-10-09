@@ -12,10 +12,10 @@ module ysyx_210544_cache_nocache (
   input   wire  [`BUS_64]     i_cache_nocache_addr,          // 地址
   input   wire  [`BUS_64]     i_cache_nocache_wdata,         // 写入的数据
   input   wire  [2 : 0]       i_cache_nocache_bytes,         // 操作的字大小: 0~7表示1~8字节
-	input   wire                i_cache_nocache_op,            // 操作: 0:read, 1:write
-	input   wire                i_cache_nocache_req,           // 请求
+  input   wire                i_cache_nocache_op,            // 操作: 0:read, 1:write
+  input   wire                i_cache_nocache_req,           // 请求
   output  reg   [`BUS_64]     o_cache_nocache_rdata,         // 读出的数据
-	output  reg                 o_cache_nocache_ack,           // 应答
+  output  reg                 o_cache_nocache_ack,           // 应答
 
   // AXI interface
   input   wire  [511:0]       i_axi_io_rdata,

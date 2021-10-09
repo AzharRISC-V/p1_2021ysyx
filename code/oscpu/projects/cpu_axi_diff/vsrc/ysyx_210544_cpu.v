@@ -34,7 +34,6 @@ wire                          writebacked_ack;
 // if_stage -> id_stage
 wire  [`BUS_64]               o_if_pc;
 wire  [`BUS_32]               o_if_inst;
-wire                          o_if_nocmt;
 
 // id_stage
 // id_stage -> regfile
@@ -49,7 +48,6 @@ wire  [7 : 0]                 o_id_inst_opcode;
 wire  [`BUS_64]               o_id_op1;
 wire  [`BUS_64]               o_id_op2;
 wire  [`BUS_64]               o_id_op3;
-wire                          o_id_nocmt;
 wire                          o_id_skipcmt;
 wire  [`BUS_64]               o_id_pc;
 wire  [`BUS_32]               o_id_inst;
@@ -67,7 +65,6 @@ wire  [`BUS_64]               o_ex_rd_wdata;
 wire  [`BUS_64]               o_ex_op1;
 wire  [`BUS_64]               o_ex_op2;
 wire  [`BUS_64]               o_ex_op3;
-wire                          o_ex_nocmt;
 wire                          o_ex_skipcmt;
 wire  [`BUS_32]               o_ex_intrNo;
 
@@ -84,7 +81,6 @@ wire  [`BUS_32]               o_mem_inst;
 wire  [`BUS_RIDX]             o_mem_rd;
 wire                          o_mem_rd_wen;
 wire  [`BUS_64]               o_mem_rd_wdata;
-wire                          o_mem_nocmt;
 wire                          o_mem_skipcmt;
 wire  [`BUS_32]               o_mem_intrNo;
 // mem_stage -> cache
@@ -95,7 +91,6 @@ wire                          i_mem_fencei_ack;
 // wb_stage -> cmt_stage
 wire  [`BUS_64]               o_wb_pc;
 wire  [`BUS_32]               o_wb_inst;
-wire                          o_wb_nocmt;
 wire                          o_wb_skipcmt;
 wire  [`BUS_32]               o_wb_intrNo;
 // wb_stage -> regfile
@@ -138,31 +133,12 @@ wire  [63:0]                  i_dcache_rdata;
 
 `ifdef DIFFTEST_YSYX_210544
 
-// Special Instruction: putch a0
-// wire                          putch_wen;
-// wire [7 : 0]                  putch_wdata;
-// assign putch_wen              = o_if_inst == 32'h7b;
-// assign putch_wdata            = (!putch_wen) ? 0 : (o_reg_regs[10][7:0]); 
-
-// 方式一：缓存一行后再$write打印。
-// putch Putch(
-//   .clk                (clk              ),
-//   .rst                (rst              ),
-//   .wen                (putch_wen        ),
-//   .wdata              (putch_wdata      ) 
-// );
-
-// 方式二：使用$write打印。
 always @(posedge clk) begin
   if (o_if_inst == 32'h7b) begin
     $write("%c", o_reg_regs[10][7:0]);
     $fflush();
   end
 end
-
-// 方式三：交给上层c++代码来打印
-// assign io_uart_out_valid = putch_wen;
-// assign io_uart_out_ch = putch_wdata;
 
 `endif
 
@@ -212,8 +188,7 @@ ysyx_210544_if_stage If_stage(
   .i_if_pc_jmp                (o_ex_pc_jmp                ),
   .i_if_pc_jmpaddr            (o_ex_pc_jmpaddr            ),
   .o_if_pc                    (o_if_pc                    ),
-  .o_if_inst                  (o_if_inst                  ),
-  .o_if_nocmt                 (o_if_nocmt                 ) 
+  .o_if_inst                  (o_if_inst                  )
 );
 
 ysyx_210544_id_stage Id_stage(
@@ -226,7 +201,6 @@ ysyx_210544_id_stage Id_stage(
   .i_id_inst                  (o_if_inst                  ),
   .i_id_rs1_data              (o_reg_id_rs1_data          ),
   .i_id_rs2_data              (o_reg_id_rs2_data          ),
-  .i_id_nocmt                 (o_if_nocmt                 ),
   .o_id_pc                    (o_id_pc                    ),
   .o_id_inst_opcode           (o_id_inst_opcode           ),
   .o_id_inst                  (o_id_inst                  ),
@@ -239,7 +213,6 @@ ysyx_210544_id_stage Id_stage(
   .o_id_op1                   (o_id_op1                   ),
   .o_id_op2                   (o_id_op2                   ),
   .o_id_op3                   (o_id_op3                   ),
-  .o_id_nocmt                 (o_id_nocmt                 ),
   .o_id_skipcmt               (o_id_skipcmt               )
 );
 
@@ -258,7 +231,6 @@ ysyx_210544_exe_stage Exe_stage(
   .i_ex_op3                   (o_id_op3                   ),
   .i_ex_rd                    (o_id_rd                    ),
   .i_ex_rd_wen                (o_id_rd_wen                ),
-  .i_ex_nocmt                 (o_id_nocmt                 ),
   .i_ex_skipcmt               (o_id_skipcmt               ),
   .i_ex_clint_mstatus_mie     (o_clint_mstatus_mie        ),
   .i_ex_clint_mie_mtie        (o_clint_mie_mtie           ),
@@ -274,7 +246,6 @@ ysyx_210544_exe_stage Exe_stage(
   .o_ex_op1                   (o_ex_op1                   ),
   .o_ex_op2                   (o_ex_op2                   ),
   .o_ex_op3                   (o_ex_op3                   ),
-  .o_ex_nocmt                 (o_ex_nocmt                 ),
   .i_ex_csr_rdata             (o_csr_rdata                ),
   .o_ex_csr_addr              (o_ex_csr_addr              ),
   .o_ex_csr_ren               (o_ex_csr_ren               ),
@@ -300,14 +271,12 @@ ysyx_210544_mem_stage Mem_stage(
   .i_mem_rd                   (o_ex_rd                    ),
   .i_mem_rd_wen               (o_ex_rd_wen                ),
   .i_mem_rd_wdata             (o_ex_rd_wdata              ),
-  .i_mem_nocmt                (o_ex_nocmt                 ),
   .i_mem_skipcmt              (o_ex_skipcmt               ),
   .o_mem_rd                   (o_mem_rd                   ),
   .o_mem_rd_wen               (o_mem_rd_wen               ),
   .o_mem_rd_wdata             (o_mem_rd_wdata             ),
   .o_mem_pc                   (o_mem_pc                   ),
   .o_mem_inst                 (o_mem_inst                 ),
-  .o_mem_nocmt                (o_mem_nocmt                ),
   .o_mem_skipcmt              (o_mem_skipcmt              ),
   .o_mem_clint_mtime_overflow (o_clint_mtime_overflow     ),
   .i_mem_intrNo               (o_ex_intrNo                ),
@@ -336,14 +305,12 @@ ysyx_210544_wb_stage Wb_stage(
   .i_wb_rd                    (o_mem_rd                   ),
   .i_wb_rd_wen                (o_mem_rd_wen               ),
   .i_wb_rd_wdata              (o_mem_rd_wdata             ),
-  .i_wb_nocmt                 (o_mem_nocmt                ),
   .i_wb_skipcmt               (o_mem_skipcmt              ),
   .o_wb_pc                    (o_wb_pc                    ),
   .o_wb_inst                  (o_wb_inst                  ),
   .o_wb_rd                    (o_wb_rd                    ),
   .o_wb_rd_wen                (o_wb_rd_wen                ),
   .o_wb_rd_wdata              (o_wb_rd_wdata              ),
-  .o_wb_nocmt                 (o_wb_nocmt                 ),
   .o_wb_skipcmt               (o_wb_skipcmt               ),
   .i_wb_intrNo                (o_mem_intrNo               ),
   .o_wb_intrNo                (o_wb_intrNo                )
@@ -359,7 +326,6 @@ ysyx_210544_cmt_stage Cmt_stage(
   .i_cmt_rd_wdata             (o_wb_rd_wdata              ),
   .i_cmt_pc                   (o_wb_pc                    ),
   .i_cmt_inst                 (o_wb_inst                  ),
-  .i_cmt_nocmt                (o_wb_nocmt                 ),
   .i_cmt_skipcmt              (o_wb_skipcmt               ),
   .i_cmt_regs                 (o_reg_regs                 ),
   .i_cmt_csrs                 (o_csr_csrs                 ),

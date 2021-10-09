@@ -9,7 +9,7 @@ module ysyx_210544_mem_stage(
   input   wire                clk,
   input   wire                rst,
   input   wire                i_mem_executed_req,
-  output  reg                 o_mem_executed_ack,
+  output  wire                o_mem_executed_ack,
   output  reg                 o_mem_memoryed_req,
   input   wire                i_mem_memoryed_ack,
   input   wire  [`BUS_64]     i_mem_pc,
@@ -17,7 +17,6 @@ module ysyx_210544_mem_stage(
   input   wire  [`BUS_RIDX]   i_mem_rd,
   input   wire                i_mem_rd_wen,
   input   wire  [`BUS_64]     i_mem_rd_wdata,
-  input   wire                i_mem_nocmt,
   input   wire                i_mem_skipcmt,
   input   wire  [7 : 0]       i_mem_inst_opcode,
   input   wire  [`BUS_64]     i_mem_op1,
@@ -28,7 +27,6 @@ module ysyx_210544_mem_stage(
   output  reg   [`BUS_64]     o_mem_rd_wdata,
   output  wire  [`BUS_64]     o_mem_pc,
   output  wire  [`BUS_32]     o_mem_inst,
-  output  wire                o_mem_nocmt,
   output  wire                o_mem_skipcmt,
   output  wire                o_mem_clint_mtime_overflow,
   input   wire  [`BUS_32]     i_mem_intrNo,
@@ -73,7 +71,6 @@ reg   [`BUS_RIDX]             tmp_i_mem_rd;
 reg                           tmp_i_mem_rd_wen;
 reg   [`BUS_64]               tmp_i_mem_rd_wdata;
 reg   [7 : 0]                 tmp_i_mem_inst_opcode;
-reg                           tmp_i_mem_nocmt;
 reg                           tmp_i_mem_skipcmt;
 reg                           tmp_ch_cachesync;
 reg                           tmp_ch_mem;
@@ -148,7 +145,6 @@ always @(posedge clk) begin
       tmp_i_mem_rd_wen,
       tmp_i_mem_rd_wdata,
       tmp_i_mem_inst_opcode,
-      tmp_i_mem_nocmt,
       tmp_i_mem_skipcmt,
       tmp_ch_cachesync,
       tmp_ch_mem,
@@ -165,7 +161,6 @@ always @(posedge clk) begin
       tmp_i_mem_rd              <= i_mem_rd;
       tmp_i_mem_rd_wen          <= i_mem_rd_wen;
       tmp_i_mem_rd_wdata        <= i_mem_rd_wdata;
-      tmp_i_mem_nocmt           <= i_mem_nocmt;
       tmp_i_mem_skipcmt         <= i_mem_skipcmt;
       tmp_ch_cachesync          <= ch_cachesync;
       tmp_ch_mem                <= ch_mem;
@@ -190,7 +185,6 @@ assign o_mem_inst         = tmp_i_mem_inst;
 assign o_mem_rd           = tmp_i_mem_rd;
 assign o_mem_rd_wen       = tmp_i_mem_rd_wen;
 // assign o_mem_rd_wdata     = tmp_i_mem_rd_wdata;
-assign o_mem_nocmt        = tmp_i_mem_nocmt;
 assign o_mem_skipcmt      = tmp_i_mem_skipcmt | tmp_ch_mmio;
 
 // ren, only valid at one pulse

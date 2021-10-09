@@ -14,19 +14,19 @@
 module ysyx_210544_cache_axi(
   input   wire                      clk,
   input   wire                      rst,
-	input                             i_cache_axi_req,        // 请求读写
+  input                             i_cache_axi_req,        // 请求读写
   input   wire  [63 : 0]            i_cache_axi_addr,       // 存储器地址（字节为单位），128字节对齐，低7位为0。
   input   wire                      i_cache_axi_op,         // 操作类型：0读取，1写入
   input   wire  [511 : 0]           i_cache_axi_wdata,      // 写入的数据
   output  reg   [511 : 0]           o_cache_axi_rdata,      // 读出的数据
-	output  reg                       o_cache_axi_ack,        // 读写完成应答
+  output  reg                       o_cache_axi_ack,        // 读写完成应答
 
   ///////////////////////////////////////////////
   // AXI interface
-	output                            o_axi_io_op,            // 0:read, 1:write
-	input                             i_axi_io_ready,
+  output                            o_axi_io_op,            // 0:read, 1:write
+  input                             i_axi_io_ready,
   input         [511 : 0]           i_axi_io_rdata,
-	output reg                        o_axi_io_valid,
+  output reg                        o_axi_io_valid,
   output reg    [63 : 0]            o_axi_io_addr,
   output reg    [511 : 0]           o_axi_io_wdata,
   output        [2 : 0]             o_axi_io_size,

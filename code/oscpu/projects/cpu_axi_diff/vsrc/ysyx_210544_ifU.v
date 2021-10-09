@@ -11,9 +11,9 @@ module ysyx_210544_ifU(
 
   /////////////////////////////////////////////////////////
   // AXI interface for Fetch
-	input                       i_bus_ack,
+  input                       i_bus_ack,
   input         [`BUS_32]     i_bus_rdata,
-	output reg                  o_bus_req,
+  output reg                  o_bus_req,
   output reg    [`BUS_64]     o_bus_addr,
   
   /////////////////////////////////////////////////////////
@@ -22,8 +22,7 @@ module ysyx_210544_ifU(
   input   wire  [`BUS_64]     i_pc_jmpaddr,
   output  reg   [`BUS_64]     o_pc,
   output  reg   [`BUS_32]     o_inst,
-  output  reg                 o_fetched,            // 取到指令的通知
-  output  reg                 o_nocmt               // 由于冲刷流水线而不提交这条指令
+  output  reg                 o_fetched             // 取到指令的通知
 );
 
 wire              handshake_done;
@@ -33,8 +32,6 @@ reg               fetch_again;          // 再次取指
 reg [`BUS_64]     pc_pred;              // 预测的下一个PC
 
 
-
-assign o_nocmt = 0;
 
 // o_bus_req
 always @(posedge clk) begin

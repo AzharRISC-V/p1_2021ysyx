@@ -54,8 +54,8 @@ module ysyx_210544_axi_rw (
     input                               clock,
     input                               reset,
 
-	input                               user_valid_i,
-	output                              user_ready_o,
+    input                               user_valid_i,
+    output                              user_ready_o,
     input                               user_req_i,         // read or write
     input  [7:0]                        user_blks_i,          // blocks: 0 ~ 7， means 1~8 (后端硬件资源限制为8)
     output reg [`RW_DATA_WIDTH-1:0]     user_rdata_o,

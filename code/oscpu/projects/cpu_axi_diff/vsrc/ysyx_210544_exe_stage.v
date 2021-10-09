@@ -9,7 +9,7 @@ module ysyx_210544_exe_stage(
   input   wire                rst,
   input   wire                clk,
   input   wire                i_ex_decoded_req,
-  output  reg                 o_ex_decoded_ack,
+  output  wire                o_ex_decoded_ack,
   output  reg                 o_ex_executed_req,
   input   wire                i_ex_executed_ack,
   input   wire  [7 : 0]       i_ex_inst_opcode,
@@ -20,7 +20,6 @@ module ysyx_210544_exe_stage(
   input   wire  [`BUS_64]     i_ex_op3,
   input   wire  [`BUS_RIDX]   i_ex_rd,
   input   wire                i_ex_rd_wen,
-  input   wire                i_ex_nocmt,
   input   wire                i_ex_clint_mstatus_mie,
   input   wire                i_ex_clint_mie_mtie,
   input   wire                i_ex_clint_mtime_overflow,
@@ -41,7 +40,6 @@ module ysyx_210544_exe_stage(
   output  wire  [`BUS_64]     o_ex_op1,
   output  wire  [`BUS_64]     o_ex_op2,
   output  wire  [`BUS_64]     o_ex_op3,
-  output  wire                o_ex_nocmt,
   output  wire                o_ex_skipcmt,
   output  reg   [`BUS_32]     o_ex_intrNo
 );
@@ -83,7 +81,6 @@ reg   [`BUS_64]               tmp_i_ex_op2;
 reg   [`BUS_64]               tmp_i_ex_op3;
 reg   [4 : 0]                 tmp_i_ex_rd;
 reg                           tmp_i_ex_rd_wen;
-reg                           tmp_i_ex_nocmt;
 reg                           tmp_i_ex_skipcmt;
 
 
@@ -109,7 +106,6 @@ always @(posedge clk) begin
       tmp_i_ex_op3,
       tmp_i_ex_rd,
       tmp_i_ex_rd_wen,
-      tmp_i_ex_nocmt,
       tmp_i_ex_skipcmt
     } <= 0;
 
@@ -128,7 +124,6 @@ always @(posedge clk) begin
       tmp_i_ex_op3      <= i_ex_op3;
       tmp_i_ex_rd       <= i_ex_rd;
       tmp_i_ex_rd_wen   <= i_ex_rd_wen;
-      tmp_i_ex_nocmt    <= i_ex_nocmt;
       tmp_i_ex_skipcmt  <= i_ex_skipcmt;
       
       o_ex_intrNo <= is_time_int_req ? 7 : 0;
@@ -166,7 +161,6 @@ assign o_ex_op3           = i_disable ? 0 : tmp_i_ex_op3;
 assign o_ex_inst_opcode   = i_disable ? 0 : tmp_i_ex_inst_opcode;
 assign o_ex_rd            = i_disable ? 0 : (!o_ena_exeU ? 0 : tmp_i_ex_rd);
 assign o_ex_rd_wen        = i_disable ? 0 : (!o_ena_exeU ? 0 : tmp_i_ex_rd_wen);
-assign o_ex_nocmt         = i_disable ? 0 : tmp_i_ex_nocmt;
 assign o_ex_skipcmt       = i_disable ? 0 : (tmp_i_ex_skipcmt | exeU_skip_cmt);
 
 assign o_ex_pc_jmp      = rst ? 0 : (o_ena_exeU ? exeU_pc_jmp     : exceptionU_pc_jmp);

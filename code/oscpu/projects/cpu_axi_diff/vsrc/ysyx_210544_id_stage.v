@@ -15,7 +15,6 @@ module ysyx_210544_id_stage(
   input   wire  [`BUS_32]     i_id_inst,
   input   wire  [`BUS_64]     i_id_rs1_data,
   input   wire  [`BUS_64]     i_id_rs2_data,
-  input   wire                i_id_nocmt,
   output  wire  [`BUS_64]     o_id_pc,
   output  wire  [`BUS_32]     o_id_inst,
   output  wire                o_id_rs1_ren,
@@ -28,7 +27,6 @@ module ysyx_210544_id_stage(
   output  wire  [`BUS_64]     o_id_op1,
   output  wire  [`BUS_64]     o_id_op2,
   output  wire  [`BUS_64]     o_id_op3,
-  output  wire                o_id_nocmt,
   output  wire                o_id_skipcmt
 );
 
@@ -37,7 +35,6 @@ wire                          i_disable;
 // 保存输入信息
 reg   [`BUS_64]               tmp_i_id_pc;
 reg   [`BUS_32]               tmp_i_id_inst;
-reg                           tmp_i_id_nocmt;
 
 wire fetched_hs;
 wire decoded_hs;
@@ -51,8 +48,7 @@ always @(posedge clk) begin
   if (rst) begin
     {
       tmp_i_id_pc,
-      tmp_i_id_inst,
-      tmp_i_id_nocmt
+      tmp_i_id_inst
     } <= 0;
 
     o_id_decoded_req      <= 0;
@@ -62,7 +58,6 @@ always @(posedge clk) begin
     if (fetched_hs) begin
       tmp_i_id_pc         <= i_id_pc;
       tmp_i_id_inst       <= i_id_inst;
-      tmp_i_id_nocmt      <= i_id_nocmt;
 
       o_id_decoded_req    <= 1;
       i_ena               <= 1;
@@ -78,7 +73,6 @@ assign i_disable = !i_ena;
 
 assign o_id_pc      = i_disable ? 0 : tmp_i_id_pc;
 assign o_id_inst    = i_disable ? 0 : tmp_i_id_inst;
-assign o_id_nocmt   = i_disable ? 0 : tmp_i_id_nocmt;
 
 ysyx_210544_idU IdU(
   .rst                        (rst                        ),

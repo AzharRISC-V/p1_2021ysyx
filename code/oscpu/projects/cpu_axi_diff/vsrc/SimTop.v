@@ -17,51 +17,51 @@ module SimTop(
     output                              io_uart_in_valid,
     input  [7:0]                        io_uart_in_ch,
 
-    input                               `AXI_TOP_INTERFACE(aw_ready),
-    output                              `AXI_TOP_INTERFACE(aw_valid),
-    output [63:0]                       `AXI_TOP_INTERFACE(aw_bits_addr),
-    output [2:0]                        `AXI_TOP_INTERFACE(aw_bits_prot),
-    output [`AXI_ID_WIDTH-1:0]          `AXI_TOP_INTERFACE(aw_bits_id),
-    output                              `AXI_TOP_INTERFACE(aw_bits_user),
-    output [7:0]                        `AXI_TOP_INTERFACE(aw_bits_len),
-    output [2:0]                        `AXI_TOP_INTERFACE(aw_bits_size),
-    output [1:0]                        `AXI_TOP_INTERFACE(aw_bits_burst),
-    output                              `AXI_TOP_INTERFACE(aw_bits_lock),
-    output [3:0]                        `AXI_TOP_INTERFACE(aw_bits_cache),
-    output [3:0]                        `AXI_TOP_INTERFACE(aw_bits_qos),
+    input                               io_memAXI_0_aw_ready,
+    output                              io_memAXI_0_aw_valid,
+    output [63:0]                       io_memAXI_0_aw_bits_addr,
+    output [2:0]                        io_memAXI_0_aw_bits_prot,
+    output [`AXI_ID_WIDTH-1:0]          io_memAXI_0_aw_bits_id,
+    output                              io_memAXI_0_aw_bits_user,
+    output [7:0]                        io_memAXI_0_aw_bits_len,
+    output [2:0]                        io_memAXI_0_aw_bits_size,
+    output [1:0]                        io_memAXI_0_aw_bits_burst,
+    output                              io_memAXI_0_aw_bits_lock,
+    output [3:0]                        io_memAXI_0_aw_bits_cache,
+    output [3:0]                        io_memAXI_0_aw_bits_qos,
     
-    input                               `AXI_TOP_INTERFACE(w_ready),
-    output                              `AXI_TOP_INTERFACE(w_valid),
-    output [63:0]                       `AXI_TOP_INTERFACE(w_bits_data)         [3:0],
-    output [7:0]                        `AXI_TOP_INTERFACE(w_bits_strb),
-    output                              `AXI_TOP_INTERFACE(w_bits_last),
+    input                               io_memAXI_0_w_ready,
+    output                              io_memAXI_0_w_valid,
+    output [63:0]                       io_memAXI_0_w_bits_data         [3:0],
+    output [7:0]                        io_memAXI_0_w_bits_strb,
+    output                              io_memAXI_0_w_bits_last,
     
-    output                              `AXI_TOP_INTERFACE(b_ready),
-    input                               `AXI_TOP_INTERFACE(b_valid),
-    input  [1:0]                        `AXI_TOP_INTERFACE(b_bits_resp),
-    input  [`AXI_ID_WIDTH-1:0]          `AXI_TOP_INTERFACE(b_bits_id),
-    input                               `AXI_TOP_INTERFACE(b_bits_user),
+    output                              io_memAXI_0_b_ready,
+    input                               io_memAXI_0_b_valid,
+    input  [1:0]                        io_memAXI_0_b_bits_resp,
+    input  [`AXI_ID_WIDTH-1:0]          io_memAXI_0_b_bits_id,
+    input                               io_memAXI_0_b_bits_user,
 
-    input                               `AXI_TOP_INTERFACE(ar_ready),
-    output                              `AXI_TOP_INTERFACE(ar_valid),
-    output [63:0]                       `AXI_TOP_INTERFACE(ar_bits_addr),
-    output [2:0]                        `AXI_TOP_INTERFACE(ar_bits_prot),
-    output [`AXI_ID_WIDTH-1:0]          `AXI_TOP_INTERFACE(ar_bits_id),
-    output                              `AXI_TOP_INTERFACE(ar_bits_user),
-    output [7:0]                        `AXI_TOP_INTERFACE(ar_bits_len),
-    output [2:0]                        `AXI_TOP_INTERFACE(ar_bits_size),
-    output [1:0]                        `AXI_TOP_INTERFACE(ar_bits_burst),
-    output                              `AXI_TOP_INTERFACE(ar_bits_lock),
-    output [3:0]                        `AXI_TOP_INTERFACE(ar_bits_cache),
-    output [3:0]                        `AXI_TOP_INTERFACE(ar_bits_qos),
+    input                               io_memAXI_0_ar_ready,
+    output                              io_memAXI_0_ar_valid,
+    output [63:0]                       io_memAXI_0_ar_bits_addr,
+    output [2:0]                        io_memAXI_0_ar_bits_prot,
+    output [`AXI_ID_WIDTH-1:0]          io_memAXI_0_ar_bits_id,
+    output                              io_memAXI_0_ar_bits_user,
+    output [7:0]                        io_memAXI_0_ar_bits_len,
+    output [2:0]                        io_memAXI_0_ar_bits_size,
+    output [1:0]                        io_memAXI_0_ar_bits_burst,
+    output                              io_memAXI_0_ar_bits_lock,
+    output [3:0]                        io_memAXI_0_ar_bits_cache,
+    output [3:0]                        io_memAXI_0_ar_bits_qos,
     
-    output                              `AXI_TOP_INTERFACE(r_ready),
-    input                               `AXI_TOP_INTERFACE(r_valid),
-    input  [1:0]                        `AXI_TOP_INTERFACE(r_bits_resp),
-    input  [63:0]                       `AXI_TOP_INTERFACE(r_bits_data)         [3:0],
-    input                               `AXI_TOP_INTERFACE(r_bits_last),
-    input  [`AXI_ID_WIDTH-1:0]          `AXI_TOP_INTERFACE(r_bits_id),
-    input                               `AXI_TOP_INTERFACE(r_bits_user)
+    output                              io_memAXI_0_r_ready,
+    input                               io_memAXI_0_r_valid,
+    input  [1:0]                        io_memAXI_0_r_bits_resp,
+    input  [63:0]                       io_memAXI_0_r_bits_data         [3:0],
+    input                               io_memAXI_0_r_bits_last,
+    input  [`AXI_ID_WIDTH-1:0]          io_memAXI_0_r_bits_id,
+    input                               io_memAXI_0_r_bits_user
 );
 
 // axi_rw 接口
@@ -92,35 +92,35 @@ ysyx_210544_axi_rw u_axi_rw (
     .user_blks_i                    (o_user_axi_blks),
     .user_resp_o                    (o_user_axi_resp),
 
-    .axi_aw_ready_i                 (`AXI_TOP_INTERFACE(aw_ready)),
-    .axi_aw_valid_o                 (`AXI_TOP_INTERFACE(aw_valid)),
-    .axi_aw_addr_o                  (`AXI_TOP_INTERFACE(aw_bits_addr)),
-    .axi_aw_id_o                    (`AXI_TOP_INTERFACE(aw_bits_id)),
-    .axi_aw_len_o                   (`AXI_TOP_INTERFACE(aw_bits_len)),
-    .axi_aw_size_o                  (`AXI_TOP_INTERFACE(aw_bits_size)),
-    .axi_aw_burst_o                 (`AXI_TOP_INTERFACE(aw_bits_burst)),
-    .axi_w_ready_i                  (`AXI_TOP_INTERFACE(w_ready)),
-    .axi_w_valid_o                  (`AXI_TOP_INTERFACE(w_valid)),
-    .axi_w_data_o                   (`AXI_TOP_INTERFACE(w_bits_data)[0]),
-    .axi_w_strb_o                   (`AXI_TOP_INTERFACE(w_bits_strb)),
-    .axi_w_last_o                   (`AXI_TOP_INTERFACE(w_bits_last)),
-    .axi_b_ready_o                  (`AXI_TOP_INTERFACE(b_ready)),
-    .axi_b_valid_i                  (`AXI_TOP_INTERFACE(b_valid)),
-    .axi_b_resp_i                   (`AXI_TOP_INTERFACE(b_bits_resp)),
-    .axi_b_id_i                     (`AXI_TOP_INTERFACE(b_bits_id)),
-    .axi_ar_ready_i                 (`AXI_TOP_INTERFACE(ar_ready)),
-    .axi_ar_valid_o                 (`AXI_TOP_INTERFACE(ar_valid)),
-    .axi_ar_addr_o                  (`AXI_TOP_INTERFACE(ar_bits_addr)),
-    .axi_ar_id_o                    (`AXI_TOP_INTERFACE(ar_bits_id)),
-    .axi_ar_len_o                   (`AXI_TOP_INTERFACE(ar_bits_len)),
-    .axi_ar_size_o                  (`AXI_TOP_INTERFACE(ar_bits_size)),
-    .axi_ar_burst_o                 (`AXI_TOP_INTERFACE(ar_bits_burst)),
-    .axi_r_ready_o                  (`AXI_TOP_INTERFACE(r_ready)),
-    .axi_r_valid_i                  (`AXI_TOP_INTERFACE(r_valid)),
-    .axi_r_resp_i                   (`AXI_TOP_INTERFACE(r_bits_resp)),
-    .axi_r_data_i                   (`AXI_TOP_INTERFACE(r_bits_data)[0]),
-    .axi_r_last_i                   (`AXI_TOP_INTERFACE(r_bits_last)),
-    .axi_r_id_i                     (`AXI_TOP_INTERFACE(r_bits_id))
+    .axi_aw_ready_i                 (io_memAXI_0_aw_ready),
+    .axi_aw_valid_o                 (io_memAXI_0_aw_valid),
+    .axi_aw_addr_o                  (io_memAXI_0_aw_bits_addr),
+    .axi_aw_id_o                    (io_memAXI_0_aw_bits_id),
+    .axi_aw_len_o                   (io_memAXI_0_aw_bits_len),
+    .axi_aw_size_o                  (io_memAXI_0_aw_bits_size),
+    .axi_aw_burst_o                 (io_memAXI_0_aw_bits_burst),
+    .axi_w_ready_i                  (io_memAXI_0_w_ready),
+    .axi_w_valid_o                  (io_memAXI_0_w_valid),
+    .axi_w_data_o                   (io_memAXI_0_w_bits_data[0]),
+    .axi_w_strb_o                   (io_memAXI_0_w_bits_strb),
+    .axi_w_last_o                   (io_memAXI_0_w_bits_last),
+    .axi_b_ready_o                  (io_memAXI_0_b_ready),
+    .axi_b_valid_i                  (io_memAXI_0_b_valid),
+    .axi_b_resp_i                   (io_memAXI_0_b_bits_resp),
+    .axi_b_id_i                     (io_memAXI_0_b_bits_id),
+    .axi_ar_ready_i                 (io_memAXI_0_ar_ready),
+    .axi_ar_valid_o                 (io_memAXI_0_ar_valid),
+    .axi_ar_addr_o                  (io_memAXI_0_ar_bits_addr),
+    .axi_ar_id_o                    (io_memAXI_0_ar_bits_id),
+    .axi_ar_len_o                   (io_memAXI_0_ar_bits_len),
+    .axi_ar_size_o                  (io_memAXI_0_ar_bits_size),
+    .axi_ar_burst_o                 (io_memAXI_0_ar_bits_burst),
+    .axi_r_ready_o                  (io_memAXI_0_r_ready),
+    .axi_r_valid_i                  (io_memAXI_0_r_valid),
+    .axi_r_resp_i                   (io_memAXI_0_r_bits_resp),
+    .axi_r_data_i                   (io_memAXI_0_r_bits_data[0]),
+    .axi_r_last_i                   (io_memAXI_0_r_bits_last),
+    .axi_r_id_i                     (io_memAXI_0_r_bits_id)
 );
 
 // CPU核
@@ -141,16 +141,16 @@ assign io_uart_out_valid = 0;
 assign io_uart_out_ch = 0;
 assign io_uart_in_valid = 0;
 
-assign `AXI_TOP_INTERFACE(aw_bits_prot) = 0;
-assign `AXI_TOP_INTERFACE(aw_bits_user) = 0;
-assign `AXI_TOP_INTERFACE(aw_bits_lock) = 0;
-assign `AXI_TOP_INTERFACE(aw_bits_cache) = 0;
-assign `AXI_TOP_INTERFACE(aw_bits_qos) = 0;
-assign `AXI_TOP_INTERFACE(ar_bits_prot) = 0;
-assign `AXI_TOP_INTERFACE(ar_bits_user) = 0;
-assign `AXI_TOP_INTERFACE(ar_bits_lock) = 0;
-assign `AXI_TOP_INTERFACE(ar_bits_cache) = 0;
-assign `AXI_TOP_INTERFACE(ar_bits_qos) = 0;
+assign io_memAXI_0_aw_bits_prot = 0;
+assign io_memAXI_0_aw_bits_user = 0;
+assign io_memAXI_0_aw_bits_lock = 0;
+assign io_memAXI_0_aw_bits_cache = 0;
+assign io_memAXI_0_aw_bits_qos = 0;
+assign io_memAXI_0_ar_bits_prot = 0;
+assign io_memAXI_0_ar_bits_user = 0;
+assign io_memAXI_0_ar_bits_lock = 0;
+assign io_memAXI_0_ar_bits_cache = 0;
+assign io_memAXI_0_ar_bits_qos = 0;
 
 
 wire _unused_ok = &{1'b0,
@@ -160,8 +160,8 @@ wire _unused_ok = &{1'b0,
   io_perfInfo_clean,
   io_perfInfo_dump,
   io_uart_in_ch,
-  `AXI_TOP_INTERFACE(b_bits_user),
-  `AXI_TOP_INTERFACE(r_bits_user),
+  io_memAXI_0_b_bits_user,
+  io_memAXI_0_r_bits_user,
   o_user_axi_resp,
   1'b0};
 

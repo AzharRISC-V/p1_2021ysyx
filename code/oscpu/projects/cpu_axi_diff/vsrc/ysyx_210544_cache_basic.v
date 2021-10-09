@@ -60,10 +60,10 @@ module ysyx_210544_cache_basic (
   input   wire  [`BUS_64]     i_cache_basic_addr,         // 地址。保证与操作数大小相加后不能跨界。
   input   wire  [`BUS_64]     i_cache_basic_wdata,        // 写入的数据
   input   wire  [2 : 0]       i_cache_basic_bytes,        // 操作的字节数: 0~7表示1~8字节
-	input   wire                i_cache_basic_op,           // 操作: 0:read, 1:write
-	input   wire                i_cache_basic_req,          // 请求
+  input   wire                i_cache_basic_op,           // 操作: 0:read, 1:write
+  input   wire                i_cache_basic_req,          // 请求
   output  reg   [`BUS_64]     o_cache_basic_rdata,        // 读出的数据
-	output  reg                 o_cache_basic_ack,          // 应答
+  output  reg                 o_cache_basic_ack,          // 应答
 
   // 同步通道
   input   wire                i_cache_basic_sync_rreq,      // 读请求，需要一直保持，收到应答后撤销。
@@ -144,9 +144,9 @@ reg                           sync_wack;                  // 同步操作写包�
 
 reg   [1  : 0]                sync_rwayid;                // 读取到的路id: 0~3
 reg   [3  : 0]                sync_rblkid;                // 读取到的块id: 0~15
-reg   [25 : 0]                sync_rinfo;                 // 读到到的cache_info
+wire  [25 : 0]                sync_rinfo;                 // 读到到的cache_info
 reg   [511: 0]                sync_rdata;                 // 读到到的cache_data
-reg                           sync_rlast;                 // 读取达到最后一个单元
+wire                          sync_rlast;                 // 读取达到最后一个单元
 wire                          sync_r_need;                // 是否需要读取的条件：cache行有效，且地址是主存的地址
 
 wire  [1  : 0]                sync_wwayid;                // 要写入的路id: 0~3
@@ -206,8 +206,8 @@ wire                hs_cache_axi;               // cache_axi操作 握手
 wire                hs_ramwrite;                // ram操作 握手（完成4行写入）
 wire                hs_ramread;                 // ram操作 握手（完成4行读取）
 wire                hs_ramline;                 // ram操作 握手（完成指定1行读写）
-reg   [127: 0]      rdata_line;                 // 读取一行数据
-reg   [63: 0]       rdata_out;                  // 输出的数据
+wire  [127: 0]      rdata_line;                 // 读取一行数据
+wire  [63: 0]       rdata_out;                  // 输出的数据
 
 
 
@@ -684,12 +684,12 @@ end
 ysyx_210544_cache_axi Cache_axi(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
-	.i_cache_axi_req            (o_cache_axi_req            ),
-	.i_cache_axi_addr           (o_cache_axi_addr           ),
-	.i_cache_axi_op             (o_cache_axi_op             ),
-	.i_cache_axi_wdata          (o_cache_axi_wdata          ),
-	.o_cache_axi_rdata          (i_cache_axi_rdata          ),
-	.o_cache_axi_ack            (i_cache_axi_ack            ),
+  .i_cache_axi_req            (o_cache_axi_req            ),
+  .i_cache_axi_addr           (o_cache_axi_addr           ),
+  .i_cache_axi_op             (o_cache_axi_op             ),
+  .i_cache_axi_wdata          (o_cache_axi_wdata          ),
+  .o_cache_axi_rdata          (i_cache_axi_rdata          ),
+  .o_cache_axi_ack            (i_cache_axi_ack            ),
 
   .i_axi_io_ready             (i_axi_io_ready             ),
   .i_axi_io_rdata             (i_axi_io_rdata             ),

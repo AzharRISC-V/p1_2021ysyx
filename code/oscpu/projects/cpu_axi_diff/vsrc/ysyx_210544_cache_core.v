@@ -13,10 +13,10 @@ module ysyx_210544_cache_core (
   input   wire  [`BUS_64]     i_cache_core_addr,          // 地址。地址与操作数相加后可以跨界。
   input   wire  [`BUS_64]     i_cache_core_wdata,         // 写入的数据
   input   wire  [2 : 0]       i_cache_core_bytes,         // 操作的字节数: 0~7表示1~8字节
-	input   wire                i_cache_core_op,            // 操作: 0:read, 1:write
-	input   wire                i_cache_core_req,           // 请求
+  input   wire                i_cache_core_op,            // 操作: 0:read, 1:write
+  input   wire                i_cache_core_req,           // 请求
   output  reg   [`BUS_64]     o_cache_core_rdata,         // 读出的数据
-	output  reg                 o_cache_core_ack,           // 应答
+  output  reg                 o_cache_core_ack,           // 应答
 
   // 同步通道
   input   wire                i_cache_core_sync_rreq,     // 读请求
@@ -57,6 +57,8 @@ reg                           i_cache_basic_ack;          // 应答
 // =============== 处理跨行问题 ===============
 wire  [59:0]                  i_addr_high;                // 输入地址的高60位
 wire  [3:0]                   i_addr_4;                   // 输入地址的低4位 (0~15)
+wire  [3:0]                   i_addr_4_rev;               // 输入地址的低4位取反 (0~15)
+wire  [3:0]                   i_addr_4_add;               // 输入地址的低4位add (0~15)
 wire  [3:0]                   i_bytes_4;                  // 输入字节数扩展为4位
 
 wire                          en_second;                  // 第二次操作使能
@@ -75,13 +77,13 @@ assign o_cache_basic_op = i_cache_core_op;
 ysyx_210544_cache_basic Cache_basic(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
-	.i_cache_basic_addr         (o_cache_basic_addr         ),
-	.i_cache_basic_wdata        (o_cache_basic_wdata        ),
-	.i_cache_basic_bytes        (o_cache_basic_bytes        ),
-	.i_cache_basic_op           (o_cache_basic_op           ),
-	.i_cache_basic_req          (o_cache_basic_req          ),
-	.o_cache_basic_rdata        (i_cache_basic_rdata        ),
-	.o_cache_basic_ack          (i_cache_basic_ack          ),
+  .i_cache_basic_addr         (o_cache_basic_addr         ),
+  .i_cache_basic_wdata        (o_cache_basic_wdata        ),
+  .i_cache_basic_bytes        (o_cache_basic_bytes        ),
+  .i_cache_basic_op           (o_cache_basic_op           ),
+  .i_cache_basic_req          (o_cache_basic_req          ),
+  .o_cache_basic_rdata        (i_cache_basic_rdata        ),
+  .o_cache_basic_ack          (i_cache_basic_ack          ),
 
   .i_cache_basic_sync_rreq    (i_cache_core_sync_rreq     ),
   .o_cache_basic_sync_rack    (o_cache_core_sync_rack     ),
@@ -111,10 +113,12 @@ ysyx_210544_cache_basic Cache_basic(
 assign i_addr_high = i_cache_core_addr[63:4];
 assign i_addr_4 = i_cache_core_addr[3:0];
 assign i_bytes_4 = {1'd0, i_cache_core_bytes};
+assign i_addr_4_rev = 4'd15 - i_addr_4;
+assign i_addr_4_add = i_addr_4 + i_bytes_4;
 
 assign en_second = i_addr_4 + i_bytes_4 < i_addr_4;
-assign bytes[0] = en_second ? {4'd15 - i_addr_4}[2:0] : i_cache_core_bytes;
-assign bytes[1] = en_second ? {i_addr_4 + i_bytes_4}[2:0] : 3'd0;
+assign bytes[0] = en_second ? i_addr_4_rev[2:0] : i_cache_core_bytes;
+assign bytes[1] = en_second ? i_addr_4_add[2:0] : 3'd0;
 assign addr[0] = i_cache_core_addr;
 assign addr[1] = {i_addr_high + 60'd1, 4'd0};
 assign wdata[0] = i_cache_core_wdata;
@@ -177,5 +181,9 @@ always @(posedge clk) begin
   end
 end
 
+wire _unused_ok = &{1'b0,
+  i_addr_4_rev[3],
+  i_addr_4_add[3],
+  1'b0};
 
 endmodule

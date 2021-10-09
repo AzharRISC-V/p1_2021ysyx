@@ -15,7 +15,6 @@ module ysyx_210544_cmt_stage(
   input   wire [`BUS_64]      i_cmt_rd_wdata,
   input   wire [`BUS_64]      i_cmt_pc,
   input   wire [`BUS_32]      i_cmt_inst,
-  input   wire                i_cmt_nocmt,
   input   wire                i_cmt_skipcmt,
   input   wire [`BUS_64]      i_cmt_regs[0 : 31],
   input   wire [`BUS_64]      i_cmt_csrs[0 : 15],
@@ -29,7 +28,7 @@ wire i_cmtvalid;
 
 assign o_cmt_writebacked_ack = 1'b1;
 assign writebacked_hs = i_cmt_writebacked_req & o_cmt_writebacked_ack;
-assign i_cmtvalid = writebacked_hs & (!i_cmt_nocmt);
+assign i_cmtvalid = writebacked_hs;
 
 ysyx_210544_cmtU CmtU(
   .clk                        (clk                        ),
