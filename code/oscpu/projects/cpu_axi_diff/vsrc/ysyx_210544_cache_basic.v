@@ -307,15 +307,14 @@ genvar way;
 generate
   for (way = 0; way < `WAYS; way = way + 1) 
   begin: CACHE_DATA_GEN
-    localparam [1:0] w = way;
     S011HD1P_X32Y2D128_BW  chip_data(
       .CLK                        (clk                  ),
-      .CEN                        (chip_data_cen[w]     ),
-      .WEN                        (chip_data_wen[w]     ),
-      .A                          (chip_data_addr[w]    ),
-      .D                          (chip_data_wdata[w]   ),
-      .BWEN                       (chip_data_wmask[w]   ),
-      .Q                          (chip_data_rdata[w]   )
+      .CEN                        (chip_data_cen[way]     ),
+      .WEN                        (chip_data_wen[way]     ),
+      .A                          (chip_data_addr[way]    ),
+      .D                          (chip_data_wdata[way]   ),
+      .BWEN                       (chip_data_wmask[way]   ),
+      .Q                          (chip_data_rdata[way]   )
     );
   end
 endgenerate

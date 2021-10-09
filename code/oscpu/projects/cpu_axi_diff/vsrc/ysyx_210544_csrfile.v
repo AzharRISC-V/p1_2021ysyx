@@ -80,7 +80,6 @@ always @(posedge clk) begin
     csrs[`CSR_IDX_MIP]      <= 0;// 64'h80;
   end
   else begin
-
     if (i_csr_wen) begin
       if (csr_idx == `CSR_IDX_MSTATUS) begin
         csrs[csr_idx] <= {mstatus_sd, i_csr_wdata[62:0]};
@@ -88,6 +87,10 @@ always @(posedge clk) begin
       else begin
         csrs[csr_idx] <= i_csr_wdata;
       end
+    end
+    else begin
+      // mcycle模拟
+      csrs[`CSR_IDX_MCYCLE] <= csrs[`CSR_IDX_MCYCLE] + 1;
     end
   end
 end
@@ -100,16 +103,5 @@ generate
     assign o_csrs[i] = csrs[i];
   end
 endgenerate
-
-// mcycle模拟
-always @(posedge clk) begin
-  if (rst) begin
-    csrs[`CSR_IDX_MCYCLE] <= 0;
-  end
-  else begin
-    csrs[`CSR_IDX_MCYCLE] <= csrs[`CSR_IDX_MCYCLE] + 1;
-  end
-end
-
 
 endmodule
