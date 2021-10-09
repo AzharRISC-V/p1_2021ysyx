@@ -20,6 +20,9 @@ module ysyx_210544_cmtU(
   input   wire                i_skipcmt
 );
 
+
+`ifdef DIFFTEST_YSYX_210544
+
 // Difftest
 reg                           cmt_wen;
 reg   [7:0]                   cmt_wdest;
@@ -33,11 +36,8 @@ reg   [2:0]                   trap_code;
 reg   [`BUS_64]               cycleCnt;
 reg   [`BUS_64]               instrCnt;
 reg   [`BUS_64]               regs_diff [0 : 31];
-
-wire  [`BUS_64] instrCnt_inc;
-wire  [`BUS_64] sstatus;
-
-
+wire  [`BUS_64]               instrCnt_inc;
+wire  [`BUS_64]               sstatus;
 
 assign instrCnt_inc = i_cmtvalid ? 1 : 0;
 assign sstatus = i_csrs[`CSR_IDX_MSTATUS] & 64'h80000003_000DE122;
@@ -61,8 +61,6 @@ always @(negedge clk) begin
     instrCnt      <= instrCnt + instrCnt_inc;
   end
 end
-
-`ifdef DIFFTEST_YSYX_210544
 
 DifftestArchEvent DifftestArchEvent(
   .clock              (clk),    // 时钟
@@ -195,21 +193,6 @@ DifftestArchFpRegState DifftestArchFpRegState(
   .fpr_30             (0),
   .fpr_31             (0)
 );
-
-`else
-
-wire _unused_ok = &{1'b0,
-  cmt_wen,
-  cmt_wdest,
-  cmt_wdata,
-  cmt_pc,
-  cmt_inst,
-  cmt_valid,
-  cmt_skip,
-  trap_code,
-  // regs_diff,
-  sstatus,
-  1'b0};
 
 `endif
 

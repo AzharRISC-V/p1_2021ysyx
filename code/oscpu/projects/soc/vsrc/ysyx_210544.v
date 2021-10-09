@@ -998,43 +998,32 @@ assign c_offset_bits    = mem_offset_bits[6:0];
 assign c_wmask          = {64'd0, user_wmask} << c_offset_bits;
 assign c_wdata          = {64'd0, i_cache_basic_wdata} << c_offset_bits;
 
-// cache_info
-genvar way,i;
-generate
-  for (way = 0; way < `WAYS; way = way + 1) 
-  begin: CACHE_INFO_GEN1
-    localparam [1:0] w = way;
-    for (i = 0; i < `BLKS; i = i + 1) 
-    begin: CAHCE_INFO_GEN2
-      always @(posedge clk) begin
-        if (rst) begin
-          cache_info[w][i] <= {w, 1'b0, 1'b0, 22'b0};
-        end
-      end
-    end
-  end
-endgenerate
-
 // c_tag, c_v, c_d, c_s
-generate
-  for (way = 0; way < `WAYS; way = way + 1) 
-  begin: CACHE_INFO_DETAILS_GEN
-    localparam [1:0] w = way;
-    assign c_tag[w]   = cache_info[w][mem_blkno][`c_tag_BUS];
-    assign c_v[w]     = cache_info[w][mem_blkno][`c_v_BUS];
-    assign c_d[w]     = cache_info[w][mem_blkno][`c_d_BUS];
-    assign c_s[w]     = cache_info[w][mem_blkno][`c_s_BUS];
-  end
-endgenerate
+assign c_tag[0]   = cache_info[0][mem_blkno][`c_tag_BUS];
+assign c_tag[1]   = cache_info[1][mem_blkno][`c_tag_BUS];
+assign c_tag[2]   = cache_info[2][mem_blkno][`c_tag_BUS];
+assign c_tag[3]   = cache_info[3][mem_blkno][`c_tag_BUS];
+
+assign c_v[0]     = cache_info[0][mem_blkno][`c_v_BUS];
+assign c_v[1]     = cache_info[1][mem_blkno][`c_v_BUS];
+assign c_v[2]     = cache_info[2][mem_blkno][`c_v_BUS];
+assign c_v[3]     = cache_info[3][mem_blkno][`c_v_BUS];
+
+assign c_d[0]     = cache_info[0][mem_blkno][`c_d_BUS];
+assign c_d[1]     = cache_info[1][mem_blkno][`c_d_BUS];
+assign c_d[2]     = cache_info[2][mem_blkno][`c_d_BUS];
+assign c_d[3]     = cache_info[3][mem_blkno][`c_d_BUS];
+
+assign c_s[0]     = cache_info[0][mem_blkno][`c_s_BUS];
+assign c_s[1]     = cache_info[1][mem_blkno][`c_s_BUS];
+assign c_s[2]     = cache_info[2][mem_blkno][`c_s_BUS];
+assign c_s[3]     = cache_info[3][mem_blkno][`c_s_BUS];
 
 // hit
-generate
-  for (way = 0; way < `WAYS; way = way + 1) 
-  begin: HIT_GEN
-    localparam [1:0] w = way;
-    assign hit[w] = c_v[w] && (c_tag[w] == mem_tag);
-  end
-endgenerate
+assign hit[0] = c_v[0] && (c_tag[0] == mem_tag);
+assign hit[1] = c_v[1] && (c_tag[1] == mem_tag);
+assign hit[2] = c_v[2] && (c_tag[2] == mem_tag);
+assign hit[3] = c_v[3] && (c_tag[3] == mem_tag);
 
 assign hit_any = hit[0] | hit[1] | hit[2] | hit[3];
 assign wayID_hit = (hit[1] ? 2'd1 : 2'd0) | (hit[2] ? 2'd2 : 2'd0) | (hit[3] ? 2'd3 : 2'd0);
@@ -1042,35 +1031,19 @@ assign wayID_smin = (c_s[1] == 0 ? 2'd1 : 2'd0) | (c_s[2] == 0 ? 2'd2 : 2'd0) | 
 assign wayID_select = hit_any ? wayID_hit : wayID_smin;
 
 // RAM instantiate
+genvar way;
 generate
   for (way = 0; way < `WAYS; way = way + 1) 
   begin: CACHE_DATA_GEN
-    localparam [1:0] w = way;
     S011HD1P_X32Y2D128_BW  chip_data(
       .CLK                        (clk                  ),
-      .CEN                        (chip_data_cen[w]     ),
-      .WEN                        (chip_data_wen[w]     ),
-      .A                          (chip_data_addr[w]    ),
-      .D                          (chip_data_wdata[w]   ),
-      .BWEN                       (chip_data_wmask[w]   ),
-      .Q                          (chip_data_rdata[w]   )
+      .CEN                        (chip_data_cen[way]     ),
+      .WEN                        (chip_data_wen[way]     ),
+      .A                          (chip_data_addr[way]    ),
+      .D                          (chip_data_wdata[way]   ),
+      .BWEN                       (chip_data_wmask[way]   ),
+      .Q                          (chip_data_rdata[way]   )
     );
-  end
-endgenerate
-
-// cen, addr
-generate
-  for (way = 0; way < `WAYS; way = way + 1) 
-  begin: CHIP_DATA_CEN_WEN_GEN
-    localparam [1:0] w = way;
-    always @(posedge clk) begin
-      if (rst) begin
-        chip_data_cen[w] <= !CHIP_DATA_CEN;
-        chip_data_wen[w] <= !CHIP_DATA_WEN;
-        chip_data_addr[w] <= 6'd0;
-        chip_data_wdata[w] <= 128'd0;
-      end
-    end
   end
 endgenerate
 
@@ -1171,6 +1144,88 @@ end
 
 always @(posedge clk) begin
   if (rst) begin
+    cache_info[0][ 0] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][ 1] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][ 2] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][ 3] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][ 4] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][ 5] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][ 6] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][ 7] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][ 8] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][ 9] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][10] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][11] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][12] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][13] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][14] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[0][15] <= {2'd0, 1'b0, 1'b0, 22'b0};
+    cache_info[1][ 0] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][ 1] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][ 2] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][ 3] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][ 4] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][ 5] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][ 6] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][ 7] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][ 8] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][ 9] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][10] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][11] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][12] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][13] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][14] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[1][15] <= {2'd1, 1'b0, 1'b0, 22'b0};
+    cache_info[2][ 0] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][ 1] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][ 2] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][ 3] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][ 4] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][ 5] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][ 6] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][ 7] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][ 8] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][ 9] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][10] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][11] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][12] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][13] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][14] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[2][15] <= {2'd2, 1'b0, 1'b0, 22'b0};
+    cache_info[3][ 0] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][ 1] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][ 2] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][ 3] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][ 4] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][ 5] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][ 6] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][ 7] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][ 8] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][ 9] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][10] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][11] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][12] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][13] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][14] <= {2'd3, 1'b0, 1'b0, 22'b0};
+    cache_info[3][15] <= {2'd3, 1'b0, 1'b0, 22'b0};
+
+    chip_data_cen[0] <= !CHIP_DATA_CEN;
+    chip_data_cen[1] <= !CHIP_DATA_CEN;
+    chip_data_cen[2] <= !CHIP_DATA_CEN;
+    chip_data_cen[3] <= !CHIP_DATA_CEN;
+    chip_data_wen[0] <= !CHIP_DATA_WEN;
+    chip_data_wen[1] <= !CHIP_DATA_WEN;
+    chip_data_wen[2] <= !CHIP_DATA_WEN;
+    chip_data_wen[3] <= !CHIP_DATA_WEN;
+    chip_data_addr[0] <= 6'd0;
+    chip_data_addr[1] <= 6'd0;
+    chip_data_addr[2] <= 6'd0;
+    chip_data_addr[3] <= 6'd0;
+    chip_data_wdata[0] <= 128'd0;
+    chip_data_wdata[1] <= 128'd0;
+    chip_data_wdata[2] <= 128'd0;
+    chip_data_wdata[3] <= 128'd0;
+
     o_cache_basic_ack <= 1'd0;
     sync_rpackreq <= 1'd0;
     sync_rack <= 1'd0;
@@ -2572,7 +2627,6 @@ always @(posedge clk) begin
     csrs[`CSR_IDX_MIP]      <= 0;// 64'h80;
   end
   else begin
-
     if (i_csr_wen) begin
       if (csr_idx == `CSR_IDX_MSTATUS) begin
         csrs[csr_idx] <= {mstatus_sd, i_csr_wdata[62:0]};
@@ -2580,6 +2634,10 @@ always @(posedge clk) begin
       else begin
         csrs[csr_idx] <= i_csr_wdata;
       end
+    end
+    else begin
+      // mcycle模拟
+      csrs[`CSR_IDX_MCYCLE] <= csrs[`CSR_IDX_MCYCLE] + 1;
     end
   end
 end
@@ -2592,17 +2650,6 @@ generate
     assign o_csrs[i] = csrs[i];
   end
 endgenerate
-
-// mcycle模拟
-always @(posedge clk) begin
-  if (rst) begin
-    csrs[`CSR_IDX_MCYCLE] <= 0;
-  end
-  else begin
-    csrs[`CSR_IDX_MCYCLE] <= csrs[`CSR_IDX_MCYCLE] + 1;
-  end
-end
-
 
 endmodule
 
@@ -2674,7 +2721,6 @@ module ysyx_210544_ifU(
 );
 
 wire              handshake_done;
-reg               ignore_next_inst;     // 忽略下一条取指
 reg [`BUS_64]     saved_pc_jmpaddr;     // 记忆的pc跳转指令
 reg               fetch_again;          // 再次取指
 reg [`BUS_64]     pc_pred;              // 预测的下一个PC
@@ -2689,11 +2735,8 @@ always @(posedge clk) begin
   else begin
     // 停止信号
     if (handshake_done) begin
-      // 若要求再次取指，则这次不要停止
-      if (fetch_again) begin
-        fetch_again <= 0;
-      end
-      else begin
+		// if fetch_again, won't stop
+      if (!fetch_again) begin
         o_bus_req <= 0;
       end
     end
@@ -2709,16 +2752,8 @@ assign handshake_done = o_bus_req & i_bus_ack;
 // 跳转指令处理
 always @(posedge clk) begin
   if (rst) begin
-    ignore_next_inst <= 0;
-    saved_pc_jmpaddr <= 0;
-    fetch_again <= 0;
   end
   else begin
-    if (i_pc_jmp & (i_pc_jmpaddr != pc_pred)) begin
-      ignore_next_inst <= 1;
-      fetch_again <= 1;
-      saved_pc_jmpaddr <= i_pc_jmpaddr;
-    end
   end
 end
 
@@ -2729,11 +2764,18 @@ always @( posedge clk ) begin
     o_pc                    <= 0;
     pc_pred                 <= 0;
     o_fetched               <= 0;
+	 fetch_again             <= 0;
+    saved_pc_jmpaddr        <= 0;
   end
   else begin
+	 // if jmp, fetch again once
+    if (i_pc_jmp & (i_pc_jmpaddr != pc_pred)) begin
+      fetch_again 			<= 1;
+      saved_pc_jmpaddr 		<= i_pc_jmpaddr;
+    end
     if (handshake_done) begin
-      if (ignore_next_inst) begin
-        ignore_next_inst        <= 0;
+      if (fetch_again) begin
+        fetch_again             <= 0;
         o_bus_addr              <= saved_pc_jmpaddr;
         o_pc                    <= saved_pc_jmpaddr;
         pc_pred                 <= saved_pc_jmpaddr + 4;
@@ -3389,7 +3431,6 @@ end
 
 assign o_ex_pc            = i_disable ? 0 : tmp_i_ex_pc;
 assign o_ex_inst          = i_disable ? 0 : tmp_i_ex_inst;
-assign o_ex_rd            = i_disable ? 0 : tmp_i_ex_rd;
 assign o_ex_op1           = i_disable ? 0 : tmp_i_ex_op1;
 assign o_ex_op2           = i_disable ? 0 : tmp_i_ex_op2;
 assign o_ex_op3           = i_disable ? 0 : tmp_i_ex_op3;
@@ -3642,6 +3683,7 @@ parameter [3:0] STATE_LEAVE_READ_MEPC         = 4'd7;   // machine exception pro
 parameter [3:0] STATE_LEAVE_WRITE_MSTATUS     = 4'd8;   // machine status register
 
 reg [3:0] state;
+reg [3:0] next_state;
 reg [1:0] step;
 // 在异常发生的第一个时钟周期就确定下来，因为有些输入信号只保持一个周期
 reg [63:0] exception_cause;     // 异常原因
@@ -3650,94 +3692,259 @@ reg [63:0] csr_rdata_save1;
 reg [63:0] csr_rdata_save2;
 
 
-
-assign hs = ack & req;
-
+// state machine
 always @(posedge clk) begin
   if (rst) begin
     state <= STATE_NULL;
-    step <= 0;
-    exception_cause <= 0;
+  end
+  else begin
+    state <= next_state;
+  end
+end
+
+assign hs = ack & req;
+
+// user action
+always @(posedge clk) begin
+  if (rst) begin
+    o_pc_jmp          <= 0;
+    o_pc_jmpaddr      <= 0;
+    csr_rdata_save1   <= 0;
+    next_state        <= STATE_NULL;
+    step              <= 0;
+    exception_cause   <= 0;
   end
   else begin
     if (!hs) begin
       case (state)
-        STATE_NULL:   begin
+        STATE_NULL: begin
+          // 如果有使能信号，则进入不同的状态
           if (ena) begin
             if (i_inst_opcode == `INST_ECALL) begin
-              state <= STATE_ENTER_WRITE_MEPC;
+              next_state <= STATE_ENTER_WRITE_MEPC;
               exception_cause <= 64'd11;
               //$write("#ecall\n"); $fflush();
             end
             else if (i_inst_opcode == `INST_MRET) begin
-              state <= STATE_LEAVE_READ_MSTATUS;
+              next_state <= STATE_LEAVE_READ_MSTATUS;
             end
             else begin
-              state <= STATE_ENTER_WRITE_MEPC;
+              next_state <= STATE_ENTER_WRITE_MEPC;
               exception_cause <= 64'h80000000_00000007;
               // $write("#time-instr\n"); $fflush();
               // $write("."); $fflush();
             end
-            step <= 0;
           end
+
+          // 空闲时清空jmp信号
+          o_pc_jmp <= 0;
+          o_pc_jmpaddr <= 0;  
         end
-        
+
         STATE_ENTER_WRITE_MEPC: begin
-          if (step == 2) begin
-            state <= STATE_ENTER_WRITE_MCAUSE;
-            step <= 0;
-          end
+          case (step)
+            0:  begin 
+              // 防止再次进入
+              if (state == next_state) begin 
+                o_csr_addr      <=`CSR_ADR_MEPC; 
+                o_csr_wen       <= 1; 
+                o_csr_wdata     <= i_pc;
+                step            <= 1;
+              end
+            end
+            1:  begin
+              o_csr_wen       <= 0;
+              step            <= 2;
+            end
+            2:  begin
+              next_state 		  <= STATE_ENTER_WRITE_MCAUSE;
+              step 				    <= 0;
+            end
+            default: ;
+          endcase
         end
-        
+
         STATE_ENTER_WRITE_MCAUSE: begin
-          if (step == 2) begin
-            state <= STATE_ENTER_READ_MTVEC;
-            step <= 0;
-          end
+          case (step)
+            0:  begin 
+              // 防止再次进入
+              if (state == next_state) begin 
+                o_csr_addr      <=`CSR_ADR_MCAUSE; 
+                o_csr_wen       <= 1; 
+                o_csr_wdata     <= exception_cause;
+                step            <= 1;
+              end
+            end
+            1:  begin
+              o_csr_wen       <= 0;
+              step            <= 2;
+            end
+            2:  begin
+              next_state      <= STATE_ENTER_READ_MTVEC;
+              step            <= 0;
+            end
+            default: ;
+          endcase
         end
-        
+
         STATE_ENTER_READ_MTVEC: begin
-          if (step == 2) begin
-            state <= STATE_ENTER_READ_MSTATUS;
-            step <= 0;
-          end
+          case (step)
+            0:  begin 
+              // 防止再次进入
+              if (state == next_state) begin 
+                o_csr_addr      <=`CSR_ADR_MTVEC; 
+                o_csr_ren       <= 1; 
+                step            <= 1;
+              end
+            end
+            1:  begin
+              o_csr_ren       <= 0;
+              step            <= 2;
+              csr_rdata_save2 <= i_csr_rdata;
+            end
+            2:  begin
+              next_state      <= STATE_ENTER_READ_MSTATUS;
+              step            <= 0;
+            end
+            default: ;
+          endcase
         end
         
         STATE_ENTER_READ_MSTATUS: begin
-          if (step == 2) begin
-            state <= STATE_ENTER_WRITE_MSTATUS;
-            step <= 0;
-          end
+          case (step)
+            0:  begin 
+              // 防止再次进入
+              if (state == next_state) begin 
+                o_csr_addr      <=`CSR_ADR_MSTATUS; 
+                o_csr_ren       <= 1; 
+                step            <= 1;
+              end
+            end
+            1:  begin
+              o_csr_ren       <= 0;
+              step            <= 2;
+              csr_rdata_save1 <= i_csr_rdata;
+            end
+            2:  begin
+              next_state      <= STATE_ENTER_WRITE_MSTATUS;
+              step            <= 0;
+            end
+            default: ;
+          endcase
         end
         
         STATE_ENTER_WRITE_MSTATUS: begin
-          if (step == 2) begin
-            state <= STATE_NULL;
-            step <= 0;
-            req <= 1;
-          end
+          case (step)
+            0:  begin 
+              // 防止再次进入
+              if (state == next_state) begin 
+                o_csr_addr      <=`CSR_ADR_MSTATUS; 
+                o_csr_wen       <= 1; 
+                o_csr_wdata     <= {
+                  csr_rdata_save1[63:13],
+                  2'b11,                    // [12:11]: MPP, set to M-mode
+                  csr_rdata_save1[10:8], 
+                  csr_rdata_save1[3],       // [7]: MPIE, set with MIE
+                  csr_rdata_save1[6:4], 
+                  1'b0,                     // [3]: MIE, set 0
+                  csr_rdata_save1[2:0]
+                  };
+                step            <= 1;
+              end
+            end
+            1:  begin
+              o_csr_wen       <= 0;
+              step            <= 2;
+              o_pc_jmp        <= 1;
+              o_pc_jmpaddr    <= csr_rdata_save2;
+            end
+            2:  begin
+              next_state      <= STATE_NULL;
+              step            <= 0;
+              req             <= 1;
+            end
+            default: ;
+          endcase
         end
         
         STATE_LEAVE_READ_MSTATUS: begin
-          if (step == 2) begin
-            state <= STATE_LEAVE_READ_MEPC;
-            step <= 0;
-          end
+          case (step)
+            0:  begin
+              // 防止再次进入
+              if (state == next_state) begin 
+                o_csr_addr      <=`CSR_ADR_MSTATUS; 
+                o_csr_ren       <= 1; 
+                step            <= 1;
+              end
+            end
+            1:  begin
+              o_csr_ren       <= 0;
+              step            <= 2;
+              csr_rdata_save1 <= i_csr_rdata;
+            end
+            2:  begin
+              next_state      <= STATE_LEAVE_READ_MEPC;
+              step            <= 0;
+            end
+            default: ;
+          endcase
         end
-        
+
         STATE_LEAVE_READ_MEPC: begin
-          if (step == 2) begin
-            state <= STATE_LEAVE_WRITE_MSTATUS;
-            step <= 0;
-          end
+          case (step)
+            0:  begin 
+              // 防止再次进入
+              if (state == next_state) begin 
+                o_csr_addr      <=`CSR_ADR_MEPC; 
+                o_csr_ren       <= 1; 
+                step            <= 1;
+              end
+            end
+            1:  begin
+              o_csr_ren       <= 0;
+              csr_rdata_save2 <= i_csr_rdata;
+              step            <= 2;
+            end
+            2:  begin
+              next_state      <= STATE_LEAVE_WRITE_MSTATUS;
+              step            <= 0;
+            end
+            default: ;
+          endcase
         end
         
         STATE_LEAVE_WRITE_MSTATUS: begin
-          if (step == 2) begin
-            state <= STATE_NULL;
-            step <= 0;
-            req <= 1;
-          end
+          case (step)
+            0:  begin 
+              // 防止再次进入
+              if (state == next_state) begin 
+                o_csr_addr      <=`CSR_ADR_MSTATUS; 
+                o_csr_wen       <= 1; 
+                o_csr_wdata     <= {
+                  csr_rdata_save1[63:13],
+                  2'b00,                    // [12:11]: MPP, set to U-mode
+                  csr_rdata_save1[10:8], 
+                  1'b1,                     // [7]: MPIE, set to 1
+                  csr_rdata_save1[6:4], 
+                  csr_rdata_save1[7],       // [3]: MIE, set with MPIE
+                  csr_rdata_save1[2:0]
+                  };
+                step            <= 1;
+              end
+            end
+            1:  begin
+              o_csr_wen       <= 0;
+              step            <= 2;
+              o_pc_jmp        <= 1;
+              o_pc_jmpaddr    <= csr_rdata_save2;
+            end
+            2:  begin
+              next_state      <= STATE_NULL;
+              step            <= 0;
+              req             <= 1;
+            end
+            default: ;
+          endcase
         end
 
         default: ;
@@ -3746,173 +3953,6 @@ always @(posedge clk) begin
     else begin
       req <= 0;
     end
-    
-  end
-end
-
-always @(posedge clk) begin
-  if (rst) begin
-    o_pc_jmp        <= 0;
-    o_pc_jmpaddr    <= 0;
-    csr_rdata_save1  <= 0;
-  end
-  else begin
-    case (state)
-      STATE_NULL: begin
-        o_pc_jmp <= 0;
-        o_pc_jmpaddr <= 0;  
-      end
-
-      STATE_ENTER_WRITE_MEPC: begin
-        case (step)
-          0:  begin 
-            o_csr_addr      <=`CSR_ADR_MEPC; 
-            o_csr_wen       <= 1; 
-            o_csr_wdata     <= i_pc;
-            step            <= 1;
-          end
-          1:  begin
-            o_csr_wen       <= 0;
-            step            <= 2;
-          end
-          default: ;
-        endcase
-      end
-
-      STATE_ENTER_WRITE_MCAUSE: begin
-        case (step)
-          0:  begin 
-            o_csr_addr      <=`CSR_ADR_MCAUSE; 
-            o_csr_wen       <= 1; 
-            o_csr_wdata     <= exception_cause;
-            step            <= 1;
-          end
-          1:  begin
-            o_csr_wen       <= 0;
-            step            <= 2;
-          end
-          default: ;
-        endcase
-      end
-
-      STATE_ENTER_READ_MTVEC: begin
-        case (step)
-          0:  begin 
-            o_csr_addr      <=`CSR_ADR_MTVEC; 
-            o_csr_ren       <= 1; 
-            step            <= 1;
-          end
-          1:  begin
-            o_csr_ren       <= 0;
-            step            <= 2;
-            csr_rdata_save2 <= i_csr_rdata;
-          end
-          default: ;
-        endcase
-      end
-      
-      STATE_ENTER_READ_MSTATUS: begin
-        case (step)
-          0:  begin 
-            o_csr_addr      <=`CSR_ADR_MSTATUS; 
-            o_csr_ren       <= 1; 
-            step            <= 1;
-          end
-          1:  begin
-            o_csr_ren       <= 0;
-            step            <= 2;
-            csr_rdata_save1 <= i_csr_rdata;
-          end
-          default: ;
-        endcase
-      end
-      
-      STATE_ENTER_WRITE_MSTATUS: begin
-        case (step)
-          0:  begin 
-            o_csr_addr      <=`CSR_ADR_MSTATUS; 
-            o_csr_wen       <= 1; 
-            o_csr_wdata     <= {
-              csr_rdata_save1[63:13],
-              2'b11,                    // [12:11]: MPP, set to M-mode
-              csr_rdata_save1[10:8], 
-              csr_rdata_save1[3],       // [7]: MPIE, set with MIE
-              csr_rdata_save1[6:4], 
-              1'b0,                     // [3]: MIE, set 0
-              csr_rdata_save1[2:0]
-              };
-            step            <= 1;
-          end
-          1:  begin
-            o_csr_wen       <= 0;
-            step            <= 2;
-            o_pc_jmp        <= 1;
-            o_pc_jmpaddr    <= csr_rdata_save2;
-          end
-          default: ;
-        endcase
-      end
-      
-      STATE_LEAVE_READ_MSTATUS: begin
-        case (step)
-          0:  begin 
-            o_csr_addr      <=`CSR_ADR_MSTATUS; 
-            o_csr_ren       <= 1; 
-            step            <= 1;
-          end
-          1:  begin
-            o_csr_ren       <= 0;
-            step            <= 2;
-            csr_rdata_save1 <= i_csr_rdata;
-          end
-          default: ;
-        endcase
-      end
-
-      STATE_LEAVE_READ_MEPC: begin
-        case (step)
-          0:  begin 
-            o_csr_addr      <=`CSR_ADR_MEPC; 
-            o_csr_ren       <= 1; 
-            step            <= 1;
-          end
-          1:  begin
-            o_csr_ren       <= 0;
-            csr_rdata_save2 <= i_csr_rdata;
-            step            <= 2;
-          end
-          default: ;
-        endcase
-      end
-      
-      STATE_LEAVE_WRITE_MSTATUS: begin
-        case (step)
-          0:  begin 
-            o_csr_addr      <=`CSR_ADR_MSTATUS; 
-            o_csr_wen       <= 1; 
-            o_csr_wdata     <= {
-              csr_rdata_save1[63:13],
-              2'b00,                    // [12:11]: MPP, set to U-mode
-              csr_rdata_save1[10:8], 
-              1'b1,                     // [7]: MPIE, set to 1
-              csr_rdata_save1[6:4], 
-              csr_rdata_save1[7],       // [3]: MIE, set with MPIE
-              csr_rdata_save1[2:0]
-              };
-            step            <= 1;
-          end
-          1:  begin
-            o_csr_wen       <= 0;
-            step            <= 2;
-            o_pc_jmp        <= 1;
-            o_pc_jmpaddr    <= csr_rdata_save2;
-          end
-          default: ;
-        endcase
-      end
-
-      default: ;
-    endcase
   end
 end
 
@@ -4704,6 +4744,9 @@ module ysyx_210544_cmtU(
   input   wire                i_skipcmt
 );
 
+
+`ifdef DIFFTEST_YSYX_210544
+
 // Difftest
 reg                           cmt_wen;
 reg   [7:0]                   cmt_wdest;
@@ -4717,11 +4760,8 @@ reg   [2:0]                   trap_code;
 reg   [`BUS_64]               cycleCnt;
 reg   [`BUS_64]               instrCnt;
 reg   [`BUS_64]               regs_diff [0 : 31];
-
-wire  [`BUS_64] instrCnt_inc;
-wire  [`BUS_64] sstatus;
-
-
+wire  [`BUS_64]               instrCnt_inc;
+wire  [`BUS_64]               sstatus;
 
 assign instrCnt_inc = i_cmtvalid ? 1 : 0;
 assign sstatus = i_csrs[`CSR_IDX_MSTATUS] & 64'h80000003_000DE122;
@@ -4745,8 +4785,6 @@ always @(negedge clk) begin
     instrCnt      <= instrCnt + instrCnt_inc;
   end
 end
-
-`ifdef DIFFTEST_YSYX_210544
 
 DifftestArchEvent DifftestArchEvent(
   .clock              (clk),    // 时钟
@@ -4879,21 +4917,6 @@ DifftestArchFpRegState DifftestArchFpRegState(
   .fpr_30             (0),
   .fpr_31             (0)
 );
-
-`else
-
-wire _unused_ok = &{1'b0,
-  cmt_wen,
-  cmt_wdest,
-  cmt_wdata,
-  cmt_pc,
-  cmt_inst,
-  cmt_valid,
-  cmt_skip,
-  trap_code,
-  // regs_diff,
-  sstatus,
-  1'b0};
 
 `endif
 
