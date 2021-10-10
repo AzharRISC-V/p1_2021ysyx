@@ -69,16 +69,16 @@
 `define CSR_ADR_MCAUSE      12'h342         // machine trap cause
 `define CSR_ADR_MIP         12'h344         // machine interrupt pending
 
-// CSR index in local memory
-`define CSR_IDX_NONE        4'd0
-`define CSR_IDX_MCYCLE      4'd1
-`define CSR_IDX_MSTATUS     4'd2
-`define CSR_IDX_MIE         4'd3
-`define CSR_IDX_MTVEC       4'd4
-`define CSR_IDX_MSCRATCH    4'd5
-`define CSR_IDX_MEPC        4'd6
-`define CSR_IDX_MCAUSE      4'd7
-`define CSR_IDX_MIP         4'd8
+// // CSR index in local memory
+// `define CSR_IDX_NONE        4'd0
+// `define CSR_IDX_MCYCLE      4'd1
+// `define CSR_IDX_MSTATUS     4'd2
+// `define CSR_IDX_MIE         4'd3
+// `define CSR_IDX_MTVEC       4'd4
+// `define CSR_IDX_MSCRATCH    4'd5
+// `define CSR_IDX_MEPC        4'd6
+// `define CSR_IDX_MCAUSE      4'd7
+// `define CSR_IDX_MIP         4'd8
 
 // 寄存器配置
 `define REG_BITS            64              // 寄存器位数

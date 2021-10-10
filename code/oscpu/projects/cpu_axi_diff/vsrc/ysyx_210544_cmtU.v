@@ -14,14 +14,16 @@ module ysyx_210544_cmtU(
   input   wire [`BUS_64]      i_pc,
   input   wire [`BUS_32]      i_inst,
   input   wire [`BUS_64]      i_regs[0 : 31],
-  input   wire [`BUS_64]      i_csrs[0 : 8],
+  input   wire [`BUS_64]      i_csrs_mstatus,
+  input   wire [`BUS_64]      i_csrs_mie,
+  input   wire [`BUS_64]      i_csrs_mtvec,
+  input   wire [`BUS_64]      i_csrs_mscratch,
+  input   wire [`BUS_64]      i_csrs_mepc,
+  input   wire [`BUS_64]      i_csrs_mcause,
   input   wire [`BUS_32]      i_intrNo,
   input   wire                i_cmtvalid,
   input   wire                i_skipcmt
 );
-
-
-`ifdef DIFFTEST_YSYX_210544
 
 // Difftest
 reg                           cmt_wen;
@@ -40,7 +42,7 @@ wire  [`BUS_64]               instrCnt_inc;
 wire  [`BUS_64]               sstatus;
 
 assign instrCnt_inc = i_cmtvalid ? 1 : 0;
-assign sstatus = i_csrs[`CSR_IDX_MSTATUS] & 64'h80000003_000DE122;
+assign sstatus = i_csrs_mstatus & 64'h80000003_000DE122;
 
 always @(negedge clk) begin
   if (rst) begin
@@ -138,20 +140,20 @@ DifftestCSRState DifftestCSRState(
   .clock              (clk),
   .coreid             (0),
   .priviledgeMode     (`RISCV_PRIV_MODE_M),
-  .mstatus            (i_csrs[`CSR_IDX_MSTATUS]),
+  .mstatus            (i_csrs_mstatus),
   .sstatus            (sstatus),
-  .mepc               (i_csrs[`CSR_IDX_MEPC]),
+  .mepc               (i_csrs_mepc),
   .sepc               (0),
   .mtval              (0),
   .stval              (0),
-  .mtvec              (i_csrs[`CSR_IDX_MTVEC]),
+  .mtvec              (i_csrs_mtvec),
   .stvec              (0),
-  .mcause             (i_csrs[`CSR_IDX_MCAUSE]),
+  .mcause             (i_csrs_mcause),
   .scause             (0),
   .satp               (0),
   .mip                (0),
-  .mie                (i_csrs[`CSR_IDX_MIE]),
-  .mscratch           (i_csrs[`CSR_IDX_MSCRATCH]),
+  .mie                (i_csrs_mie),
+  .mscratch           (i_csrs_mscratch),
   .sscratch           (0),
   .mideleg            (0),
   .medeleg            (0)
@@ -193,7 +195,5 @@ DifftestArchFpRegState DifftestArchFpRegState(
   .fpr_30             (0),
   .fpr_31             (0)
 );
-
-`endif
 
 endmodule

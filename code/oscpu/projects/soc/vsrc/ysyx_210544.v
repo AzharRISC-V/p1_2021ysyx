@@ -69,16 +69,16 @@
 `define CSR_ADR_MCAUSE      12'h342         // machine trap cause
 `define CSR_ADR_MIP         12'h344         // machine interrupt pending
 
-// CSR index in local memory
-`define CSR_IDX_NONE        4'd0
-`define CSR_IDX_MCYCLE      4'd1
-`define CSR_IDX_MSTATUS     4'd2
-`define CSR_IDX_MIE         4'd3
-`define CSR_IDX_MTVEC       4'd4
-`define CSR_IDX_MSCRATCH    4'd5
-`define CSR_IDX_MEPC        4'd6
-`define CSR_IDX_MCAUSE      4'd7
-`define CSR_IDX_MIP         4'd8
+// // CSR index in local memory
+// `define CSR_IDX_NONE        4'd0
+// `define CSR_IDX_MCYCLE      4'd1
+// `define CSR_IDX_MSTATUS     4'd2
+// `define CSR_IDX_MIE         4'd3
+// `define CSR_IDX_MTVEC       4'd4
+// `define CSR_IDX_MSCRATCH    4'd5
+// `define CSR_IDX_MEPC        4'd6
+// `define CSR_IDX_MCAUSE      4'd7
+// `define CSR_IDX_MIP         4'd8
 
 // 寄存器配置
 `define REG_BITS            64              // 寄存器位数
@@ -2388,14 +2388,26 @@ module ysyx_210544_regfile(
   input   wire                  i_rd_wen,
   input   wire  [`BUS_64]       i_rd_data,
   output  reg   [`BUS_64]       o_rs1_data,
-  output  reg   [`BUS_64]       o_rs2_data,
-  output  wire  [`BUS_64]       o_regs[0 : 31]
+  output  reg   [`BUS_64]       o_rs2_data
+
+`ifdef DIFFTEST_YSYX_210544
+    ,
+  output  wire  [`BUS_64]       o_regs[0:31]
+`endif
 );
 
-// 32 registers
-reg   [`BUS_64]   regs[0 : 31];
+reg [`BUS_64] regs[0:31];
 
-`ifdef YSYX_210544_REGS_ALIAS
+`ifdef DIFFTEST_YSYX_210544
+
+// difftest regs接口
+genvar i;
+generate
+    for (i = 0; i < 32; i = i + 1) 
+    begin: O_REGS_GEN
+        assign o_regs[i] = ((i_rd_wen) && (i_rd == i) && (i != 0)) ? i_rd_data : regs[i];
+    end
+endgenerate
 
 // register alias name
 wire  [`BUS_64]   x00_zero;
@@ -2432,37 +2444,37 @@ wire  [`BUS_64]   x30_t5;
 wire  [`BUS_64]   x31_t6;
 
 assign x00_zero = regs[00];
-assign x01_ra = regs[01];
-assign x02_sp = regs[02];
-assign x03_gp = regs[03];
-assign x04_tp = regs[04];
-assign x05_t0 = regs[05];
-assign x06_t1 = regs[06];
-assign x07_t2 = regs[07];
-assign x08_s0 = regs[08];
-assign x09_s1 = regs[09];
-assign x10_a0 = regs[10];
-assign x11_a1 = regs[11];
-assign x12_a2 = regs[12];
-assign x13_a3 = regs[13];
-assign x14_a4 = regs[14];
-assign x15_a5 = regs[15];
-assign x16_a6 = regs[16];
-assign x17_a7 = regs[17];
-assign x18_s2 = regs[18];
-assign x19_s3 = regs[19];
-assign x20_s4 = regs[20];
-assign x21_s5 = regs[21];
-assign x22_s6 = regs[22];
-assign x23_s7 = regs[23];
-assign x24_s8 = regs[24];
-assign x25_s9 = regs[25];
-assign x26_s10 = regs[26];
-assign x27_s11 = regs[27];
-assign x28_t3 = regs[28];
-assign x29_t4 = regs[29];
-assign x30_t5 = regs[30];
-assign x31_t6 = regs[31];
+assign x01_ra   = regs[01];
+assign x02_sp   = regs[02];
+assign x03_gp   = regs[03];
+assign x04_tp   = regs[04];
+assign x05_t0   = regs[05];
+assign x06_t1   = regs[06];
+assign x07_t2   = regs[07];
+assign x08_s0   = regs[08];
+assign x09_s1   = regs[09];
+assign x10_a0   = regs[10];
+assign x11_a1   = regs[11];
+assign x12_a2   = regs[12];
+assign x13_a3   = regs[13];
+assign x14_a4   = regs[14];
+assign x15_a5   = regs[15];
+assign x16_a6   = regs[16];
+assign x17_a7   = regs[17];
+assign x18_s2   = regs[18];
+assign x19_s3   = regs[19];
+assign x20_s4   = regs[20];
+assign x21_s5   = regs[21];
+assign x22_s6   = regs[22];
+assign x23_s7   = regs[23];
+assign x24_s8   = regs[24];
+assign x25_s9   = regs[25];
+assign x26_s10  = regs[26];
+assign x27_s11  = regs[27];
+assign x28_t3   = regs[28];
+assign x29_t4   = regs[29];
+assign x30_t5   = regs[30];
+assign x31_t6   = regs[31];
 
 `endif
 
@@ -2531,15 +2543,6 @@ always @(*) begin
     o_rs2_data = `ZERO_WORD;
 end
 
-// difftest regs接口
-genvar i;
-generate
-  for (i = 0; i < 32; i = i + 1) 
-  begin: O_REGS_GEN
-    assign o_regs[i] = ((i_rd_wen) && (i_rd == i) && (i != 0)) ? i_rd_data : regs[i];
-  end
-endgenerate
-
 //wire _unused_ok = &{1'b0,
 //  x00_zero,
 //  x01_ra,
@@ -2595,39 +2598,22 @@ module ysyx_210544_csrfile(
   output                    o_csr_clint_mstatus_mie,
   output                    o_csr_clint_mie_mtie,
 
-  // difftest
-  output  wire  [`BUS_64]   o_csrs[0 : 8]
+  output  reg   [`BUS_64]   o_csrs_mcycle,
+  output  reg   [`BUS_64]   o_csrs_mstatus,
+  output  reg   [`BUS_64]   o_csrs_mie,
+  output  reg   [`BUS_64]   o_csrs_mtvec,
+  output  reg   [`BUS_64]   o_csrs_mscratch,
+  output  reg   [`BUS_64]   o_csrs_mepc,
+  output  reg   [`BUS_64]   o_csrs_mcause,
+  output  reg   [`BUS_64]   o_csrs_mip
 );
 
-reg [`BUS_64]     csrs[0 : 8];
-reg  [3 : 0]      csr_idx;
 wire              mstatus_sd;
 
 
-
 // CSR
-assign o_csr_clint_mstatus_mie = csrs[`CSR_IDX_MSTATUS][3];
-assign o_csr_clint_mie_mtie = csrs[`CSR_IDX_MIE][7];
-
-// i_csr_addr translate to csr_idx
-always @(*) begin
-  if (rst) begin
-    csr_idx = `CSR_IDX_NONE;
-  end
-  else begin
-    case (i_csr_addr)
-      `CSR_ADR_MCYCLE   : csr_idx = `CSR_IDX_MCYCLE;
-      `CSR_ADR_MSTATUS  : csr_idx = `CSR_IDX_MSTATUS;
-      `CSR_ADR_MIE      : csr_idx = `CSR_IDX_MIE;
-      `CSR_ADR_MTVEC    : csr_idx = `CSR_IDX_MTVEC;
-      `CSR_ADR_MSCRATCH : csr_idx = `CSR_IDX_MSCRATCH;
-      `CSR_ADR_MEPC     : csr_idx = `CSR_IDX_MEPC;
-      `CSR_ADR_MCAUSE   : csr_idx = `CSR_IDX_MCAUSE;
-      `CSR_ADR_MIP      : csr_idx = `CSR_IDX_MIP;
-      default           : csr_idx = `CSR_IDX_NONE;
-    endcase
-  end
-end
+assign o_csr_clint_mstatus_mie = o_csrs_mstatus[3];
+assign o_csr_clint_mie_mtie = o_csrs_mie[7];
 
 // csr读取
 always @(*) begin
@@ -2635,7 +2621,17 @@ always @(*) begin
     o_csr_rdata   = 0;
   end
   else if (i_csr_ren) begin
-    o_csr_rdata = csrs[csr_idx];
+    case (i_csr_addr)
+        `CSR_ADR_MCYCLE:    o_csr_rdata = o_csrs_mcycle;
+        `CSR_ADR_MSTATUS:   o_csr_rdata = o_csrs_mstatus;
+        `CSR_ADR_MIE:       o_csr_rdata = o_csrs_mie;
+        `CSR_ADR_MTVEC:     o_csr_rdata = o_csrs_mtvec;
+        `CSR_ADR_MSCRATCH:  o_csr_rdata = o_csrs_mscratch;
+        `CSR_ADR_MEPC:      o_csr_rdata = o_csrs_mepc;
+        `CSR_ADR_MCAUSE:    o_csr_rdata = o_csrs_mcause;
+        `CSR_ADR_MIP:       o_csr_rdata = o_csrs_mip;
+        default:            o_csr_rdata = 0;
+    endcase
   end
   else begin
     o_csr_rdata = 0;
@@ -2646,40 +2642,33 @@ assign mstatus_sd = (i_csr_wdata[14:13] == 2'b11) | (i_csr_wdata[16:15] == 2'b11
 
 // csr写入
 always @(posedge clk) begin
-  if (rst) begin
-    csrs[`CSR_IDX_NONE]     <= 0;
-    csrs[`CSR_IDX_MCYCLE]   <= 0;
-    csrs[`CSR_IDX_MSTATUS]  <= 64'h1800;// 64'h1808;
-    csrs[`CSR_IDX_MIE]      <= 0;// 64'h80;
-    csrs[`CSR_IDX_MTVEC]    <= 0;
-    csrs[`CSR_IDX_MEPC]     <= 0;
-    csrs[`CSR_IDX_MCAUSE]   <= 0;// 64'h80000000_00000007;
-    csrs[`CSR_IDX_MIP]      <= 0;// 64'h80;
-  end
-  else begin
-    if (i_csr_wen) begin
-      if (csr_idx == `CSR_IDX_MSTATUS) begin
-        csrs[csr_idx] <= {mstatus_sd, i_csr_wdata[62:0]};
-      end
-      else begin
-        csrs[csr_idx] <= i_csr_wdata;
-      end
+    if (rst) begin
+        o_csrs_mcycle    <= 0;
+        o_csrs_mstatus   <= 64'h1800;// 64'h1808;
+        o_csrs_mie       <= 0;// 64'h80;
+        o_csrs_mtvec     <= 0;
+        o_csrs_mscratch  <= 0;
+        o_csrs_mepc      <= 0;
+        o_csrs_mcause    <= 0;// 64'h80000000_00000007;
+        o_csrs_mip       <= 0;// 64'h80;
     end
     else begin
-      // mcycle模拟
-      csrs[`CSR_IDX_MCYCLE] <= csrs[`CSR_IDX_MCYCLE] + 1;
+        o_csrs_mcycle <= o_csrs_mcycle + 1;
+        if (i_csr_wen) begin
+            case (i_csr_addr)
+                // `CSR_ADR_MCYCLE:    o_csrs_mcycle <= i_csr_wdata;
+                `CSR_ADR_MSTATUS:   o_csrs_mstatus <= {mstatus_sd, i_csr_wdata[62:0]};
+                `CSR_ADR_MIE:       o_csrs_mie <= i_csr_wdata;
+                `CSR_ADR_MTVEC:     o_csrs_mtvec <= i_csr_wdata;
+                `CSR_ADR_MSCRATCH:  o_csrs_mscratch <= i_csr_wdata;
+                `CSR_ADR_MEPC:      o_csrs_mepc <= i_csr_wdata;
+                `CSR_ADR_MCAUSE:    o_csrs_mcause <= i_csr_wdata;
+                `CSR_ADR_MIP:       o_csrs_mip <= i_csr_wdata;
+                default: ;
+            endcase
+        end
     end
-  end
 end
-
-// difftest csr_regs接口
-genvar i;
-generate
-  for (i = 0; i <= 8; i = i + 1) 
-  begin: O_CSRS_GEN
-    assign o_csrs[i] = csrs[i];
-  end
-endgenerate
 
 endmodule
 
@@ -4672,289 +4661,6 @@ endmodule
 
 // ZhengpuShi
 
-// Commit Interface (for difftest)
-
-
-module ysyx_210544_cmt_stage(
-  input   wire                clk,
-  input   wire                rst,
-  input   wire                i_cmt_writebacked_req,
-  output  reg                 o_cmt_writebacked_ack,
-  input   wire [4 : 0]        i_cmt_rd,
-  input   wire                i_cmt_rd_wen,
-  input   wire [`BUS_64]      i_cmt_rd_wdata,
-  input   wire [`BUS_64]      i_cmt_pc,
-  input   wire [`BUS_32]      i_cmt_inst,
-  input   wire                i_cmt_skipcmt,
-  input   wire [`BUS_64]      i_cmt_regs[0 : 31],
-  input   wire [`BUS_64]      i_cmt_csrs[0 : 8],
-  input   wire [`BUS_32]      i_cmt_intrNo
-);
-
-assign o_cmt_writebacked_ack = 1'b1;
-
-
-`ifdef DIFFTEST_YSYX_210544
-
-wire writebacked_hs;
-wire i_cmtvalid;
-
-assign writebacked_hs = i_cmt_writebacked_req & o_cmt_writebacked_ack;
-assign i_cmtvalid = writebacked_hs;
-
-ysyx_210544_cmtU CmtU(
-  .clk                        (clk                        ),
-  .rst                        (rst                        ),
-  .i_rd                       (i_cmt_rd                   ),
-  .i_rd_wen                   (i_cmt_rd_wen               ),
-  .i_rd_wdata                 (i_cmt_rd_wdata             ),
-  .i_pc                       (i_cmt_pc                   ),
-  .i_inst                     (i_cmt_inst                 ),
-  .i_cmtvalid                 (i_cmtvalid                 ),
-  .i_skipcmt                  (i_cmt_skipcmt              ),
-  .i_regs                     (i_cmt_regs                 ),
-  .i_csrs                     (i_cmt_csrs                 ),
-  .i_intrNo                   (i_cmt_intrNo               )
-);
-
-reg [63:0] cnt;
-always @(posedge clk) begin
-  if (rst) begin
-    cnt <= 1;
-  end
-  else begin
-    
-    // 判断停机
-    if (i_cmt_inst == 32'h6b) begin
-      if (i_cmt_regs[10] == 0) begin
-        $display("*****SUCCESS!");
-      end
-      else begin
-        $display("!!!!!FAIL!");
-      end
-      $finish();
-    end
-
-    // 打印执行情况
-    // if (i_cmtvalid) begin
-    //   cnt <= cnt + 1;
-    //   if (cnt[4:0] == 0) begin
-    //     $displayh("[cnt:", cnt, ", pc:", i_cmt_pc, "]");
-    //   end
-    // end
-
-
-  end
-end
-
-wire _unused_ok = &{1'b0,
-  cnt,
-  1'b0};
-
-`endif
-
-endmodule
-
-// ZhengpuShi
-
-// Commit Unit (for difftest)
-
-
-module ysyx_210544_cmtU(
-  input   wire                clk,
-  input   wire                rst,
-  input   wire [`BUS_RIDX]    i_rd,
-  input   wire                i_rd_wen,
-  input   wire [`BUS_64]      i_rd_wdata,
-  input   wire [`BUS_64]      i_pc,
-  input   wire [`BUS_32]      i_inst,
-  input   wire [`BUS_64]      i_regs[0 : 31],
-  input   wire [`BUS_64]      i_csrs[0 : 8],
-  input   wire [`BUS_32]      i_intrNo,
-  input   wire                i_cmtvalid,
-  input   wire                i_skipcmt
-);
-
-
-`ifdef DIFFTEST_YSYX_210544
-
-// Difftest
-reg                           cmt_wen;
-reg   [7:0]                   cmt_wdest;
-reg   [`BUS_64]               cmt_wdata;
-reg   [`BUS_64]               cmt_pc;
-reg   [`BUS_32]               cmt_inst;
-reg                           cmt_valid;
-reg                           cmt_skip;       // control commit skip
-reg                           trap;
-reg   [2:0]                   trap_code;
-reg   [`BUS_64]               cycleCnt;
-reg   [`BUS_64]               instrCnt;
-reg   [`BUS_64]               regs_diff [0 : 31];
-wire  [`BUS_64]               instrCnt_inc;
-wire  [`BUS_64]               sstatus;
-
-assign instrCnt_inc = i_cmtvalid ? 1 : 0;
-assign sstatus = i_csrs[`CSR_IDX_MSTATUS] & 64'h80000003_000DE122;
-
-always @(negedge clk) begin
-  if (rst) begin
-    {cmt_wen, cmt_wdest, cmt_wdata, cmt_pc, cmt_inst, cmt_valid, cmt_skip, trap, trap_code, cycleCnt, instrCnt} <= 0;
-  end
-  else if (~trap) begin
-    cmt_wen       <= i_rd_wen;
-    cmt_wdest     <= {3'd0, i_rd};
-    cmt_wdata     <= i_rd_wdata;
-    cmt_pc        <= i_pc;
-    cmt_inst      <= i_inst;
-    cmt_skip      <= i_skipcmt;
-    cmt_valid     <= i_cmtvalid & (i_intrNo == 0);
-    regs_diff     <= i_regs;
-    trap          <= i_inst[6:0] == 7'h6b;
-    trap_code     <= i_regs[10][2:0];
-    cycleCnt      <= cycleCnt + 1;
-    instrCnt      <= instrCnt + instrCnt_inc;
-  end
-end
-
-DifftestArchEvent DifftestArchEvent(
-  .clock              (clk),    // 时钟
-  .coreid             (0),      // cpu id，单核时固定为0
-  .intrNO             (i_intrNo),      // 中断号，非零有效
-  .cause              (0),      // 异常号，非零有效
-  .exceptionPC        (i_intrNo > 0 ? i_pc : 0),  // 产生异常或中断时的PC
-  .exceptionInst      (0)    // 产生异常时的指令，未使用
-);
-
-DifftestInstrCommit DifftestInstrCommit(
-  .clock              (clk),
-  .coreid             (0),
-  .index              (0),
-  .valid              (cmt_valid),
-  .pc                 (cmt_pc),
-  .instr              (cmt_inst),
-  .special            (0),
-  .skip               (cmt_skip),
-  .isRVC              (0),
-  .scFailed           (0),
-  .wen                (cmt_wen),
-  .wdest              (cmt_wdest),
-  .wdata              (cmt_wdata)
-);
-
-DifftestArchIntRegState DifftestArchIntRegState (
-  .clock              (clk),
-  .coreid             (0),
-  .gpr_0              (regs_diff[0]),
-  .gpr_1              (regs_diff[1]),
-  .gpr_2              (regs_diff[2]),
-  .gpr_3              (regs_diff[3]),
-  .gpr_4              (regs_diff[4]),
-  .gpr_5              (regs_diff[5]),
-  .gpr_6              (regs_diff[6]),
-  .gpr_7              (regs_diff[7]),
-  .gpr_8              (regs_diff[8]),
-  .gpr_9              (regs_diff[9]),
-  .gpr_10             (regs_diff[10]),
-  .gpr_11             (regs_diff[11]),
-  .gpr_12             (regs_diff[12]),
-  .gpr_13             (regs_diff[13]),
-  .gpr_14             (regs_diff[14]),
-  .gpr_15             (regs_diff[15]),
-  .gpr_16             (regs_diff[16]),
-  .gpr_17             (regs_diff[17]),
-  .gpr_18             (regs_diff[18]),
-  .gpr_19             (regs_diff[19]),
-  .gpr_20             (regs_diff[20]),
-  .gpr_21             (regs_diff[21]),
-  .gpr_22             (regs_diff[22]),
-  .gpr_23             (regs_diff[23]),
-  .gpr_24             (regs_diff[24]),
-  .gpr_25             (regs_diff[25]),
-  .gpr_26             (regs_diff[26]),
-  .gpr_27             (regs_diff[27]),
-  .gpr_28             (regs_diff[28]),
-  .gpr_29             (regs_diff[29]),
-  .gpr_30             (regs_diff[30]),
-  .gpr_31             (regs_diff[31])
-);
-
-DifftestTrapEvent DifftestTrapEvent(
-  .clock              (clk),
-  .coreid             (0),
-  .valid              (trap),
-  .code               (trap_code),
-  .pc                 (cmt_pc),
-  .cycleCnt           (cycleCnt),
-  .instrCnt           (instrCnt)
-);
-
-DifftestCSRState DifftestCSRState(
-  .clock              (clk),
-  .coreid             (0),
-  .priviledgeMode     (`RISCV_PRIV_MODE_M),
-  .mstatus            (i_csrs[`CSR_IDX_MSTATUS]),
-  .sstatus            (sstatus),
-  .mepc               (i_csrs[`CSR_IDX_MEPC]),
-  .sepc               (0),
-  .mtval              (0),
-  .stval              (0),
-  .mtvec              (i_csrs[`CSR_IDX_MTVEC]),
-  .stvec              (0),
-  .mcause             (i_csrs[`CSR_IDX_MCAUSE]),
-  .scause             (0),
-  .satp               (0),
-  .mip                (0),
-  .mie                (i_csrs[`CSR_IDX_MIE]),
-  .mscratch           (i_csrs[`CSR_IDX_MSCRATCH]),
-  .sscratch           (0),
-  .mideleg            (0),
-  .medeleg            (0)
-);
-
-DifftestArchFpRegState DifftestArchFpRegState(
-  .clock              (clk),
-  .coreid             (0),
-  .fpr_0              (0),
-  .fpr_1              (0),
-  .fpr_2              (0),
-  .fpr_3              (0),
-  .fpr_4              (0),
-  .fpr_5              (0),
-  .fpr_6              (0),
-  .fpr_7              (0),
-  .fpr_8              (0),
-  .fpr_9              (0),
-  .fpr_10             (0),
-  .fpr_11             (0),
-  .fpr_12             (0),
-  .fpr_13             (0),
-  .fpr_14             (0),
-  .fpr_15             (0),
-  .fpr_16             (0),
-  .fpr_17             (0),
-  .fpr_18             (0),
-  .fpr_19             (0),
-  .fpr_20             (0),
-  .fpr_21             (0),
-  .fpr_22             (0),
-  .fpr_23             (0),
-  .fpr_24             (0),
-  .fpr_25             (0),
-  .fpr_26             (0),
-  .fpr_27             (0),
-  .fpr_28             (0),
-  .fpr_29             (0),
-  .fpr_30             (0),
-  .fpr_31             (0)
-);
-
-`endif
-
-endmodule
-
-// ZhengpuShi
-
 
 module ysyx_210544_cpu(
   input                       clk,
@@ -5055,14 +4761,24 @@ wire  [`BUS_64]               o_wb_rd_wdata;
 // regfile -> id_stage
 wire  [`BUS_64]               o_reg_id_rs1_data;
 wire  [`BUS_64]               o_reg_id_rs2_data;
+
+`ifdef DIFFTEST_YSYX_210544
 // regfile -> difftest
 wire  [`BUS_64]               o_reg_regs[0 : 31];
+`endif
 
 // csrfile
 // csrfile -> ex_stage
 wire  [`BUS_64]               o_csr_rdata;
 // csrfile -> wb_stage
-wire  [`BUS_64]               o_csr_csrs[0 :  8];
+wire  [`BUS_64]               o_csr_csrs_mcycle;
+wire  [`BUS_64]               o_csr_csrs_mstatus;
+wire  [`BUS_64]               o_csr_csrs_mie;
+wire  [`BUS_64]               o_csr_csrs_mtvec;
+wire  [`BUS_64]               o_csr_csrs_mscratch;
+wire  [`BUS_64]               o_csr_csrs_mepc;
+wire  [`BUS_64]               o_csr_csrs_mcause;
+wire  [`BUS_64]               o_csr_csrs_mip;
 
 // clint
 wire                          o_clint_mstatus_mie;
@@ -5269,6 +4985,8 @@ ysyx_210544_wb_stage Wb_stage(
   .o_wb_intrNo                (o_wb_intrNo                )
 );
 
+`ifdef DIFFTEST_YSYX_210544
+
 ysyx_210544_cmt_stage Cmt_stage(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
@@ -5281,9 +4999,20 @@ ysyx_210544_cmt_stage Cmt_stage(
   .i_cmt_inst                 (o_wb_inst                  ),
   .i_cmt_skipcmt              (o_wb_skipcmt               ),
   .i_cmt_regs                 (o_reg_regs                 ),
-  .i_cmt_csrs                 (o_csr_csrs                 ),
+  .i_cmt_csrs_mstatus         (o_csr_csrs_mstatus         ),
+  .i_cmt_csrs_mie             (o_csr_csrs_mie             ),
+  .i_cmt_csrs_mtvec           (o_csr_csrs_mtvec           ),
+  .i_cmt_csrs_mscratch        (o_csr_csrs_mscratch        ),
+  .i_cmt_csrs_mepc            (o_csr_csrs_mepc            ),
+  .i_cmt_csrs_mcause          (o_csr_csrs_mcause          ),
+
   .i_cmt_intrNo               (o_wb_intrNo                )
 );
+
+`else
+    assign writebacked_ack = 1'b1;
+`endif
+
 
 ysyx_210544_regfile Regfile(
   .clk                        (clk                        ),
@@ -5296,8 +5025,12 @@ ysyx_210544_regfile Regfile(
   .i_rd_wen                   (o_wb_rd_wen                ),
   .i_rd_data                  (o_wb_rd_wdata              ),
   .o_rs1_data                 (o_reg_id_rs1_data          ),
-  .o_rs2_data                 (o_reg_id_rs2_data          ),
+  .o_rs2_data                 (o_reg_id_rs2_data          )
+  
+`ifdef DIFFTEST_YSYX_210544
+    ,
   .o_regs                     (o_reg_regs                 )
+`endif
 );
 
 ysyx_210544_csrfile Csrfile(
@@ -5310,7 +5043,14 @@ ysyx_210544_csrfile Csrfile(
   .o_csr_rdata                (o_csr_rdata                ),
   .o_csr_clint_mstatus_mie    (o_clint_mstatus_mie        ),
   .o_csr_clint_mie_mtie       (o_clint_mie_mtie           ),
-  .o_csrs                     (o_csr_csrs                 )
+  .o_csrs_mcycle              (o_csr_csrs_mcycle          ),
+  .o_csrs_mstatus             (o_csr_csrs_mstatus         ),
+  .o_csrs_mie                 (o_csr_csrs_mie             ),
+  .o_csrs_mtvec               (o_csr_csrs_mtvec           ),
+  .o_csrs_mscratch            (o_csr_csrs_mscratch        ),
+  .o_csrs_mepc                (o_csr_csrs_mepc            ),
+  .o_csrs_mcause              (o_csr_csrs_mcause          ),
+  .o_csrs_mip                 (o_csr_csrs_mip             )
 );
 
 endmodule

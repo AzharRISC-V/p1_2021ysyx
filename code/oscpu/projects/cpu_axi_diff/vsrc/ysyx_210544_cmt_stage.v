@@ -16,8 +16,13 @@ module ysyx_210544_cmt_stage(
   input   wire [`BUS_64]      i_cmt_pc,
   input   wire [`BUS_32]      i_cmt_inst,
   input   wire                i_cmt_skipcmt,
-  input   wire [`BUS_64]      i_cmt_regs[0 : 31],
-  input   wire [`BUS_64]      i_cmt_csrs[0 : 8],
+  input   wire [`BUS_64]      i_cmt_regs[0:31],
+  input   wire [`BUS_64]      i_cmt_csrs_mstatus,
+  input   wire [`BUS_64]      i_cmt_csrs_mie,
+  input   wire [`BUS_64]      i_cmt_csrs_mtvec,
+  input   wire [`BUS_64]      i_cmt_csrs_mscratch,
+  input   wire [`BUS_64]      i_cmt_csrs_mepc,
+  input   wire [`BUS_64]      i_cmt_csrs_mcause,
   input   wire [`BUS_32]      i_cmt_intrNo
 );
 
@@ -43,7 +48,12 @@ ysyx_210544_cmtU CmtU(
   .i_cmtvalid                 (i_cmtvalid                 ),
   .i_skipcmt                  (i_cmt_skipcmt              ),
   .i_regs                     (i_cmt_regs                 ),
-  .i_csrs                     (i_cmt_csrs                 ),
+  .i_csrs_mstatus             (i_cmt_csrs_mstatus         ),
+  .i_csrs_mie                 (i_cmt_csrs_mie             ),
+  .i_csrs_mtvec               (i_cmt_csrs_mtvec           ),
+  .i_csrs_mscratch            (i_cmt_csrs_mscratch        ),
+  .i_csrs_mepc                (i_cmt_csrs_mepc            ),
+  .i_csrs_mcause              (i_cmt_csrs_mcause          ),
   .i_intrNo                   (i_cmt_intrNo               )
 );
 

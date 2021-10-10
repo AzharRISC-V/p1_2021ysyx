@@ -102,14 +102,24 @@ wire  [`BUS_64]               o_wb_rd_wdata;
 // regfile -> id_stage
 wire  [`BUS_64]               o_reg_id_rs1_data;
 wire  [`BUS_64]               o_reg_id_rs2_data;
+
+`ifdef DIFFTEST_YSYX_210544
 // regfile -> difftest
 wire  [`BUS_64]               o_reg_regs[0 : 31];
+`endif
 
 // csrfile
 // csrfile -> ex_stage
 wire  [`BUS_64]               o_csr_rdata;
 // csrfile -> wb_stage
-wire  [`BUS_64]               o_csr_csrs[0 :  8];
+wire  [`BUS_64]               o_csr_csrs_mcycle;
+wire  [`BUS_64]               o_csr_csrs_mstatus;
+wire  [`BUS_64]               o_csr_csrs_mie;
+wire  [`BUS_64]               o_csr_csrs_mtvec;
+wire  [`BUS_64]               o_csr_csrs_mscratch;
+wire  [`BUS_64]               o_csr_csrs_mepc;
+wire  [`BUS_64]               o_csr_csrs_mcause;
+wire  [`BUS_64]               o_csr_csrs_mip;
 
 // clint
 wire                          o_clint_mstatus_mie;
@@ -316,6 +326,8 @@ ysyx_210544_wb_stage Wb_stage(
   .o_wb_intrNo                (o_wb_intrNo                )
 );
 
+`ifdef DIFFTEST_YSYX_210544
+
 ysyx_210544_cmt_stage Cmt_stage(
   .clk                        (clk                        ),
   .rst                        (rst                        ),
@@ -328,9 +340,20 @@ ysyx_210544_cmt_stage Cmt_stage(
   .i_cmt_inst                 (o_wb_inst                  ),
   .i_cmt_skipcmt              (o_wb_skipcmt               ),
   .i_cmt_regs                 (o_reg_regs                 ),
-  .i_cmt_csrs                 (o_csr_csrs                 ),
+  .i_cmt_csrs_mstatus         (o_csr_csrs_mstatus         ),
+  .i_cmt_csrs_mie             (o_csr_csrs_mie             ),
+  .i_cmt_csrs_mtvec           (o_csr_csrs_mtvec           ),
+  .i_cmt_csrs_mscratch        (o_csr_csrs_mscratch        ),
+  .i_cmt_csrs_mepc            (o_csr_csrs_mepc            ),
+  .i_cmt_csrs_mcause          (o_csr_csrs_mcause          ),
+
   .i_cmt_intrNo               (o_wb_intrNo                )
 );
+
+`else
+    assign writebacked_ack = 1'b1;
+`endif
+
 
 ysyx_210544_regfile Regfile(
   .clk                        (clk                        ),
@@ -343,8 +366,12 @@ ysyx_210544_regfile Regfile(
   .i_rd_wen                   (o_wb_rd_wen                ),
   .i_rd_data                  (o_wb_rd_wdata              ),
   .o_rs1_data                 (o_reg_id_rs1_data          ),
-  .o_rs2_data                 (o_reg_id_rs2_data          ),
+  .o_rs2_data                 (o_reg_id_rs2_data          )
+  
+`ifdef DIFFTEST_YSYX_210544
+    ,
   .o_regs                     (o_reg_regs                 )
+`endif
 );
 
 ysyx_210544_csrfile Csrfile(
@@ -357,7 +384,14 @@ ysyx_210544_csrfile Csrfile(
   .o_csr_rdata                (o_csr_rdata                ),
   .o_csr_clint_mstatus_mie    (o_clint_mstatus_mie        ),
   .o_csr_clint_mie_mtie       (o_clint_mie_mtie           ),
-  .o_csrs                     (o_csr_csrs                 )
+  .o_csrs_mcycle              (o_csr_csrs_mcycle          ),
+  .o_csrs_mstatus             (o_csr_csrs_mstatus         ),
+  .o_csrs_mie                 (o_csr_csrs_mie             ),
+  .o_csrs_mtvec               (o_csr_csrs_mtvec           ),
+  .o_csrs_mscratch            (o_csr_csrs_mscratch        ),
+  .o_csrs_mepc                (o_csr_csrs_mepc            ),
+  .o_csrs_mcause              (o_csr_csrs_mcause          ),
+  .o_csrs_mip                 (o_csr_csrs_mip             )
 );
 
 endmodule

@@ -18,39 +18,22 @@ module ysyx_210544_csrfile(
   output                    o_csr_clint_mstatus_mie,
   output                    o_csr_clint_mie_mtie,
 
-  // difftest
-  output  wire  [`BUS_64]   o_csrs[0 : 8]
+  output  reg   [`BUS_64]   o_csrs_mcycle,
+  output  reg   [`BUS_64]   o_csrs_mstatus,
+  output  reg   [`BUS_64]   o_csrs_mie,
+  output  reg   [`BUS_64]   o_csrs_mtvec,
+  output  reg   [`BUS_64]   o_csrs_mscratch,
+  output  reg   [`BUS_64]   o_csrs_mepc,
+  output  reg   [`BUS_64]   o_csrs_mcause,
+  output  reg   [`BUS_64]   o_csrs_mip
 );
 
-reg [`BUS_64]     csrs[0 : 8];
-reg  [3 : 0]      csr_idx;
 wire              mstatus_sd;
 
 
-
 // CSR
-assign o_csr_clint_mstatus_mie = csrs[`CSR_IDX_MSTATUS][3];
-assign o_csr_clint_mie_mtie = csrs[`CSR_IDX_MIE][7];
-
-// i_csr_addr translate to csr_idx
-always @(*) begin
-  if (rst) begin
-    csr_idx = `CSR_IDX_NONE;
-  end
-  else begin
-    case (i_csr_addr)
-      `CSR_ADR_MCYCLE   : csr_idx = `CSR_IDX_MCYCLE;
-      `CSR_ADR_MSTATUS  : csr_idx = `CSR_IDX_MSTATUS;
-      `CSR_ADR_MIE      : csr_idx = `CSR_IDX_MIE;
-      `CSR_ADR_MTVEC    : csr_idx = `CSR_IDX_MTVEC;
-      `CSR_ADR_MSCRATCH : csr_idx = `CSR_IDX_MSCRATCH;
-      `CSR_ADR_MEPC     : csr_idx = `CSR_IDX_MEPC;
-      `CSR_ADR_MCAUSE   : csr_idx = `CSR_IDX_MCAUSE;
-      `CSR_ADR_MIP      : csr_idx = `CSR_IDX_MIP;
-      default           : csr_idx = `CSR_IDX_NONE;
-    endcase
-  end
-end
+assign o_csr_clint_mstatus_mie = o_csrs_mstatus[3];
+assign o_csr_clint_mie_mtie = o_csrs_mie[7];
 
 // csr读取
 always @(*) begin
@@ -58,7 +41,17 @@ always @(*) begin
     o_csr_rdata   = 0;
   end
   else if (i_csr_ren) begin
-    o_csr_rdata = csrs[csr_idx];
+    case (i_csr_addr)
+        `CSR_ADR_MCYCLE:    o_csr_rdata = o_csrs_mcycle;
+        `CSR_ADR_MSTATUS:   o_csr_rdata = o_csrs_mstatus;
+        `CSR_ADR_MIE:       o_csr_rdata = o_csrs_mie;
+        `CSR_ADR_MTVEC:     o_csr_rdata = o_csrs_mtvec;
+        `CSR_ADR_MSCRATCH:  o_csr_rdata = o_csrs_mscratch;
+        `CSR_ADR_MEPC:      o_csr_rdata = o_csrs_mepc;
+        `CSR_ADR_MCAUSE:    o_csr_rdata = o_csrs_mcause;
+        `CSR_ADR_MIP:       o_csr_rdata = o_csrs_mip;
+        default:            o_csr_rdata = 0;
+    endcase
   end
   else begin
     o_csr_rdata = 0;
@@ -69,39 +62,32 @@ assign mstatus_sd = (i_csr_wdata[14:13] == 2'b11) | (i_csr_wdata[16:15] == 2'b11
 
 // csr写入
 always @(posedge clk) begin
-  if (rst) begin
-    csrs[`CSR_IDX_NONE]     <= 0;
-    csrs[`CSR_IDX_MCYCLE]   <= 0;
-    csrs[`CSR_IDX_MSTATUS]  <= 64'h1800;// 64'h1808;
-    csrs[`CSR_IDX_MIE]      <= 0;// 64'h80;
-    csrs[`CSR_IDX_MTVEC]    <= 0;
-    csrs[`CSR_IDX_MEPC]     <= 0;
-    csrs[`CSR_IDX_MCAUSE]   <= 0;// 64'h80000000_00000007;
-    csrs[`CSR_IDX_MIP]      <= 0;// 64'h80;
-  end
-  else begin
-    if (i_csr_wen) begin
-      if (csr_idx == `CSR_IDX_MSTATUS) begin
-        csrs[csr_idx] <= {mstatus_sd, i_csr_wdata[62:0]};
-      end
-      else begin
-        csrs[csr_idx] <= i_csr_wdata;
-      end
+    if (rst) begin
+        o_csrs_mcycle    <= 0;
+        o_csrs_mstatus   <= 64'h1800;// 64'h1808;
+        o_csrs_mie       <= 0;// 64'h80;
+        o_csrs_mtvec     <= 0;
+        o_csrs_mscratch  <= 0;
+        o_csrs_mepc      <= 0;
+        o_csrs_mcause    <= 0;// 64'h80000000_00000007;
+        o_csrs_mip       <= 0;// 64'h80;
     end
     else begin
-      // mcycle模拟
-      csrs[`CSR_IDX_MCYCLE] <= csrs[`CSR_IDX_MCYCLE] + 1;
+        o_csrs_mcycle <= o_csrs_mcycle + 1;
+        if (i_csr_wen) begin
+            case (i_csr_addr)
+                // `CSR_ADR_MCYCLE:    o_csrs_mcycle <= i_csr_wdata;
+                `CSR_ADR_MSTATUS:   o_csrs_mstatus <= {mstatus_sd, i_csr_wdata[62:0]};
+                `CSR_ADR_MIE:       o_csrs_mie <= i_csr_wdata;
+                `CSR_ADR_MTVEC:     o_csrs_mtvec <= i_csr_wdata;
+                `CSR_ADR_MSCRATCH:  o_csrs_mscratch <= i_csr_wdata;
+                `CSR_ADR_MEPC:      o_csrs_mepc <= i_csr_wdata;
+                `CSR_ADR_MCAUSE:    o_csrs_mcause <= i_csr_wdata;
+                `CSR_ADR_MIP:       o_csrs_mip <= i_csr_wdata;
+                default: ;
+            endcase
+        end
     end
-  end
 end
-
-// difftest csr_regs接口
-genvar i;
-generate
-  for (i = 0; i <= 8; i = i + 1) 
-  begin: O_CSRS_GEN
-    assign o_csrs[i] = csrs[i];
-  end
-endgenerate
 
 endmodule
