@@ -6,29 +6,19 @@ START ?= 1
 END ?= -1
 
 
-PROJECT = cpu_axi_diff
-PROJECT_AXI_FLAGS = WITH_DRAMSIM3=1
 
-# build and run
+# axi_diff, build and run
 app:
 	rm projects/cpu_axi_diff/build/emu-compile -rf
-	./build.sh -e $(PROJECT) -d -b -s -v ' -DDIFFTEST_YSYX_210544 -Wall ' -a "-i $(BIN).bin --dump-wave -b $(START) -e $(END)" -m "EMU_TRACE=1 $(PROJECT_AXI_FLAGS)"
+	./build.sh -e cpu_axi_diff -d -b -s -a "-i $(BIN).bin --dump-wave -b $(START) -e $(END)" -m "EMU_TRACE=1 WITH_DRAMSIM3=1"
 
-# run without dump
+# axi_diff, run without dump
 run:
-	./build.sh -e $(PROJECT) -d -s -v ' -DDIFFTEST_YSYX_210544 -Wall ' -a "-i $(BIN).bin" -m "$(PROJECT_AXI_FLAGS)"
+	./build.sh -e cpu_axi_diff -d -s -a "-i $(BIN).bin" -m "WITH_DRAMSIM3=1"
 
-# run with dump
-dump:
-	./build.sh -e $(PROJECT) -d -s -v ' -DDIFFTEST_YSYX_210544 -Wall ' -a "-i $(BIN).bin --dump-wave -b $(START) -e $(END)" -m "EMU_TRACE=1 $(PROJECT_AXI_FLAGS)"
-
-# run all
-run-all-1:
-	./build.sh -e $(PROJECT) -b -v ' -DDIFFTEST_YSYX_210544 -Wall ' -r "non-output/cpu-tests" -m "EMU_TRACE=1 $(PROJECT_AXI_FLAGS)"
-run-all-2:
-	./build.sh -e $(PROJECT) -b -v ' -DDIFFTEST_YSYX_210544 -Wall ' -r "non-output/riscv-tests" -m "EMU_TRACE=1 $(PROJECT_AXI_FLAGS)"
-run-all-3:
-	./build.sh -e $(PROJECT) -b -v ' -DDIFFTEST_YSYX_210544 -Wall ' -r "my/cpu-tests" -m "EMU_TRACE=1 $(PROJECT_AXI_FLAGS)"
+# axi_diff, run all
+run-all:
+	./build.sh -e cpu_axi_diff -b -r "non-output/cpu-tests non-output/riscv-tests" -m "WITH_DRAMSIM3=1"
 
 
 # ysyx soc
@@ -54,9 +44,6 @@ soc:
 soc-run:
 	@./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal'\
 		-a "-i $(SOCBIN)"
-soc-run-dump:
-	@./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal' \
-		-a "-i $(SOCBIN) --dump-wave -b $(START) -e $(END)"
 
 # 注意：以下并不能使用，因为这些测试程序不会自动停止，而Ctrl+C会终止所有的后续命令。
 soc-run-all:
@@ -69,4 +56,5 @@ soc-run-all:
 
 # Clean nemu/build
 clean:
-	@./build.sh -e $(PROJECT) -c
+	@./build.sh -e cpu_axi_diff -c
+	@./build.sh -e soc -c

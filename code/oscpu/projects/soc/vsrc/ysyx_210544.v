@@ -346,7 +346,7 @@ wire size_b;
 wire size_h;
 wire size_w;
 wire size_d;
-wire [63:0] mask_rdata;
+reg  [63:0] mask_rdata;
 wire [5:0] aligned_offset;                      // 移位的bit数。0~7 转换为 0~56
 wire [63:0] axi_r_data_masked_unaligned;        // 已掩码，已移位后的数据
 
@@ -562,11 +562,18 @@ assign size_w             = user_size_i == `SIZE_W;
 assign size_d             = user_size_i == `SIZE_D;
 
 // Read data mask
-assign mask_rdata   = (({64{size_b}} & {{64- 8{1'b0}},  8'hff}) 
-                     | ({64{size_h}} & {{64-16{1'b0}}, 16'hffff})
-                     | ({64{size_w}} & {{64-32{1'b0}}, 32'hffffffff})
-                     | ({64{size_d}} & {{64-64{1'b0}}, 64'hffffffff_ffffffff})
-                      );
+// assign mask_rdata   = (({64{size_b}} & {{64- 8{1'b0}},  8'hff}) 
+//                      | ({64{size_h}} & {{64-16{1'b0}}, 16'hffff})
+//                      | ({64{size_w}} & {{64-32{1'b0}}, 32'hffffffff})
+//                      | ({64{size_d}} & {{64-64{1'b0}}, 64'hffffffff_ffffffff})
+//                       );
+always @(*) begin
+    if (size_d)         mask_rdata = 64'hffffffff_ffffffff;
+    else if (size_w)    mask_rdata = 64'h00000000_ffffffff;
+    else if (size_h)    mask_rdata = 64'h00000000_0000ffff;
+    else if (size_b)    mask_rdata = 64'h00000000_000000ff;
+    else                mask_rdata = 64'd0;
+end
 
 
 assign aligned_offset = {3'b0, user_addr_i[2:0]} << 2'd3;
@@ -1569,7 +1576,7 @@ wire  [2  : 0]                o_cache_basic_bytes;        // 字节数
 wire                          o_cache_basic_op;           // 操作类型：0读取，1写入
 reg                           o_cache_basic_req;          // 请求
 wire  [63 : 0]                i_cache_basic_rdata;        // 已读出的数据
-reg                           i_cache_basic_ack;          // 应答
+wire                          i_cache_basic_ack;          // 应答
 
 // =============== 处理跨行问题 ===============
 wire  [59:0]                  i_addr_high;                // 输入地址的高60位
@@ -5054,6 +5061,10 @@ ysyx_210544_csrfile Csrfile(
 );
 
 endmodule
+
+// ZhengpuShi
+// SoC Top Module
+
 
 module ysyx_210544(
   input         clock,

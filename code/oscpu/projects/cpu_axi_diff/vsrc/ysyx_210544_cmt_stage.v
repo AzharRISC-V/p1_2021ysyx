@@ -3,6 +3,8 @@
 
 // Commit Interface (for difftest)
 
+`ifdef DIFFTEST_YSYX_210544
+
 `include "defines.v"
 
 module ysyx_210544_cmt_stage(
@@ -28,8 +30,6 @@ module ysyx_210544_cmt_stage(
 
 assign o_cmt_writebacked_ack = 1'b1;
 
-
-`ifdef DIFFTEST_YSYX_210544
 
 wire writebacked_hs;
 wire i_cmtvalid;
@@ -91,6 +91,6 @@ wire _unused_ok = &{1'b0,
   cnt,
   1'b0};
 
-`endif
-
 endmodule
+
+`endif

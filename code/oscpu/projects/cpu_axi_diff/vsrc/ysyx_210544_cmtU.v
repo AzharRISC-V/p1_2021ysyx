@@ -3,6 +3,8 @@
 
 // Commit Unit (for difftest)
 
+`ifdef DIFFTEST_YSYX_210544
+
 `include "defines.v"
 
 module ysyx_210544_cmtU(
@@ -197,3 +199,5 @@ DifftestArchFpRegState DifftestArchFpRegState(
 );
 
 endmodule
+
+`endif

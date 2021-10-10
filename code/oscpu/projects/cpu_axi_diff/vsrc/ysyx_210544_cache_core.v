@@ -52,7 +52,7 @@ wire  [2  : 0]                o_cache_basic_bytes;        // 字节数
 wire                          o_cache_basic_op;           // 操作类型：0读取，1写入
 reg                           o_cache_basic_req;          // 请求
 wire  [63 : 0]                i_cache_basic_rdata;        // 已读出的数据
-reg                           i_cache_basic_ack;          // 应答
+wire                          i_cache_basic_ack;          // 应答
 
 // =============== 处理跨行问题 ===============
 wire  [59:0]                  i_addr_high;                // 输入地址的高60位
