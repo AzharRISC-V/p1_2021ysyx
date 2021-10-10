@@ -191,9 +191,9 @@ assign inst_store   = inst_sb | inst_sh | inst_sw | inst_sd;
 // arith inst: 10000; logic: 01000;
 // load-store: 00100; j: 00010;  sys: 000001
 // === I don't use the logic above!
-assign inst_opcode[7] = rst ? 0 : 0;
-assign inst_opcode[6] = rst ? 0 : 0;
-assign inst_opcode[5] = rst ? 0 : 
+assign inst_opcode[7] = rst ? 1'd0 : 1'd0;
+assign inst_opcode[6] = rst ? 1'd0 : 1'd0;
+assign inst_opcode[5] = rst ? 1'd0 : 
   ( inst_sltu   | inst_xor    | inst_srl    | inst_sra    | 
     inst_or     | inst_and    | inst_fence  | inst_fencei | 
     inst_ecall  | inst_ebreak | inst_csrrw  | inst_csrrs  | 
@@ -202,7 +202,7 @@ assign inst_opcode[5] = rst ? 0 :
     inst_slliw  | inst_srliw  | inst_sraiw  | inst_addw   | 
     inst_subw   | inst_sllw   | inst_srlw   | inst_sraw   |
     inst_mret   );
-assign inst_opcode[4] = rst ? 0 : 
+assign inst_opcode[4] = rst ? 1'd0 : 
   ( inst_sb     | inst_sh     | inst_sw     | inst_addi   | 
     inst_slti   | inst_sltiu  | inst_xori   | inst_ori    | 
     inst_andi   | inst_slli   | inst_srli   | inst_srai   | 
@@ -211,7 +211,7 @@ assign inst_opcode[4] = rst ? 0 :
     inst_slliw  | inst_srliw  | inst_sraiw  | inst_addw   | 
     inst_subw   | inst_sllw   | inst_srlw   | inst_sraw   |
     inst_mret   );
-assign inst_opcode[3] = rst ? 0 : 
+assign inst_opcode[3] = rst ? 1'd0 : 
   ( inst_bge    | inst_bltu   | inst_bgeu   | inst_lb     | 
     inst_lh     | inst_lw     | inst_lbu    | inst_lhu    | 
     inst_andi   | inst_slli   | inst_srli   | inst_srai   | 
@@ -220,7 +220,7 @@ assign inst_opcode[3] = rst ? 0 :
     inst_csrrc  | inst_csrrwi | inst_csrrsi | inst_csrrci |
     inst_sllw   | inst_srlw   | inst_sraw   | inst_subw   |
     inst_mret   );
-assign inst_opcode[2] = rst ? 0 : 
+assign inst_opcode[2] = rst ? 1'd0 : 
   ( inst_jalr   | inst_beq    | inst_bne    | inst_blt    | 
     inst_lh     | inst_lw     | inst_lbu    | inst_lhu    | 
     inst_slti   | inst_sltiu  | inst_xori   | inst_ori    | 
@@ -228,7 +228,7 @@ assign inst_opcode[2] = rst ? 0 :
     inst_or     | inst_and    | inst_fence  | inst_fencei | 
     inst_csrrc  | inst_csrrwi | inst_csrrsi | inst_csrrci |
     inst_slliw  | inst_srliw  | inst_sraiw  | inst_mret   );
-assign inst_opcode[1] = rst ? 0 : 
+assign inst_opcode[1] = rst ? 1'd0 : 
   ( inst_auipc  | inst_jal    | inst_bne    | inst_blt    | 
     inst_bgeu   | inst_lb     | inst_lbu    | inst_lhu    | 
     inst_sw     | inst_addi   | inst_xori   | inst_ori    | 
@@ -237,7 +237,7 @@ assign inst_opcode[1] = rst ? 0 :
     inst_csrrw  | inst_csrrs  | inst_csrrsi | inst_csrrci |
     inst_sd     | inst_addiw  | inst_sraiw  | inst_addw   | 
     inst_srlw   | inst_sraw   );
-assign inst_opcode[0] = rst ? 0 : 
+assign inst_opcode[0] = rst ? 1'd0 : 
   ( inst_lui    | inst_jal    | inst_beq    | inst_blt    | 
     inst_bltu   | inst_lb     | inst_lw     | inst_lhu    | 
     inst_sh     | inst_addi   | inst_sltiu  | inst_ori    | 
@@ -247,12 +247,12 @@ assign inst_opcode[0] = rst ? 0 :
     inst_ld     | inst_addiw  | inst_srliw  | inst_addw   | 
     inst_sllw   | inst_sraw   ); 
 
-assign inst_type_R    = rst ? 0 : 
+assign inst_type_R    = rst ? 1'd0 : 
   ( inst_add    | inst_sub    | inst_sll    | inst_slt    | 
     inst_sltu   | inst_xor    | inst_srl    | inst_sra    | 
     inst_or     | inst_and    | inst_addw   | inst_subw   | 
     inst_sllw   | inst_srlw   | inst_sraw   );
-assign inst_type_I    = rst ? 0 : 
+assign inst_type_I    = rst ? 1'd0 : 
   ( inst_jalr   | inst_lb     | inst_lh     | inst_lw     | 
     inst_ld     | inst_lbu    | inst_lhu    | inst_lwu    | 
     inst_addi   | inst_slti   | inst_sltiu  | inst_xori   | 
@@ -261,25 +261,25 @@ assign inst_type_I    = rst ? 0 :
     inst_lwu    | inst_ld     | inst_addiw  | inst_slliw  | 
     inst_srliw  | inst_sraiw  | inst_csrrwi | inst_csrrsi | 
     inst_csrrci );
-assign inst_type_S    = rst ? 0 : 
+assign inst_type_S    = rst ? 1'd0 : 
   ( inst_sb     | inst_sh     | inst_sw     | inst_sd     );
-assign inst_type_B    = rst ? 0 : 
+assign inst_type_B    = rst ? 1'd0 : 
   ( inst_beq    | inst_bne    | inst_blt    | inst_bge   | 
     inst_bltu   | inst_bgeu   );
-assign inst_type_U    = rst ? 0 : 
+assign inst_type_U    = rst ? 1'd0 : 
   ( inst_lui    | inst_auipc  );
-assign inst_type_J    = rst ? 0 : 
+assign inst_type_J    = rst ? 1'd0 : 
   ( inst_jal    );
-assign inst_type_CSRI = rst ? 0 : 
+assign inst_type_CSRI = rst ? 1'd0 : 
   ( inst_csrrwi | inst_csrrsi | inst_csrrci );
 
-assign o_rs1_ren  = rst ? 0 : ( inst_type_R | inst_type_I | inst_type_S | inst_type_B);
-assign o_rs1      = rst ? 0 : ((inst_type_R | inst_type_I | inst_type_S | inst_type_B) ? rs1 : 0 );
-assign o_rs2_ren  = rst ? 0 : ( inst_type_R | inst_type_S | inst_type_B);
-assign o_rs2      = rst ? 0 : ((inst_type_R | inst_type_S | inst_type_B) ? rs2 : 0 );
+assign o_rs1_ren  = rst ? 1'd0 : ( inst_type_R | inst_type_I | inst_type_S | inst_type_B);
+assign o_rs1      = rst ? 5'd0 : ((inst_type_R | inst_type_I | inst_type_S | inst_type_B) ? rs1 : 5'd0 );
+assign o_rs2_ren  = rst ? 1'd0 : ( inst_type_R | inst_type_S | inst_type_B);
+assign o_rs2      = rst ? 5'd0 : ((inst_type_R | inst_type_S | inst_type_B) ? rs2 : 5'd0 );
 
-assign o_rd_wen   = rst ? 0 : ( inst_type_R | inst_type_I | inst_type_U | inst_type_J | inst_type_CSRI);
-assign o_rd       = rst ? 0 : ((inst_type_R | inst_type_I | inst_type_U | inst_type_J | inst_type_CSRI) ? rd  : 0 );
+assign o_rd_wen   = rst ? 1'd0 : ( inst_type_R | inst_type_I | inst_type_U | inst_type_J | inst_type_CSRI);
+assign o_rd       = rst ? 5'd0 : ((inst_type_R | inst_type_I | inst_type_U | inst_type_J | inst_type_CSRI) ? rd  : 5'd0 );
 
 always @(*) begin
   if (rst) begin

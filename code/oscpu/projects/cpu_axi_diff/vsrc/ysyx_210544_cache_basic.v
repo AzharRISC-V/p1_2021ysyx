@@ -326,7 +326,7 @@ endgenerate
 // wire state_load_from_bus    = state == STATE_LOAD_FROM_BUS;
 // wire state_load_to_ram      = state == STATE_LOAD_TO_RAM;
 
-assign ram_op_offset_128 = ({6'd0, ram_op_cnt} - 2) << 3'd7;
+assign ram_op_offset_128 = ({6'd0, ram_op_cnt} - 9'd2) << 3'd7;
 assign hs_cache = i_cache_basic_req & o_cache_basic_ack;
 assign hs_sync_rd = sync_rreq & sync_rack;
 assign hs_sync_rpack = sync_rpackack & sync_rpackreq;
@@ -583,7 +583,7 @@ always @(posedge clk) begin
       STATE_LOAD_TO_RAM: begin
         // 写入RAM一个块
         if (!hs_ramwrite) begin
-          ram_op_cnt <= ram_op_cnt + 1;
+          ram_op_cnt <= ram_op_cnt + 3'd1;
           // 写入cache数据一行
           chip_data_cen[wayID_select] <= CHIP_DATA_CEN;
           chip_data_wen[wayID_select] <= CHIP_DATA_WEN;
@@ -739,7 +739,7 @@ always @(posedge clk) begin
             chip_data_wen[sync_wwayid] <= !CHIP_DATA_WEN;
             // 更新cache记录一行，并强行置位dirty位，保证在调换时能被写入主存
             // 这里cache s位是否需要考虑？如果是DCache全部搬运，则不需要考虑。如果是搬运v=1的块，则要考虑吧
-            cache_info[sync_wwayid][sync_wblkid] <= sync_winfo | (1 << `c_d_BUS);
+            cache_info[sync_wwayid][sync_wblkid] <= sync_winfo | (26'd1 << `c_d_BUS);
 
             sync_wack <= 1'd1;
           end

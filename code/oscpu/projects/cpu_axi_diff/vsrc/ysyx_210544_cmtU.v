@@ -14,7 +14,7 @@ module ysyx_210544_cmtU(
   input   wire [`BUS_64]      i_pc,
   input   wire [`BUS_32]      i_inst,
   input   wire [`BUS_64]      i_regs[0 : 31],
-  input   wire [`BUS_64]      i_csrs[0 : 15],
+  input   wire [`BUS_64]      i_csrs[0 : 8],
   input   wire [`BUS_32]      i_intrNo,
   input   wire                i_cmtvalid,
   input   wire                i_skipcmt

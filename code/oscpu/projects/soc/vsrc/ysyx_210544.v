@@ -1,6 +1,5 @@
 /* verilator lint_off DECLFILENAME */
 
-// 2021.10.08 21:16
 // ZhengpuShi
 
 // Definitions
@@ -421,7 +420,7 @@ always @(posedge clock) begin
         len <= 0;
     end
     else if (len_incr_en) begin
-        len <= len + 1;
+        len <= len + 8'd1;
     end
 end
 
@@ -594,10 +593,10 @@ always @(posedge clock) begin
  end
 
 
-wire _unused_ok = &{1'b0,
-  axi_b_id_i,
-  axi_r_id_i,
-  1'b0};
+//wire _unused_ok = &{1'b0,
+//  axi_b_id_i,
+//  axi_r_id_i,
+//  1'b0};
 
 endmodule
 
@@ -1062,7 +1061,7 @@ endgenerate
 // wire state_load_from_bus    = state == STATE_LOAD_FROM_BUS;
 // wire state_load_to_ram      = state == STATE_LOAD_TO_RAM;
 
-assign ram_op_offset_128 = ({6'd0, ram_op_cnt} - 2) << 3'd7;
+assign ram_op_offset_128 = ({6'd0, ram_op_cnt} - 9'd2) << 3'd7;
 assign hs_cache = i_cache_basic_req & o_cache_basic_ack;
 assign hs_sync_rd = sync_rreq & sync_rack;
 assign hs_sync_rpack = sync_rpackack & sync_rpackreq;
@@ -1319,7 +1318,7 @@ always @(posedge clk) begin
       STATE_LOAD_TO_RAM: begin
         // 写入RAM一个块
         if (!hs_ramwrite) begin
-          ram_op_cnt <= ram_op_cnt + 1;
+          ram_op_cnt <= ram_op_cnt + 3'd1;
           // 写入cache数据一行
           chip_data_cen[wayID_select] <= CHIP_DATA_CEN;
           chip_data_wen[wayID_select] <= CHIP_DATA_WEN;
@@ -1475,7 +1474,7 @@ always @(posedge clk) begin
             chip_data_wen[sync_wwayid] <= !CHIP_DATA_WEN;
             // 更新cache记录一行，并强行置位dirty位，保证在调换时能被写入主存
             // 这里cache s位是否需要考虑？如果是DCache全部搬运，则不需要考虑。如果是搬运v=1的块，则要考虑吧
-            cache_info[sync_wwayid][sync_wblkid] <= sync_winfo | (1 << `c_d_BUS);
+            cache_info[sync_wwayid][sync_wblkid] <= sync_winfo | (26'd1 << `c_d_BUS);
 
             sync_wack <= 1'd1;
           end
@@ -2101,12 +2100,12 @@ ysyx_210544_cache_core ICache(
 
 
   .i_cache_core_sync_rreq     (1'b0                       ),
-  .o_cache_core_sync_rack     (sync_icache_rack           ),
+  .o_cache_core_sync_rack     (),//sync_icache_rack           ),
   .i_cache_core_sync_rpackack (1'b0                       ),
   .o_cache_core_sync_rpackreq (sync_icache_rpackreq       ),
   .i_cache_core_sync_wreq     (sync_icache_wreq           ),
   .o_cache_core_sync_wack     (sync_icache_wack           ),
-  .o_cache_core_sync_rwayid   (sync_icache_rwayid         ),
+  //.o_cache_core_sync_rwayid   (),//sync_icache_rwayid         ),
   .o_cache_core_sync_rblkid   (sync_icache_rblkid         ),
   .o_cache_core_sync_rinfo    (sync_icache_rinfo          ),
   .o_cache_core_sync_rdata    (sync_icache_rdata          ),
@@ -2209,8 +2208,8 @@ ysyx_210544_cache_sync Cache_sync(
 
 assign nocache_req      = ch_nocache ? (i_icache_req | i_dcache_req                     ) : 1'b0;
 assign nocache_addr     = ch_nocache ? (i_icache_req ? i_icache_addr  : i_dcache_addr   ) : 64'd0;
-assign nocache_wdata    = ch_nocache ? (i_icache_req ? 0              : i_dcache_wdata  ) : 64'd0;
-assign nocache_bytes    = ch_nocache ? (i_icache_req ? 3              : i_dcache_bytes  ) : 3'd0;
+assign nocache_wdata    = ch_nocache ? (i_icache_req ? 64'd0          : i_dcache_wdata  ) : 64'd0;
+assign nocache_bytes    = ch_nocache ? (i_icache_req ? 3'd3           : i_dcache_bytes  ) : 3'd0;
 assign nocache_op       = ch_nocache ? (i_icache_req ? `REQ_READ      : i_dcache_op     ) : `REQ_READ;
 
 assign o_axi_io_valid   = ch_icache ? icache_axi_io_valid   : (ch_dcache ? dcache_axi_io_valid  : nocache_axi_io_valid);
@@ -2271,38 +2270,38 @@ assign rtc_val = {21'b0, year, month, day, hour, minute, second};
 always @(posedge clk) begin
   if (rst) begin
     clk_cnt  <= 0;
-    year    <= 2021;
-    month   <= 1;
-    day     <= 2;
-    hour    <= 3;
-    minute  <= 4;
-    second  <= 5;
+    year    <= 16'd2021;
+    month   <= 4'd1;
+    day     <= 5'd2;
+    hour    <= 6'd3;
+    minute  <= 6'd4;
+    second  <= 6'd5;
   end
   else begin
     clk_cnt <= clk_cnt + 1;
     if (clk_cnt == `CLOCKS_PER_SECOND) begin
       clk_cnt <= 0;
-      second <= second + 1;
+      second <= second + 6'd1;
       if (second == 60) begin
-        second <= 0;
+        second <= 6'd0;
 
-        minute <= minute + 1;
+        minute <= minute + 6'd1;
         if (minute == 60) begin
-          minute <= 0;
+          minute <= 6'd0;
 
-          hour <= hour + 1;
+          hour <= hour + 6'd1;
           if (hour == 24) begin
-            hour <= 0;
+            hour <= 6'd0;
 
-            day <= day + 1;
+            day <= day + 5'd1;
             if (day == 30) begin
-              day <= 0;
+              day <= 5'd0;
 
-              month <= month + 1;
+              month <= month + 4'd1;
               if (month == 12) begin
-                month <= 0;
+                month <= 4'd0;
 
-                year <= year + 1;
+                year <= year + 16'd1;
               end
             end
           end
@@ -2598,10 +2597,10 @@ module ysyx_210544_csrfile(
   output                    o_csr_clint_mie_mtie,
 
   // difftest
-  output  wire  [`BUS_64]   o_csrs[0 : 15]
+  output  wire  [`BUS_64]   o_csrs[0 : 8]
 );
 
-reg [`BUS_64]     csrs[0 : 15];
+reg [`BUS_64]     csrs[0 : 8];
 reg  [3 : 0]      csr_idx;
 wire              mstatus_sd;
 
@@ -2677,7 +2676,7 @@ end
 // difftest csr_regs接口
 genvar i;
 generate
-  for (i = 0; i < 8; i = i + 1) 
+  for (i = 0; i <= 8; i = i + 1) 
   begin: O_CSRS_GEN
     assign o_csrs[i] = csrs[i];
   end
@@ -3112,9 +3111,9 @@ assign inst_store   = inst_sb | inst_sh | inst_sw | inst_sd;
 // arith inst: 10000; logic: 01000;
 // load-store: 00100; j: 00010;  sys: 000001
 // === I don't use the logic above!
-assign inst_opcode[7] = rst ? 0 : 0;
-assign inst_opcode[6] = rst ? 0 : 0;
-assign inst_opcode[5] = rst ? 0 : 
+assign inst_opcode[7] = rst ? 1'd0 : 1'd0;
+assign inst_opcode[6] = rst ? 1'd0 : 1'd0;
+assign inst_opcode[5] = rst ? 1'd0 : 
   ( inst_sltu   | inst_xor    | inst_srl    | inst_sra    | 
     inst_or     | inst_and    | inst_fence  | inst_fencei | 
     inst_ecall  | inst_ebreak | inst_csrrw  | inst_csrrs  | 
@@ -3123,7 +3122,7 @@ assign inst_opcode[5] = rst ? 0 :
     inst_slliw  | inst_srliw  | inst_sraiw  | inst_addw   | 
     inst_subw   | inst_sllw   | inst_srlw   | inst_sraw   |
     inst_mret   );
-assign inst_opcode[4] = rst ? 0 : 
+assign inst_opcode[4] = rst ? 1'd0 : 
   ( inst_sb     | inst_sh     | inst_sw     | inst_addi   | 
     inst_slti   | inst_sltiu  | inst_xori   | inst_ori    | 
     inst_andi   | inst_slli   | inst_srli   | inst_srai   | 
@@ -3132,7 +3131,7 @@ assign inst_opcode[4] = rst ? 0 :
     inst_slliw  | inst_srliw  | inst_sraiw  | inst_addw   | 
     inst_subw   | inst_sllw   | inst_srlw   | inst_sraw   |
     inst_mret   );
-assign inst_opcode[3] = rst ? 0 : 
+assign inst_opcode[3] = rst ? 1'd0 : 
   ( inst_bge    | inst_bltu   | inst_bgeu   | inst_lb     | 
     inst_lh     | inst_lw     | inst_lbu    | inst_lhu    | 
     inst_andi   | inst_slli   | inst_srli   | inst_srai   | 
@@ -3141,7 +3140,7 @@ assign inst_opcode[3] = rst ? 0 :
     inst_csrrc  | inst_csrrwi | inst_csrrsi | inst_csrrci |
     inst_sllw   | inst_srlw   | inst_sraw   | inst_subw   |
     inst_mret   );
-assign inst_opcode[2] = rst ? 0 : 
+assign inst_opcode[2] = rst ? 1'd0 : 
   ( inst_jalr   | inst_beq    | inst_bne    | inst_blt    | 
     inst_lh     | inst_lw     | inst_lbu    | inst_lhu    | 
     inst_slti   | inst_sltiu  | inst_xori   | inst_ori    | 
@@ -3149,7 +3148,7 @@ assign inst_opcode[2] = rst ? 0 :
     inst_or     | inst_and    | inst_fence  | inst_fencei | 
     inst_csrrc  | inst_csrrwi | inst_csrrsi | inst_csrrci |
     inst_slliw  | inst_srliw  | inst_sraiw  | inst_mret   );
-assign inst_opcode[1] = rst ? 0 : 
+assign inst_opcode[1] = rst ? 1'd0 : 
   ( inst_auipc  | inst_jal    | inst_bne    | inst_blt    | 
     inst_bgeu   | inst_lb     | inst_lbu    | inst_lhu    | 
     inst_sw     | inst_addi   | inst_xori   | inst_ori    | 
@@ -3158,7 +3157,7 @@ assign inst_opcode[1] = rst ? 0 :
     inst_csrrw  | inst_csrrs  | inst_csrrsi | inst_csrrci |
     inst_sd     | inst_addiw  | inst_sraiw  | inst_addw   | 
     inst_srlw   | inst_sraw   );
-assign inst_opcode[0] = rst ? 0 : 
+assign inst_opcode[0] = rst ? 1'd0 : 
   ( inst_lui    | inst_jal    | inst_beq    | inst_blt    | 
     inst_bltu   | inst_lb     | inst_lw     | inst_lhu    | 
     inst_sh     | inst_addi   | inst_sltiu  | inst_ori    | 
@@ -3168,12 +3167,12 @@ assign inst_opcode[0] = rst ? 0 :
     inst_ld     | inst_addiw  | inst_srliw  | inst_addw   | 
     inst_sllw   | inst_sraw   ); 
 
-assign inst_type_R    = rst ? 0 : 
+assign inst_type_R    = rst ? 1'd0 : 
   ( inst_add    | inst_sub    | inst_sll    | inst_slt    | 
     inst_sltu   | inst_xor    | inst_srl    | inst_sra    | 
     inst_or     | inst_and    | inst_addw   | inst_subw   | 
     inst_sllw   | inst_srlw   | inst_sraw   );
-assign inst_type_I    = rst ? 0 : 
+assign inst_type_I    = rst ? 1'd0 : 
   ( inst_jalr   | inst_lb     | inst_lh     | inst_lw     | 
     inst_ld     | inst_lbu    | inst_lhu    | inst_lwu    | 
     inst_addi   | inst_slti   | inst_sltiu  | inst_xori   | 
@@ -3182,25 +3181,25 @@ assign inst_type_I    = rst ? 0 :
     inst_lwu    | inst_ld     | inst_addiw  | inst_slliw  | 
     inst_srliw  | inst_sraiw  | inst_csrrwi | inst_csrrsi | 
     inst_csrrci );
-assign inst_type_S    = rst ? 0 : 
+assign inst_type_S    = rst ? 1'd0 : 
   ( inst_sb     | inst_sh     | inst_sw     | inst_sd     );
-assign inst_type_B    = rst ? 0 : 
+assign inst_type_B    = rst ? 1'd0 : 
   ( inst_beq    | inst_bne    | inst_blt    | inst_bge   | 
     inst_bltu   | inst_bgeu   );
-assign inst_type_U    = rst ? 0 : 
+assign inst_type_U    = rst ? 1'd0 : 
   ( inst_lui    | inst_auipc  );
-assign inst_type_J    = rst ? 0 : 
+assign inst_type_J    = rst ? 1'd0 : 
   ( inst_jal    );
-assign inst_type_CSRI = rst ? 0 : 
+assign inst_type_CSRI = rst ? 1'd0 : 
   ( inst_csrrwi | inst_csrrsi | inst_csrrci );
 
-assign o_rs1_ren  = rst ? 0 : ( inst_type_R | inst_type_I | inst_type_S | inst_type_B);
-assign o_rs1      = rst ? 0 : ((inst_type_R | inst_type_I | inst_type_S | inst_type_B) ? rs1 : 0 );
-assign o_rs2_ren  = rst ? 0 : ( inst_type_R | inst_type_S | inst_type_B);
-assign o_rs2      = rst ? 0 : ((inst_type_R | inst_type_S | inst_type_B) ? rs2 : 0 );
+assign o_rs1_ren  = rst ? 1'd0 : ( inst_type_R | inst_type_I | inst_type_S | inst_type_B);
+assign o_rs1      = rst ? 5'd0 : ((inst_type_R | inst_type_I | inst_type_S | inst_type_B) ? rs1 : 5'd0 );
+assign o_rs2_ren  = rst ? 1'd0 : ( inst_type_R | inst_type_S | inst_type_B);
+assign o_rs2      = rst ? 5'd0 : ((inst_type_R | inst_type_S | inst_type_B) ? rs2 : 5'd0 );
 
-assign o_rd_wen   = rst ? 0 : ( inst_type_R | inst_type_I | inst_type_U | inst_type_J | inst_type_CSRI);
-assign o_rd       = rst ? 0 : ((inst_type_R | inst_type_I | inst_type_U | inst_type_J | inst_type_CSRI) ? rd  : 0 );
+assign o_rd_wen   = rst ? 1'd0 : ( inst_type_R | inst_type_I | inst_type_U | inst_type_J | inst_type_CSRI);
+assign o_rd       = rst ? 5'd0 : ((inst_type_R | inst_type_I | inst_type_U | inst_type_J | inst_type_CSRI) ? rd  : 5'd0 );
 
 always @(*) begin
   if (rst) begin
@@ -3458,22 +3457,22 @@ always @(posedge clk) begin
   end
 end
 
-assign o_ex_pc            = i_disable ? 0 : tmp_i_ex_pc;
-assign o_ex_inst          = i_disable ? 0 : tmp_i_ex_inst;
-assign o_ex_op1           = i_disable ? 0 : tmp_i_ex_op1;
-assign o_ex_op2           = i_disable ? 0 : tmp_i_ex_op2;
-assign o_ex_op3           = i_disable ? 0 : tmp_i_ex_op3;
-assign o_ex_inst_opcode   = i_disable ? 0 : tmp_i_ex_inst_opcode;
-assign o_ex_rd            = i_disable ? 0 : (!o_ena_exeU ? 0 : tmp_i_ex_rd);
-assign o_ex_rd_wen        = i_disable ? 0 : (!o_ena_exeU ? 0 : tmp_i_ex_rd_wen);
-assign o_ex_skipcmt       = i_disable ? 0 : (tmp_i_ex_skipcmt | exeU_skip_cmt);
+assign o_ex_pc            = i_disable ? 64'd0 : tmp_i_ex_pc;
+assign o_ex_inst          = i_disable ? 32'd0 : tmp_i_ex_inst;
+assign o_ex_op1           = i_disable ? 64'd0 : tmp_i_ex_op1;
+assign o_ex_op2           = i_disable ? 64'd0 : tmp_i_ex_op2;
+assign o_ex_op3           = i_disable ? 64'd0 : tmp_i_ex_op3;
+assign o_ex_inst_opcode   = i_disable ?  8'd0 : tmp_i_ex_inst_opcode;
+assign o_ex_rd            = i_disable ?  5'd0 : (!o_ena_exeU ? 5'd0 : tmp_i_ex_rd);
+assign o_ex_rd_wen        = i_disable ?  1'd0 : (!o_ena_exeU ? 1'd0 : tmp_i_ex_rd_wen);
+assign o_ex_skipcmt       = i_disable ?  1'd0 : (tmp_i_ex_skipcmt | exeU_skip_cmt);
 
-assign o_ex_pc_jmp      = rst ? 0 : (o_ena_exeU ? exeU_pc_jmp     : exceptionU_pc_jmp);
-assign o_ex_pc_jmpaddr  = rst ? 0 : (o_ena_exeU ? exeU_pc_jmpaddr : exceptionU_pc_jmpaddr);
-assign o_ex_csr_addr    = rst ? 0 : (o_ena_exeU ? exeU_csr_addr   : exceptionU_csr_addr);
-assign o_ex_csr_ren     = rst ? 0 : (o_ena_exeU ? exeU_csr_ren    : exceptionU_csr_ren);
-assign o_ex_csr_wen     = rst ? 0 : (o_ena_exeU ? exeU_csr_wen    : exceptionU_csr_wen);
-assign o_ex_csr_wdata   = rst ? 0 : (o_ena_exeU ? exeU_csr_wdata  : exceptionU_csr_wdata);
+assign o_ex_pc_jmp      = rst ?  1'd0 : (o_ena_exeU ? exeU_pc_jmp     : exceptionU_pc_jmp);
+assign o_ex_pc_jmpaddr  = rst ? 64'd0 : (o_ena_exeU ? exeU_pc_jmpaddr : exceptionU_pc_jmpaddr);
+assign o_ex_csr_addr    = rst ? 12'd0 : (o_ena_exeU ? exeU_csr_addr   : exceptionU_csr_addr);
+assign o_ex_csr_ren     = rst ?  1'd0 : (o_ena_exeU ? exeU_csr_ren    : exceptionU_csr_ren);
+assign o_ex_csr_wen     = rst ?  1'd0 : (o_ena_exeU ? exeU_csr_wen    : exceptionU_csr_wen);
+assign o_ex_csr_wdata   = rst ? 64'd0 : (o_ena_exeU ? exeU_csr_wdata  : exceptionU_csr_wdata);
 
 ysyx_210544_exeU ExeU(
   .ena                        (o_ena_exeU                 ),
@@ -3601,19 +3600,19 @@ end
 // o_pc_jmp
 always @(*) begin
   if ( i_disable ) begin
-    o_pc_jmp = 0;
+    o_pc_jmp = 1'd0;
   end
   else begin
     case (i_inst_opcode)
-      `INST_BEQ   : begin o_pc_jmp = (i_op1 == i_op2) ? 1 : 0; end
-      `INST_BNE   : begin o_pc_jmp = (i_op1 != i_op2) ? 1 : 0; end
-      `INST_BLT   : begin o_pc_jmp = ($signed(i_op1) < $signed(i_op2)) ? 1 : 0; end
-      `INST_BGE   : begin o_pc_jmp = ($signed(i_op1) >= $signed(i_op2)) ? 1 : 0; end
-      `INST_BLTU  : begin o_pc_jmp = (i_op1 < i_op2) ? 1 : 0; end
-      `INST_BGEU  : begin o_pc_jmp = (i_op1 >= i_op2) ? 1 : 0; end
-      `INST_JAL   : begin o_pc_jmp = 1; end
-      `INST_JALR  : begin o_pc_jmp = 1; end
-      default     : begin o_pc_jmp = 0; end
+      `INST_BEQ   : begin o_pc_jmp = (i_op1 == i_op2) ? 1'd1 : 1'd0; end
+      `INST_BNE   : begin o_pc_jmp = (i_op1 != i_op2) ? 1'd1 : 1'd0; end
+      `INST_BLT   : begin o_pc_jmp = ($signed(i_op1) <  $signed(i_op2)) ? 1'd1 : 1'd0; end
+      `INST_BGE   : begin o_pc_jmp = ($signed(i_op1) >= $signed(i_op2)) ? 1'd1 : 1'd0; end
+      `INST_BLTU  : begin o_pc_jmp = (i_op1 <  i_op2) ? 1'd1 : 1'd0; end
+      `INST_BGEU  : begin o_pc_jmp = (i_op1 >= i_op2) ? 1'd1 : 1'd0; end
+      `INST_JAL   : begin o_pc_jmp = 1'd1; end
+      `INST_JALR  : begin o_pc_jmp = 1'd1; end
+      default     : begin o_pc_jmp = 1'd0; end
     endcase
   end
 end
@@ -3621,19 +3620,19 @@ end
 // o_pc_jmpaddr
 always @(*) begin
   if ( i_disable ) begin
-    o_pc_jmpaddr = 0;
+    o_pc_jmpaddr = 64'd0;
   end
   else begin
     case (i_inst_opcode)
       `INST_JAL   : begin o_pc_jmpaddr = i_op3; end
-      `INST_JALR  : begin o_pc_jmpaddr = (i_op1 + i_op2) & ~1; end
+      `INST_JALR  : begin o_pc_jmpaddr = (i_op1 + i_op2) & ~64'd1; end
       `INST_BEQ   : begin o_pc_jmpaddr = i_op3; end
       `INST_BNE   : begin o_pc_jmpaddr = i_op3; end
       `INST_BLT   : begin o_pc_jmpaddr = i_op3; end
       `INST_BGE   : begin o_pc_jmpaddr = i_op3; end
       `INST_BLTU  : begin o_pc_jmpaddr = i_op3; end
       `INST_BGEU  : begin o_pc_jmpaddr = i_op3; end
-      default     : begin o_pc_jmpaddr = 0; end
+      default     : begin o_pc_jmpaddr = 64'd0; end
     endcase
   end
 end
@@ -3645,13 +3644,13 @@ assign inst_csr =
   (i_inst_opcode == `INST_CSRRC ) | (i_inst_opcode == `INST_CSRRWI) | 
   (i_inst_opcode == `INST_CSRRSI) | (i_inst_opcode == `INST_CSRRCI) ;
 
-assign o_csr_ren  = (i_disable) ? 0 : inst_csr;
-assign o_csr_wen  = (i_disable) ? 0 : inst_csr;
-assign o_csr_addr = (i_disable) ? 0 : (inst_csr ? i_op2[11:0] : 0);
+assign o_csr_ren  = (i_disable) ?  1'd0 : inst_csr;
+assign o_csr_wen  = (i_disable) ?  1'd0 : inst_csr;
+assign o_csr_addr = (i_disable) ? 12'd0 : (inst_csr ? i_op2[11:0] : 12'd0);
 
 always @(*) begin
   if (i_disable) begin
-    o_csr_wdata = 0;
+    o_csr_wdata = 64'd0;
   end
   else begin
     case (i_inst_opcode)
@@ -3661,7 +3660,7 @@ always @(*) begin
       `INST_CSRRWI  : o_csr_wdata = i_op1;
       `INST_CSRRSI  : o_csr_wdata = i_csr_rdata | i_op1;
       `INST_CSRRCI  : o_csr_wdata = i_csr_rdata & (~i_op1);
-      default       : o_csr_wdata = 0;
+      default       : o_csr_wdata = 64'd0;
     endcase
   end
 end
@@ -4433,6 +4432,7 @@ endmodule
 // ZhengpuShi
 
 
+
 module ysyx_210544_mem_mmio(
   input   wire                clk,
   input   wire                rst,
@@ -4447,61 +4447,58 @@ module ysyx_210544_mem_mmio(
   output  reg  [`BUS_64]      rdata,
   output  wire                o_clint_mtime_overflow
 );
-
-// rtc设备
-wire  [`BUS_64]               rtc_rdata;
-wire  [`BUS_64]               i_clint_rdata;
-
-
-
-ysyx_210544_rtc Rtc(
-  .clk                (clk              ),
-  .rst                (rst              ),
-  .ren                (ren & (addr == `DEV_RTC)),
-  .rdata              (rtc_rdata        )
-);
-
-// CLINT (Core Local Interrupt Controller)
-ysyx_210544_clint Clint(
-  .clk                        (clk                        ),
-  .rst                        (rst                        ),
-  .i_clint_addr               (addr                       ),
-  .i_clint_ren                (ren                        ),
-  .o_clint_rdata              (i_clint_rdata              ),
-  .i_clint_wen                (wen                        ),
-  .i_clint_wdata              (wdata                      ),
-  .o_clint_mtime_overflow     (o_clint_mtime_overflow     )
-);
-
-always @(posedge clk) begin
-  if (rst) begin
-    req <= 0;
-    rdata <= 0;
-  end
-  else begin
-    // set request
-    if (start) begin
-      if (ren) begin
-        case (addr)
-          `DEV_RTC        : rdata <= rtc_rdata;
-          `DEV_MTIME      : rdata <= i_clint_rdata;
-          `DEV_MTIMECMP   : rdata <= i_clint_rdata;
-          default         : ;
-        endcase
-        req <= 1;
-      end
-      else begin
-        req <= 1;
-      end
+    
+    // rtc设备
+    wire  [`BUS_64]               rtc_rdata;
+    wire  [`BUS_64]               i_clint_rdata;
+    
+    
+    
+    ysyx_210544_rtc Rtc(
+    .clk                (clk),
+    .rst                (rst),
+    .ren                (ren & (addr == `DEV_RTC)),
+    .rdata              (rtc_rdata)
+    );
+    
+    // CLINT (Core Local Interrupt Controller)
+    ysyx_210544_clint Clint(
+    .clk                        (clk),
+    .rst                        (rst),
+    .i_clint_addr               (addr),
+    .i_clint_ren                (ren),
+    .o_clint_rdata              (i_clint_rdata),
+    .i_clint_wen                (wen),
+    .i_clint_wdata              (wdata),
+    .o_clint_mtime_overflow     (o_clint_mtime_overflow)
+    );
+    
+    always @(posedge clk) begin
+        if (rst) begin
+            req   <= 0;
+            rdata <= 0;
+        end
+        else begin
+            // set request
+            if (start) begin
+                if (ren) begin
+                    if (addr == `DEV_RTC)             rdata <= rtc_rdata;
+                    else if (addr == `DEV_MTIME)      rdata <= i_clint_rdata;
+                    else if (addr == `DEV_MTIMECMP)   rdata <= i_clint_rdata;
+                    req <= 1;
+                end
+                else begin
+                    req <= 1;
+                end
+            end
+            // clear request
+            else if (ack) begin
+            req   <= 0;
+            rdata <= 0;
+        end
     end
-    // clear request
-    else if (ack) begin
-      req <= 0;
-      rdata <= 0;
     end
-  end
-end
-
+    
 endmodule
 
 // ZhengpuShi
@@ -4665,12 +4662,12 @@ always @(posedge clk) begin
   end
 end
 
-assign o_wb_pc        = i_disable ? 0 : tmp_i_wb_pc;
-assign o_wb_inst      = i_disable ? 0 : tmp_i_wb_inst;
-assign o_wb_skipcmt   = i_disable ? 0 : tmp_i_wb_skipcmt;
-assign o_wb_rd        = i_disable ? 0 : tmp_i_wb_rd;
-assign o_wb_rd_wen    = i_disable ? 0 : tmp_i_wb_rd_wen;
-assign o_wb_rd_wdata  = i_disable ? 0 : tmp_i_wb_rd_wdata;
+assign o_wb_pc        = i_disable ? 64'd0 : tmp_i_wb_pc;
+assign o_wb_inst      = i_disable ? 32'd0 : tmp_i_wb_inst;
+assign o_wb_skipcmt   = i_disable ?  1'd0 : tmp_i_wb_skipcmt;
+assign o_wb_rd        = i_disable ?  5'd0 : tmp_i_wb_rd;
+assign o_wb_rd_wen    = i_disable ?  1'd0 : tmp_i_wb_rd_wen;
+assign o_wb_rd_wdata  = i_disable ? 64'd0 : tmp_i_wb_rd_wdata;
 
 endmodule
 
@@ -4691,16 +4688,18 @@ module ysyx_210544_cmt_stage(
   input   wire [`BUS_32]      i_cmt_inst,
   input   wire                i_cmt_skipcmt,
   input   wire [`BUS_64]      i_cmt_regs[0 : 31],
-  input   wire [`BUS_64]      i_cmt_csrs[0 : 15],
+  input   wire [`BUS_64]      i_cmt_csrs[0 : 8],
   input   wire [`BUS_32]      i_cmt_intrNo
 );
+
+assign o_cmt_writebacked_ack = 1'b1;
+
+
+`ifdef DIFFTEST_YSYX_210544
 
 wire writebacked_hs;
 wire i_cmtvalid;
 
-
-
-assign o_cmt_writebacked_ack = 1'b1;
 assign writebacked_hs = i_cmt_writebacked_req & o_cmt_writebacked_ack;
 assign i_cmtvalid = writebacked_hs;
 
@@ -4718,8 +4717,6 @@ ysyx_210544_cmtU CmtU(
   .i_csrs                     (i_cmt_csrs                 ),
   .i_intrNo                   (i_cmt_intrNo               )
 );
-
-`ifdef DIFFTEST_YSYX_210544
 
 reg [63:0] cnt;
 always @(posedge clk) begin
@@ -4773,7 +4770,7 @@ module ysyx_210544_cmtU(
   input   wire [`BUS_64]      i_pc,
   input   wire [`BUS_32]      i_inst,
   input   wire [`BUS_64]      i_regs[0 : 31],
-  input   wire [`BUS_64]      i_csrs[0 : 15],
+  input   wire [`BUS_64]      i_csrs[0 : 8],
   input   wire [`BUS_32]      i_intrNo,
   input   wire                i_cmtvalid,
   input   wire                i_skipcmt
@@ -5066,7 +5063,7 @@ wire  [`BUS_64]               o_reg_regs[0 : 31];
 // csrfile -> ex_stage
 wire  [`BUS_64]               o_csr_rdata;
 // csrfile -> wb_stage
-wire  [`BUS_64]               o_csr_csrs[0 :  15];
+wire  [`BUS_64]               o_csr_csrs[0 :  8];
 
 // clint
 wire                          o_clint_mstatus_mie;
@@ -5479,29 +5476,29 @@ assign io_slave_rdata = 0;
 assign io_slave_rlast = 0;
 assign io_slave_rid = 0;
 
-wire _unused_ok = &{1'b0,
-  io_interrupt,
-  io_slave_awaddr,
-  io_slave_awid,
-  io_slave_awlen,
-  io_slave_awsize,
-  io_slave_awburst,
-  io_slave_awvalid,
-  io_slave_wvalid,
-  io_slave_wdata,
-  io_slave_wstrb,
-  io_slave_wlast,
-  io_slave_bready,
-  io_slave_arvalid,
-  io_slave_araddr,
-  io_slave_arid,
-  io_slave_arlen,
-  io_slave_arsize,
-  io_slave_arburst,
-  io_slave_rready,
-  axi_aw_addr_o[63:32],
-  axi_ar_addr_o[63:32],
-  o_user_axi_resp,
-  1'b0};
+//wire _unused_ok = &{1'b0,
+//  io_interrupt,
+//  io_slave_awaddr,
+//  io_slave_awid,
+//  io_slave_awlen,
+//  io_slave_awsize,
+//  io_slave_awburst,
+//  io_slave_awvalid,
+//  io_slave_wvalid,
+//  io_slave_wdata,
+//  io_slave_wstrb,
+//  io_slave_wlast,
+//  io_slave_bready,
+//  io_slave_arvalid,
+//  io_slave_araddr,
+//  io_slave_arid,
+//  io_slave_arlen,
+//  io_slave_arsize,
+//  io_slave_arburst,
+//  io_slave_rready,
+//  axi_aw_addr_o[63:32],
+//  axi_ar_addr_o[63:32],
+//  o_user_axi_resp,
+//  1'b0};
 
 endmodule

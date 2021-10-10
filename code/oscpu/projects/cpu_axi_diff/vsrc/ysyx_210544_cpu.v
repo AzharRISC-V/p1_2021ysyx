@@ -109,7 +109,7 @@ wire  [`BUS_64]               o_reg_regs[0 : 31];
 // csrfile -> ex_stage
 wire  [`BUS_64]               o_csr_rdata;
 // csrfile -> wb_stage
-wire  [`BUS_64]               o_csr_csrs[0 :  15];
+wire  [`BUS_64]               o_csr_csrs[0 :  8];
 
 // clint
 wire                          o_clint_mstatus_mie;

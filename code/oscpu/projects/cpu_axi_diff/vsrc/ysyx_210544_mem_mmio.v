@@ -3,6 +3,7 @@
 
 `include "defines.v"
 
+
 module ysyx_210544_mem_mmio(
   input   wire                clk,
   input   wire                rst,
@@ -44,32 +45,29 @@ ysyx_210544_clint Clint(
 );
 
 always @(posedge clk) begin
-  if (rst) begin
-    req <= 0;
-    rdata <= 0;
-  end
-  else begin
-    // set request
-    if (start) begin
-      if (ren) begin
-        case (addr)
-          `DEV_RTC        : rdata <= rtc_rdata;
-          `DEV_MTIME      : rdata <= i_clint_rdata;
-          `DEV_MTIMECMP   : rdata <= i_clint_rdata;
-          default         : ;
-        endcase
-        req <= 1;
-      end
-      else begin
-        req <= 1;
-      end
+    if (rst) begin
+        req   <= 0;
+        rdata <= 0;
     end
-    // clear request
-    else if (ack) begin
-      req <= 0;
-      rdata <= 0;
+    else begin
+        // set request
+        if (start) begin
+            if (ren) begin
+                if (addr == `DEV_RTC)             rdata <= rtc_rdata;
+                else if (addr == `DEV_MTIME)      rdata <= i_clint_rdata;
+                else if (addr == `DEV_MTIMECMP)   rdata <= i_clint_rdata;
+                req <= 1;
+            end
+            else begin
+                req <= 1;
+            end
+        end
+        // clear request
+        else if (ack) begin
+            req   <= 0;
+            rdata <= 0;
+        end
     end
-  end
 end
 
 endmodule

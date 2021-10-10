@@ -82,11 +82,11 @@ always @(posedge clk) begin
   end
 end
 
-assign o_wb_pc        = i_disable ? 0 : tmp_i_wb_pc;
-assign o_wb_inst      = i_disable ? 0 : tmp_i_wb_inst;
-assign o_wb_skipcmt   = i_disable ? 0 : tmp_i_wb_skipcmt;
-assign o_wb_rd        = i_disable ? 0 : tmp_i_wb_rd;
-assign o_wb_rd_wen    = i_disable ? 0 : tmp_i_wb_rd_wen;
-assign o_wb_rd_wdata  = i_disable ? 0 : tmp_i_wb_rd_wdata;
+assign o_wb_pc        = i_disable ? 64'd0 : tmp_i_wb_pc;
+assign o_wb_inst      = i_disable ? 32'd0 : tmp_i_wb_inst;
+assign o_wb_skipcmt   = i_disable ?  1'd0 : tmp_i_wb_skipcmt;
+assign o_wb_rd        = i_disable ?  5'd0 : tmp_i_wb_rd;
+assign o_wb_rd_wen    = i_disable ?  1'd0 : tmp_i_wb_rd_wen;
+assign o_wb_rd_wdata  = i_disable ? 64'd0 : tmp_i_wb_rd_wdata;
 
 endmodule

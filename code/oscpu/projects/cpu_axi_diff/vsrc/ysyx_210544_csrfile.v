@@ -19,10 +19,10 @@ module ysyx_210544_csrfile(
   output                    o_csr_clint_mie_mtie,
 
   // difftest
-  output  wire  [`BUS_64]   o_csrs[0 : 15]
+  output  wire  [`BUS_64]   o_csrs[0 : 8]
 );
 
-reg [`BUS_64]     csrs[0 : 15];
+reg [`BUS_64]     csrs[0 : 8];
 reg  [3 : 0]      csr_idx;
 wire              mstatus_sd;
 
@@ -98,7 +98,7 @@ end
 // difftest csr_regs接口
 genvar i;
 generate
-  for (i = 0; i < 8; i = i + 1) 
+  for (i = 0; i <= 8; i = i + 1) 
   begin: O_CSRS_GEN
     assign o_csrs[i] = csrs[i];
   end

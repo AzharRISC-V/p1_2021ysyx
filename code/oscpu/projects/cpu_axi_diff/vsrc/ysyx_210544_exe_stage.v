@@ -153,22 +153,22 @@ always @(posedge clk) begin
   end
 end
 
-assign o_ex_pc            = i_disable ? 0 : tmp_i_ex_pc;
-assign o_ex_inst          = i_disable ? 0 : tmp_i_ex_inst;
-assign o_ex_op1           = i_disable ? 0 : tmp_i_ex_op1;
-assign o_ex_op2           = i_disable ? 0 : tmp_i_ex_op2;
-assign o_ex_op3           = i_disable ? 0 : tmp_i_ex_op3;
-assign o_ex_inst_opcode   = i_disable ? 0 : tmp_i_ex_inst_opcode;
-assign o_ex_rd            = i_disable ? 0 : (!o_ena_exeU ? 0 : tmp_i_ex_rd);
-assign o_ex_rd_wen        = i_disable ? 0 : (!o_ena_exeU ? 0 : tmp_i_ex_rd_wen);
-assign o_ex_skipcmt       = i_disable ? 0 : (tmp_i_ex_skipcmt | exeU_skip_cmt);
+assign o_ex_pc            = i_disable ? 64'd0 : tmp_i_ex_pc;
+assign o_ex_inst          = i_disable ? 32'd0 : tmp_i_ex_inst;
+assign o_ex_op1           = i_disable ? 64'd0 : tmp_i_ex_op1;
+assign o_ex_op2           = i_disable ? 64'd0 : tmp_i_ex_op2;
+assign o_ex_op3           = i_disable ? 64'd0 : tmp_i_ex_op3;
+assign o_ex_inst_opcode   = i_disable ?  8'd0 : tmp_i_ex_inst_opcode;
+assign o_ex_rd            = i_disable ?  5'd0 : (!o_ena_exeU ? 5'd0 : tmp_i_ex_rd);
+assign o_ex_rd_wen        = i_disable ?  1'd0 : (!o_ena_exeU ? 1'd0 : tmp_i_ex_rd_wen);
+assign o_ex_skipcmt       = i_disable ?  1'd0 : (tmp_i_ex_skipcmt | exeU_skip_cmt);
 
-assign o_ex_pc_jmp      = rst ? 0 : (o_ena_exeU ? exeU_pc_jmp     : exceptionU_pc_jmp);
-assign o_ex_pc_jmpaddr  = rst ? 0 : (o_ena_exeU ? exeU_pc_jmpaddr : exceptionU_pc_jmpaddr);
-assign o_ex_csr_addr    = rst ? 0 : (o_ena_exeU ? exeU_csr_addr   : exceptionU_csr_addr);
-assign o_ex_csr_ren     = rst ? 0 : (o_ena_exeU ? exeU_csr_ren    : exceptionU_csr_ren);
-assign o_ex_csr_wen     = rst ? 0 : (o_ena_exeU ? exeU_csr_wen    : exceptionU_csr_wen);
-assign o_ex_csr_wdata   = rst ? 0 : (o_ena_exeU ? exeU_csr_wdata  : exceptionU_csr_wdata);
+assign o_ex_pc_jmp      = rst ?  1'd0 : (o_ena_exeU ? exeU_pc_jmp     : exceptionU_pc_jmp);
+assign o_ex_pc_jmpaddr  = rst ? 64'd0 : (o_ena_exeU ? exeU_pc_jmpaddr : exceptionU_pc_jmpaddr);
+assign o_ex_csr_addr    = rst ? 12'd0 : (o_ena_exeU ? exeU_csr_addr   : exceptionU_csr_addr);
+assign o_ex_csr_ren     = rst ?  1'd0 : (o_ena_exeU ? exeU_csr_ren    : exceptionU_csr_ren);
+assign o_ex_csr_wen     = rst ?  1'd0 : (o_ena_exeU ? exeU_csr_wen    : exceptionU_csr_wen);
+assign o_ex_csr_wdata   = rst ? 64'd0 : (o_ena_exeU ? exeU_csr_wdata  : exceptionU_csr_wdata);
 
 ysyx_210544_exeU ExeU(
   .ena                        (o_ena_exeU                 ),

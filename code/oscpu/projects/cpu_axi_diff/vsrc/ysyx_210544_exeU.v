@@ -90,19 +90,19 @@ end
 // o_pc_jmp
 always @(*) begin
   if ( i_disable ) begin
-    o_pc_jmp = 0;
+    o_pc_jmp = 1'd0;
   end
   else begin
     case (i_inst_opcode)
-      `INST_BEQ   : begin o_pc_jmp = (i_op1 == i_op2) ? 1 : 0; end
-      `INST_BNE   : begin o_pc_jmp = (i_op1 != i_op2) ? 1 : 0; end
-      `INST_BLT   : begin o_pc_jmp = ($signed(i_op1) < $signed(i_op2)) ? 1 : 0; end
-      `INST_BGE   : begin o_pc_jmp = ($signed(i_op1) >= $signed(i_op2)) ? 1 : 0; end
-      `INST_BLTU  : begin o_pc_jmp = (i_op1 < i_op2) ? 1 : 0; end
-      `INST_BGEU  : begin o_pc_jmp = (i_op1 >= i_op2) ? 1 : 0; end
-      `INST_JAL   : begin o_pc_jmp = 1; end
-      `INST_JALR  : begin o_pc_jmp = 1; end
-      default     : begin o_pc_jmp = 0; end
+      `INST_BEQ   : begin o_pc_jmp = (i_op1 == i_op2) ? 1'd1 : 1'd0; end
+      `INST_BNE   : begin o_pc_jmp = (i_op1 != i_op2) ? 1'd1 : 1'd0; end
+      `INST_BLT   : begin o_pc_jmp = ($signed(i_op1) <  $signed(i_op2)) ? 1'd1 : 1'd0; end
+      `INST_BGE   : begin o_pc_jmp = ($signed(i_op1) >= $signed(i_op2)) ? 1'd1 : 1'd0; end
+      `INST_BLTU  : begin o_pc_jmp = (i_op1 <  i_op2) ? 1'd1 : 1'd0; end
+      `INST_BGEU  : begin o_pc_jmp = (i_op1 >= i_op2) ? 1'd1 : 1'd0; end
+      `INST_JAL   : begin o_pc_jmp = 1'd1; end
+      `INST_JALR  : begin o_pc_jmp = 1'd1; end
+      default     : begin o_pc_jmp = 1'd0; end
     endcase
   end
 end
@@ -110,19 +110,19 @@ end
 // o_pc_jmpaddr
 always @(*) begin
   if ( i_disable ) begin
-    o_pc_jmpaddr = 0;
+    o_pc_jmpaddr = 64'd0;
   end
   else begin
     case (i_inst_opcode)
       `INST_JAL   : begin o_pc_jmpaddr = i_op3; end
-      `INST_JALR  : begin o_pc_jmpaddr = (i_op1 + i_op2) & ~1; end
+      `INST_JALR  : begin o_pc_jmpaddr = (i_op1 + i_op2) & ~64'd1; end
       `INST_BEQ   : begin o_pc_jmpaddr = i_op3; end
       `INST_BNE   : begin o_pc_jmpaddr = i_op3; end
       `INST_BLT   : begin o_pc_jmpaddr = i_op3; end
       `INST_BGE   : begin o_pc_jmpaddr = i_op3; end
       `INST_BLTU  : begin o_pc_jmpaddr = i_op3; end
       `INST_BGEU  : begin o_pc_jmpaddr = i_op3; end
-      default     : begin o_pc_jmpaddr = 0; end
+      default     : begin o_pc_jmpaddr = 64'd0; end
     endcase
   end
 end
@@ -134,13 +134,13 @@ assign inst_csr =
   (i_inst_opcode == `INST_CSRRC ) | (i_inst_opcode == `INST_CSRRWI) | 
   (i_inst_opcode == `INST_CSRRSI) | (i_inst_opcode == `INST_CSRRCI) ;
 
-assign o_csr_ren  = (i_disable) ? 0 : inst_csr;
-assign o_csr_wen  = (i_disable) ? 0 : inst_csr;
-assign o_csr_addr = (i_disable) ? 0 : (inst_csr ? i_op2[11:0] : 0);
+assign o_csr_ren  = (i_disable) ?  1'd0 : inst_csr;
+assign o_csr_wen  = (i_disable) ?  1'd0 : inst_csr;
+assign o_csr_addr = (i_disable) ? 12'd0 : (inst_csr ? i_op2[11:0] : 12'd0);
 
 always @(*) begin
   if (i_disable) begin
-    o_csr_wdata = 0;
+    o_csr_wdata = 64'd0;
   end
   else begin
     case (i_inst_opcode)
@@ -150,7 +150,7 @@ always @(*) begin
       `INST_CSRRWI  : o_csr_wdata = i_op1;
       `INST_CSRRSI  : o_csr_wdata = i_csr_rdata | i_op1;
       `INST_CSRRCI  : o_csr_wdata = i_csr_rdata & (~i_op1);
-      default       : o_csr_wdata = 0;
+      default       : o_csr_wdata = 64'd0;
     endcase
   end
 end

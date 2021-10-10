@@ -219,7 +219,7 @@ always @(posedge clock) begin
         len <= 0;
     end
     else if (len_incr_en) begin
-        len <= len + 1;
+        len <= len + 8'd1;
     end
 end
 
@@ -393,8 +393,8 @@ always @(posedge clock) begin
 
 
 wire _unused_ok = &{1'b0,
-  axi_b_id_i,
-  axi_r_id_i,
-  1'b0};
+ axi_b_id_i,
+ axi_r_id_i,
+ 1'b0};
 
 endmodule
