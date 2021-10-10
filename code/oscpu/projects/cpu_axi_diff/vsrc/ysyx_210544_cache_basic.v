@@ -158,14 +158,14 @@ wire  [511: 0]                sync_wdata;                 // 要写入的cache_d
 wire  [63: 0]                 user_blk_aligned_bytes;     // 用户地址的按块对齐地址(按字节)（64字节对齐，低6位为0）
 reg   [63: 0]                 user_wmask;                 // 用户数据的写入掩码，由bytes决定，高电平有效
 wire  [3 : 0]                 mem_blkno;                  // mem块号，0~15
-wire  [5 : 0]                 mem_offset_bytes;           // mem块内偏移(按字节)，0~63
+//wire  [5 : 0]                 mem_offset_bytes;           // mem块内偏移(按字节)，0~63
 wire  [8 : 0]                 mem_offset_bits;            // mem块内偏移(按位)，0~511
 wire  [21: 0]                 mem_tag;                    // mem标记
 
 // =============== Cache Info 缓存信息 ===============
 reg   [25 : 0]                cache_info[`BUS_WAYS][0:`BLKS-1];   // cache信息块
 wire  [5 : 0]                 c_data_lineno;                      // cache数据行号(0~63)
-wire  [3 : 0]                 c_offset_bytes;                     // cache行内偏移(按字节)(0~15)
+//wire  [3 : 0]                 c_offset_bytes;                     // cache行内偏移(按字节)(0~15)
 wire  [6 : 0]                 c_offset_bits;                      // cache行内偏移(按位)(0~127)
 wire  [127:0]                 c_wdata;                            // cache行要写入的数据
 wire  [127:0]                 c_wmask;                            // cache行要写入的掩码
@@ -259,13 +259,13 @@ always @(*) begin
   endcase
 end
 
-assign mem_offset_bytes   = i_cache_basic_addr[5:0];
+//assign mem_offset_bytes   = i_cache_basic_addr[5:0];
 assign mem_offset_bits    = {3'b0, i_cache_basic_addr[5:0]} << 2'd3;
 assign mem_blkno          = i_cache_basic_addr[9:6];
 assign mem_tag            = i_cache_basic_addr[31:10];
 
 assign c_data_lineno    = i_cache_basic_addr[9:4];
-assign c_offset_bytes   = mem_offset_bits[6:3]; 
+//assign c_offset_bytes   = mem_offset_bits[6:3]; 
 assign c_offset_bits    = mem_offset_bits[6:0];
 assign c_wmask          = {64'd0, user_wmask} << c_offset_bits;
 assign c_wdata          = {64'd0, i_cache_basic_wdata} << c_offset_bits;
@@ -773,11 +773,11 @@ ysyx_210544_cache_axi Cache_axi(
   .o_axi_io_blks              (o_axi_io_blks              )
 );
 
-wire _unused_ok = &{1'b0,
-  i_cache_basic_addr[63:32],
-  mem_offset_bytes,
-  mem_offset_bits[8:7],
-  c_offset_bytes,
-  1'b0};
+//wire _unused_ok = &{1'b0,
+//  i_cache_basic_addr[63:32],
+//  mem_offset_bytes,
+//  mem_offset_bits[8:7],
+//  c_offset_bytes,
+//  1'b0};
 
 endmodule

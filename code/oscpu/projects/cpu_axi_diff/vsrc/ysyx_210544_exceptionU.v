@@ -316,8 +316,8 @@ always @(posedge clk) begin
   end
 end
 
-wire _unused_ok = &{1'b0,
-  csr_rdata_save1[12:11],
-  1'b0};
+//wire _unused_ok = &{1'b0,
+//  csr_rdata_save1[12:11],
+//  1'b0};
 
 endmodule

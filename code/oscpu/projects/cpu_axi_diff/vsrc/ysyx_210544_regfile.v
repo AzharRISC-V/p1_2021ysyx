@@ -22,6 +22,8 @@ module ysyx_210544_regfile(
 // 32 registers
 reg   [`BUS_64]   regs[0 : 31];
 
+`ifdef YSYX_210544_REGS_ALIAS
+
 // register alias name
 wire  [`BUS_64]   x00_zero;
 wire  [`BUS_64]   x01_ra;
@@ -56,8 +58,6 @@ wire  [`BUS_64]   x29_t4;
 wire  [`BUS_64]   x30_t5;
 wire  [`BUS_64]   x31_t6;
 
-
-
 assign x00_zero = regs[00];
 assign x01_ra = regs[01];
 assign x02_sp = regs[02];
@@ -90,6 +90,8 @@ assign x28_t3 = regs[28];
 assign x29_t4 = regs[29];
 assign x30_t5 = regs[30];
 assign x31_t6 = regs[31];
+
+`endif
 
 // i_rd 写入
 always @(posedge clk) begin
@@ -165,39 +167,39 @@ generate
   end
 endgenerate
 
-wire _unused_ok = &{1'b0,
-  x00_zero,
-  x01_ra,
-  x02_sp,
-  x03_gp,
-  x04_tp,
-  x05_t0,
-  x06_t1,
-  x07_t2,
-  x08_s0,
-  x09_s1,
-  x10_a0,
-  x11_a1,
-  x12_a2,
-  x13_a3,
-  x14_a4,
-  x15_a5,
-  x16_a6,
-  x17_a7,
-  x18_s2,
-  x19_s3,
-  x20_s4,
-  x21_s5,
-  x22_s6,
-  x23_s7,
-  x24_s8,
-  x25_s9,
-  x26_s10,
-  x27_s11,
-  x28_t3,
-  x29_t4,
-  x30_t5,
-  x31_t6,
-  1'b0};
+//wire _unused_ok = &{1'b0,
+//  x00_zero,
+//  x01_ra,
+//  x02_sp,
+//  x03_gp,
+//  x04_tp,
+//  x05_t0,
+//  x06_t1,
+//  x07_t2,
+//  x08_s0,
+//  x09_s1,
+//  x10_a0,
+//  x11_a1,
+//  x12_a2,
+//  x13_a3,
+//  x14_a4,
+//  x15_a5,
+//  x16_a6,
+//  x17_a7,
+//  x18_s2,
+//  x19_s3,
+//  x20_s4,
+//  x21_s5,
+//  x22_s6,
+//  x23_s7,
+//  x24_s8,
+//  x25_s9,
+//  x26_s10,
+//  x27_s11,
+//  x28_t3,
+//  x29_t4,
+//  x30_t5,
+//  x31_t6,
+//  1'b0};
 
 endmodule

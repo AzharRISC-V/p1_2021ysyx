@@ -42,7 +42,6 @@ module ysyx_210544_cache(
 
 /////////////////////////////////////////////////
 // 数据通路选择
-wire              iaddr_PERI;
 wire              iaddr_FLASH;
 wire              iaddr_MEM;
 wire              daddr_PERI;
@@ -117,7 +116,6 @@ wire  [511:0]     sync_icache_wdata;
 // 0x1000_0000 ~ 0x2FFF_FFFF, 是UART/SPI等外设
 // 0x3000_0000 ~ 0x3FFF_FFFF, 是Flash
 // 0x8000_0000 ~ 0xFFFF_FFFF, 是主存
-assign iaddr_PERI   = i_icache_req && ((i_icache_addr[31:28] == 4'h1) || (i_icache_addr[31:28] == 4'h2));
 assign iaddr_FLASH  = i_icache_req && (i_icache_addr[31:28] == 4'h3);
 assign iaddr_MEM    = i_icache_req && (i_icache_addr[31] == 1'b1);
 
@@ -269,16 +267,15 @@ assign o_dcache_rdata   = ch_dcache ? dcache_rdata       : nocache_rdata      ;
 assign o_dcache_ack     = ch_dcache ? dcache_ack         : nocache_ack        ;
 
 
-wire _unused_ok = &{1'b0,
-  iaddr_PERI,
-  icache_rdata[63:32],
-  sync_dcache_wack,
-  sync_icache_rack,
-  sync_icache_rwayid,
-  sync_icache_rblkid,
-  sync_icache_rinfo,
-  sync_icache_rdata,
-  sync_icache_rpackreq,
-  1'b0};
+//wire _unused_ok = &{1'b0,
+//  icache_rdata[63:32],
+//  sync_dcache_wack,
+//  sync_icache_rack,
+//  sync_icache_rwayid,
+//  sync_icache_rblkid,
+//  sync_icache_rinfo,
+//  sync_icache_rdata,
+//  sync_icache_rpackreq,
+//  1'b0};
 
 endmodule

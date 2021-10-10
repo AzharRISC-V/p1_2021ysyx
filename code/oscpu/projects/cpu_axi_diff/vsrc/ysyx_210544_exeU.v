@@ -157,11 +157,11 @@ end
 
 assign o_exeU_skip_cmt = (inst_csr && (o_csr_addr == 12'hB00));
 
-wire _unused_ok = &{1'b0,
-  reg64_t1[63:32],
-  reg64_t2[63:32],
-  reg64_t3[63:32],
-  reg64_t4[63:32],
-  1'b0};
+//wire _unused_ok = &{1'b0,
+//  reg64_t1[63:32],
+//  reg64_t2[63:32],
+//  reg64_t3[63:32],
+//  reg64_t4[63:32],
+//  1'b0};
 
 endmodule

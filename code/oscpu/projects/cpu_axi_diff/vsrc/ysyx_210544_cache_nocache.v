@@ -82,8 +82,8 @@ always @(posedge clk) begin
   end
 end
 
-wire _unused_ok = &{1'b0,
-  i_axi_io_rdata[511:64],
-  1'b0};
+//wire _unused_ok = &{1'b0,
+//  i_axi_io_rdata[511:64],
+//  1'b0};
 
 endmodule

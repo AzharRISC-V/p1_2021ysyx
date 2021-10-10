@@ -594,9 +594,9 @@ always @(posedge clock) begin
 
 
 //wire _unused_ok = &{1'b0,
-//  axi_b_id_i,
-//  axi_r_id_i,
-//  1'b0};
+// axi_b_id_i,
+// axi_r_id_i,
+// 1'b0};
 
 endmodule
 
@@ -893,14 +893,14 @@ wire  [511: 0]                sync_wdata;                 // 要写入的cache_d
 wire  [63: 0]                 user_blk_aligned_bytes;     // 用户地址的按块对齐地址(按字节)（64字节对齐，低6位为0）
 reg   [63: 0]                 user_wmask;                 // 用户数据的写入掩码，由bytes决定，高电平有效
 wire  [3 : 0]                 mem_blkno;                  // mem块号，0~15
-wire  [5 : 0]                 mem_offset_bytes;           // mem块内偏移(按字节)，0~63
+//wire  [5 : 0]                 mem_offset_bytes;           // mem块内偏移(按字节)，0~63
 wire  [8 : 0]                 mem_offset_bits;            // mem块内偏移(按位)，0~511
 wire  [21: 0]                 mem_tag;                    // mem标记
 
 // =============== Cache Info 缓存信息 ===============
 reg   [25 : 0]                cache_info[`BUS_WAYS][0:`BLKS-1];   // cache信息块
 wire  [5 : 0]                 c_data_lineno;                      // cache数据行号(0~63)
-wire  [3 : 0]                 c_offset_bytes;                     // cache行内偏移(按字节)(0~15)
+//wire  [3 : 0]                 c_offset_bytes;                     // cache行内偏移(按字节)(0~15)
 wire  [6 : 0]                 c_offset_bits;                      // cache行内偏移(按位)(0~127)
 wire  [127:0]                 c_wdata;                            // cache行要写入的数据
 wire  [127:0]                 c_wmask;                            // cache行要写入的掩码
@@ -994,13 +994,13 @@ always @(*) begin
   endcase
 end
 
-assign mem_offset_bytes   = i_cache_basic_addr[5:0];
+//assign mem_offset_bytes   = i_cache_basic_addr[5:0];
 assign mem_offset_bits    = {3'b0, i_cache_basic_addr[5:0]} << 2'd3;
 assign mem_blkno          = i_cache_basic_addr[9:6];
 assign mem_tag            = i_cache_basic_addr[31:10];
 
 assign c_data_lineno    = i_cache_basic_addr[9:4];
-assign c_offset_bytes   = mem_offset_bits[6:3]; 
+//assign c_offset_bytes   = mem_offset_bits[6:3]; 
 assign c_offset_bits    = mem_offset_bits[6:0];
 assign c_wmask          = {64'd0, user_wmask} << c_offset_bits;
 assign c_wdata          = {64'd0, i_cache_basic_wdata} << c_offset_bits;
@@ -1508,12 +1508,12 @@ ysyx_210544_cache_axi Cache_axi(
   .o_axi_io_blks              (o_axi_io_blks              )
 );
 
-wire _unused_ok = &{1'b0,
-  i_cache_basic_addr[63:32],
-  mem_offset_bytes,
-  mem_offset_bits[8:7],
-  c_offset_bytes,
-  1'b0};
+//wire _unused_ok = &{1'b0,
+//  i_cache_basic_addr[63:32],
+//  mem_offset_bytes,
+//  mem_offset_bits[8:7],
+//  c_offset_bytes,
+//  1'b0};
 
 endmodule
 
@@ -1700,10 +1700,10 @@ always @(posedge clk) begin
   end
 end
 
-wire _unused_ok = &{1'b0,
-  i_addr_4_rev[3],
-  i_addr_4_add[3],
-  1'b0};
+//wire _unused_ok = &{1'b0,
+//  i_addr_4_rev[3],
+//  i_addr_4_add[3],
+//  1'b0};
 
 endmodule
 
@@ -1789,9 +1789,9 @@ always @(posedge clk) begin
   end
 end
 
-wire _unused_ok = &{1'b0,
-  i_axi_io_rdata[511:64],
-  1'b0};
+//wire _unused_ok = &{1'b0,
+//  i_axi_io_rdata[511:64],
+//  1'b0};
 
 endmodule
 
@@ -1999,7 +1999,6 @@ module ysyx_210544_cache(
 
 /////////////////////////////////////////////////
 // 数据通路选择
-wire              iaddr_PERI;
 wire              iaddr_FLASH;
 wire              iaddr_MEM;
 wire              daddr_PERI;
@@ -2074,7 +2073,6 @@ wire  [511:0]     sync_icache_wdata;
 // 0x1000_0000 ~ 0x2FFF_FFFF, 是UART/SPI等外设
 // 0x3000_0000 ~ 0x3FFF_FFFF, 是Flash
 // 0x8000_0000 ~ 0xFFFF_FFFF, 是主存
-assign iaddr_PERI   = i_icache_req && ((i_icache_addr[31:28] == 4'h1) || (i_icache_addr[31:28] == 4'h2));
 assign iaddr_FLASH  = i_icache_req && (i_icache_addr[31:28] == 4'h3);
 assign iaddr_MEM    = i_icache_req && (i_icache_addr[31] == 1'b1);
 
@@ -2100,12 +2098,12 @@ ysyx_210544_cache_core ICache(
 
 
   .i_cache_core_sync_rreq     (1'b0                       ),
-  .o_cache_core_sync_rack     (),//sync_icache_rack           ),
+  .o_cache_core_sync_rack     (sync_icache_rack           ),
   .i_cache_core_sync_rpackack (1'b0                       ),
   .o_cache_core_sync_rpackreq (sync_icache_rpackreq       ),
   .i_cache_core_sync_wreq     (sync_icache_wreq           ),
   .o_cache_core_sync_wack     (sync_icache_wack           ),
-  //.o_cache_core_sync_rwayid   (),//sync_icache_rwayid         ),
+  .o_cache_core_sync_rwayid   (sync_icache_rwayid         ),
   .o_cache_core_sync_rblkid   (sync_icache_rblkid         ),
   .o_cache_core_sync_rinfo    (sync_icache_rinfo          ),
   .o_cache_core_sync_rdata    (sync_icache_rdata          ),
@@ -2226,17 +2224,16 @@ assign o_dcache_rdata   = ch_dcache ? dcache_rdata       : nocache_rdata      ;
 assign o_dcache_ack     = ch_dcache ? dcache_ack         : nocache_ack        ;
 
 
-wire _unused_ok = &{1'b0,
-  iaddr_PERI,
-  icache_rdata[63:32],
-  sync_dcache_wack,
-  sync_icache_rack,
-  sync_icache_rwayid,
-  sync_icache_rblkid,
-  sync_icache_rinfo,
-  sync_icache_rdata,
-  sync_icache_rpackreq,
-  1'b0};
+//wire _unused_ok = &{1'b0,
+//  icache_rdata[63:32],
+//  sync_dcache_wack,
+//  sync_icache_rack,
+//  sync_icache_rwayid,
+//  sync_icache_rblkid,
+//  sync_icache_rinfo,
+//  sync_icache_rdata,
+//  sync_icache_rpackreq,
+//  1'b0};
 
 endmodule
 
@@ -2398,6 +2395,8 @@ module ysyx_210544_regfile(
 // 32 registers
 reg   [`BUS_64]   regs[0 : 31];
 
+`ifdef YSYX_210544_REGS_ALIAS
+
 // register alias name
 wire  [`BUS_64]   x00_zero;
 wire  [`BUS_64]   x01_ra;
@@ -2432,8 +2431,6 @@ wire  [`BUS_64]   x29_t4;
 wire  [`BUS_64]   x30_t5;
 wire  [`BUS_64]   x31_t6;
 
-
-
 assign x00_zero = regs[00];
 assign x01_ra = regs[01];
 assign x02_sp = regs[02];
@@ -2466,6 +2463,8 @@ assign x28_t3 = regs[28];
 assign x29_t4 = regs[29];
 assign x30_t5 = regs[30];
 assign x31_t6 = regs[31];
+
+`endif
 
 // i_rd 写入
 always @(posedge clk) begin
@@ -2541,40 +2540,40 @@ generate
   end
 endgenerate
 
-wire _unused_ok = &{1'b0,
-  x00_zero,
-  x01_ra,
-  x02_sp,
-  x03_gp,
-  x04_tp,
-  x05_t0,
-  x06_t1,
-  x07_t2,
-  x08_s0,
-  x09_s1,
-  x10_a0,
-  x11_a1,
-  x12_a2,
-  x13_a3,
-  x14_a4,
-  x15_a5,
-  x16_a6,
-  x17_a7,
-  x18_s2,
-  x19_s3,
-  x20_s4,
-  x21_s5,
-  x22_s6,
-  x23_s7,
-  x24_s8,
-  x25_s9,
-  x26_s10,
-  x27_s11,
-  x28_t3,
-  x29_t4,
-  x30_t5,
-  x31_t6,
-  1'b0};
+//wire _unused_ok = &{1'b0,
+//  x00_zero,
+//  x01_ra,
+//  x02_sp,
+//  x03_gp,
+//  x04_tp,
+//  x05_t0,
+//  x06_t1,
+//  x07_t2,
+//  x08_s0,
+//  x09_s1,
+//  x10_a0,
+//  x11_a1,
+//  x12_a2,
+//  x13_a3,
+//  x14_a4,
+//  x15_a5,
+//  x16_a6,
+//  x17_a7,
+//  x18_s2,
+//  x19_s3,
+//  x20_s4,
+//  x21_s5,
+//  x22_s6,
+//  x23_s7,
+//  x24_s8,
+//  x25_s9,
+//  x26_s10,
+//  x27_s11,
+//  x28_t3,
+//  x29_t4,
+//  x30_t5,
+//  x31_t6,
+//  1'b0};
 
 endmodule
 
@@ -3296,11 +3295,11 @@ assign o_skipcmt =
   // | mem_addr_is_device
   ;
 
-wire _unused_ok = &{1'b0,
-  opcode[1:0],
-  func7[6],
-  func7[2:1],
-  1'b0};
+//wire _unused_ok = &{1'b0,
+//  opcode[1:0],
+//  func7[6],
+//  func7[2:1],
+//  1'b0};
 
 endmodule
 
@@ -3667,12 +3666,12 @@ end
 
 assign o_exeU_skip_cmt = (inst_csr && (o_csr_addr == 12'hB00));
 
-wire _unused_ok = &{1'b0,
-  reg64_t1[63:32],
-  reg64_t2[63:32],
-  reg64_t3[63:32],
-  reg64_t4[63:32],
-  1'b0};
+//wire _unused_ok = &{1'b0,
+//  reg64_t1[63:32],
+//  reg64_t2[63:32],
+//  reg64_t3[63:32],
+//  reg64_t4[63:32],
+//  1'b0};
 
 endmodule
 
@@ -3992,9 +3991,9 @@ always @(posedge clk) begin
   end
 end
 
-wire _unused_ok = &{1'b0,
-  csr_rdata_save1[12:11],
-  1'b0};
+//wire _unused_ok = &{1'b0,
+//  csr_rdata_save1[12:11],
+//  1'b0};
 
 endmodule
 
@@ -4447,58 +4446,58 @@ module ysyx_210544_mem_mmio(
   output  reg  [`BUS_64]      rdata,
   output  wire                o_clint_mtime_overflow
 );
-    
-    // rtc设备
-    wire  [`BUS_64]               rtc_rdata;
-    wire  [`BUS_64]               i_clint_rdata;
-    
-    
-    
-    ysyx_210544_rtc Rtc(
-    .clk                (clk),
-    .rst                (rst),
-    .ren                (ren & (addr == `DEV_RTC)),
-    .rdata              (rtc_rdata)
-    );
-    
-    // CLINT (Core Local Interrupt Controller)
-    ysyx_210544_clint Clint(
-    .clk                        (clk),
-    .rst                        (rst),
-    .i_clint_addr               (addr),
-    .i_clint_ren                (ren),
-    .o_clint_rdata              (i_clint_rdata),
-    .i_clint_wen                (wen),
-    .i_clint_wdata              (wdata),
-    .o_clint_mtime_overflow     (o_clint_mtime_overflow)
-    );
-    
-    always @(posedge clk) begin
-        if (rst) begin
-            req   <= 0;
-            rdata <= 0;
-        end
-        else begin
-            // set request
-            if (start) begin
-                if (ren) begin
-                    if (addr == `DEV_RTC)             rdata <= rtc_rdata;
-                    else if (addr == `DEV_MTIME)      rdata <= i_clint_rdata;
-                    else if (addr == `DEV_MTIMECMP)   rdata <= i_clint_rdata;
-                    req <= 1;
-                end
-                else begin
-                    req <= 1;
-                end
+
+// rtc设备
+wire  [`BUS_64]               rtc_rdata;
+wire  [`BUS_64]               i_clint_rdata;
+
+
+
+ysyx_210544_rtc Rtc(
+  .clk                (clk              ),
+  .rst                (rst              ),
+  .ren                (ren & (addr == `DEV_RTC)),
+  .rdata              (rtc_rdata        )
+);
+
+// CLINT (Core Local Interrupt Controller)
+ysyx_210544_clint Clint(
+  .clk                        (clk                        ),
+  .rst                        (rst                        ),
+  .i_clint_addr               (addr                       ),
+  .i_clint_ren                (ren                        ),
+  .o_clint_rdata              (i_clint_rdata              ),
+  .i_clint_wen                (wen                        ),
+  .i_clint_wdata              (wdata                      ),
+  .o_clint_mtime_overflow     (o_clint_mtime_overflow     )
+);
+
+always @(posedge clk) begin
+    if (rst) begin
+        req   <= 0;
+        rdata <= 0;
+    end
+    else begin
+        // set request
+        if (start) begin
+            if (ren) begin
+                if (addr == `DEV_RTC)             rdata <= rtc_rdata;
+                else if (addr == `DEV_MTIME)      rdata <= i_clint_rdata;
+                else if (addr == `DEV_MTIMECMP)   rdata <= i_clint_rdata;
+                req <= 1;
             end
-            // clear request
-            else if (ack) begin
+            else begin
+                req <= 1;
+            end
+        end
+        // clear request
+        else if (ack) begin
             req   <= 0;
             rdata <= 0;
         end
     end
-    end
-    
+end
+
 endmodule
 
 // ZhengpuShi
@@ -5477,28 +5476,28 @@ assign io_slave_rlast = 0;
 assign io_slave_rid = 0;
 
 //wire _unused_ok = &{1'b0,
-//  io_interrupt,
-//  io_slave_awaddr,
-//  io_slave_awid,
-//  io_slave_awlen,
-//  io_slave_awsize,
-//  io_slave_awburst,
-//  io_slave_awvalid,
-//  io_slave_wvalid,
-//  io_slave_wdata,
-//  io_slave_wstrb,
-//  io_slave_wlast,
-//  io_slave_bready,
-//  io_slave_arvalid,
-//  io_slave_araddr,
-//  io_slave_arid,
-//  io_slave_arlen,
-//  io_slave_arsize,
-//  io_slave_arburst,
-//  io_slave_rready,
-//  axi_aw_addr_o[63:32],
-//  axi_ar_addr_o[63:32],
-//  o_user_axi_resp,
-//  1'b0};
+// io_interrupt,
+// io_slave_awaddr,
+// io_slave_awid,
+// io_slave_awlen,
+// io_slave_awsize,
+// io_slave_awburst,
+// io_slave_awvalid,
+// io_slave_wvalid,
+// io_slave_wdata,
+// io_slave_wstrb,
+// io_slave_wlast,
+// io_slave_bready,
+// io_slave_arvalid,
+// io_slave_araddr,
+// io_slave_arid,
+// io_slave_arlen,
+// io_slave_arsize,
+// io_slave_arburst,
+// io_slave_rready,
+// axi_aw_addr_o[63:32],
+// axi_ar_addr_o[63:32],
+// o_user_axi_resp,
+// 1'b0};
 
 endmodule

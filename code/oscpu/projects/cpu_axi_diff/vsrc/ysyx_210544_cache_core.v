@@ -183,9 +183,9 @@ always @(posedge clk) begin
   end
 end
 
-wire _unused_ok = &{1'b0,
-  i_addr_4_rev[3],
-  i_addr_4_add[3],
-  1'b0};
+//wire _unused_ok = &{1'b0,
+//  i_addr_4_rev[3],
+//  i_addr_4_add[3],
+//  1'b0};
 
 endmodule

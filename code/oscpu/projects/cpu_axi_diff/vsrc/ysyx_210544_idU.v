@@ -376,10 +376,10 @@ assign o_skipcmt =
   // | mem_addr_is_device
   ;
 
-wire _unused_ok = &{1'b0,
-  opcode[1:0],
-  func7[6],
-  func7[2:1],
-  1'b0};
+//wire _unused_ok = &{1'b0,
+//  opcode[1:0],
+//  func7[6],
+//  func7[2:1],
+//  1'b0};
 
 endmodule

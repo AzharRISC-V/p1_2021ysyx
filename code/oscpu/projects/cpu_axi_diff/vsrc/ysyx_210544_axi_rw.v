@@ -392,9 +392,9 @@ always @(posedge clock) begin
  end
 
 
-wire _unused_ok = &{1'b0,
- axi_b_id_i,
- axi_r_id_i,
- 1'b0};
+//wire _unused_ok = &{1'b0,
+// axi_b_id_i,
+// axi_r_id_i,
+// 1'b0};
 
 endmodule
