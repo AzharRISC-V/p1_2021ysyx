@@ -188,6 +188,7 @@ always @(posedge clock) begin
                 W_STATE_ADDR:  if (aw_hs)   w_state <= W_STATE_WRITE;
                 W_STATE_WRITE: if (w_done)  w_state <= W_STATE_RESP;
                 W_STATE_RESP:  if (b_hs)    w_state <= W_STATE_IDLE;
+                default: ;
             endcase
         end
     end
@@ -238,6 +239,7 @@ always @(posedge clock) begin
         rw_ready <= rw_ready_nxt;
     end
 end
+
 assign user_ready_o     = rw_ready;
 
 assign rw_resp_nxt = w_trans ? axi_b_resp_i : axi_r_resp_i;
@@ -271,14 +273,14 @@ always @(posedge clock) begin
         axi_w_valid_o <= 1'b0;
     end
     else begin
-    if (w_state_write) begin
-        if (!axi_w_valid_o) begin
-				axi_w_valid_o <= 1'b1;
+        if (w_state_write) begin
+            if (!axi_w_valid_o) begin
+                axi_w_valid_o <= 1'b1;
+            end
         end
-    end
-    else if (w_state_resp) begin// (w_state_resp) begin
-        axi_w_valid_o <= 1'b0;
-    end
+        else if (w_state_resp) begin
+            axi_w_valid_o <= 1'b0;
+        end
     end
 end
 
@@ -288,7 +290,7 @@ assign axi_w_last_o     = w_hs & (len == axi_len);
 
 always @(*) begin
     if (reset) begin
-    axi_w_strb_orig = 8'd0;
+        axi_w_strb_orig = 8'd0;
     end
     else begin
     case (user_size_i)
@@ -312,23 +314,28 @@ assign axi_w_strb_o = axi_w_strb_orig << axi_addr_offset_bytes;
 assign axi_b_ready_o    = w_state_resp;
 
 always @(posedge clock) begin
-    // sent first wdata
-    if (w_state_write && (!axi_w_valid_o)) begin
-        axi_w_data_o  <= user_wdata_i[63:0] << axi_addr_offset_bits;
+    if (reset) begin
+        axi_w_data_o <= 0;
     end
     else begin
-        // sent remain wdata
-        if (w_hs) begin
-            case (len)
-                8'd0: axi_w_data_o <= user_wdata_i[64*1 +:64] << axi_addr_offset_bits;
-                8'd1: axi_w_data_o <= user_wdata_i[64*2 +:64] << axi_addr_offset_bits;
-                8'd2: axi_w_data_o <= user_wdata_i[64*3 +:64] << axi_addr_offset_bits;
-                8'd3: axi_w_data_o <= user_wdata_i[64*4 +:64] << axi_addr_offset_bits;
-                8'd4: axi_w_data_o <= user_wdata_i[64*5 +:64] << axi_addr_offset_bits;
-                8'd5: axi_w_data_o <= user_wdata_i[64*6 +:64] << axi_addr_offset_bits;
-                8'd6: axi_w_data_o <= user_wdata_i[64*7 +:64] << axi_addr_offset_bits;
-                default: ;
-            endcase
+        // sent first wdata
+        if (w_state_write && (!axi_w_valid_o)) begin
+            axi_w_data_o  <= user_wdata_i[63:0] << axi_addr_offset_bits;
+        end
+        else begin
+            // sent remain wdata
+            if (w_hs) begin
+                case (len)
+                    8'd0: axi_w_data_o <= user_wdata_i[64*1 +:64] << axi_addr_offset_bits;
+                    8'd1: axi_w_data_o <= user_wdata_i[64*2 +:64] << axi_addr_offset_bits;
+                    8'd2: axi_w_data_o <= user_wdata_i[64*3 +:64] << axi_addr_offset_bits;
+                    8'd3: axi_w_data_o <= user_wdata_i[64*4 +:64] << axi_addr_offset_bits;
+                    8'd4: axi_w_data_o <= user_wdata_i[64*5 +:64] << axi_addr_offset_bits;
+                    8'd5: axi_w_data_o <= user_wdata_i[64*6 +:64] << axi_addr_offset_bits;
+                    8'd6: axi_w_data_o <= user_wdata_i[64*7 +:64] << axi_addr_offset_bits;
+                    default: ;
+                endcase
+            end
         end
     end
  end
@@ -348,21 +355,20 @@ assign axi_ar_burst_o   = `AXI_BURST_TYPE_INCR;
 assign axi_r_ready_o    = r_state_read;
 
 // User Data Size
-
 assign size_b             = user_size_i == `SIZE_B;
 assign size_h             = user_size_i == `SIZE_H;
 assign size_w             = user_size_i == `SIZE_W;
 assign size_d             = user_size_i == `SIZE_D;
 
 // Read data mask
-assign mask_rdata  = (({ 64{size_b}} & {{64- 8{1'b0}}, 8'hff})
-                            | ({64{size_h}} & {{64-16{1'b0}}, 16'hffff})
-                            | ({64{size_w}} & {{64-32{1'b0}}, 32'hffffffff})
-                            | ({64{size_d}} & {{64-64{1'b0}}, 64'hffffffff_ffffffff})
-                            );
+assign mask_rdata   = (({64{size_b}} & {{64- 8{1'b0}},  8'hff}) 
+                     | ({64{size_h}} & {{64-16{1'b0}}, 16'hffff})
+                     | ({64{size_w}} & {{64-32{1'b0}}, 32'hffffffff})
+                     | ({64{size_d}} & {{64-64{1'b0}}, 64'hffffffff_ffffffff})
+                      );
 
 
-assign aligned_offset    = {3'b0, user_addr_i[2:0]} << 2'd3;
+assign aligned_offset = {3'b0, user_addr_i[2:0]} << 2'd3;
 
 assign axi_r_data_masked_unaligned = (axi_r_data_i >> aligned_offset) & mask_rdata;
 

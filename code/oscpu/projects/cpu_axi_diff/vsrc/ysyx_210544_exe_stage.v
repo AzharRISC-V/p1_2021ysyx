@@ -109,9 +109,10 @@ always @(posedge clk) begin
       tmp_i_ex_skipcmt
     } <= 0;
 
-    o_ex_executed_req   <= 0;
+    o_ena_exeU          <= 0;
     o_ena_exceptionU    <= 0;
-    o_ex_intrNo <= 0;
+    o_ex_executed_req   <= 0;
+    o_ex_intrNo         <= 0;
   end
   else begin
     // 启动
@@ -138,16 +139,16 @@ always @(posedge clk) begin
         o_ena_exceptionU  <= 1;
       end
     end
-    // exeU或exceptionU收到应答，请求信号撤销
-    else if (executed_hs) begin
-      o_ex_executed_req <= 0;
-      o_ena_exeU        <= 0;
-      o_ena_exceptionU  <= 0;
-      o_ex_intrNo <= 0;
-    end
     // exceptionU结束，请求信号置位
     else if (exceptionU_req) begin
       o_ex_executed_req <= 1;
+    end
+    // exeU或exceptionU收到应答，请求信号撤销
+    else if (executed_hs) begin
+      o_ena_exeU        <= 0;
+      o_ena_exceptionU  <= 0;
+      o_ex_executed_req <= 0;
+      o_ex_intrNo       <= 0;
     end
   end
 end

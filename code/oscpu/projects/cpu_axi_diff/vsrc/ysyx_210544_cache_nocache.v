@@ -47,12 +47,14 @@ end
 
 always @(posedge clk) begin
   if (rst) begin
-    o_axi_io_valid <= 0;
-    o_axi_io_op <= 0;
-    o_axi_io_wdata <= 0;
     o_axi_io_addr <= 0;
-    o_axi_io_size <= 0;
     o_axi_io_blks <= 0;
+    o_axi_io_op <= 0;
+    o_axi_io_size <= 0;
+    o_axi_io_wdata <= 0;
+    o_axi_io_valid <= 0;
+    o_cache_nocache_rdata <= 0;
+    o_cache_nocache_ack <= 0;
   end
   else begin
     // 发现用户请求

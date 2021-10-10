@@ -29,6 +29,7 @@ assign rtc_val = {21'b0, year, month, day, hour, minute, second};
 // rtc simulate
 always @(posedge clk) begin
   if (rst) begin
+    clk_cnt  <= 0;
     year    <= 2021;
     month   <= 1;
     day     <= 2;

@@ -57,10 +57,9 @@ always @(posedge clk) begin
       tmp_i_wb_skipcmt
     } <= 0;
 
-    o_wb_writebacked_req  <= 0;
-    i_ena                 <= 0;
-
-    o_wb_intrNo <= 0;
+    o_wb_writebacked_req    <= 0;
+    i_ena                   <= 0;
+    o_wb_intrNo             <= 0;
   end
   else begin
     if (memoryed_hs) begin
@@ -73,13 +72,12 @@ always @(posedge clk) begin
 
       o_wb_writebacked_req  <= 1;
       i_ena                 <= 1;
-
-      o_wb_intrNo <= i_wb_intrNo;
+      o_wb_intrNo           <= i_wb_intrNo;
     end
     else if (i_wb_writebacked_ack) begin
       o_wb_writebacked_req  <= 0;
       i_ena                 <= 0;
-      o_wb_intrNo <= 0;
+      o_wb_intrNo           <= 0;
     end
   end
 end

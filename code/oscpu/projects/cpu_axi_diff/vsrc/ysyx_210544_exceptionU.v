@@ -59,12 +59,20 @@ assign hs = ack & req;
 // user action
 always @(posedge clk) begin
   if (rst) begin
-    o_pc_jmp          <= 0;
-    o_pc_jmpaddr      <= 0;
-    csr_rdata_save1   <= 0;
-    next_state        <= STATE_NULL;
-    step              <= 0;
-    exception_cause   <= 0;
+    next_state          <= STATE_NULL;
+    step                <= 0;
+    exception_cause     <= 0;
+    o_pc_jmp            <= 0;
+    o_pc_jmpaddr        <= 0;
+
+    o_csr_addr          <= 0;
+    o_csr_ren           <= 0;
+    o_csr_wen           <= 0;
+    o_csr_wdata         <= 0;
+    csr_rdata_save1     <= 0;
+    csr_rdata_save2     <= 0;
+
+    req                 <= 0;
   end
   else begin
     if (!hs) begin

@@ -114,6 +114,8 @@ always @(posedge clk) begin
     o_sync_icache_wblkid <= 0;
     o_sync_icache_winfo <= 0;
     o_sync_icache_wdata <= 0;
+    o_sync_icache_wreq <= 0;
+    o_sync_dcache_rpackack <= 0;
   end
   else begin
     case (state)

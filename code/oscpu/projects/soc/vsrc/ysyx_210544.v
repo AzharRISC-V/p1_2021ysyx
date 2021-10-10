@@ -390,6 +390,7 @@ always @(posedge clock) begin
                 W_STATE_ADDR:  if (aw_hs)   w_state <= W_STATE_WRITE;
                 W_STATE_WRITE: if (w_done)  w_state <= W_STATE_RESP;
                 W_STATE_RESP:  if (b_hs)    w_state <= W_STATE_IDLE;
+                default: ;
             endcase
         end
     end
@@ -440,6 +441,7 @@ always @(posedge clock) begin
         rw_ready <= rw_ready_nxt;
     end
 end
+
 assign user_ready_o     = rw_ready;
 
 assign rw_resp_nxt = w_trans ? axi_b_resp_i : axi_r_resp_i;
@@ -473,14 +475,14 @@ always @(posedge clock) begin
         axi_w_valid_o <= 1'b0;
     end
     else begin
-    if (w_state_write) begin
-        if (!axi_w_valid_o) begin
-				axi_w_valid_o <= 1'b1;
+        if (w_state_write) begin
+            if (!axi_w_valid_o) begin
+                axi_w_valid_o <= 1'b1;
+            end
         end
-    end
-    else if (w_state_resp) begin// (w_state_resp) begin
-        axi_w_valid_o <= 1'b0;
-    end
+        else if (w_state_resp) begin
+            axi_w_valid_o <= 1'b0;
+        end
     end
 end
 
@@ -490,7 +492,7 @@ assign axi_w_last_o     = w_hs & (len == axi_len);
 
 always @(*) begin
     if (reset) begin
-    axi_w_strb_orig = 8'd0;
+        axi_w_strb_orig = 8'd0;
     end
     else begin
     case (user_size_i)
@@ -514,23 +516,28 @@ assign axi_w_strb_o = axi_w_strb_orig << axi_addr_offset_bytes;
 assign axi_b_ready_o    = w_state_resp;
 
 always @(posedge clock) begin
-    // sent first wdata
-    if (w_state_write && (!axi_w_valid_o)) begin
-        axi_w_data_o  <= user_wdata_i[63:0] << axi_addr_offset_bits;
+    if (reset) begin
+        axi_w_data_o <= 0;
     end
     else begin
-        // sent remain wdata
-        if (w_hs) begin
-            case (len)
-                8'd0: axi_w_data_o <= user_wdata_i[64*1 +:64] << axi_addr_offset_bits;
-                8'd1: axi_w_data_o <= user_wdata_i[64*2 +:64] << axi_addr_offset_bits;
-                8'd2: axi_w_data_o <= user_wdata_i[64*3 +:64] << axi_addr_offset_bits;
-                8'd3: axi_w_data_o <= user_wdata_i[64*4 +:64] << axi_addr_offset_bits;
-                8'd4: axi_w_data_o <= user_wdata_i[64*5 +:64] << axi_addr_offset_bits;
-                8'd5: axi_w_data_o <= user_wdata_i[64*6 +:64] << axi_addr_offset_bits;
-                8'd6: axi_w_data_o <= user_wdata_i[64*7 +:64] << axi_addr_offset_bits;
-                default: ;
-            endcase
+        // sent first wdata
+        if (w_state_write && (!axi_w_valid_o)) begin
+            axi_w_data_o  <= user_wdata_i[63:0] << axi_addr_offset_bits;
+        end
+        else begin
+            // sent remain wdata
+            if (w_hs) begin
+                case (len)
+                    8'd0: axi_w_data_o <= user_wdata_i[64*1 +:64] << axi_addr_offset_bits;
+                    8'd1: axi_w_data_o <= user_wdata_i[64*2 +:64] << axi_addr_offset_bits;
+                    8'd2: axi_w_data_o <= user_wdata_i[64*3 +:64] << axi_addr_offset_bits;
+                    8'd3: axi_w_data_o <= user_wdata_i[64*4 +:64] << axi_addr_offset_bits;
+                    8'd4: axi_w_data_o <= user_wdata_i[64*5 +:64] << axi_addr_offset_bits;
+                    8'd5: axi_w_data_o <= user_wdata_i[64*6 +:64] << axi_addr_offset_bits;
+                    8'd6: axi_w_data_o <= user_wdata_i[64*7 +:64] << axi_addr_offset_bits;
+                    default: ;
+                endcase
+            end
         end
     end
  end
@@ -550,21 +557,20 @@ assign axi_ar_burst_o   = `AXI_BURST_TYPE_INCR;
 assign axi_r_ready_o    = r_state_read;
 
 // User Data Size
-
 assign size_b             = user_size_i == `SIZE_B;
 assign size_h             = user_size_i == `SIZE_H;
 assign size_w             = user_size_i == `SIZE_W;
 assign size_d             = user_size_i == `SIZE_D;
 
 // Read data mask
-assign mask_rdata  = (({ 64{size_b}} & {{64- 8{1'b0}}, 8'hff})
-                            | ({64{size_h}} & {{64-16{1'b0}}, 16'hffff})
-                            | ({64{size_w}} & {{64-32{1'b0}}, 32'hffffffff})
-                            | ({64{size_d}} & {{64-64{1'b0}}, 64'hffffffff_ffffffff})
-                            );
+assign mask_rdata   = (({64{size_b}} & {{64- 8{1'b0}},  8'hff}) 
+                     | ({64{size_h}} & {{64-16{1'b0}}, 16'hffff})
+                     | ({64{size_w}} & {{64-32{1'b0}}, 32'hffffffff})
+                     | ({64{size_d}} & {{64-64{1'b0}}, 64'hffffffff_ffffffff})
+                      );
 
 
-assign aligned_offset    = {3'b0, user_addr_i[2:0]} << 2'd3;
+assign aligned_offset = {3'b0, user_addr_i[2:0]} << 2'd3;
 
 assign axi_r_data_masked_unaligned = (axi_r_data_i >> aligned_offset) & mask_rdata;
 
@@ -600,7 +606,7 @@ endmodule
 // Cache AXI Unit
 // Cache的AXI通信模块。
 // 通过AXI更新Cache数据的，根据Cache的设计而定制的AXI访问控制
-// 对外接口：访问64字节（=512bit），包括读、写
+// 对外接口：访问64字节（ = 512bit），包括读、写
 // 内部需要转换为AXI访问的多次读写。
 // 1. AXI数据宽度最多64bit，已确认。
 // 2. AXI burst len最多是8，这样一次最多传输64字节。
@@ -627,105 +633,107 @@ module ysyx_210544_cache_axi(
   output        [2 : 0]             o_axi_io_size,
   output        [7 : 0]             o_axi_io_blks
 );
-
-
-wire is_flash;    // 是否为Flash外设，此时只能4字节传输，且不能使用burst模式，所以64字节需要16次传输
-wire hs_ok;       // axi一次传输完成
-reg cache_req_his0;   // 跟踪req信号，连续两个周期的 req 才认为是开始信号，防止一结束就又开始了新的阶段
-wire  axi_start;    // axi请求开始
-
-reg [3:0] trans_cnt;          // 传输次数
-reg [3:0] trans_cnt_write;    // 传输次数（写入）
-wire [8:0] offset_bits;       // 偏移位数
-wire [8:0] offset_bits_write; // 偏移位数（写入）
-
-
-
-assign is_flash = i_cache_axi_addr[31:28] == 4'h3;
-assign hs_ok = o_axi_io_valid & i_axi_io_ready;
-
-// axi每次传输的大小：64bit
-assign o_axi_io_size = is_flash ? `SIZE_W : `SIZE_D;
-
-// 块数：0~7表示1~8块
-assign o_axi_io_blks = is_flash ? 8'd0 : 8'd7;
-
-// 操作类型：0:read, 1:write
-assign o_axi_io_op = i_cache_axi_op;
-
-assign axi_start    = i_cache_axi_req & !cache_req_his0;
-
-// 传输起始地址，64字节对齐
-// assign o_axi_io_addr = i_cache_axi_addr & (~64'h3F);
-
-// 控制传输次数，
-// 如果是主存，  需要 1次AXI传输得512bit；
-// 如果是Flash，需要16次AXI传输得到512bit，每次传输32bit（64bit是否支持？？）；
-assign offset_bits = {5'd0, trans_cnt} << 3'd5;
-assign offset_bits_write = {5'd0, trans_cnt_write} << 3'd5;
-
-// 控制传输
-always @( posedge clk ) begin
-  if (rst) begin
-    o_cache_axi_ack         <= 1'd0;
-    o_axi_io_valid          <= 1'd0;
-    o_axi_io_addr           <= 64'd0;
-    o_axi_io_wdata          <= 512'd0;
-    cache_req_his0          <= 1'd0;
-    trans_cnt               <= 4'd0;
-  end
-  else begin
-    // 追踪开始信号
-    cache_req_his0  <= i_cache_axi_req;
-
-    // 收到数据：保存数据、增加计数、握手反馈
-    if (hs_ok) begin
-      if (is_flash) begin
-          o_cache_axi_rdata[offset_bits +:32] <= i_axi_io_rdata[0+:32]; // 保存数据
-        if (trans_cnt < 4'd15) begin
-          o_axi_io_wdata    <= {480'd0, i_cache_axi_wdata[offset_bits_write +:32]}; // 准备数据
-          o_axi_io_addr <= o_axi_io_addr + 64'd4;     // 地址递增
-          trans_cnt <= trans_cnt + 4'd1;             // 次数递增
-          trans_cnt_write <= trans_cnt_write + 4'd1;
+    
+    wire        is_flash;    // 是否为Flash外设，此时只能4字节传输，且不能使用burst模式，所以64字节需要16次传输
+    wire        hs_ok;       // axi一次传输完成
+    reg         cache_req_his0;   // 跟踪req信号，连续两个周期的 req 才认为是开始信号，防止一结束就又开始了新的阶段
+    wire        axi_start;    // axi请求开始
+    
+    reg [3:0]   trans_cnt;          // 传输次数
+    reg [3:0]   trans_cnt_write;    // 传输次数（写入）
+    wire [8:0]  offset_bits;        // 偏移位数
+    wire [8:0]  offset_bits_write;  // 偏移位数（写入）
+    
+    
+    
+    assign is_flash = i_cache_axi_addr[31:28] == 4'h3;
+    assign hs_ok    = o_axi_io_valid & i_axi_io_ready;
+    
+    // axi每次传输的大小：64bit
+    assign o_axi_io_size = is_flash ? `SIZE_W : `SIZE_D;
+    
+    // 块数：0~7表示1~8块
+    assign o_axi_io_blks = is_flash ? 8'd0 : 8'd7;
+    
+    // 操作类型：0:read, 1:write
+    assign o_axi_io_op = i_cache_axi_op;
+    
+    assign axi_start = i_cache_axi_req & !cache_req_his0;
+    
+    // 传输起始地址，64字节对齐。加入soc后，有UART的1字节对齐，Flash的4字节对齐，故这一个规则弃用
+    // assign o_axi_io_addr = i_cache_axi_addr & (~64'h3F);
+    
+    // 控制传输次数，
+    // 如果是主存，  需要 1次AXI传输得512bit；
+    // 如果是Flash，需要16次AXI传输得到512bit，每次传输32bit（64bit是否支持？？）；
+    assign offset_bits       = {5'd0, trans_cnt} << 3'd5;
+    assign offset_bits_write = {5'd0, trans_cnt_write} << 3'd5;
+    
+    // 控制传输
+    always @(posedge clk) begin
+        if (rst) begin
+            cache_req_his0    <= 1'd0;
+            o_cache_axi_ack   <= 1'd0;
+            o_axi_io_valid    <= 1'd0;
+            o_axi_io_addr     <= 64'd0;
+            o_axi_io_wdata    <= 512'd0;
+            o_cache_axi_rdata <= 512'd0;
+            trans_cnt         <= 4'd0;
+            trans_cnt_write   <= 4'd0;
         end
         else begin
-          o_cache_axi_ack   <= 1'd1;   // 完成
-          o_axi_io_valid    <= 1'd0;   // 关闭axi请求
-          trans_cnt <= 4'd0;   // 清零计数，准备下次继续
-          trans_cnt_write <= 4'd1; // 初始为1，方便计算偏移量
+            // 追踪开始信号
+            cache_req_his0 <= i_cache_axi_req;
+            
+            // 收到数据：保存数据、增加计数、握手反馈
+            if (hs_ok) begin
+                if (is_flash) begin
+                    // flash传输，需要分批读取数据，分批写入数据。
+                    o_cache_axi_rdata[offset_bits +:32] <= i_axi_io_rdata[0+:32]; // 保存数据
+                    if (trans_cnt < 4'd15) begin
+                        o_axi_io_addr   <= o_axi_io_addr + 64'd4;     // 地址递增
+                        o_axi_io_wdata  <= {480'd0, i_cache_axi_wdata[offset_bits_write +:32]}; // 准备数据
+                        trans_cnt       <= trans_cnt + 4'd1;             // 次数递增
+                        trans_cnt_write <= trans_cnt_write + 4'd1;
+                    end
+                    else begin
+                        o_cache_axi_ack <= 1'd1;    // 完成
+                        o_axi_io_valid  <= 1'd0;    // 关闭axi请求
+                        trans_cnt       <= 4'd0;    // 清零计数，准备下次继续
+                        trans_cnt_write <= 4'd1;    // 初始为1，方便计算偏移量
+                    end
+                end
+                else begin
+                    o_cache_axi_rdata <= i_axi_io_rdata;    // 保存数据
+                    o_cache_axi_ack   <= 1'd1;   // 完成
+                    o_axi_io_valid    <= 1'd0;   // 关闭axi请求
+                end
+            end
+            else begin
+                // 触发采样
+                if (axi_start) begin
+                    // 第一次进入时更新地址、写入数据
+                    if (!o_axi_io_valid) begin
+                        if (is_flash) begin
+                            o_axi_io_addr  <= i_cache_axi_addr & (~64'h3);   // 传输起始地址，4字节对齐
+                        end
+                        else begin
+                            o_axi_io_addr  <= i_cache_axi_addr & (~64'h3F);  // 传输起始地址，64字节对齐
+                        end
+                        // 准备数据
+                        o_axi_io_wdata <= i_cache_axi_wdata;
+                    end
+                    o_axi_io_valid <= 1'd1;
+                end
+                // 清除信号
+                o_cache_axi_ack <= 1'd0;
+            end
         end
-      end
-      else begin
-        o_cache_axi_rdata <= i_axi_io_rdata;    // 保存数据
-        o_cache_axi_ack   <= 1'd1;   // 完成
-        o_axi_io_valid    <= 1'd0;   // 关闭axi请求
-      end
     end
-    else begin
-      // 触发采样
-      if (axi_start) begin
-        // 仅在第一次进入时修改地址
-        if (!o_axi_io_valid) begin
-          if (is_flash) begin
-            o_axi_io_addr <= i_cache_axi_addr & (~64'h3);   // 传输起始地址，4字节对齐
-            o_axi_io_wdata    <= i_cache_axi_wdata;         // 准备数据
-          end
-          else begin
-            o_axi_io_addr <= i_cache_axi_addr & (~64'h3F);  // 传输起始地址，64字节对齐
-            o_axi_io_wdata    <= i_cache_axi_wdata;         // 准备数据
-          end
-        end
-        o_axi_io_valid <= 1'd1;
-      end
-      // 清除信号   
-      o_cache_axi_ack <= 1'd0;
-    end
-  end
-end
-
-// assign o_cache_axi_rdata = i_axi_io_rdata;
-// assign o_axi_io_wdata = i_cache_axi_wdata;
-
+    
+    // assign o_cache_axi_rdata = i_axi_io_rdata;
+    // assign o_axi_io_wdata    = i_cache_axi_wdata;
+    
 endmodule
 
 // ZhengpuShi
@@ -1225,14 +1233,28 @@ always @(posedge clk) begin
     chip_data_wdata[1] <= 128'd0;
     chip_data_wdata[2] <= 128'd0;
     chip_data_wdata[3] <= 128'd0;
+    chip_data_wmask[0] <= 0;
+    chip_data_wmask[1] <= 0;
+    chip_data_wmask[2] <= 0;
+    chip_data_wmask[3] <= 0;
 
-    o_cache_basic_ack <= 1'd0;
+    o_cache_basic_rdata <= 0;
+    o_cache_basic_ack   <= 1'd0;
+
     sync_rpackreq <= 1'd0;
-    sync_rack <= 1'd0;
-    sync_wack <= 1'd0;
+    sync_rack   <= 1'd0;
+    sync_wack   <= 1'd0;
     sync_rwayid <= 2'd0;
     sync_rblkid <= 4'd0;
-    sync_rdata <= 512'd0;
+    sync_rdata  <= 512'd0;
+    sync_step   <= 2'd0;
+
+    ram_op_cnt          <= 3'd0;
+
+    o_cache_axi_req     <= 0;
+    o_cache_axi_addr    <= 64'd0;
+    o_cache_axi_op      <= 0;
+    o_cache_axi_wdata   <= 0;
   end
   else begin
     case (state)
@@ -1284,10 +1306,12 @@ always @(posedge clk) begin
 
       STATE_LOAD_FROM_BUS: begin
         // 读取主存一个块
-        o_cache_axi_req <= 1'd1;
-        o_cache_axi_addr <= user_blk_aligned_bytes;
-        o_cache_axi_op <= `REQ_READ;
-        if (hs_cache_axi) begin
+        if (!hs_cache_axi) begin
+            o_cache_axi_req <= 1'd1;
+            o_cache_axi_addr <= user_blk_aligned_bytes;
+            o_cache_axi_op <= `REQ_READ;
+        end
+        else begin
           o_cache_axi_req <= 1'd0;
         end
       end
@@ -1343,11 +1367,12 @@ always @(posedge clk) begin
 
       STATE_STORE_TO_BUS: begin
         // 写入主存一个块
-        o_cache_axi_req <= 1'd1;
-        o_cache_axi_addr <= {32'd0, c_tag[wayID_select], mem_blkno, 6'd0 };
-        o_cache_axi_op <= `REQ_WRITE;
-
-        if (hs_cache_axi) begin
+        if (!hs_cache_axi) begin
+            o_cache_axi_req <= 1'd1;
+            o_cache_axi_addr <= {32'd0, c_tag[wayID_select], mem_blkno, 6'd0 };
+            o_cache_axi_op <= `REQ_WRITE;
+        end
+        else begin
           o_cache_axi_wdata <= 512'd0;
           o_cache_axi_req <= 1'd0;
         end
@@ -1627,6 +1652,8 @@ always @(posedge clk) begin
   if (rst) begin
     index <= 1'd0;
     o_cache_basic_req <= 1'd0;
+    o_cache_core_rdata <= 0;
+    o_cache_core_ack <= 0;
   end
   else begin
     // 发现用户请求
@@ -1728,12 +1755,14 @@ end
 
 always @(posedge clk) begin
   if (rst) begin
-    o_axi_io_valid <= 0;
-    o_axi_io_op <= 0;
-    o_axi_io_wdata <= 0;
     o_axi_io_addr <= 0;
-    o_axi_io_size <= 0;
     o_axi_io_blks <= 0;
+    o_axi_io_op <= 0;
+    o_axi_io_size <= 0;
+    o_axi_io_wdata <= 0;
+    o_axi_io_valid <= 0;
+    o_cache_nocache_rdata <= 0;
+    o_cache_nocache_ack <= 0;
   end
   else begin
     // 发现用户请求
@@ -1881,6 +1910,8 @@ always @(posedge clk) begin
     o_sync_icache_wblkid <= 0;
     o_sync_icache_winfo <= 0;
     o_sync_icache_wdata <= 0;
+    o_sync_icache_wreq <= 0;
+    o_sync_dcache_rpackack <= 0;
   end
   else begin
     case (state)
@@ -2239,6 +2270,7 @@ assign rtc_val = {21'b0, year, month, day, hour, minute, second};
 // rtc simulate
 always @(posedge clk) begin
   if (rst) begin
+    clk_cnt  <= 0;
     year    <= 2021;
     month   <= 1;
     day     <= 2;
@@ -2749,31 +2781,26 @@ end
 
 assign handshake_done = o_bus_req & i_bus_ack;
 
-// 跳转指令处理
-always @(posedge clk) begin
-  if (rst) begin
-  end
-  else begin
-  end
-end
 
 // fetch an instruction
 always @( posedge clk ) begin
   if (rst) begin
+    fetch_again             <= 0;
+    saved_pc_jmpaddr        <= 0;
     o_bus_addr              <= `PC_START;
     o_pc                    <= 0;
-    pc_pred                 <= 0;
+    o_inst                  <= 0;
     o_fetched               <= 0;
-	 fetch_again             <= 0;
-    saved_pc_jmpaddr        <= 0;
+    pc_pred                 <= 0;
   end
   else begin
-	 // if jmp, fetch again once
+    // if jmp, fetch again once
     if (i_pc_jmp & (i_pc_jmpaddr != pc_pred)) begin
       fetch_again 			<= 1;
       saved_pc_jmpaddr 		<= i_pc_jmpaddr;
     end
-    if (handshake_done) begin
+    // 收到总线数据，处理数据
+    else if (handshake_done) begin
       if (fetch_again) begin
         fetch_again             <= 0;
         o_bus_addr              <= saved_pc_jmpaddr;
@@ -2788,6 +2815,7 @@ always @( posedge clk ) begin
         o_fetched               <= 1;
       end
     end
+    // 空闲时，输出空数据
     else begin
       o_inst                  <= 0;
       o_fetched               <= 0;
@@ -3386,9 +3414,10 @@ always @(posedge clk) begin
       tmp_i_ex_skipcmt
     } <= 0;
 
-    o_ex_executed_req   <= 0;
+    o_ena_exeU          <= 0;
     o_ena_exceptionU    <= 0;
-    o_ex_intrNo <= 0;
+    o_ex_executed_req   <= 0;
+    o_ex_intrNo         <= 0;
   end
   else begin
     // 启动
@@ -3415,16 +3444,16 @@ always @(posedge clk) begin
         o_ena_exceptionU  <= 1;
       end
     end
-    // exeU或exceptionU收到应答，请求信号撤销
-    else if (executed_hs) begin
-      o_ex_executed_req <= 0;
-      o_ena_exeU        <= 0;
-      o_ena_exceptionU  <= 0;
-      o_ex_intrNo <= 0;
-    end
     // exceptionU结束，请求信号置位
     else if (exceptionU_req) begin
       o_ex_executed_req <= 1;
+    end
+    // exeU或exceptionU收到应答，请求信号撤销
+    else if (executed_hs) begin
+      o_ena_exeU        <= 0;
+      o_ena_exceptionU  <= 0;
+      o_ex_executed_req <= 0;
+      o_ex_intrNo       <= 0;
     end
   end
 end
@@ -3707,12 +3736,20 @@ assign hs = ack & req;
 // user action
 always @(posedge clk) begin
   if (rst) begin
-    o_pc_jmp          <= 0;
-    o_pc_jmpaddr      <= 0;
-    csr_rdata_save1   <= 0;
-    next_state        <= STATE_NULL;
-    step              <= 0;
-    exception_cause   <= 0;
+    next_state          <= STATE_NULL;
+    step                <= 0;
+    exception_cause     <= 0;
+    o_pc_jmp            <= 0;
+    o_pc_jmpaddr        <= 0;
+
+    o_csr_addr          <= 0;
+    o_csr_ren           <= 0;
+    o_csr_wen           <= 0;
+    o_csr_wdata         <= 0;
+    csr_rdata_save1     <= 0;
+    csr_rdata_save2     <= 0;
+
+    req                 <= 0;
   end
   else begin
     if (!hs) begin
@@ -4344,14 +4381,14 @@ assign hs_dcache  = o_dcache_req & i_dcache_ack;
 
 always @(posedge clk) begin
   if (rst) begin
-    wait_finish    <= 0;
-    req <= 0;
-    o_rdata <= 0;
-    o_dcache_req <= 0;
-    o_dcache_addr <= 0;
-    o_dcache_op <= 0;
-    o_dcache_bytes <= 0;
-    o_dcache_wdata <= 0;
+    wait_finish     <= 0;
+    req             <= 0;
+    o_rdata         <= 0;
+    o_dcache_req    <= 0;
+    o_dcache_op     <= 0;
+    o_dcache_addr   <= 0;
+    o_dcache_bytes  <= 0;
+    o_dcache_wdata  <= 0;
   end
   else begin
     if (start) begin
@@ -4603,10 +4640,9 @@ always @(posedge clk) begin
       tmp_i_wb_skipcmt
     } <= 0;
 
-    o_wb_writebacked_req  <= 0;
-    i_ena                 <= 0;
-
-    o_wb_intrNo <= 0;
+    o_wb_writebacked_req    <= 0;
+    i_ena                   <= 0;
+    o_wb_intrNo             <= 0;
   end
   else begin
     if (memoryed_hs) begin
@@ -4619,13 +4655,12 @@ always @(posedge clk) begin
 
       o_wb_writebacked_req  <= 1;
       i_ena                 <= 1;
-
-      o_wb_intrNo <= i_wb_intrNo;
+      o_wb_intrNo           <= i_wb_intrNo;
     end
     else if (i_wb_writebacked_ack) begin
       o_wb_writebacked_req  <= 0;
       i_ena                 <= 0;
-      o_wb_intrNo <= 0;
+      o_wb_intrNo           <= 0;
     end
   end
 end

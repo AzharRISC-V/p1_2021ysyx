@@ -497,14 +497,28 @@ always @(posedge clk) begin
     chip_data_wdata[1] <= 128'd0;
     chip_data_wdata[2] <= 128'd0;
     chip_data_wdata[3] <= 128'd0;
+    chip_data_wmask[0] <= 0;
+    chip_data_wmask[1] <= 0;
+    chip_data_wmask[2] <= 0;
+    chip_data_wmask[3] <= 0;
 
-    o_cache_basic_ack <= 1'd0;
+    o_cache_basic_rdata <= 0;
+    o_cache_basic_ack   <= 1'd0;
+
     sync_rpackreq <= 1'd0;
-    sync_rack <= 1'd0;
-    sync_wack <= 1'd0;
+    sync_rack   <= 1'd0;
+    sync_wack   <= 1'd0;
     sync_rwayid <= 2'd0;
     sync_rblkid <= 4'd0;
-    sync_rdata <= 512'd0;
+    sync_rdata  <= 512'd0;
+    sync_step   <= 2'd0;
+
+    ram_op_cnt          <= 3'd0;
+
+    o_cache_axi_req     <= 0;
+    o_cache_axi_addr    <= 64'd0;
+    o_cache_axi_op      <= 0;
+    o_cache_axi_wdata   <= 0;
   end
   else begin
     case (state)
@@ -556,10 +570,12 @@ always @(posedge clk) begin
 
       STATE_LOAD_FROM_BUS: begin
         // 读取主存一个块
-        o_cache_axi_req <= 1'd1;
-        o_cache_axi_addr <= user_blk_aligned_bytes;
-        o_cache_axi_op <= `REQ_READ;
-        if (hs_cache_axi) begin
+        if (!hs_cache_axi) begin
+            o_cache_axi_req <= 1'd1;
+            o_cache_axi_addr <= user_blk_aligned_bytes;
+            o_cache_axi_op <= `REQ_READ;
+        end
+        else begin
           o_cache_axi_req <= 1'd0;
         end
       end
@@ -615,11 +631,12 @@ always @(posedge clk) begin
 
       STATE_STORE_TO_BUS: begin
         // 写入主存一个块
-        o_cache_axi_req <= 1'd1;
-        o_cache_axi_addr <= {32'd0, c_tag[wayID_select], mem_blkno, 6'd0 };
-        o_cache_axi_op <= `REQ_WRITE;
-
-        if (hs_cache_axi) begin
+        if (!hs_cache_axi) begin
+            o_cache_axi_req <= 1'd1;
+            o_cache_axi_addr <= {32'd0, c_tag[wayID_select], mem_blkno, 6'd0 };
+            o_cache_axi_op <= `REQ_WRITE;
+        end
+        else begin
           o_cache_axi_wdata <= 512'd0;
           o_cache_axi_req <= 1'd0;
         end

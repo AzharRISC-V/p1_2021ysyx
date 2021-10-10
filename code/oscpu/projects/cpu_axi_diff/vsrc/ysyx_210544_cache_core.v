@@ -134,6 +134,8 @@ always @(posedge clk) begin
   if (rst) begin
     index <= 1'd0;
     o_cache_basic_req <= 1'd0;
+    o_cache_core_rdata <= 0;
+    o_cache_core_ack <= 0;
   end
   else begin
     // 发现用户请求

@@ -39,14 +39,14 @@ assign hs_dcache  = o_dcache_req & i_dcache_ack;
 
 always @(posedge clk) begin
   if (rst) begin
-    wait_finish    <= 0;
-    req <= 0;
-    o_rdata <= 0;
-    o_dcache_req <= 0;
-    o_dcache_addr <= 0;
-    o_dcache_op <= 0;
-    o_dcache_bytes <= 0;
-    o_dcache_wdata <= 0;
+    wait_finish     <= 0;
+    req             <= 0;
+    o_rdata         <= 0;
+    o_dcache_req    <= 0;
+    o_dcache_op     <= 0;
+    o_dcache_addr   <= 0;
+    o_dcache_bytes  <= 0;
+    o_dcache_wdata  <= 0;
   end
   else begin
     if (start) begin

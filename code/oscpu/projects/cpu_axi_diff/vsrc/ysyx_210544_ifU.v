@@ -54,31 +54,26 @@ end
 
 assign handshake_done = o_bus_req & i_bus_ack;
 
-// 跳转指令处理
-always @(posedge clk) begin
-  if (rst) begin
-  end
-  else begin
-  end
-end
 
 // fetch an instruction
 always @( posedge clk ) begin
   if (rst) begin
+    fetch_again             <= 0;
+    saved_pc_jmpaddr        <= 0;
     o_bus_addr              <= `PC_START;
     o_pc                    <= 0;
-    pc_pred                 <= 0;
+    o_inst                  <= 0;
     o_fetched               <= 0;
-	 fetch_again             <= 0;
-    saved_pc_jmpaddr        <= 0;
+    pc_pred                 <= 0;
   end
   else begin
-	 // if jmp, fetch again once
+    // if jmp, fetch again once
     if (i_pc_jmp & (i_pc_jmpaddr != pc_pred)) begin
       fetch_again 			<= 1;
       saved_pc_jmpaddr 		<= i_pc_jmpaddr;
     end
-    if (handshake_done) begin
+    // 收到总线数据，处理数据
+    else if (handshake_done) begin
       if (fetch_again) begin
         fetch_again             <= 0;
         o_bus_addr              <= saved_pc_jmpaddr;
@@ -93,6 +88,7 @@ always @( posedge clk ) begin
         o_fetched               <= 1;
       end
     end
+    // 空闲时，输出空数据
     else begin
       o_inst                  <= 0;
       o_fetched               <= 0;
