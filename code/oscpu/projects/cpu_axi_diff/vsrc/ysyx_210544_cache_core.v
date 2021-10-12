@@ -65,7 +65,7 @@ wire                          en_second;                  // 第二次操作使�
 wire  [2 : 0]                 bytes[0:1];                 // 字节数
 wire  [63: 0]                 addr[0:1];                  // 地址
 wire  [63: 0]                 wdata[0:1];                 // 写数据
-reg   [63: 0]                 rdata[0:1];                 // 读数据
+reg   [63: 0]                 rdata0;                     // 读数据
 
 reg                           index;      // 操作的序号：0,1表示两个阶段
 wire                          hs_cache;
@@ -136,6 +136,7 @@ always @(posedge clk) begin
     o_cache_basic_req <= 1'd0;
     o_cache_core_rdata <= 0;
     o_cache_core_ack <= 0;
+    rdata0 <= 0;
   end
   else begin
     // 发现用户请求
@@ -149,7 +150,7 @@ always @(posedge clk) begin
         // 收到回应
         else begin
           o_cache_basic_req <= 0;
-          rdata[0] <= i_cache_basic_rdata;
+          rdata0 <= i_cache_basic_rdata;
           // 启动第二次请求，或者结束任务
           if (en_second) begin
             index <= 1;
@@ -168,8 +169,8 @@ always @(posedge clk) begin
         end
         // 收到回应
         else begin
-          rdata[1] <= i_cache_basic_rdata;
-          o_cache_core_rdata <= rdata[0] + (i_cache_basic_rdata << ((bytes[0] + 1) << 3));
+        //   rdata[1] <= i_cache_basic_rdata;
+          o_cache_core_rdata <= rdata0 + (i_cache_basic_rdata << ((bytes[0] + 1) << 3));
           o_cache_basic_req <= 0;
           o_cache_core_ack <= 1;
         end

@@ -259,10 +259,10 @@ assign user_resp_o      = rw_resp;
 
 // Read address channel signals
 assign axi_aw_valid_o   = w_state_addr & user_valid_i;
-assign axi_aw_addr_o    = axi_addr;
-assign axi_aw_id_o      = axi_id;
-assign axi_aw_len_o     = axi_len;
-assign axi_aw_size_o    = axi_size;
+assign axi_aw_addr_o    = w_valid ? axi_addr : 64'd0;
+assign axi_aw_id_o      = w_valid ? axi_id : 4'd0;
+assign axi_aw_len_o     = w_valid ? axi_len: 8'd0;
+assign axi_aw_size_o    = w_valid ? axi_size: 3'd0;
 assign axi_aw_burst_o   = `AXI_BURST_TYPE_INCR;
 
 // Write data channel signals
@@ -308,7 +308,7 @@ assign axi_addr_offset_bits   = {3'b0, axi_addr_offset_bytes} << 2'd3;
 
 // 移位生成最终的 w_strb。wdata 和 wstrb 都需要移位
 // assign axi_w_strb_o     = 8'b1111_1111;     // 每个bit代表一个字节是否要写入
-assign axi_w_strb_o = axi_w_strb_orig << axi_addr_offset_bytes;
+assign axi_w_strb_o = w_valid ? (axi_w_strb_orig << axi_addr_offset_bytes) : 8'd0;
 
 // Wreite response channel signals
 assign axi_b_ready_o    = w_state_resp;
@@ -325,16 +325,18 @@ always @(posedge clock) begin
         else begin
             // sent remain wdata
             if (w_hs) begin
-                case (len)
-                    8'd0: axi_w_data_o <= user_wdata_i[64*1 +:64] << axi_addr_offset_bits;
-                    8'd1: axi_w_data_o <= user_wdata_i[64*2 +:64] << axi_addr_offset_bits;
-                    8'd2: axi_w_data_o <= user_wdata_i[64*3 +:64] << axi_addr_offset_bits;
-                    8'd3: axi_w_data_o <= user_wdata_i[64*4 +:64] << axi_addr_offset_bits;
-                    8'd4: axi_w_data_o <= user_wdata_i[64*5 +:64] << axi_addr_offset_bits;
-                    8'd5: axi_w_data_o <= user_wdata_i[64*6 +:64] << axi_addr_offset_bits;
-                    8'd6: axi_w_data_o <= user_wdata_i[64*7 +:64] << axi_addr_offset_bits;
-                    default: ;
-                endcase
+                if (axi_len > 0) begin
+                    case (len)
+                        8'd0: axi_w_data_o <= user_wdata_i[64*1 +:64] << axi_addr_offset_bits;
+                        8'd1: axi_w_data_o <= user_wdata_i[64*2 +:64] << axi_addr_offset_bits;
+                        8'd2: axi_w_data_o <= user_wdata_i[64*3 +:64] << axi_addr_offset_bits;
+                        8'd3: axi_w_data_o <= user_wdata_i[64*4 +:64] << axi_addr_offset_bits;
+                        8'd4: axi_w_data_o <= user_wdata_i[64*5 +:64] << axi_addr_offset_bits;
+                        8'd5: axi_w_data_o <= user_wdata_i[64*6 +:64] << axi_addr_offset_bits;
+                        8'd6: axi_w_data_o <= user_wdata_i[64*7 +:64] << axi_addr_offset_bits;
+                        default: ;
+                    endcase
+                end
             end
         end
     end
@@ -345,10 +347,10 @@ always @(posedge clock) begin
 
 // Read address channel signals
 assign axi_ar_valid_o   = r_state_addr & user_valid_i;
-assign axi_ar_addr_o    = axi_addr;
-assign axi_ar_id_o      = axi_id;
-assign axi_ar_len_o     = axi_len;
-assign axi_ar_size_o    = axi_size;
+assign axi_ar_addr_o    = r_trans ? axi_addr : 64'd0;
+assign axi_ar_id_o      = r_trans ? axi_id : 4'd0;
+assign axi_ar_len_o     = r_trans ? axi_len : 8'd0;
+assign axi_ar_size_o    = r_trans ? axi_size : 3'd0;
 assign axi_ar_burst_o   = `AXI_BURST_TYPE_INCR;
 
 // Read data channel signals
