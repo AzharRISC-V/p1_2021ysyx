@@ -21,7 +21,7 @@ module SimTop(
     output                              io_memAXI_0_aw_valid,
     output [63:0]                       io_memAXI_0_aw_bits_addr,
     output [2:0]                        io_memAXI_0_aw_bits_prot,
-    output [`AXI_ID_WIDTH-1:0]          io_memAXI_0_aw_bits_id,
+    output [3:0]                        io_memAXI_0_aw_bits_id,
     output                              io_memAXI_0_aw_bits_user,
     output [7:0]                        io_memAXI_0_aw_bits_len,
     output [2:0]                        io_memAXI_0_aw_bits_size,
@@ -39,14 +39,14 @@ module SimTop(
     output                              io_memAXI_0_b_ready,
     input                               io_memAXI_0_b_valid,
     input  [1:0]                        io_memAXI_0_b_bits_resp,
-    input  [`AXI_ID_WIDTH-1:0]          io_memAXI_0_b_bits_id,
+    input  [3:0]                        io_memAXI_0_b_bits_id,
     input                               io_memAXI_0_b_bits_user,
 
     input                               io_memAXI_0_ar_ready,
     output                              io_memAXI_0_ar_valid,
     output [63:0]                       io_memAXI_0_ar_bits_addr,
     output [2:0]                        io_memAXI_0_ar_bits_prot,
-    output [`AXI_ID_WIDTH-1:0]          io_memAXI_0_ar_bits_id,
+    output [3:0]                        io_memAXI_0_ar_bits_id,
     output                              io_memAXI_0_ar_bits_user,
     output [7:0]                        io_memAXI_0_ar_bits_len,
     output [2:0]                        io_memAXI_0_ar_bits_size,
@@ -60,7 +60,7 @@ module SimTop(
     input  [1:0]                        io_memAXI_0_r_bits_resp,
     input  [63:0]                       io_memAXI_0_r_bits_data         [3:0],
     input                               io_memAXI_0_r_bits_last,
-    input  [`AXI_ID_WIDTH-1:0]          io_memAXI_0_r_bits_id,
+    input  [3:0]                        io_memAXI_0_r_bits_id,
     input                               io_memAXI_0_r_bits_user
 );
 
