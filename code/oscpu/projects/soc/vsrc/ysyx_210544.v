@@ -474,12 +474,10 @@ always @(posedge clock) begin
         axi_w_valid_o <= 1'b0;
     end
     else begin
-        if (w_state_write) begin
-            if (!axi_w_valid_o) begin
+        if (w_state_write && (!axi_w_valid_o)) begin// (w_state_addr & user_valid_i) begin
                 axi_w_valid_o <= 1'b1;
             end
-        end
-        else if (w_state_resp) begin
+        else if (w_done) begin
             axi_w_valid_o <= 1'b0;
         end
     end
@@ -521,7 +519,7 @@ always @(posedge clock) begin
     else begin
         // sent first wdata
         if (w_state_write && (!axi_w_valid_o)) begin
-            axi_w_data_o  <= user_wdata_i[63:0] << axi_addr_offset_bits;
+            axi_w_data_o <= user_wdata_i[63:0] << axi_addr_offset_bits;
         end
         else begin
             // sent remain wdata
@@ -2220,12 +2218,12 @@ assign nocache_wdata    = ch_nocache ? (i_icache_req ? 64'd0          : i_dcache
 assign nocache_bytes    = ch_nocache ? (i_icache_req ? 3'd3           : i_dcache_bytes  ) : 3'd0;
 assign nocache_op       = ch_nocache ? (i_icache_req ? `REQ_READ      : i_dcache_op     ) : `REQ_READ;
 
-assign o_axi_io_valid   = ch_icache ? icache_axi_io_valid   : (ch_dcache ? dcache_axi_io_valid  : nocache_axi_io_valid);
-assign o_axi_io_op      = ch_icache ? icache_axi_io_op      : (ch_dcache ? dcache_axi_io_op     : nocache_axi_io_op);
-assign o_axi_io_wdata   = ch_icache ? icache_axi_io_wdata   : (ch_dcache ? dcache_axi_io_wdata  : nocache_axi_io_wdata);
-assign o_axi_io_addr    = ch_icache ? icache_axi_io_addr    : (ch_dcache ? dcache_axi_io_addr   : nocache_axi_io_addr);
-assign o_axi_io_size    = ch_icache ? icache_axi_io_size    : (ch_dcache ? dcache_axi_io_size   : nocache_axi_io_size);
-assign o_axi_io_blks    = ch_icache ? icache_axi_io_blks    : (ch_dcache ? dcache_axi_io_blks   : nocache_axi_io_blks);
+assign o_axi_io_valid   =                   ch_icache ? icache_axi_io_valid   : (ch_dcache ? dcache_axi_io_valid  : nocache_axi_io_valid);
+assign o_axi_io_op      = o_axi_io_valid ? (ch_icache ? icache_axi_io_op      : (ch_dcache ? dcache_axi_io_op     : nocache_axi_io_op   )) : 0;
+assign o_axi_io_wdata   = o_axi_io_valid ? (ch_icache ? icache_axi_io_wdata   : (ch_dcache ? dcache_axi_io_wdata  : nocache_axi_io_wdata)) : 0;
+assign o_axi_io_addr    = o_axi_io_valid ? (ch_icache ? icache_axi_io_addr    : (ch_dcache ? dcache_axi_io_addr   : nocache_axi_io_addr )) : 0;
+assign o_axi_io_size    = o_axi_io_valid ? (ch_icache ? icache_axi_io_size    : (ch_dcache ? dcache_axi_io_size   : nocache_axi_io_size )) : 0;
+assign o_axi_io_blks    = o_axi_io_valid ? (ch_icache ? icache_axi_io_blks    : (ch_dcache ? dcache_axi_io_blks   : nocache_axi_io_blks )) : 0;
 
 assign o_icache_rdata   = ch_icache ? icache_rdata[31:0] : nocache_rdata[31:0];
 assign o_icache_ack     = ch_icache ? icache_ack         : nocache_ack        ;

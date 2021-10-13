@@ -273,12 +273,10 @@ always @(posedge clock) begin
         axi_w_valid_o <= 1'b0;
     end
     else begin
-        if (w_state_write) begin
-            if (!axi_w_valid_o) begin
+        if (w_state_write && (!axi_w_valid_o)) begin// (w_state_addr & user_valid_i) begin
                 axi_w_valid_o <= 1'b1;
             end
-        end
-        else if (w_state_resp) begin
+        else if (w_done) begin
             axi_w_valid_o <= 1'b0;
         end
     end
@@ -320,7 +318,7 @@ always @(posedge clock) begin
     else begin
         // sent first wdata
         if (w_state_write && (!axi_w_valid_o)) begin
-            axi_w_data_o  <= user_wdata_i[63:0] << axi_addr_offset_bits;
+            axi_w_data_o <= user_wdata_i[63:0] << axi_addr_offset_bits;
         end
         else begin
             // sent remain wdata
