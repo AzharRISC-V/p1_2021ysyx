@@ -275,8 +275,8 @@ module ysyx_210544_axi_rw (
     output [1:0]                        axi_aw_burst_o,
 
     input                               axi_w_ready_i,
-    output reg                          axi_w_valid_o,
-    output reg  [63:0]                  axi_w_data_o,
+    output                              axi_w_valid_o,
+    output [63:0]                       axi_w_data_o,
     output [7:0]                        axi_w_strb_o,
     output                              axi_w_last_o,
     
@@ -469,21 +469,6 @@ assign axi_aw_burst_o   = 2'b01;// `AXI_BURST_TYPE_INCR;
 // Write data channel signals
 assign axi_w_valid_o = reset ? 1'b0 : w_state_write;
 
-// // 由于 w_valid 使能之时需要同时送出 wdata，所以改用时序逻辑
-// always @(posedge clock) begin
-//     if (reset) begin
-//         axi_w_valid_o <= 1'b0;
-//     end
-//     else begin
-//         if (w_state_write && (!axi_w_valid_o)) begin// (w_state_addr & user_valid_i) begin
-//             axi_w_valid_o <= 1'b1;
-//         end
-//         else if (w_done) begin
-//             axi_w_valid_o <= 1'b0;
-//         end
-//     end
-// end
-
 assign axi_w_last_o     = w_hs & (len == axi_len);
 
 // 仅根据size生成的wstrb，需要移位后使用，是吗？？
@@ -514,35 +499,6 @@ assign axi_w_strb_o = w_valid ? (axi_w_strb_orig << axi_addr_offset_bytes) : 8'd
 assign axi_b_ready_o    = w_state_resp;
 
 assign axi_w_data_o = (reset || (!w_state_write)) ? 0 : (user_wdata_i[64*len +:64] << axi_addr_offset_bits);
-
-// always @(posedge clock) begin
-//     if (reset) begin
-//         axi_w_data_o <= 0;
-//     end
-//     else begin
-//         // sent first wdata
-//         if (w_state_write && (!axi_w_valid_o)) begin
-//             axi_w_data_o <= user_wdata_i[63:0] << axi_addr_offset_bits;
-//         end
-//         else begin
-//             // sent remain wdata
-//             if (w_hs) begin
-//                 if (axi_len > 0) begin
-//                     case (len)
-//                         8'd0: axi_w_data_o <= user_wdata_i[64*1 +:64] << axi_addr_offset_bits;
-//                         8'd1: axi_w_data_o <= user_wdata_i[64*2 +:64] << axi_addr_offset_bits;
-//                         8'd2: axi_w_data_o <= user_wdata_i[64*3 +:64] << axi_addr_offset_bits;
-//                         8'd3: axi_w_data_o <= user_wdata_i[64*4 +:64] << axi_addr_offset_bits;
-//                         8'd4: axi_w_data_o <= user_wdata_i[64*5 +:64] << axi_addr_offset_bits;
-//                         8'd5: axi_w_data_o <= user_wdata_i[64*6 +:64] << axi_addr_offset_bits;
-//                         8'd6: axi_w_data_o <= user_wdata_i[64*7 +:64] << axi_addr_offset_bits;
-//                         default: ;
-//                     endcase
-//                 end
-//             end
-//         end
-//     end
-//  end
 
 
 // ------------------Read Transaction------------------
