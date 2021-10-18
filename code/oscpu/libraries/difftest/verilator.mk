@@ -35,7 +35,7 @@ endif
 VEXTRA_FLAGS  = -I$(abspath $(BUILD_DIR)) --x-assign unique -O3 -CFLAGS "$(EMU_CXXFLAGS)" -LDFLAGS "$(EMU_LDFLAGS)"
 
 # temporary info
-VEXTRA_FLAGS += -DDIFFTEST_YSYX_210544
+VEXTRA_FLAGS += -DYSYX210544_DIFFTEST_FLAG
 
 # Verilator trace support
 EMU_TRACE ?=

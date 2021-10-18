@@ -7,25 +7,25 @@ module ysyx_210544_regfile(
   input   wire                  clk,
   input   wire                  rst,
 
-  input   wire  [`BUS_RIDX]     i_rs1,
+  input   wire  [`YSYX210544_BUS_RIDX]     i_rs1,
   input   wire                  i_rs1_ren,
-  input   wire  [`BUS_RIDX]     i_rs2,
+  input   wire  [`YSYX210544_BUS_RIDX]     i_rs2,
   input   wire                  i_rs2_ren,
-  input   wire  [`BUS_RIDX]     i_rd,
+  input   wire  [`YSYX210544_BUS_RIDX]     i_rd,
   input   wire                  i_rd_wen,
-  input   wire  [`BUS_64]       i_rd_data,
-  output  reg   [`BUS_64]       o_rs1_data,
-  output  reg   [`BUS_64]       o_rs2_data
+  input   wire  [`YSYX210544_BUS_64]       i_rd_data,
+  output  reg   [`YSYX210544_BUS_64]       o_rs1_data,
+  output  reg   [`YSYX210544_BUS_64]       o_rs2_data
 
-`ifdef DIFFTEST_YSYX_210544
+`ifdef YSYX210544_DIFFTEST_FLAG
     ,
-  output  wire  [`BUS_64]       o_regs[0:31]
+  output  wire  [`YSYX210544_BUS_64]       o_regs[0:31]
 `endif
 );
 
-reg [`BUS_64] regs[0:31];
+reg [`YSYX210544_BUS_64] regs[0:31];
 
-`ifdef DIFFTEST_YSYX_210544
+`ifdef YSYX210544_DIFFTEST_FLAG
 
 // difftest regs接口
 genvar i;
@@ -37,38 +37,38 @@ generate
 endgenerate
 
 // register alias name
-wire  [`BUS_64]   x00_zero;
-wire  [`BUS_64]   x01_ra;
-wire  [`BUS_64]   x02_sp;
-wire  [`BUS_64]   x03_gp;
-wire  [`BUS_64]   x04_tp;
-wire  [`BUS_64]   x05_t0;
-wire  [`BUS_64]   x06_t1;
-wire  [`BUS_64]   x07_t2;
-wire  [`BUS_64]   x08_s0;
-wire  [`BUS_64]   x09_s1;
-wire  [`BUS_64]   x10_a0;
-wire  [`BUS_64]   x11_a1;
-wire  [`BUS_64]   x12_a2;
-wire  [`BUS_64]   x13_a3;
-wire  [`BUS_64]   x14_a4;
-wire  [`BUS_64]   x15_a5;
-wire  [`BUS_64]   x16_a6;
-wire  [`BUS_64]   x17_a7;
-wire  [`BUS_64]   x18_s2;
-wire  [`BUS_64]   x19_s3;
-wire  [`BUS_64]   x20_s4;
-wire  [`BUS_64]   x21_s5;
-wire  [`BUS_64]   x22_s6;
-wire  [`BUS_64]   x23_s7;
-wire  [`BUS_64]   x24_s8;
-wire  [`BUS_64]   x25_s9;
-wire  [`BUS_64]   x26_s10;
-wire  [`BUS_64]   x27_s11;
-wire  [`BUS_64]   x28_t3;
-wire  [`BUS_64]   x29_t4;
-wire  [`BUS_64]   x30_t5;
-wire  [`BUS_64]   x31_t6;
+wire  [`YSYX210544_BUS_64]   x00_zero;
+wire  [`YSYX210544_BUS_64]   x01_ra;
+wire  [`YSYX210544_BUS_64]   x02_sp;
+wire  [`YSYX210544_BUS_64]   x03_gp;
+wire  [`YSYX210544_BUS_64]   x04_tp;
+wire  [`YSYX210544_BUS_64]   x05_t0;
+wire  [`YSYX210544_BUS_64]   x06_t1;
+wire  [`YSYX210544_BUS_64]   x07_t2;
+wire  [`YSYX210544_BUS_64]   x08_s0;
+wire  [`YSYX210544_BUS_64]   x09_s1;
+wire  [`YSYX210544_BUS_64]   x10_a0;
+wire  [`YSYX210544_BUS_64]   x11_a1;
+wire  [`YSYX210544_BUS_64]   x12_a2;
+wire  [`YSYX210544_BUS_64]   x13_a3;
+wire  [`YSYX210544_BUS_64]   x14_a4;
+wire  [`YSYX210544_BUS_64]   x15_a5;
+wire  [`YSYX210544_BUS_64]   x16_a6;
+wire  [`YSYX210544_BUS_64]   x17_a7;
+wire  [`YSYX210544_BUS_64]   x18_s2;
+wire  [`YSYX210544_BUS_64]   x19_s3;
+wire  [`YSYX210544_BUS_64]   x20_s4;
+wire  [`YSYX210544_BUS_64]   x21_s5;
+wire  [`YSYX210544_BUS_64]   x22_s6;
+wire  [`YSYX210544_BUS_64]   x23_s7;
+wire  [`YSYX210544_BUS_64]   x24_s8;
+wire  [`YSYX210544_BUS_64]   x25_s9;
+wire  [`YSYX210544_BUS_64]   x26_s10;
+wire  [`YSYX210544_BUS_64]   x27_s11;
+wire  [`YSYX210544_BUS_64]   x28_t3;
+wire  [`YSYX210544_BUS_64]   x29_t4;
+wire  [`YSYX210544_BUS_64]   x30_t5;
+wire  [`YSYX210544_BUS_64]   x31_t6;
 
 assign x00_zero = regs[00];
 assign x01_ra   = regs[01];
@@ -108,38 +108,38 @@ assign x31_t6   = regs[31];
 // i_rd 写入
 always @(posedge clk) begin
   if (rst) begin
-    regs[ 0] <= `ZERO_WORD;
-    regs[ 1] <= `ZERO_WORD;
-    regs[ 2] <= `ZERO_WORD;
-    regs[ 3] <= `ZERO_WORD;
-    regs[ 4] <= `ZERO_WORD;
-    regs[ 5] <= `ZERO_WORD;
-    regs[ 6] <= `ZERO_WORD;
-    regs[ 7] <= `ZERO_WORD;
-    regs[ 8] <= `ZERO_WORD;
-    regs[ 9] <= `ZERO_WORD;
-    regs[10] <= `ZERO_WORD;
-    regs[11] <= `ZERO_WORD;
-    regs[12] <= `ZERO_WORD;
-    regs[13] <= `ZERO_WORD;
-    regs[14] <= `ZERO_WORD;
-    regs[15] <= `ZERO_WORD;
-    regs[16] <= `ZERO_WORD;
-    regs[17] <= `ZERO_WORD;
-    regs[18] <= `ZERO_WORD;
-    regs[19] <= `ZERO_WORD;
-    regs[20] <= `ZERO_WORD;
-    regs[21] <= `ZERO_WORD;
-    regs[22] <= `ZERO_WORD;
-    regs[23] <= `ZERO_WORD;
-    regs[24] <= `ZERO_WORD;
-    regs[25] <= `ZERO_WORD;
-    regs[26] <= `ZERO_WORD;
-    regs[27] <= `ZERO_WORD;
-    regs[28] <= `ZERO_WORD;
-    regs[29] <= `ZERO_WORD;
-    regs[30] <= `ZERO_WORD;
-    regs[31] <= `ZERO_WORD;
+    regs[ 0] <= `YSYX210544_ZERO_WORD;
+    regs[ 1] <= `YSYX210544_ZERO_WORD;
+    regs[ 2] <= `YSYX210544_ZERO_WORD;
+    regs[ 3] <= `YSYX210544_ZERO_WORD;
+    regs[ 4] <= `YSYX210544_ZERO_WORD;
+    regs[ 5] <= `YSYX210544_ZERO_WORD;
+    regs[ 6] <= `YSYX210544_ZERO_WORD;
+    regs[ 7] <= `YSYX210544_ZERO_WORD;
+    regs[ 8] <= `YSYX210544_ZERO_WORD;
+    regs[ 9] <= `YSYX210544_ZERO_WORD;
+    regs[10] <= `YSYX210544_ZERO_WORD;
+    regs[11] <= `YSYX210544_ZERO_WORD;
+    regs[12] <= `YSYX210544_ZERO_WORD;
+    regs[13] <= `YSYX210544_ZERO_WORD;
+    regs[14] <= `YSYX210544_ZERO_WORD;
+    regs[15] <= `YSYX210544_ZERO_WORD;
+    regs[16] <= `YSYX210544_ZERO_WORD;
+    regs[17] <= `YSYX210544_ZERO_WORD;
+    regs[18] <= `YSYX210544_ZERO_WORD;
+    regs[19] <= `YSYX210544_ZERO_WORD;
+    regs[20] <= `YSYX210544_ZERO_WORD;
+    regs[21] <= `YSYX210544_ZERO_WORD;
+    regs[22] <= `YSYX210544_ZERO_WORD;
+    regs[23] <= `YSYX210544_ZERO_WORD;
+    regs[24] <= `YSYX210544_ZERO_WORD;
+    regs[25] <= `YSYX210544_ZERO_WORD;
+    regs[26] <= `YSYX210544_ZERO_WORD;
+    regs[27] <= `YSYX210544_ZERO_WORD;
+    regs[28] <= `YSYX210544_ZERO_WORD;
+    regs[29] <= `YSYX210544_ZERO_WORD;
+    regs[30] <= `YSYX210544_ZERO_WORD;
+    regs[31] <= `YSYX210544_ZERO_WORD;
   end
   else begin
     // if ((w_ena) && (w_addr != 5'h00))    
@@ -153,21 +153,21 @@ end
 // i_rs1 读取
 always @(*) begin
   if (rst)
-    o_rs1_data = `ZERO_WORD;
+    o_rs1_data = `YSYX210544_ZERO_WORD;
   else if (i_rs1_ren)
     o_rs1_data = regs[i_rs1];
   else
-    o_rs1_data = `ZERO_WORD;
+    o_rs1_data = `YSYX210544_ZERO_WORD;
 end
 
 // i_rs2 读取
 always @(*) begin
   if (rst)
-    o_rs2_data = `ZERO_WORD;
+    o_rs2_data = `YSYX210544_ZERO_WORD;
   else if (i_rs2_ren)
     o_rs2_data = regs[i_rs2];
   else
-    o_rs2_data = `ZERO_WORD;
+    o_rs2_data = `YSYX210544_ZERO_WORD;
 end
 
 //wire _unused_ok = &{1'b0,

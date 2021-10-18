@@ -11,30 +11,30 @@ module ysyx_210544_id_stage(
   input   wire                i_id_fetched_req,
   input   wire                i_id_decoded_ack,
   output  reg                 o_id_decoded_req,
-  input   wire  [`BUS_64]     i_id_pc,
-  input   wire  [`BUS_32]     i_id_inst,
-  input   wire  [`BUS_64]     i_id_rs1_data,
-  input   wire  [`BUS_64]     i_id_rs2_data,
-  output  wire  [`BUS_64]     o_id_pc,
-  output  wire  [`BUS_32]     o_id_inst,
+  input   wire  [`YSYX210544_BUS_64]     i_id_pc,
+  input   wire  [`YSYX210544_BUS_32]     i_id_inst,
+  input   wire  [`YSYX210544_BUS_64]     i_id_rs1_data,
+  input   wire  [`YSYX210544_BUS_64]     i_id_rs2_data,
+  output  wire  [`YSYX210544_BUS_64]     o_id_pc,
+  output  wire  [`YSYX210544_BUS_32]     o_id_inst,
   output  wire                o_id_rs1_ren,
-  output  wire  [`BUS_RIDX]   o_id_rs1,
+  output  wire  [`YSYX210544_BUS_RIDX]   o_id_rs1,
   output  wire                o_id_rs2_ren,
-  output  wire  [`BUS_RIDX]   o_id_rs2,
-  output  wire  [`BUS_RIDX]   o_id_rd,
+  output  wire  [`YSYX210544_BUS_RIDX]   o_id_rs2,
+  output  wire  [`YSYX210544_BUS_RIDX]   o_id_rd,
   output  wire                o_id_rd_wen,
   output  wire  [7 : 0]       o_id_inst_opcode,
-  output  wire  [`BUS_64]     o_id_op1,
-  output  wire  [`BUS_64]     o_id_op2,
-  output  wire  [`BUS_64]     o_id_op3,
+  output  wire  [`YSYX210544_BUS_64]     o_id_op1,
+  output  wire  [`YSYX210544_BUS_64]     o_id_op2,
+  output  wire  [`YSYX210544_BUS_64]     o_id_op3,
   output  wire                o_id_skipcmt
 );
 
 reg                           i_ena;    // 是否使能组合逻辑单元部件
 wire                          i_disable;
 // 保存输入信息
-reg   [`BUS_64]               tmp_i_id_pc;
-reg   [`BUS_32]               tmp_i_id_inst;
+reg   [`YSYX210544_BUS_64]               tmp_i_id_pc;
+reg   [`YSYX210544_BUS_32]               tmp_i_id_inst;
 
 wire fetched_hs;
 wire decoded_hs;

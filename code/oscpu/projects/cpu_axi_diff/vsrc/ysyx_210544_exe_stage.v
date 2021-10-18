@@ -13,35 +13,35 @@ module ysyx_210544_exe_stage(
   output  reg                 o_ex_executed_req,
   input   wire                i_ex_executed_ack,
   input   wire  [7 : 0]       i_ex_inst_opcode,
-  input   wire  [`BUS_64]     i_ex_pc,
-  input   wire  [`BUS_32]     i_ex_inst,
-  input   wire  [`BUS_64]     i_ex_op1,
-  input   wire  [`BUS_64]     i_ex_op2,
-  input   wire  [`BUS_64]     i_ex_op3,
-  input   wire  [`BUS_RIDX]   i_ex_rd,
+  input   wire  [`YSYX210544_BUS_64]     i_ex_pc,
+  input   wire  [`YSYX210544_BUS_32]     i_ex_inst,
+  input   wire  [`YSYX210544_BUS_64]     i_ex_op1,
+  input   wire  [`YSYX210544_BUS_64]     i_ex_op2,
+  input   wire  [`YSYX210544_BUS_64]     i_ex_op3,
+  input   wire  [`YSYX210544_BUS_RIDX]   i_ex_rd,
   input   wire                i_ex_rd_wen,
   input   wire                i_ex_clint_mstatus_mie,
   input   wire                i_ex_clint_mie_mtie,
   input   wire                i_ex_clint_mtime_overflow,
   input   wire                i_ex_skipcmt,
-  input   wire  [`BUS_64]     i_ex_csr_rdata,
+  input   wire  [`YSYX210544_BUS_64]     i_ex_csr_rdata,
   output  wire  [11 : 0]      o_ex_csr_addr,
   output  wire                o_ex_csr_ren,
   output  wire                o_ex_csr_wen,
-  output  wire  [`BUS_64]     o_ex_csr_wdata,
-  output  wire  [`BUS_64]     o_ex_pc,
-  output  wire  [`BUS_32]     o_ex_inst,
+  output  wire  [`YSYX210544_BUS_64]     o_ex_csr_wdata,
+  output  wire  [`YSYX210544_BUS_64]     o_ex_pc,
+  output  wire  [`YSYX210544_BUS_32]     o_ex_inst,
   output  wire                o_ex_pc_jmp,
-  output  wire  [`BUS_64]     o_ex_pc_jmpaddr,
-  output  wire  [`BUS_RIDX]   o_ex_rd,
+  output  wire  [`YSYX210544_BUS_64]     o_ex_pc_jmpaddr,
+  output  wire  [`YSYX210544_BUS_RIDX]   o_ex_rd,
   output  wire                o_ex_rd_wen,
-  output  wire  [`BUS_64]     o_ex_rd_wdata,
+  output  wire  [`YSYX210544_BUS_64]     o_ex_rd_wdata,
   output  wire  [7 : 0]       o_ex_inst_opcode,
-  output  wire  [`BUS_64]     o_ex_op1,
-  output  wire  [`BUS_64]     o_ex_op2,
-  output  wire  [`BUS_64]     o_ex_op3,
+  output  wire  [`YSYX210544_BUS_64]     o_ex_op1,
+  output  wire  [`YSYX210544_BUS_64]     o_ex_op2,
+  output  wire  [`YSYX210544_BUS_64]     o_ex_op3,
   output  wire                o_ex_skipcmt,
-  output  reg   [`BUS_32]     o_ex_intrNo
+  output  reg   [`YSYX210544_BUS_32]     o_ex_intrNo
 );
 
 wire                          i_disable;
@@ -58,27 +58,27 @@ reg                           o_ena_exeU;
 reg                           o_ena_exceptionU;
 
 wire                          exeU_pc_jmp;
-wire [`BUS_64]                exeU_pc_jmpaddr;
+wire [`YSYX210544_BUS_64]                exeU_pc_jmpaddr;
 wire   [11 : 0]               exeU_csr_addr;
 wire                          exeU_csr_ren;
 wire                          exeU_csr_wen;
-wire   [`BUS_64]              exeU_csr_wdata;
+wire   [`YSYX210544_BUS_64]              exeU_csr_wdata;
 
 wire                          exceptionU_req;
 wire                          exceptionU_pc_jmp;
-wire [`BUS_64]                exceptionU_pc_jmpaddr;
+wire [`YSYX210544_BUS_64]                exceptionU_pc_jmpaddr;
 wire   [11 : 0]               exceptionU_csr_addr;
 wire                          exceptionU_csr_ren;
 wire                          exceptionU_csr_wen;
-wire   [`BUS_64]              exceptionU_csr_wdata;
+wire   [`YSYX210544_BUS_64]              exceptionU_csr_wdata;
 
 // 保存输入信息
 reg   [7 : 0]                 tmp_i_ex_inst_opcode;
-reg   [`BUS_64]               tmp_i_ex_pc;
-reg   [`BUS_32]               tmp_i_ex_inst;
-reg   [`BUS_64]               tmp_i_ex_op1;
-reg   [`BUS_64]               tmp_i_ex_op2;
-reg   [`BUS_64]               tmp_i_ex_op3;
+reg   [`YSYX210544_BUS_64]               tmp_i_ex_pc;
+reg   [`YSYX210544_BUS_32]               tmp_i_ex_inst;
+reg   [`YSYX210544_BUS_64]               tmp_i_ex_op1;
+reg   [`YSYX210544_BUS_64]               tmp_i_ex_op2;
+reg   [`YSYX210544_BUS_64]               tmp_i_ex_op3;
 reg   [4 : 0]                 tmp_i_ex_rd;
 reg                           tmp_i_ex_rd_wen;
 reg                           tmp_i_ex_skipcmt;
@@ -92,7 +92,7 @@ assign o_ex_decoded_ack = 1'b1;
 assign decoded_hs = i_ex_decoded_req & o_ex_decoded_ack;
 assign executed_hs = i_ex_executed_ack & o_ex_executed_req;
 
-assign is_inst_exceptionU = (i_ex_inst_opcode == `INST_ECALL) | (i_ex_inst_opcode == `INST_MRET);
+assign is_inst_exceptionU = (i_ex_inst_opcode == `YSYX210544_INST_ECALL) | (i_ex_inst_opcode == `YSYX210544_INST_MRET);
 assign is_time_int_req = i_ex_clint_mstatus_mie & i_ex_clint_mie_mtie & i_ex_clint_mtime_overflow;
 
 always @(posedge clk) begin

@@ -11,21 +11,21 @@ module ysyx_210544_csrfile(
   input                     i_csr_ren,
   input   wire  [11 : 0]    i_csr_addr,
   input                     i_csr_wen,
-  input   wire  [`BUS_64]   i_csr_wdata,
-  output  reg   [`BUS_64]   o_csr_rdata,
+  input   wire  [`YSYX210544_BUS_64]   i_csr_wdata,
+  output  reg   [`YSYX210544_BUS_64]   o_csr_rdata,
 
   // 中断信号，直接控制csr
   output                    o_csr_clint_mstatus_mie,
   output                    o_csr_clint_mie_mtie,
 
-  output  reg   [`BUS_64]   o_csrs_mcycle,
-  output  reg   [`BUS_64]   o_csrs_mstatus,
-  output  reg   [`BUS_64]   o_csrs_mie,
-  output  reg   [`BUS_64]   o_csrs_mtvec,
-  output  reg   [`BUS_64]   o_csrs_mscratch,
-  output  reg   [`BUS_64]   o_csrs_mepc,
-  output  reg   [`BUS_64]   o_csrs_mcause,
-  output  reg   [`BUS_64]   o_csrs_mip
+  output  reg   [`YSYX210544_BUS_64]   o_csrs_mcycle,
+  output  reg   [`YSYX210544_BUS_64]   o_csrs_mstatus,
+  output  reg   [`YSYX210544_BUS_64]   o_csrs_mie,
+  output  reg   [`YSYX210544_BUS_64]   o_csrs_mtvec,
+  output  reg   [`YSYX210544_BUS_64]   o_csrs_mscratch,
+  output  reg   [`YSYX210544_BUS_64]   o_csrs_mepc,
+  output  reg   [`YSYX210544_BUS_64]   o_csrs_mcause,
+  output  reg   [`YSYX210544_BUS_64]   o_csrs_mip
 );
 
 wire              mstatus_sd;
@@ -42,14 +42,14 @@ always @(*) begin
   end
   else if (i_csr_ren) begin
     case (i_csr_addr)
-        `CSR_ADR_MCYCLE:    o_csr_rdata = o_csrs_mcycle;
-        `CSR_ADR_MSTATUS:   o_csr_rdata = o_csrs_mstatus;
-        `CSR_ADR_MIE:       o_csr_rdata = o_csrs_mie;
-        `CSR_ADR_MTVEC:     o_csr_rdata = o_csrs_mtvec;
-        `CSR_ADR_MSCRATCH:  o_csr_rdata = o_csrs_mscratch;
-        `CSR_ADR_MEPC:      o_csr_rdata = o_csrs_mepc;
-        `CSR_ADR_MCAUSE:    o_csr_rdata = o_csrs_mcause;
-        `CSR_ADR_MIP:       o_csr_rdata = o_csrs_mip;
+        `YSYX210544_CSR_ADR_MCYCLE:    o_csr_rdata = o_csrs_mcycle;
+        `YSYX210544_CSR_ADR_MSTATUS:   o_csr_rdata = o_csrs_mstatus;
+        `YSYX210544_CSR_ADR_MIE:       o_csr_rdata = o_csrs_mie;
+        `YSYX210544_CSR_ADR_MTVEC:     o_csr_rdata = o_csrs_mtvec;
+        `YSYX210544_CSR_ADR_MSCRATCH:  o_csr_rdata = o_csrs_mscratch;
+        `YSYX210544_CSR_ADR_MEPC:      o_csr_rdata = o_csrs_mepc;
+        `YSYX210544_CSR_ADR_MCAUSE:    o_csr_rdata = o_csrs_mcause;
+        `YSYX210544_CSR_ADR_MIP:       o_csr_rdata = o_csrs_mip;
         default:            o_csr_rdata = 0;
     endcase
   end
@@ -76,14 +76,14 @@ always @(posedge clk) begin
         o_csrs_mcycle <= o_csrs_mcycle + 1;
         if (i_csr_wen) begin
             case (i_csr_addr)
-                // `CSR_ADR_MCYCLE:    o_csrs_mcycle <= i_csr_wdata;
-                `CSR_ADR_MSTATUS:   o_csrs_mstatus <= {mstatus_sd, i_csr_wdata[62:0]};
-                `CSR_ADR_MIE:       o_csrs_mie <= i_csr_wdata;
-                `CSR_ADR_MTVEC:     o_csrs_mtvec <= i_csr_wdata;
-                `CSR_ADR_MSCRATCH:  o_csrs_mscratch <= i_csr_wdata;
-                `CSR_ADR_MEPC:      o_csrs_mepc <= i_csr_wdata;
-                `CSR_ADR_MCAUSE:    o_csrs_mcause <= i_csr_wdata;
-                `CSR_ADR_MIP:       o_csrs_mip <= i_csr_wdata;
+                // `YSYX210544_CSR_ADR_MCYCLE:    o_csrs_mcycle <= i_csr_wdata;
+                `YSYX210544_CSR_ADR_MSTATUS:   o_csrs_mstatus <= {mstatus_sd, i_csr_wdata[62:0]};
+                `YSYX210544_CSR_ADR_MIE:       o_csrs_mie <= i_csr_wdata;
+                `YSYX210544_CSR_ADR_MTVEC:     o_csrs_mtvec <= i_csr_wdata;
+                `YSYX210544_CSR_ADR_MSCRATCH:  o_csrs_mscratch <= i_csr_wdata;
+                `YSYX210544_CSR_ADR_MEPC:      o_csrs_mepc <= i_csr_wdata;
+                `YSYX210544_CSR_ADR_MCAUSE:    o_csrs_mcause <= i_csr_wdata;
+                `YSYX210544_CSR_ADR_MIP:       o_csrs_mip <= i_csr_wdata;
                 default: ;
             endcase
         end

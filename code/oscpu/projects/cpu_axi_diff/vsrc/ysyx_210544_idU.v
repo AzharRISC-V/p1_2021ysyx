@@ -7,20 +7,20 @@
 
 module ysyx_210544_idU(
   input   wire                rst,
-  input   wire  [`BUS_32]     i_inst,
-  input   wire  [`BUS_64]     i_rs1_data,
-  input   wire  [`BUS_64]     i_rs2_data,
-  input   wire  [`BUS_64]     i_pc,
+  input   wire  [`YSYX210544_BUS_32]     i_inst,
+  input   wire  [`YSYX210544_BUS_64]     i_rs1_data,
+  input   wire  [`YSYX210544_BUS_64]     i_rs2_data,
+  input   wire  [`YSYX210544_BUS_64]     i_pc,
   output  wire                o_rs1_ren,
-  output  wire  [`BUS_RIDX]   o_rs1,
+  output  wire  [`YSYX210544_BUS_RIDX]   o_rs1,
   output  wire                o_rs2_ren,
-  output  wire  [`BUS_RIDX]   o_rs2,
-  output  wire  [`BUS_RIDX]   o_rd,
+  output  wire  [`YSYX210544_BUS_RIDX]   o_rs2,
+  output  wire  [`YSYX210544_BUS_RIDX]   o_rd,
   output  wire                o_rd_wen,
   output  wire  [7 : 0]       o_inst_opcode,
-  output  reg   [`BUS_64]     o_op1,
-  output  reg   [`BUS_64]     o_op2,
-  output  reg   [`BUS_64]     o_op3,
+  output  reg   [`YSYX210544_BUS_64]     o_op1,
+  output  reg   [`YSYX210544_BUS_64]     o_op2,
+  output  reg   [`YSYX210544_BUS_64]     o_op3,
   output  wire                o_skipcmt
 );
 

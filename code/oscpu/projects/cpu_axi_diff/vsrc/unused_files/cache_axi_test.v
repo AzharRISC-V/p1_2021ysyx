@@ -39,18 +39,18 @@ reg [1:0] reg_rand_idx;
 // 指示读出的数据是否与写入的一致
 wire equal_flag = o_cache_axi_wdata == i_cache_axi_rdata;
 
-reg [`BUS_64] cnt;
+reg [`YSYX210544_BUS_64] cnt;
 wire cache_hs = o_cache_axi_req & i_cache_axi_ack;
-wire cache_hs_read = cache_hs & (o_cache_axi_op == `REQ_READ);
-wire cache_hs_write = cache_hs & (o_cache_axi_op == `REQ_WRITE);
+wire cache_hs_read = cache_hs & (o_cache_axi_op == `YSYX210544_REQ_READ);
+wire cache_hs_write = cache_hs & (o_cache_axi_op == `YSYX210544_REQ_WRITE);
 
 // 演示：延时；写入64字节；延时；读取64字节；。。。
 always @(posedge clk) begin
   if (rst) begin
     cnt <= 0;
     o_cache_axi_req      <= 0;
-    o_cache_axi_addr     <= `PC_START;
-    o_cache_axi_op       <= `REQ_WRITE;
+    o_cache_axi_addr     <= `YSYX210544_PC_START;
+    o_cache_axi_op       <= `YSYX210544_REQ_WRITE;
     o_cache_axi_wdata    <= 0;
   end
   else begin
@@ -58,13 +58,13 @@ always @(posedge clk) begin
     if (cache_hs_write) begin
       o_cache_axi_req      <= 0;
       cnt                 <= 0;
-      o_cache_axi_op       <= `REQ_READ;
+      o_cache_axi_op       <= `YSYX210544_REQ_READ;
     end
     // 读取完毕
     else if (cache_hs_read) begin
       o_cache_axi_req      <= 0;
       cnt                 <= 0;
-      o_cache_axi_op       <= `REQ_WRITE;
+      o_cache_axi_op       <= `YSYX210544_REQ_WRITE;
       reg_rand_idx        <= reg_rand_idx + 1;              // 数据偏移
       o_cache_axi_addr     <= o_cache_axi_addr + 64'h40;    // 地址偏移
     end
@@ -74,7 +74,7 @@ always @(posedge clk) begin
       if (cnt > 1000) begin
         o_cache_axi_req <= 1;
         // 准备要写入的数据
-        if (o_cache_axi_op == `REQ_WRITE) begin
+        if (o_cache_axi_op == `YSYX210544_REQ_WRITE) begin
           o_cache_axi_wdata    <= reg_rand[reg_rand_idx];
         end
       end

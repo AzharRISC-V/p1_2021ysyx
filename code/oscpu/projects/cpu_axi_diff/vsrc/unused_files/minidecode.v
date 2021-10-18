@@ -6,17 +6,17 @@
 module minidecode(
   input   wire                  clk,
   input   wire                  rst,
-  input   wire  [`BUS_64]       pc,
-  input   wire  [`BUS_32]       inst,
+  input   wire  [`YSYX210544_BUS_64]       pc,
+  input   wire  [`YSYX210544_BUS_32]       inst,
 
   // 从寄存器取出数据
   output  wire  [4 : 0]         rs1,
-  input   wire  [`BUS_64]       rs1_data,
+  input   wire  [`YSYX210544_BUS_64]       rs1_data,
   output  wire  [4 : 0]         rs2,
-  input   wire  [`BUS_64]       rs2_data,
+  input   wire  [`YSYX210544_BUS_64]       rs2_data,
 
   output  reg                   pc_jmp,
-  output  reg   [`BUS_64]       pc_jmpaddr
+  output  reg   [`YSYX210544_BUS_64]       pc_jmpaddr
 );
 
 wire [4 : 0] opcode = inst[6  :  2];
@@ -41,13 +41,13 @@ wire cond_bgeu  = rs1_data >= rs2_data;
 wire cond_b     = cond_beq | cond_bne | cond_blt | cond_bge | cond_bltu | cond_bgeu;
 wire jump_b     = inst_b & cond_b;
 
-wire [`BUS_64]I_imm   = { {52{inst[31]}}, inst[31 : 20] };
-wire [`BUS_64]J_imm   = { {44{inst[31]}}, inst[19 : 12], inst[20], inst[30 : 21], 1'b0 };
-wire [`BUS_64]B_imm   = { {52{inst[31]}}, inst[7], inst[30 : 25], inst[11 : 8], 1'b0 };
+wire [`YSYX210544_BUS_64]I_imm   = { {52{inst[31]}}, inst[31 : 20] };
+wire [`YSYX210544_BUS_64]J_imm   = { {44{inst[31]}}, inst[19 : 12], inst[20], inst[30 : 21], 1'b0 };
+wire [`YSYX210544_BUS_64]B_imm   = { {52{inst[31]}}, inst[7], inst[30 : 25], inst[11 : 8], 1'b0 };
 
-wire [`BUS_64] jal_tgt    = pc + I_imm;
-wire [`BUS_64] jalr_tgt   = (rs1_data + J_imm) & (~1);
-wire [`BUS_64] b_tgt      = B_imm;
+wire [`YSYX210544_BUS_64] jal_tgt    = pc + I_imm;
+wire [`YSYX210544_BUS_64] jalr_tgt   = (rs1_data + J_imm) & (~1);
+wire [`YSYX210544_BUS_64] b_tgt      = B_imm;
 
 assign pc_jmp = rst ? 0 : inst_jal | inst_jalr | jump_b;
 

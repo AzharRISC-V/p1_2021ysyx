@@ -4,10 +4,10 @@
 module counter(
   input   wire              clk,
   input   wire              rst,
-  input   wire  [`BUS_8]    min,
-  input   wire  [`BUS_8]    max,
+  input   wire  [`YSYX210544_BUS_8]    min,
+  input   wire  [`YSYX210544_BUS_8]    max,
   input   wire              clear,
-  output  reg   [`BUS_8]    val
+  output  reg   [`YSYX210544_BUS_8]    val
 );
 
 always @(posedge clk or negedge rst) begin

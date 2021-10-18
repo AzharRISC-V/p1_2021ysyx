@@ -12,31 +12,31 @@ module ysyx_210544_wb_stage(
   output  wire                o_wb_memoryed_ack,
   output  reg                 o_wb_writebacked_req,
   input   wire                i_wb_writebacked_ack,
-  input   wire  [`BUS_64]     i_wb_pc,
-  input   wire  [`BUS_32]     i_wb_inst,
-  input   wire  [`BUS_RIDX]   i_wb_rd,
+  input   wire  [`YSYX210544_BUS_64]     i_wb_pc,
+  input   wire  [`YSYX210544_BUS_32]     i_wb_inst,
+  input   wire  [`YSYX210544_BUS_RIDX]   i_wb_rd,
   input   wire                i_wb_rd_wen,
-  input   wire  [`BUS_64]     i_wb_rd_wdata,
+  input   wire  [`YSYX210544_BUS_64]     i_wb_rd_wdata,
   input   wire                i_wb_skipcmt,
-  output  wire  [`BUS_64]     o_wb_pc,
-  output  wire  [`BUS_32]     o_wb_inst,
-  output  wire  [`BUS_RIDX]   o_wb_rd,
+  output  wire  [`YSYX210544_BUS_64]     o_wb_pc,
+  output  wire  [`YSYX210544_BUS_32]     o_wb_inst,
+  output  wire  [`YSYX210544_BUS_RIDX]   o_wb_rd,
   output  wire                o_wb_rd_wen,
-  output  wire  [`BUS_64]     o_wb_rd_wdata,
+  output  wire  [`YSYX210544_BUS_64]     o_wb_rd_wdata,
   output  wire                o_wb_skipcmt,
-  input   wire  [`BUS_32]     i_wb_intrNo,
-  output  reg   [`BUS_32]     o_wb_intrNo
+  input   wire  [`YSYX210544_BUS_32]     i_wb_intrNo,
+  output  reg   [`YSYX210544_BUS_32]     o_wb_intrNo
 );
 
 reg                           i_ena;    // 是否使能组合逻辑单元部件
 wire                          i_disable = !i_ena;
 
 // 保存输入信息
-reg   [`BUS_64]               tmp_i_wb_pc;
-reg   [`BUS_32]               tmp_i_wb_inst;
+reg   [`YSYX210544_BUS_64]               tmp_i_wb_pc;
+reg   [`YSYX210544_BUS_32]               tmp_i_wb_inst;
 reg   [4 : 0]                 tmp_i_wb_rd;
 reg                           tmp_i_wb_rd_wen;
-reg   [`BUS_64]               tmp_i_wb_rd_wdata;
+reg   [`YSYX210544_BUS_64]               tmp_i_wb_rd_wdata;
 reg                           tmp_i_wb_skipcmt;
 
 wire memoryed_hs;

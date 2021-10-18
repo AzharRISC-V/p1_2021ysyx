@@ -4,51 +4,51 @@
 `include "defines.v"
 
 // Burst types
-`define AXI_BURST_TYPE_FIXED                                2'b00
-`define AXI_BURST_TYPE_INCR                                 2'b01
-`define AXI_BURST_TYPE_WRAP                                 2'b10
+// `define AXI_BURST_TYPE_FIXED                                2'b00
+// `define AXI_BURST_TYPE_INCR                                 2'b01
+// `define AXI_BURST_TYPE_WRAP                                 2'b10
 // Access permissions
-`define AXI_PROT_UNPRIVILEGED_ACCESS                        3'b000
-`define AXI_PROT_PRIVILEGED_ACCESS                          3'b001
-`define AXI_PROT_SECURE_ACCESS                              3'b000
-`define AXI_PROT_NON_SECURE_ACCESS                          3'b010
-`define AXI_PROT_DATA_ACCESS                                3'b000
-`define AXI_PROT_INSTRUCTION_ACCESS                         3'b100
+// `define AXI_PROT_UNPRIVILEGED_ACCESS                        3'b000
+// `define AXI_PROT_PRIVILEGED_ACCESS                          3'b001
+// `define AXI_PROT_SECURE_ACCESS                              3'b000
+// `define AXI_PROT_NON_SECURE_ACCESS                          3'b010
+// `define AXI_PROT_DATA_ACCESS                                3'b000
+// `define AXI_PROT_INSTRUCTION_ACCESS                         3'b100
 // Memory types (AR)
-`define AXI_ARCACHE_DEVICE_NON_BUFFERABLE                   4'b0000
-`define AXI_ARCACHE_DEVICE_BUFFERABLE                       4'b0001
-`define AXI_ARCACHE_NORMAL_NON_CACHEABLE_NON_BUFFERABLE     4'b0010
-`define AXI_ARCACHE_NORMAL_NON_CACHEABLE_BUFFERABLE         4'b0011
-`define AXI_ARCACHE_WRITE_THROUGH_NO_ALLOCATE               4'b1010
-`define AXI_ARCACHE_WRITE_THROUGH_READ_ALLOCATE             4'b1110
-`define AXI_ARCACHE_WRITE_THROUGH_WRITE_ALLOCATE            4'b1010
-`define AXI_ARCACHE_WRITE_THROUGH_READ_AND_WRITE_ALLOCATE   4'b1110
-`define AXI_ARCACHE_WRITE_BACK_NO_ALLOCATE                  4'b1011
-`define AXI_ARCACHE_WRITE_BACK_READ_ALLOCATE                4'b1111
-`define AXI_ARCACHE_WRITE_BACK_WRITE_ALLOCATE               4'b1011
-`define AXI_ARCACHE_WRITE_BACK_READ_AND_WRITE_ALLOCATE      4'b1111
+// `define AXI_ARCACHE_DEVICE_NON_BUFFERABLE                   4'b0000
+// `define AXI_ARCACHE_DEVICE_BUFFERABLE                       4'b0001
+// `define AXI_ARCACHE_NORMAL_NON_CACHEABLE_NON_BUFFERABLE     4'b0010
+// `define AXI_ARCACHE_NORMAL_NON_CACHEABLE_BUFFERABLE         4'b0011
+// `define AXI_ARCACHE_WRITE_THROUGH_NO_ALLOCATE               4'b1010
+// `define AXI_ARCACHE_WRITE_THROUGH_READ_ALLOCATE             4'b1110
+// `define AXI_ARCACHE_WRITE_THROUGH_WRITE_ALLOCATE            4'b1010
+// `define AXI_ARCACHE_WRITE_THROUGH_READ_AND_WRITE_ALLOCATE   4'b1110
+// `define AXI_ARCACHE_WRITE_BACK_NO_ALLOCATE                  4'b1011
+// `define AXI_ARCACHE_WRITE_BACK_READ_ALLOCATE                4'b1111
+// `define AXI_ARCACHE_WRITE_BACK_WRITE_ALLOCATE               4'b1011
+// `define AXI_ARCACHE_WRITE_BACK_READ_AND_WRITE_ALLOCATE      4'b1111
 // Memory types (AW)
-`define AXI_AWCACHE_DEVICE_NON_BUFFERABLE                   4'b0000
-`define AXI_AWCACHE_DEVICE_BUFFERABLE                       4'b0001
-`define AXI_AWCACHE_NORMAL_NON_CACHEABLE_NON_BUFFERABLE     4'b0010
-`define AXI_AWCACHE_NORMAL_NON_CACHEABLE_BUFFERABLE         4'b0011
-`define AXI_AWCACHE_WRITE_THROUGH_NO_ALLOCATE               4'b0110
-`define AXI_AWCACHE_WRITE_THROUGH_READ_ALLOCATE             4'b0110
-`define AXI_AWCACHE_WRITE_THROUGH_WRITE_ALLOCATE            4'b1110
-`define AXI_AWCACHE_WRITE_THROUGH_READ_AND_WRITE_ALLOCATE   4'b1110
-`define AXI_AWCACHE_WRITE_BACK_NO_ALLOCATE                  4'b0111
-`define AXI_AWCACHE_WRITE_BACK_READ_ALLOCATE                4'b0111
-`define AXI_AWCACHE_WRITE_BACK_WRITE_ALLOCATE               4'b1111
-`define AXI_AWCACHE_WRITE_BACK_READ_AND_WRITE_ALLOCATE      4'b1111
+// `define AXI_AWCACHE_DEVICE_NON_BUFFERABLE                   4'b0000
+// `define AXI_AWCACHE_DEVICE_BUFFERABLE                       4'b0001
+// `define AXI_AWCACHE_NORMAL_NON_CACHEABLE_NON_BUFFERABLE     4'b0010
+// `define AXI_AWCACHE_NORMAL_NON_CACHEABLE_BUFFERABLE         4'b0011
+// `define AXI_AWCACHE_WRITE_THROUGH_NO_ALLOCATE               4'b0110
+// `define AXI_AWCACHE_WRITE_THROUGH_READ_ALLOCATE             4'b0110
+// `define AXI_AWCACHE_WRITE_THROUGH_WRITE_ALLOCATE            4'b1110
+// `define AXI_AWCACHE_WRITE_THROUGH_READ_AND_WRITE_ALLOCATE   4'b1110
+// `define AXI_AWCACHE_WRITE_BACK_NO_ALLOCATE                  4'b0111
+// `define AXI_AWCACHE_WRITE_BACK_READ_ALLOCATE                4'b0111
+// `define AXI_AWCACHE_WRITE_BACK_WRITE_ALLOCATE               4'b1111
+// `define AXI_AWCACHE_WRITE_BACK_READ_AND_WRITE_ALLOCATE      4'b1111
 
-`define AXI_SIZE_BYTES_1                                    3'b000
-`define AXI_SIZE_BYTES_2                                    3'b001
-`define AXI_SIZE_BYTES_4                                    3'b010
-`define AXI_SIZE_BYTES_8                                    3'b011
-`define AXI_SIZE_BYTES_16                                   3'b100
-`define AXI_SIZE_BYTES_32                                   3'b101
-`define AXI_SIZE_BYTES_64                                   3'b110
-`define AXI_SIZE_BYTES_128                                  3'b111
+// `define AXI_SIZE_BYTES_1                                    3'b000
+// `define AXI_SIZE_BYTES_2                                    3'b001
+// `define AXI_SIZE_BYTES_4                                    3'b010
+// `define AXI_SIZE_BYTES_8                                    3'b011
+// `define AXI_SIZE_BYTES_16                                   3'b100
+// `define AXI_SIZE_BYTES_32                                   3'b101
+// `define AXI_SIZE_BYTES_64                                   3'b110
+// `define AXI_SIZE_BYTES_128                                  3'b111
 
 module ysyx_210544_axi_rw (
     input                               clock,
@@ -58,8 +58,8 @@ module ysyx_210544_axi_rw (
     output                              user_ready_o,
     input                               user_req_i,         // read or write
     input  [7:0]                        user_blks_i,          // blocks: 0 ~ 7， means 1~8 (后端硬件资源限制为8)
-    output reg [`RW_DATA_WIDTH-1:0]     user_rdata_o,
-    input  [`RW_DATA_WIDTH-1:0]         user_wdata_i,
+    output reg [`YSYX210544_RW_DATA_WIDTH-1:0]     user_rdata_o,
+    input  [`YSYX210544_RW_DATA_WIDTH-1:0]         user_wdata_i,
     input  [63:0]                       user_addr_i,
     input  [2:0]                        user_size_i,
     output [1:0]                        user_resp_o,
@@ -141,18 +141,18 @@ wire [2:0] axi_addr_offset_bytes;       // 输入地址的 字节偏移量(0~7)
 wire [5:0] axi_addr_offset_bits;        // 输入地址的   位偏移量(0~56)
 reg  [7:0] axi_w_strb_orig;
 
-wire size_b;
-wire size_h;
-wire size_w;
-wire size_d;
+wire YSYX210544_SIZE_B;
+wire YSYX210544_SIZE_H;
+wire YSYX210544_SIZE_W;
+wire YSYX210544_SIZE_D;
 reg  [63:0] mask_rdata;
 wire [5:0] aligned_offset;                      // 移位的bit数。0~7 转换为 0~56
 wire [63:0] axi_r_data_masked_unaligned;        // 已掩码，已移位后的数据
 
 
 
-assign w_trans    = user_req_i == `REQ_WRITE;
-assign r_trans    = user_req_i == `REQ_READ;
+assign w_trans    = user_req_i == `YSYX210544_REQ_WRITE;
+assign r_trans    = user_req_i == `YSYX210544_REQ_READ;
 assign w_valid    = user_valid_i & w_trans & (!rw_ready);
 assign r_valid    = user_valid_i & r_trans & (!rw_ready);
 
@@ -278,10 +278,10 @@ always @(*) begin
     end
     else begin
     case (user_size_i)
-        `SIZE_B: axi_w_strb_orig = 8'b0000_0001;
-        `SIZE_H: axi_w_strb_orig = 8'b0000_0011;
-        `SIZE_W: axi_w_strb_orig = 8'b0000_1111;
-        `SIZE_D: axi_w_strb_orig = 8'b1111_1111;
+        `YSYX210544_SIZE_B: axi_w_strb_orig = 8'b0000_0001;
+        `YSYX210544_SIZE_H: axi_w_strb_orig = 8'b0000_0011;
+        `YSYX210544_SIZE_W: axi_w_strb_orig = 8'b0000_1111;
+        `YSYX210544_SIZE_D: axi_w_strb_orig = 8'b1111_1111;
         default: axi_w_strb_orig = 8'b0000_0000; // 不支持
     endcase 
     end
@@ -314,22 +314,22 @@ assign axi_ar_burst_o   = 2'b01;// `AXI_BURST_TYPE_INCR;
 assign axi_r_ready_o    = r_state_read;
 
 // User Data Size
-assign size_b             = user_size_i == `SIZE_B;
-assign size_h             = user_size_i == `SIZE_H;
-assign size_w             = user_size_i == `SIZE_W;
-assign size_d             = user_size_i == `SIZE_D;
+assign YSYX210544_SIZE_B             = user_size_i == `YSYX210544_SIZE_B;
+assign YSYX210544_SIZE_H             = user_size_i == `YSYX210544_SIZE_H;
+assign YSYX210544_SIZE_W             = user_size_i == `YSYX210544_SIZE_W;
+assign YSYX210544_SIZE_D             = user_size_i == `YSYX210544_SIZE_D;
 
 // Read data mask
-// assign mask_rdata   = (({64{size_b}} & {{64- 8{1'b0}},  8'hff}) 
-//                      | ({64{size_h}} & {{64-16{1'b0}}, 16'hffff})
-//                      | ({64{size_w}} & {{64-32{1'b0}}, 32'hffffffff})
-//                      | ({64{size_d}} & {{64-64{1'b0}}, 64'hffffffff_ffffffff})
+// assign mask_rdata   = (({64{YSYX210544_SIZE_B}} & {{64- 8{1'b0}},  8'hff}) 
+//                      | ({64{YSYX210544_SIZE_H}} & {{64-16{1'b0}}, 16'hffff})
+//                      | ({64{YSYX210544_SIZE_W}} & {{64-32{1'b0}}, 32'hffffffff})
+//                      | ({64{YSYX210544_SIZE_D}} & {{64-64{1'b0}}, 64'hffffffff_ffffffff})
 //                       );
 always @(*) begin
-    if (size_d)         mask_rdata = 64'hffffffff_ffffffff;
-    else if (size_w)    mask_rdata = 64'h00000000_ffffffff;
-    else if (size_h)    mask_rdata = 64'h00000000_0000ffff;
-    else if (size_b)    mask_rdata = 64'h00000000_000000ff;
+    if (YSYX210544_SIZE_D)         mask_rdata = 64'hffffffff_ffffffff;
+    else if (YSYX210544_SIZE_W)    mask_rdata = 64'h00000000_ffffffff;
+    else if (YSYX210544_SIZE_H)    mask_rdata = 64'h00000000_0000ffff;
+    else if (YSYX210544_SIZE_B)    mask_rdata = 64'h00000000_000000ff;
     else                mask_rdata = 64'd0;
 end
 

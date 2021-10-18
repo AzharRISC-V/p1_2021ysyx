@@ -32,94 +32,94 @@ wire                          writebacked_ack;
 
 // if_stage
 // if_stage -> id_stage
-wire  [`BUS_64]               o_if_pc;
-wire  [`BUS_32]               o_if_inst;
+wire  [`YSYX210544_BUS_64]               o_if_pc;
+wire  [`YSYX210544_BUS_32]               o_if_inst;
 
 // id_stage
 // id_stage -> regfile
 wire                          o_id_rs1_ren;
-wire  [`BUS_RIDX]             o_id_rs1;
+wire  [`YSYX210544_BUS_RIDX]             o_id_rs1;
 wire                          o_id_rs2_ren;
-wire  [`BUS_RIDX]             o_id_rs2;
+wire  [`YSYX210544_BUS_RIDX]             o_id_rs2;
 // id_stage -> exe_stage
-wire  [`BUS_RIDX]             o_id_rd;
+wire  [`YSYX210544_BUS_RIDX]             o_id_rd;
 wire                          o_id_rd_wen;
 wire  [7 : 0]                 o_id_inst_opcode;
-wire  [`BUS_64]               o_id_op1;
-wire  [`BUS_64]               o_id_op2;
-wire  [`BUS_64]               o_id_op3;
+wire  [`YSYX210544_BUS_64]               o_id_op1;
+wire  [`YSYX210544_BUS_64]               o_id_op2;
+wire  [`YSYX210544_BUS_64]               o_id_op3;
 wire                          o_id_skipcmt;
-wire  [`BUS_64]               o_id_pc;
-wire  [`BUS_32]               o_id_inst;
+wire  [`YSYX210544_BUS_64]               o_id_pc;
+wire  [`YSYX210544_BUS_32]               o_id_inst;
 
 // exe_stage
 // exe_stage -> mem_stage
-wire  [`BUS_64]               o_ex_pc;
-wire  [`BUS_32]               o_ex_inst;
+wire  [`YSYX210544_BUS_64]               o_ex_pc;
+wire  [`YSYX210544_BUS_32]               o_ex_inst;
 wire                          o_ex_pc_jmp;
-wire  [`BUS_64]               o_ex_pc_jmpaddr;
+wire  [`YSYX210544_BUS_64]               o_ex_pc_jmpaddr;
 wire  [7 : 0]                 o_ex_inst_opcode;
-wire  [`BUS_RIDX]             o_ex_rd;
+wire  [`YSYX210544_BUS_RIDX]             o_ex_rd;
 wire                          o_ex_rd_wen;
-wire  [`BUS_64]               o_ex_rd_wdata;
-wire  [`BUS_64]               o_ex_op1;
-wire  [`BUS_64]               o_ex_op2;
-wire  [`BUS_64]               o_ex_op3;
+wire  [`YSYX210544_BUS_64]               o_ex_rd_wdata;
+wire  [`YSYX210544_BUS_64]               o_ex_op1;
+wire  [`YSYX210544_BUS_64]               o_ex_op2;
+wire  [`YSYX210544_BUS_64]               o_ex_op3;
 wire                          o_ex_skipcmt;
-wire  [`BUS_32]               o_ex_intrNo;
+wire  [`YSYX210544_BUS_32]               o_ex_intrNo;
 
 // ex_stage -> csrfile
 wire  [11 : 0]                o_ex_csr_addr;
 wire                          o_ex_csr_ren;
 wire                          o_ex_csr_wen;
-wire  [`BUS_64]               o_ex_csr_wdata;
+wire  [`YSYX210544_BUS_64]               o_ex_csr_wdata;
 
 // mem_stage
 // mem_stage -> wb_stage
-wire  [`BUS_64]               o_mem_pc;
-wire  [`BUS_32]               o_mem_inst;
-wire  [`BUS_RIDX]             o_mem_rd;
+wire  [`YSYX210544_BUS_64]               o_mem_pc;
+wire  [`YSYX210544_BUS_32]               o_mem_inst;
+wire  [`YSYX210544_BUS_RIDX]             o_mem_rd;
 wire                          o_mem_rd_wen;
-wire  [`BUS_64]               o_mem_rd_wdata;
+wire  [`YSYX210544_BUS_64]               o_mem_rd_wdata;
 wire                          o_mem_skipcmt;
-wire  [`BUS_32]               o_mem_intrNo;
+wire  [`YSYX210544_BUS_32]               o_mem_intrNo;
 // mem_stage -> cache
 wire                          o_mem_fencei_req;
 wire                          i_mem_fencei_ack;
 
 // wb_stage
 // wb_stage -> cmt_stage
-wire  [`BUS_64]               o_wb_pc;
-wire  [`BUS_32]               o_wb_inst;
+wire  [`YSYX210544_BUS_64]               o_wb_pc;
+wire  [`YSYX210544_BUS_32]               o_wb_inst;
 wire                          o_wb_skipcmt;
-wire  [`BUS_32]               o_wb_intrNo;
+wire  [`YSYX210544_BUS_32]               o_wb_intrNo;
 // wb_stage -> regfile
-wire  [`BUS_RIDX]             o_wb_rd;
+wire  [`YSYX210544_BUS_RIDX]             o_wb_rd;
 wire                          o_wb_rd_wen;
-wire  [`BUS_64]               o_wb_rd_wdata;
+wire  [`YSYX210544_BUS_64]               o_wb_rd_wdata;
 
 // regfile
 // regfile -> id_stage
-wire  [`BUS_64]               o_reg_id_rs1_data;
-wire  [`BUS_64]               o_reg_id_rs2_data;
+wire  [`YSYX210544_BUS_64]               o_reg_id_rs1_data;
+wire  [`YSYX210544_BUS_64]               o_reg_id_rs2_data;
 
-`ifdef DIFFTEST_YSYX_210544
+`ifdef YSYX210544_DIFFTEST_FLAG
 // regfile -> difftest
-wire  [`BUS_64]               o_reg_regs[0 : 31];
+wire  [`YSYX210544_BUS_64]               o_reg_regs[0 : 31];
 `endif
 
 // csrfile
 // csrfile -> ex_stage
-wire  [`BUS_64]               o_csr_rdata;
+wire  [`YSYX210544_BUS_64]               o_csr_rdata;
 // csrfile -> wb_stage
-wire  [`BUS_64]               o_csr_csrs_mcycle;
-wire  [`BUS_64]               o_csr_csrs_mstatus;
-wire  [`BUS_64]               o_csr_csrs_mie;
-wire  [`BUS_64]               o_csr_csrs_mtvec;
-wire  [`BUS_64]               o_csr_csrs_mscratch;
-wire  [`BUS_64]               o_csr_csrs_mepc;
-wire  [`BUS_64]               o_csr_csrs_mcause;
-wire  [`BUS_64]               o_csr_csrs_mip;
+wire  [`YSYX210544_BUS_64]               o_csr_csrs_mcycle;
+wire  [`YSYX210544_BUS_64]               o_csr_csrs_mstatus;
+wire  [`YSYX210544_BUS_64]               o_csr_csrs_mie;
+wire  [`YSYX210544_BUS_64]               o_csr_csrs_mtvec;
+wire  [`YSYX210544_BUS_64]               o_csr_csrs_mscratch;
+wire  [`YSYX210544_BUS_64]               o_csr_csrs_mepc;
+wire  [`YSYX210544_BUS_64]               o_csr_csrs_mcause;
+wire  [`YSYX210544_BUS_64]               o_csr_csrs_mip;
 
 // clint
 wire                          o_clint_mstatus_mie;
@@ -141,7 +141,7 @@ wire                          i_dcache_ack;
 wire  [63:0]                  i_dcache_rdata;
 
 
-`ifdef DIFFTEST_YSYX_210544
+`ifdef YSYX210544_DIFFTEST_FLAG
 
 always @(posedge clk) begin
   if (o_if_inst == 32'h7b) begin
@@ -326,7 +326,7 @@ ysyx_210544_wb_stage Wb_stage(
   .o_wb_intrNo                (o_wb_intrNo                )
 );
 
-`ifdef DIFFTEST_YSYX_210544
+`ifdef YSYX210544_DIFFTEST_FLAG
 
 ysyx_210544_cmt_stage Cmt_stage(
   .clk                        (clk                        ),
@@ -368,7 +368,7 @@ ysyx_210544_regfile Regfile(
   .o_rs1_data                 (o_reg_id_rs1_data          ),
   .o_rs2_data                 (o_reg_id_rs2_data          )
   
-`ifdef DIFFTEST_YSYX_210544
+`ifdef YSYX210544_DIFFTEST_FLAG
     ,
   .o_regs                     (o_reg_regs                 )
 `endif

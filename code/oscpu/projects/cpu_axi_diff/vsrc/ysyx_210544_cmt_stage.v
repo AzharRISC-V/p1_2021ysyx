@@ -3,7 +3,7 @@
 
 // Commit Interface (for difftest)
 
-`ifdef DIFFTEST_YSYX_210544
+`ifdef YSYX210544_DIFFTEST_FLAG
 
 `include "defines.v"
 
@@ -14,18 +14,18 @@ module ysyx_210544_cmt_stage(
   output  reg                 o_cmt_writebacked_ack,
   input   wire [4 : 0]        i_cmt_rd,
   input   wire                i_cmt_rd_wen,
-  input   wire [`BUS_64]      i_cmt_rd_wdata,
-  input   wire [`BUS_64]      i_cmt_pc,
-  input   wire [`BUS_32]      i_cmt_inst,
+  input   wire [`YSYX210544_BUS_64]      i_cmt_rd_wdata,
+  input   wire [`YSYX210544_BUS_64]      i_cmt_pc,
+  input   wire [`YSYX210544_BUS_32]      i_cmt_inst,
   input   wire                i_cmt_skipcmt,
-  input   wire [`BUS_64]      i_cmt_regs[0:31],
-  input   wire [`BUS_64]      i_cmt_csrs_mstatus,
-  input   wire [`BUS_64]      i_cmt_csrs_mie,
-  input   wire [`BUS_64]      i_cmt_csrs_mtvec,
-  input   wire [`BUS_64]      i_cmt_csrs_mscratch,
-  input   wire [`BUS_64]      i_cmt_csrs_mepc,
-  input   wire [`BUS_64]      i_cmt_csrs_mcause,
-  input   wire [`BUS_32]      i_cmt_intrNo
+  input   wire [`YSYX210544_BUS_64]      i_cmt_regs[0:31],
+  input   wire [`YSYX210544_BUS_64]      i_cmt_csrs_mstatus,
+  input   wire [`YSYX210544_BUS_64]      i_cmt_csrs_mie,
+  input   wire [`YSYX210544_BUS_64]      i_cmt_csrs_mtvec,
+  input   wire [`YSYX210544_BUS_64]      i_cmt_csrs_mscratch,
+  input   wire [`YSYX210544_BUS_64]      i_cmt_csrs_mepc,
+  input   wire [`YSYX210544_BUS_64]      i_cmt_csrs_mcause,
+  input   wire [`YSYX210544_BUS_32]      i_cmt_intrNo
 );
 
 assign o_cmt_writebacked_ack = 1'b1;

@@ -57,12 +57,12 @@ module ysyx_210544_cache_basic (
   input   wire                rst,
 
   // 常规通道
-  input   wire  [`BUS_64]     i_cache_basic_addr,         // 地址。保证与操作数大小相加后不能跨界。
-  input   wire  [`BUS_64]     i_cache_basic_wdata,        // 写入的数据
+  input   wire  [`YSYX210544_BUS_64]     i_cache_basic_addr,         // 地址。保证与操作数大小相加后不能跨界。
+  input   wire  [`YSYX210544_BUS_64]     i_cache_basic_wdata,        // 写入的数据
   input   wire  [2 : 0]       i_cache_basic_bytes,        // 操作的字节数: 0~7表示1~8字节
   input   wire                i_cache_basic_op,           // 操作: 0:read, 1:write
   input   wire                i_cache_basic_req,          // 请求
-  output  reg   [`BUS_64]     o_cache_basic_rdata,        // 读出的数据
+  output  reg   [`YSYX210544_BUS_64]     o_cache_basic_rdata,        // 读出的数据
   output  reg                 o_cache_basic_ack,          // 应答
 
   // 同步通道
@@ -116,15 +116,15 @@ parameter [2:0] STATE_LOAD_TO_RAM       = 3'd5;
 parameter [2:0] STATE_FENCE_RD          = 3'd6;
 parameter [2:0] STATE_FENCE_WR          = 3'd7;
 
-`define WAYS                  4             // 路数
-`define BLKS                  16            // 块数
-`define BUS_WAYS              0:3           // 各路的总线。4路
+`define YSYX210544_WAYS                  4             // 路数
+`define YSYX210544_BLKS                  16            // 块数
+`define YSYX210544_BUS_WAYS              0:3           // 各路的总线。4路
 
-`define c_tag_BUS             21:0          // cache的tag所在的总线 
-`define c_tag_msb_BUS         21            // cache的tag最高位所在的总线，若为1则是主存地址，即：8000_0000 ~ 4GB-1 
-`define c_v_BUS               22            // cache的v所在的总线 
-`define c_d_BUS               23            // cache的d所在的总线 
-`define c_s_BUS               25:24         // cache的s所在的总线
+`define YSYX210544_C_TAG_BUS             21:0          // cache的tag所在的总线 
+`define YSYX210544_C_TAG_MSG_BUS         21            // cache的tag最高位所在的总线，若为1则是主存地址，即：8000_0000 ~ 4GB-1 
+`define YSYX210544_C_V_BUS               22            // cache的v所在的总线 
+`define YSYX210544_C_D_BUS               23            // cache的d所在的总线 
+`define YSYX210544_C_S_BUS               25:24         // cache的s所在的总线
 
 
 reg                           o_cache_axi_req;            // 请求
@@ -163,20 +163,20 @@ wire  [8 : 0]                 mem_offset_bits;            // mem块内偏移(按
 wire  [21: 0]                 mem_tag;                    // mem标记
 
 // =============== Cache Info 缓存信息 ===============
-reg   [25 : 0]                cache_info[`BUS_WAYS][0:`BLKS-1];   // cache信息块
+reg   [25 : 0]                cache_info[`YSYX210544_BUS_WAYS][0:`YSYX210544_BLKS-1];   // cache信息块
 wire  [5 : 0]                 c_data_lineno;                      // cache数据行号(0~63)
 //wire  [3 : 0]                 c_offset_bytes;                     // cache行内偏移(按字节)(0~15)
 wire  [6 : 0]                 c_offset_bits;                      // cache行内偏移(按位)(0~127)
 wire  [127:0]                 c_wdata;                            // cache行要写入的数据
 wire  [127:0]                 c_wmask;                            // cache行要写入的掩码
 
-wire                          c_v[`BUS_WAYS];                     // cache valid bit 有效位，1位有效
-wire                          c_d[`BUS_WAYS];                     // cache dirty bit 脏位，1为脏
-wire  [1 : 0]                 c_s[`BUS_WAYS];                     // cache seqence bit 顺序位，越大越需要先被替换走
-wire  [21: 0]                 c_tag[`BUS_WAYS];                   // cache标记
+wire                          c_v[`YSYX210544_BUS_WAYS];                     // cache valid bit 有效位，1位有效
+wire                          c_d[`YSYX210544_BUS_WAYS];                     // cache dirty bit 脏位，1为脏
+wire  [1 : 0]                 c_s[`YSYX210544_BUS_WAYS];                     // cache seqence bit 顺序位，越大越需要先被替换走
+wire  [21: 0]                 c_tag[`YSYX210544_BUS_WAYS];                   // cache标记
 
 // =============== cache选中 ===============
-wire                          hit[`BUS_WAYS];     // 各路是否命中
+wire                          hit[`YSYX210544_BUS_WAYS];     // 各路是否命中
 wire                          hit_any;            // 是否有任意一路命中？
 wire [1:0]                    wayID_smin;         // s最小的是哪一路？
 wire [1:0]                    wayID_hit;          // 已命中的是哪一路（至多有一路命中） 
@@ -184,12 +184,12 @@ wire [1:0]                    wayID_select;       // 选择了哪一路？方法
 
 // =============== Cache Data 缓存数据 ===============
 
-reg                           chip_data_cen[`BUS_WAYS];               // RAM 使能，低电平有效
-reg                           chip_data_wen[`BUS_WAYS];               // RAM 写使能，低电平有效
-reg   [5  : 0]                chip_data_addr[`BUS_WAYS];              // RAM 地址
-reg   [127: 0]                chip_data_wdata[`BUS_WAYS];             // RAM 写入数据
-reg   [127: 0]                chip_data_wmask[`BUS_WAYS];             // RAM 写入掩码
-wire  [127: 0]                chip_data_rdata[`BUS_WAYS];             // RAM 读出数据
+reg                           chip_data_cen[`YSYX210544_BUS_WAYS];               // RAM 使能，低电平有效
+reg                           chip_data_wen[`YSYX210544_BUS_WAYS];               // RAM 写使能，低电平有效
+reg   [5  : 0]                chip_data_addr[`YSYX210544_BUS_WAYS];              // RAM 地址
+reg   [127: 0]                chip_data_wdata[`YSYX210544_BUS_WAYS];             // RAM 写入数据
+reg   [127: 0]                chip_data_wmask[`YSYX210544_BUS_WAYS];             // RAM 写入掩码
+wire  [127: 0]                chip_data_rdata[`YSYX210544_BUS_WAYS];             // RAM 读出数据
 
 
 reg [2:0] state;
@@ -225,7 +225,7 @@ assign o_cache_basic_sync_rinfo     = sync_rinfo;
 assign o_cache_basic_sync_rdata     = sync_rdata;
 
 assign sync_rlast                   = !sync_rreq ? 1'd0 : (sync_rwayid == 2'd3) && (sync_rblkid == 4'd15);
-assign sync_r_need                  = sync_rinfo[`c_v_BUS] & sync_rinfo[`c_tag_msb_BUS];
+assign sync_r_need                  = sync_rinfo[`YSYX210544_C_V_BUS] & sync_rinfo[`YSYX210544_C_TAG_MSG_BUS];
 
 assign sync_wwayid                  = i_cache_basic_sync_wwayid;
 assign sync_wblkid                  = i_cache_basic_sync_wblkid;
@@ -271,25 +271,25 @@ assign c_wmask          = {64'd0, user_wmask} << c_offset_bits;
 assign c_wdata          = {64'd0, i_cache_basic_wdata} << c_offset_bits;
 
 // c_tag, c_v, c_d, c_s
-assign c_tag[0]   = cache_info[0][mem_blkno][`c_tag_BUS];
-assign c_tag[1]   = cache_info[1][mem_blkno][`c_tag_BUS];
-assign c_tag[2]   = cache_info[2][mem_blkno][`c_tag_BUS];
-assign c_tag[3]   = cache_info[3][mem_blkno][`c_tag_BUS];
+assign c_tag[0]   = cache_info[0][mem_blkno][`YSYX210544_C_TAG_BUS];
+assign c_tag[1]   = cache_info[1][mem_blkno][`YSYX210544_C_TAG_BUS];
+assign c_tag[2]   = cache_info[2][mem_blkno][`YSYX210544_C_TAG_BUS];
+assign c_tag[3]   = cache_info[3][mem_blkno][`YSYX210544_C_TAG_BUS];
 
-assign c_v[0]     = cache_info[0][mem_blkno][`c_v_BUS];
-assign c_v[1]     = cache_info[1][mem_blkno][`c_v_BUS];
-assign c_v[2]     = cache_info[2][mem_blkno][`c_v_BUS];
-assign c_v[3]     = cache_info[3][mem_blkno][`c_v_BUS];
+assign c_v[0]     = cache_info[0][mem_blkno][`YSYX210544_C_V_BUS];
+assign c_v[1]     = cache_info[1][mem_blkno][`YSYX210544_C_V_BUS];
+assign c_v[2]     = cache_info[2][mem_blkno][`YSYX210544_C_V_BUS];
+assign c_v[3]     = cache_info[3][mem_blkno][`YSYX210544_C_V_BUS];
 
-assign c_d[0]     = cache_info[0][mem_blkno][`c_d_BUS];
-assign c_d[1]     = cache_info[1][mem_blkno][`c_d_BUS];
-assign c_d[2]     = cache_info[2][mem_blkno][`c_d_BUS];
-assign c_d[3]     = cache_info[3][mem_blkno][`c_d_BUS];
+assign c_d[0]     = cache_info[0][mem_blkno][`YSYX210544_C_D_BUS];
+assign c_d[1]     = cache_info[1][mem_blkno][`YSYX210544_C_D_BUS];
+assign c_d[2]     = cache_info[2][mem_blkno][`YSYX210544_C_D_BUS];
+assign c_d[3]     = cache_info[3][mem_blkno][`YSYX210544_C_D_BUS];
 
-assign c_s[0]     = cache_info[0][mem_blkno][`c_s_BUS];
-assign c_s[1]     = cache_info[1][mem_blkno][`c_s_BUS];
-assign c_s[2]     = cache_info[2][mem_blkno][`c_s_BUS];
-assign c_s[3]     = cache_info[3][mem_blkno][`c_s_BUS];
+assign c_s[0]     = cache_info[0][mem_blkno][`YSYX210544_C_S_BUS];
+assign c_s[1]     = cache_info[1][mem_blkno][`YSYX210544_C_S_BUS];
+assign c_s[2]     = cache_info[2][mem_blkno][`YSYX210544_C_S_BUS];
+assign c_s[3]     = cache_info[3][mem_blkno][`YSYX210544_C_S_BUS];
 
 // hit
 assign hit[0] = c_v[0] && (c_tag[0] == mem_tag);
@@ -305,7 +305,7 @@ assign wayID_select = hit_any ? wayID_hit : wayID_smin;
 // RAM instantiate
 genvar way;
 generate
-  for (way = 0; way < `WAYS; way = way + 1) 
+  for (way = 0; way < `YSYX210544_WAYS; way = way + 1) 
   begin: CACHE_DATA_GEN
     S011HD1P_X32Y2D128_BW  chip_data(
       .CLK                        (clk                  ),
@@ -531,7 +531,7 @@ always @(posedge clk) begin
 
       STATE_READY: begin
         if (!hs_cache) begin
-          if (i_cache_basic_op == `REQ_READ) begin
+          if (i_cache_basic_op == `YSYX210544_REQ_READ) begin
             // 读取RAM一个单元
             if (!hs_ramline) begin
               chip_data_cen[wayID_select] <= CHIP_DATA_CEN;
@@ -559,7 +559,7 @@ always @(posedge clk) begin
               chip_data_wen[wayID_select] <= !CHIP_DATA_WEN;
               o_cache_basic_ack <= 1'd1;
               // cache更新记录
-              cache_info[wayID_select][mem_blkno][`c_d_BUS]  <= 1'd1;
+              cache_info[wayID_select][mem_blkno][`YSYX210544_C_D_BUS]  <= 1'd1;
             end
           end
         end
@@ -573,7 +573,7 @@ always @(posedge clk) begin
         if (!hs_cache_axi) begin
             o_cache_axi_req <= 1'd1;
             o_cache_axi_addr <= user_blk_aligned_bytes;
-            o_cache_axi_op <= `REQ_READ;
+            o_cache_axi_op <= `YSYX210544_REQ_READ;
         end
         else begin
           o_cache_axi_req <= 1'd0;
@@ -596,14 +596,14 @@ always @(posedge clk) begin
           chip_data_cen[wayID_select] <= !CHIP_DATA_CEN;
           chip_data_wen[wayID_select] <= !CHIP_DATA_WEN;
           // 更新cache记录一行的 tag,v,d 位
-          cache_info[wayID_select][mem_blkno][`c_tag_BUS]      <= mem_tag; // c_tag
-          cache_info[wayID_select][mem_blkno][`c_v_BUS]        <= 1'd1;       // 有效位
-          cache_info[wayID_select][mem_blkno][`c_d_BUS]        <= 1'd0;       // 脏位
+          cache_info[wayID_select][mem_blkno][`YSYX210544_C_TAG_BUS]      <= mem_tag; // c_tag
+          cache_info[wayID_select][mem_blkno][`YSYX210544_C_V_BUS]        <= 1'd1;       // 有效位
+          cache_info[wayID_select][mem_blkno][`YSYX210544_C_D_BUS]        <= 1'd0;       // 脏位
           // 更新cache记录四行的 s 位，循环移动
-          cache_info[3][mem_blkno][`c_s_BUS] <= cache_info[2][mem_blkno][`c_s_BUS];
-          cache_info[2][mem_blkno][`c_s_BUS] <= cache_info[1][mem_blkno][`c_s_BUS];
-          cache_info[1][mem_blkno][`c_s_BUS] <= cache_info[0][mem_blkno][`c_s_BUS];
-          cache_info[0][mem_blkno][`c_s_BUS] <= cache_info[3][mem_blkno][`c_s_BUS];
+          cache_info[3][mem_blkno][`YSYX210544_C_S_BUS] <= cache_info[2][mem_blkno][`YSYX210544_C_S_BUS];
+          cache_info[2][mem_blkno][`YSYX210544_C_S_BUS] <= cache_info[1][mem_blkno][`YSYX210544_C_S_BUS];
+          cache_info[1][mem_blkno][`YSYX210544_C_S_BUS] <= cache_info[0][mem_blkno][`YSYX210544_C_S_BUS];
+          cache_info[0][mem_blkno][`YSYX210544_C_S_BUS] <= cache_info[3][mem_blkno][`YSYX210544_C_S_BUS];
         end
       end
 
@@ -625,7 +625,7 @@ always @(posedge clk) begin
           ram_op_cnt <= 3'd0;
           chip_data_cen[wayID_select] <= !CHIP_DATA_CEN;
           // 更新cache记录一行的 d 位。
-          cache_info[wayID_select][mem_blkno][`c_d_BUS]        <= 1'd0;       // 脏位
+          cache_info[wayID_select][mem_blkno][`YSYX210544_C_D_BUS]        <= 1'd0;       // 脏位
         end
       end
 
@@ -634,7 +634,7 @@ always @(posedge clk) begin
         if (!hs_cache_axi) begin
             o_cache_axi_req <= 1'd1;
             o_cache_axi_addr <= {32'd0, c_tag[wayID_select], mem_blkno, 6'd0 };
-            o_cache_axi_op <= `REQ_WRITE;
+            o_cache_axi_op <= `YSYX210544_REQ_WRITE;
         end
         else begin
           o_cache_axi_wdata <= 512'd0;
@@ -739,7 +739,7 @@ always @(posedge clk) begin
             chip_data_wen[sync_wwayid] <= !CHIP_DATA_WEN;
             // 更新cache记录一行，并强行置位dirty位，保证在调换时能被写入主存
             // 这里cache s位是否需要考虑？如果是DCache全部搬运，则不需要考虑。如果是搬运v=1的块，则要考虑吧
-            cache_info[sync_wwayid][sync_wblkid] <= sync_winfo | (26'd1 << `c_d_BUS);
+            cache_info[sync_wwayid][sync_wblkid] <= sync_winfo | (26'd1 << `YSYX210544_C_D_BUS);
 
             sync_wack <= 1'd1;
           end

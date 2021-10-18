@@ -13,12 +13,12 @@ module ysyx_210544_memU(
   input   wire                ack,
   output  reg                 req,
 
-  input   wire  [`BUS_64]     i_addr,
+  input   wire  [`YSYX210544_BUS_64]     i_addr,
   input   wire  [2:0]         i_bytes,
   input   wire                i_ren,
   input   wire                i_wen,
-  input   wire  [`BUS_64]     i_wdata,
-  output  reg   [`BUS_64]     o_rdata,
+  input   wire  [`YSYX210544_BUS_64]     i_wdata,
+  output  reg   [`YSYX210544_BUS_64]     o_rdata,
 
   ///////////////////////////////////////////////
   // DCache interface
@@ -52,14 +52,14 @@ always @(posedge clk) begin
     if (start) begin
       if (i_ren) begin
         o_dcache_req      <= 1;
-        o_dcache_op       <= `REQ_READ;
+        o_dcache_op       <= `YSYX210544_REQ_READ;
         o_dcache_addr     <= i_addr;
         o_dcache_bytes    <= i_bytes;
         wait_finish       <= 1;
       end
       else if (i_wen) begin
         o_dcache_req      <= 1;
-        o_dcache_op       <= `REQ_WRITE;
+        o_dcache_op       <= `YSYX210544_REQ_WRITE;
         o_dcache_addr     <= i_addr;
         o_dcache_bytes    <= i_bytes;
         o_dcache_wdata    <= i_wdata;

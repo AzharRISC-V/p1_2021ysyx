@@ -49,7 +49,7 @@ module ysyx_210544_cache_axi(
     assign hs_ok    = o_axi_io_valid & i_axi_io_ready;
     
     // axi每次传输的大小：64bit
-    assign o_axi_io_size = is_flash ? `SIZE_W : `SIZE_D;
+    assign o_axi_io_size = is_flash ? `YSYX210544_SIZE_W : `YSYX210544_SIZE_D;
     
     // 块数：0~7表示1~8块
     assign o_axi_io_blks = is_flash ? 8'd0 : 8'd7;

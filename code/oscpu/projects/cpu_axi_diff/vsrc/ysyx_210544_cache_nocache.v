@@ -9,12 +9,12 @@
 module ysyx_210544_cache_nocache (
   input   wire                clk,
   input   wire                rst,
-  input   wire  [`BUS_64]     i_cache_nocache_addr,          // 地址
-  input   wire  [`BUS_64]     i_cache_nocache_wdata,         // 写入的数据
+  input   wire  [`YSYX210544_BUS_64]     i_cache_nocache_addr,          // 地址
+  input   wire  [`YSYX210544_BUS_64]     i_cache_nocache_wdata,         // 写入的数据
   input   wire  [2 : 0]       i_cache_nocache_bytes,         // 操作的字大小: 0~7表示1~8字节
   input   wire                i_cache_nocache_op,            // 操作: 0:read, 1:write
   input   wire                i_cache_nocache_req,           // 请求
-  output  reg   [`BUS_64]     o_cache_nocache_rdata,         // 读出的数据
+  output  reg   [`YSYX210544_BUS_64]     o_cache_nocache_rdata,         // 读出的数据
   output  reg                 o_cache_nocache_ack,           // 应答
 
   // AXI interface
@@ -37,11 +37,11 @@ assign hs_axi_io = o_axi_io_valid & i_axi_io_ready;
 
 always @(*) begin
   case (i_cache_nocache_bytes)
-    3'b000: nocache_size = `SIZE_B;
-    3'b001: nocache_size = `SIZE_H;
-    3'b011: nocache_size = `SIZE_W;
-    3'b111: nocache_size = `SIZE_D;
-    default: nocache_size = `SIZE_B;  // 这种情况应该是不支持的。
+    3'b000: nocache_size = `YSYX210544_SIZE_B;
+    3'b001: nocache_size = `YSYX210544_SIZE_H;
+    3'b011: nocache_size = `YSYX210544_SIZE_W;
+    3'b111: nocache_size = `YSYX210544_SIZE_D;
+    default: nocache_size = `YSYX210544_SIZE_B;  // 这种情况应该是不支持的。
   endcase
 end
 

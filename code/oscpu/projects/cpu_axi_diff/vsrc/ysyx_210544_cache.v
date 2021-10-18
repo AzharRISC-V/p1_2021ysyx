@@ -134,7 +134,7 @@ ysyx_210544_cache_core ICache(
   .i_cache_core_addr          (i_icache_addr              ),
   .i_cache_core_wdata         (64'd0                      ),
   .i_cache_core_bytes         (3'd3                       ),
-  .i_cache_core_op            (`REQ_READ                  ),
+  .i_cache_core_op            (`YSYX210544_REQ_READ                  ),
   .i_cache_core_req           (ch_icache ? i_icache_req : 1'b0),
   .o_cache_core_rdata         (icache_rdata               ),
   .o_cache_core_ack           (icache_ack                 ),
@@ -251,7 +251,7 @@ assign nocache_req      = ch_nocache ? (i_icache_req | i_dcache_req             
 assign nocache_addr     = ch_nocache ? (i_icache_req ? i_icache_addr  : i_dcache_addr   ) : 64'd0;
 assign nocache_wdata    = ch_nocache ? (i_icache_req ? 64'd0          : i_dcache_wdata  ) : 64'd0;
 assign nocache_bytes    = ch_nocache ? (i_icache_req ? 3'd3           : i_dcache_bytes  ) : 3'd0;
-assign nocache_op       = ch_nocache ? (i_icache_req ? `REQ_READ      : i_dcache_op     ) : `REQ_READ;
+assign nocache_op       = ch_nocache ? (i_icache_req ? `YSYX210544_REQ_READ      : i_dcache_op     ) : `YSYX210544_REQ_READ;
 
 assign o_axi_io_valid   =                   ch_icache ? icache_axi_io_valid   : (ch_dcache ? dcache_axi_io_valid  : nocache_axi_io_valid);
 assign o_axi_io_op      = o_axi_io_valid ? (ch_icache ? icache_axi_io_op      : (ch_dcache ? dcache_axi_io_op     : nocache_axi_io_op   )) : 0;

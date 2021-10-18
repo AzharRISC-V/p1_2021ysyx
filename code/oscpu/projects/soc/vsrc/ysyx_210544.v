@@ -5,251 +5,185 @@
 // Definitions
 
 
-`define ZERO_WORD           64'h00000000_00000000
+`define YSYX210544_ZERO_WORD           64'h00000000_00000000
 
-`ifdef DIFFTEST_YSYX_210544
-`define PC_START            64'h00000000_80000000
+`ifdef YSYX210544_DIFFTEST_FLAG
+`define YSYX210544_PC_START            64'h00000000_80000000
 `else
-`define PC_START            64'h00000000_30000000
+`define YSYX210544_PC_START            64'h00000000_30000000
 `endif
 
-`define SIZE_B              3'b000
-`define SIZE_H              3'b001
-`define SIZE_W              3'b010
-`define SIZE_D              3'b011
+`define YSYX210544_SIZE_B              3'b000
+`define YSYX210544_SIZE_H              3'b001
+`define YSYX210544_SIZE_W              3'b010
+`define YSYX210544_SIZE_D              3'b011
 
-`define REQ_READ            1'b0
-`define REQ_WRITE           1'b1
+`define YSYX210544_REQ_READ            1'b0
+`define YSYX210544_REQ_WRITE           1'b1
 
-`define RW_DATA_WIDTH       512
-// `define AXI_ID_WIDTH        4
+`define YSYX210544_RW_DATA_WIDTH       512
 
-`define RISCV_PRIV_MODE_U   0
-`define RISCV_PRIV_MODE_S   1
-`define RISCV_PRIV_MODE_M   3
-
-// mem_stage三种类型的动作
-`define MEM_ACTION_NONE     0     // 普通指令，不访存
-`define MEM_ACTION_LOAD     1     // load指令，数据要写入 rd
-`define MEM_ACTION_STORE    2     // store指令，存入数据
+`define YSYX210544_RISCV_PRIV_MODE_U   0
+`define YSYX210544_RISCV_PRIV_MODE_S   1
+`define YSYX210544_RISCV_PRIV_MODE_M   3
 
 
-`define CLOCKS_PER_SECOND   64'd240_0000        // 每秒的clock数，约240万
+`define YSYX210544_CLOCKS_PER_SECOND   64'd240_0000        // 每秒的clock数，约240万
 
-`define BUS_8               7:0
-`define BUS_16              15:0
-`define BUS_32              31:0
-`define BUS_64              63:0
-`define BUS_256             255:0
-`define BUS_RIDX            4:0                 // 寄存器索引的总线
-`define BUS_FUNCT3          2:0                 // funct3的总线
-`define BUS_FUNCT7          6:0                 // funct7的总线
-`define BUS_OPCODE          6:0                 // opcode的总线
-
-// 指令状态机
-`define STATE_BUS           3:0
-`define STATE_NONE          4'd0
-`define STATE_IF            4'd1
-`define STATE_ID            4'd2
-`define STATE_EX            4'd3
-`define STATE_MEM           4'd4
-`define STATE_WB            4'd5
-`define STATE_CMT           4'd6
+`define YSYX210544_BUS_8               7:0
+`define YSYX210544_BUS_16              15:0
+`define YSYX210544_BUS_32              31:0
+`define YSYX210544_BUS_64              63:0
+`define YSYX210544_BUS_RIDX            4:0                 // 寄存器索引的总线
 
 // CSR
-`define BUS_CSR_ADDR        11 : 0          // CSR存储器地址
 
 // CSR addr
-`define CSR_ADR_MCYCLE      12'hB00
-`define CSR_ADR_MSTATUS     12'h300         // machine status register
-`define CSR_ADR_MIE         12'h304         // machine interrupt-enable register
-`define CSR_ADR_MTVEC       12'h305         // machine trap-handler base address
-`define CSR_ADR_MSCRATCH    12'h340         // scratch register for machine trap handlers.
-`define CSR_ADR_MEPC        12'h341         // machine exception program counter
-`define CSR_ADR_MCAUSE      12'h342         // machine trap cause
-`define CSR_ADR_MIP         12'h344         // machine interrupt pending
-
-// // CSR index in local memory
-// `define CSR_IDX_NONE        4'd0
-// `define CSR_IDX_MCYCLE      4'd1
-// `define CSR_IDX_MSTATUS     4'd2
-// `define CSR_IDX_MIE         4'd3
-// `define CSR_IDX_MTVEC       4'd4
-// `define CSR_IDX_MSCRATCH    4'd5
-// `define CSR_IDX_MEPC        4'd6
-// `define CSR_IDX_MCAUSE      4'd7
-// `define CSR_IDX_MIP         4'd8
-
-// 寄存器配置
-`define REG_BITS            64              // 寄存器位数
-`define REG_BUS_old         63:0            // 寄存器总线
-`define REG_ADDR_BITS       5               // 寄存器地址位数
-`define REG_ADDR_BUS        4:0             // 寄存器地址总线
-`define REG_NUM             32              // 寄存器个数
-`define REG_ZERO            64'd0           // 寄存器数值0
-
-// 指令配置
-`define INST_BITS           32              // 指令位数
-`define INST_BUS            31:0            // 指令总线
-
-// RAM配置(4KB)
-`define RAM_DATA_BITS       32              // RAM数据位数
-`define RAM_DATA_BUS        31:0            // RAM数据总线
-`define RAM_ADDR_BITS       12              // RAM地址位数
-`define RAM_ADDR_BUS        11:0            // RAM地址总线
-`define RAM_DATA_ZERO       32'd0           // RAM数据0
-`define RAM_SIZE_BUS        4095:0          // RAM单元数总线
-
-// ROM配置(4KB)
-`define ROM_DATA_BITS       32              // ROM数据位数
-`define ROM_DATA_BUS        31:0            // ROM数据总线
-`define ROM_ADDR_BITS       12              // ROM地址位数
-`define ROM_ADDR_BUS        11:0            // ROM地址总线
-`define ROM_DATA_ZERO       32'd0           // ROM数据0
-`define ROM_SIZE_BUS        4095:0          // ROM单元数总线
+`define YSYX210544_CSR_ADR_MCYCLE      12'hB00
+`define YSYX210544_CSR_ADR_MSTATUS     12'h300         // machine status register
+`define YSYX210544_CSR_ADR_MIE         12'h304         // machine interrupt-enable register
+`define YSYX210544_CSR_ADR_MTVEC       12'h305         // machine trap-handler base address
+`define YSYX210544_CSR_ADR_MSCRATCH    12'h340         // scratch register for machine trap handlers.
+`define YSYX210544_CSR_ADR_MEPC        12'h341         // machine exception program counter
+`define YSYX210544_CSR_ADR_MCAUSE      12'h342         // machine trap cause
+`define YSYX210544_CSR_ADR_MIP         12'h344         // machine interrupt pending
 
 // 已编码的指令
-`define INST_NOP            32'h0000_0013   // addi x0,x0,0
+`define YSYX210544_INST_NOP            32'h0000_0013   // addi x0,x0,0
 
 // 自定义的指令码
-`define INST_LUI            8'b0000_0001    // d1
-`define INST_AUIPC          8'b0000_0010    //
-`define INST_JAL            8'b0000_0011    //
-`define INST_JALR           8'b0000_0100    //
-`define INST_BEQ            8'b0000_0101    //
-`define INST_BNE            8'b0000_0110    //
-`define INST_BLT            8'b0000_0111    //
-`define INST_BGE            8'b0000_1000    //
-`define INST_BLTU           8'b0000_1001    //
-`define INST_BGEU           8'b0000_1010    //
-`define INST_LB             8'b0000_1011    //
-`define INST_LH             8'b0000_1100    //
-`define INST_LW             8'b0000_1101    //
-`define INST_LBU            8'b0000_1110    //
-`define INST_LHU            8'b0000_1111    //
-`define INST_SB             8'b0001_0000    //
-`define INST_SH             8'b0001_0001    //
-`define INST_SW             8'b0001_0010    //
-`define INST_ADDI           8'b0001_0011    //
-`define INST_SLTI           8'b0001_0100    //
-`define INST_SLTIU          8'b0001_0101    //
-`define INST_XORI           8'b0001_0110    //
-`define INST_ORI            8'b0001_0111    //
-`define INST_ANDI           8'b0001_1000    //
-`define INST_SLLI           8'b0001_1001    //
-`define INST_SRLI           8'b0001_1010    //
-`define INST_SRAI           8'b0001_1011    //
-`define INST_ADD            8'b0001_1100    //
-`define INST_SUB            8'b0001_1101    //
-`define INST_SLL            8'b0001_1110    //
-`define INST_SLT            8'b0001_1111    //
-`define INST_SLTU           8'b0010_0000    //
-`define INST_XOR            8'b0010_0001    //
-`define INST_SRL            8'b0010_0010    //
-`define INST_SRA            8'b0010_0011    //
-`define INST_OR             8'b0010_0100    //
-`define INST_AND            8'b0010_0101    //
-`define INST_FENCE          8'b0010_0110    //
-`define INST_FENCEI         8'b0010_0111    //
-`define INST_ECALL          8'b0010_1000    //
-`define INST_EBREAK         8'b0010_1001    //
-`define INST_CSRRW          8'b0010_1010    //
-`define INST_CSRRS          8'b0010_1011    //
-`define INST_CSRRC          8'b0010_1100    //
-`define INST_CSRRWI         8'b0010_1101    //
-`define INST_CSRRSI         8'b0010_1110    //
-`define INST_CSRRCI         8'b0010_1111    // d47 = h2F
+`define YSYX210544_INST_LUI            8'b0000_0001    // d1
+`define YSYX210544_INST_AUIPC          8'b0000_0010    //
+`define YSYX210544_INST_JAL            8'b0000_0011    //
+`define YSYX210544_INST_JALR           8'b0000_0100    //
+`define YSYX210544_INST_BEQ            8'b0000_0101    //
+`define YSYX210544_INST_BNE            8'b0000_0110    //
+`define YSYX210544_INST_BLT            8'b0000_0111    //
+`define YSYX210544_INST_BGE            8'b0000_1000    //
+`define YSYX210544_INST_BLTU           8'b0000_1001    //
+`define YSYX210544_INST_BGEU           8'b0000_1010    //
+`define YSYX210544_INST_LB             8'b0000_1011    //
+`define YSYX210544_INST_LH             8'b0000_1100    //
+`define YSYX210544_INST_LW             8'b0000_1101    //
+`define YSYX210544_INST_LBU            8'b0000_1110    //
+`define YSYX210544_INST_LHU            8'b0000_1111    //
+`define YSYX210544_INST_SB             8'b0001_0000    //
+`define YSYX210544_INST_SH             8'b0001_0001    //
+`define YSYX210544_INST_SW             8'b0001_0010    //
+`define YSYX210544_INST_ADDI           8'b0001_0011    //
+`define YSYX210544_INST_SLTI           8'b0001_0100    //
+`define YSYX210544_INST_SLTIU          8'b0001_0101    //
+`define YSYX210544_INST_XORI           8'b0001_0110    //
+`define YSYX210544_INST_ORI            8'b0001_0111    //
+`define YSYX210544_INST_ANDI           8'b0001_1000    //
+`define YSYX210544_INST_SLLI           8'b0001_1001    //
+`define YSYX210544_INST_SRLI           8'b0001_1010    //
+`define YSYX210544_INST_SRAI           8'b0001_1011    //
+`define YSYX210544_INST_ADD            8'b0001_1100    //
+`define YSYX210544_INST_SUB            8'b0001_1101    //
+`define YSYX210544_INST_SLL            8'b0001_1110    //
+`define YSYX210544_INST_SLT            8'b0001_1111    //
+`define YSYX210544_INST_SLTU           8'b0010_0000    //
+`define YSYX210544_INST_XOR            8'b0010_0001    //
+`define YSYX210544_INST_SRL            8'b0010_0010    //
+`define YSYX210544_INST_SRA            8'b0010_0011    //
+`define YSYX210544_INST_OR             8'b0010_0100    //
+`define YSYX210544_INST_AND            8'b0010_0101    //
+`define YSYX210544_INST_FENCE          8'b0010_0110    //
+`define YSYX210544_INST_FENCEI         8'b0010_0111    //
+`define YSYX210544_INST_ECALL          8'b0010_1000    //
+`define YSYX210544_INST_EBREAK         8'b0010_1001    //
+`define YSYX210544_INST_CSRRW          8'b0010_1010    //
+`define YSYX210544_INST_CSRRS          8'b0010_1011    //
+`define YSYX210544_INST_CSRRC          8'b0010_1100    //
+`define YSYX210544_INST_CSRRWI         8'b0010_1101    //
+`define YSYX210544_INST_CSRRSI         8'b0010_1110    //
+`define YSYX210544_INST_CSRRCI         8'b0010_1111    // d47 = h2F
 
-`define INST_LWU            8'b0011_0000    //
-`define INST_LD             8'b0011_0001    //
-`define INST_SD             8'b0011_0010    //
-`define INST_ADDIW          8'b0011_0011    //
-`define INST_SLLIW          8'b0011_0100    //
-`define INST_SRLIW          8'b0011_0101    //
-`define INST_SRAIW          8'b0011_0110    //
-`define INST_ADDW           8'b0011_0111    //
-`define INST_SUBW           8'b0011_1000    //
-`define INST_SLLW           8'b0011_1001    //
-`define INST_SRLW           8'b0011_1010    //
-`define INST_SRAW           8'b0011_1011    //
-`define INST_MRET           8'b0011_1100    //
-
-// CSR Operation
-`define CSROP_NONE          2'b00     // none
-`define CSROP_READ_WRITE    2'b01     // read and write
-`define CSROP_READ_SET      2'b10     // read and set
-`define CSROP_READ_CLEAR    2'b11     // read and clear
+`define YSYX210544_INST_LWU            8'b0011_0000    //
+`define YSYX210544_INST_LD             8'b0011_0001    //
+`define YSYX210544_INST_SD             8'b0011_0010    //
+`define YSYX210544_INST_ADDIW          8'b0011_0011    //
+`define YSYX210544_INST_SLLIW          8'b0011_0100    //
+`define YSYX210544_INST_SRLIW          8'b0011_0101    //
+`define YSYX210544_INST_SRAIW          8'b0011_0110    //
+`define YSYX210544_INST_ADDW           8'b0011_0111    //
+`define YSYX210544_INST_SUBW           8'b0011_1000    //
+`define YSYX210544_INST_SLLW           8'b0011_1001    //
+`define YSYX210544_INST_SRLW           8'b0011_1010    //
+`define YSYX210544_INST_SRAW           8'b0011_1011    //
+`define YSYX210544_INST_MRET           8'b0011_1100    //
 
 // ==  = Devices
 
-`define DEV_BASEADDR        64'h0200_0000
+`define YSYX210544_DEV_BASEADDR        64'h0200_0000
 
 // RTC
-`define DEV_RTC_OFFSET      64'h0100
-`define DEV_RTC             (`DEV_BASEADDR + `DEV_RTC_OFFSET)
+`define YSYX210544_DEV_RTC_OFFSET      64'h0100
+`define YSYX210544_DEV_RTC             (`YSYX210544_DEV_BASEADDR + `YSYX210544_DEV_RTC_OFFSET)
 
 // Machine time register，以恒定频率增加，廉价的RTC软件方案
 // mcycle与mtime的区别：
 // 1. mcycle可随外接时钟而变化
 // 2. mtime必须以恒定的频率增加（估计是因指令执行耗费的clock数不同而引起，这里需要封装差异吗）
-`define DEV_MTIME_OFFSET    64'hbff8
-`define DEV_MTIME           (`DEV_BASEADDR + `DEV_MTIME_OFFSET)
+`define YSYX210544_DEV_MTIME_OFFSET    64'hbff8
+`define YSYX210544_DEV_MTIME           (`YSYX210544_DEV_BASEADDR + `YSYX210544_DEV_MTIME_OFFSET)
 // Machien time compare register
 // 当 mtime > = mtimecmp 时，产生计时器中断
 // mip的MTIP位置1。
-`define DEV_MTIMECMP_OFFSET 64'h4000
-`define DEV_MTIMECMP        (`DEV_BASEADDR + `DEV_MTIMECMP_OFFSET)
+`define YSYX210544_DEV_MTIMECMP_OFFSET 64'h4000
+`define YSYX210544_DEV_MTIMECMP        (`YSYX210544_DEV_BASEADDR + `YSYX210544_DEV_MTIMECMP_OFFSET)
 
 
 // AXI Read & Write Unit
 
 
 // Burst types
-`define AXI_BURST_TYPE_FIXED                                2'b00
-`define AXI_BURST_TYPE_INCR                                 2'b01
-`define AXI_BURST_TYPE_WRAP                                 2'b10
+// `define AXI_BURST_TYPE_FIXED                                2'b00
+// `define AXI_BURST_TYPE_INCR                                 2'b01
+// `define AXI_BURST_TYPE_WRAP                                 2'b10
 // Access permissions
-`define AXI_PROT_UNPRIVILEGED_ACCESS                        3'b000
-`define AXI_PROT_PRIVILEGED_ACCESS                          3'b001
-`define AXI_PROT_SECURE_ACCESS                              3'b000
-`define AXI_PROT_NON_SECURE_ACCESS                          3'b010
-`define AXI_PROT_DATA_ACCESS                                3'b000
-`define AXI_PROT_INSTRUCTION_ACCESS                         3'b100
+// `define AXI_PROT_UNPRIVILEGED_ACCESS                        3'b000
+// `define AXI_PROT_PRIVILEGED_ACCESS                          3'b001
+// `define AXI_PROT_SECURE_ACCESS                              3'b000
+// `define AXI_PROT_NON_SECURE_ACCESS                          3'b010
+// `define AXI_PROT_DATA_ACCESS                                3'b000
+// `define AXI_PROT_INSTRUCTION_ACCESS                         3'b100
 // Memory types (AR)
-`define AXI_ARCACHE_DEVICE_NON_BUFFERABLE                   4'b0000
-`define AXI_ARCACHE_DEVICE_BUFFERABLE                       4'b0001
-`define AXI_ARCACHE_NORMAL_NON_CACHEABLE_NON_BUFFERABLE     4'b0010
-`define AXI_ARCACHE_NORMAL_NON_CACHEABLE_BUFFERABLE         4'b0011
-`define AXI_ARCACHE_WRITE_THROUGH_NO_ALLOCATE               4'b1010
-`define AXI_ARCACHE_WRITE_THROUGH_READ_ALLOCATE             4'b1110
-`define AXI_ARCACHE_WRITE_THROUGH_WRITE_ALLOCATE            4'b1010
-`define AXI_ARCACHE_WRITE_THROUGH_READ_AND_WRITE_ALLOCATE   4'b1110
-`define AXI_ARCACHE_WRITE_BACK_NO_ALLOCATE                  4'b1011
-`define AXI_ARCACHE_WRITE_BACK_READ_ALLOCATE                4'b1111
-`define AXI_ARCACHE_WRITE_BACK_WRITE_ALLOCATE               4'b1011
-`define AXI_ARCACHE_WRITE_BACK_READ_AND_WRITE_ALLOCATE      4'b1111
+// `define AXI_ARCACHE_DEVICE_NON_BUFFERABLE                   4'b0000
+// `define AXI_ARCACHE_DEVICE_BUFFERABLE                       4'b0001
+// `define AXI_ARCACHE_NORMAL_NON_CACHEABLE_NON_BUFFERABLE     4'b0010
+// `define AXI_ARCACHE_NORMAL_NON_CACHEABLE_BUFFERABLE         4'b0011
+// `define AXI_ARCACHE_WRITE_THROUGH_NO_ALLOCATE               4'b1010
+// `define AXI_ARCACHE_WRITE_THROUGH_READ_ALLOCATE             4'b1110
+// `define AXI_ARCACHE_WRITE_THROUGH_WRITE_ALLOCATE            4'b1010
+// `define AXI_ARCACHE_WRITE_THROUGH_READ_AND_WRITE_ALLOCATE   4'b1110
+// `define AXI_ARCACHE_WRITE_BACK_NO_ALLOCATE                  4'b1011
+// `define AXI_ARCACHE_WRITE_BACK_READ_ALLOCATE                4'b1111
+// `define AXI_ARCACHE_WRITE_BACK_WRITE_ALLOCATE               4'b1011
+// `define AXI_ARCACHE_WRITE_BACK_READ_AND_WRITE_ALLOCATE      4'b1111
 // Memory types (AW)
-`define AXI_AWCACHE_DEVICE_NON_BUFFERABLE                   4'b0000
-`define AXI_AWCACHE_DEVICE_BUFFERABLE                       4'b0001
-`define AXI_AWCACHE_NORMAL_NON_CACHEABLE_NON_BUFFERABLE     4'b0010
-`define AXI_AWCACHE_NORMAL_NON_CACHEABLE_BUFFERABLE         4'b0011
-`define AXI_AWCACHE_WRITE_THROUGH_NO_ALLOCATE               4'b0110
-`define AXI_AWCACHE_WRITE_THROUGH_READ_ALLOCATE             4'b0110
-`define AXI_AWCACHE_WRITE_THROUGH_WRITE_ALLOCATE            4'b1110
-`define AXI_AWCACHE_WRITE_THROUGH_READ_AND_WRITE_ALLOCATE   4'b1110
-`define AXI_AWCACHE_WRITE_BACK_NO_ALLOCATE                  4'b0111
-`define AXI_AWCACHE_WRITE_BACK_READ_ALLOCATE                4'b0111
-`define AXI_AWCACHE_WRITE_BACK_WRITE_ALLOCATE               4'b1111
-`define AXI_AWCACHE_WRITE_BACK_READ_AND_WRITE_ALLOCATE      4'b1111
+// `define AXI_AWCACHE_DEVICE_NON_BUFFERABLE                   4'b0000
+// `define AXI_AWCACHE_DEVICE_BUFFERABLE                       4'b0001
+// `define AXI_AWCACHE_NORMAL_NON_CACHEABLE_NON_BUFFERABLE     4'b0010
+// `define AXI_AWCACHE_NORMAL_NON_CACHEABLE_BUFFERABLE         4'b0011
+// `define AXI_AWCACHE_WRITE_THROUGH_NO_ALLOCATE               4'b0110
+// `define AXI_AWCACHE_WRITE_THROUGH_READ_ALLOCATE             4'b0110
+// `define AXI_AWCACHE_WRITE_THROUGH_WRITE_ALLOCATE            4'b1110
+// `define AXI_AWCACHE_WRITE_THROUGH_READ_AND_WRITE_ALLOCATE   4'b1110
+// `define AXI_AWCACHE_WRITE_BACK_NO_ALLOCATE                  4'b0111
+// `define AXI_AWCACHE_WRITE_BACK_READ_ALLOCATE                4'b0111
+// `define AXI_AWCACHE_WRITE_BACK_WRITE_ALLOCATE               4'b1111
+// `define AXI_AWCACHE_WRITE_BACK_READ_AND_WRITE_ALLOCATE      4'b1111
 
-`define AXI_SIZE_BYTES_1                                    3'b000
-`define AXI_SIZE_BYTES_2                                    3'b001
-`define AXI_SIZE_BYTES_4                                    3'b010
-`define AXI_SIZE_BYTES_8                                    3'b011
-`define AXI_SIZE_BYTES_16                                   3'b100
-`define AXI_SIZE_BYTES_32                                   3'b101
-`define AXI_SIZE_BYTES_64                                   3'b110
-`define AXI_SIZE_BYTES_128                                  3'b111
+// `define AXI_SIZE_BYTES_1                                    3'b000
+// `define AXI_SIZE_BYTES_2                                    3'b001
+// `define AXI_SIZE_BYTES_4                                    3'b010
+// `define AXI_SIZE_BYTES_8                                    3'b011
+// `define AXI_SIZE_BYTES_16                                   3'b100
+// `define AXI_SIZE_BYTES_32                                   3'b101
+// `define AXI_SIZE_BYTES_64                                   3'b110
+// `define AXI_SIZE_BYTES_128                                  3'b111
 
 module ysyx_210544_axi_rw (
     input                               clock,
@@ -259,8 +193,8 @@ module ysyx_210544_axi_rw (
     output                              user_ready_o,
     input                               user_req_i,         // read or write
     input  [7:0]                        user_blks_i,          // blocks: 0 ~ 7， means 1~8 (后端硬件资源限制为8)
-    output reg [`RW_DATA_WIDTH-1:0]     user_rdata_o,
-    input  [`RW_DATA_WIDTH-1:0]         user_wdata_i,
+    output reg [`YSYX210544_RW_DATA_WIDTH-1:0]     user_rdata_o,
+    input  [`YSYX210544_RW_DATA_WIDTH-1:0]         user_wdata_i,
     input  [63:0]                       user_addr_i,
     input  [2:0]                        user_size_i,
     output [1:0]                        user_resp_o,
@@ -342,18 +276,18 @@ wire [2:0] axi_addr_offset_bytes;       // 输入地址的 字节偏移量(0~7)
 wire [5:0] axi_addr_offset_bits;        // 输入地址的   位偏移量(0~56)
 reg  [7:0] axi_w_strb_orig;
 
-wire size_b;
-wire size_h;
-wire size_w;
-wire size_d;
+wire YSYX210544_SIZE_B;
+wire YSYX210544_SIZE_H;
+wire YSYX210544_SIZE_W;
+wire YSYX210544_SIZE_D;
 reg  [63:0] mask_rdata;
 wire [5:0] aligned_offset;                      // 移位的bit数。0~7 转换为 0~56
 wire [63:0] axi_r_data_masked_unaligned;        // 已掩码，已移位后的数据
 
 
 
-assign w_trans    = user_req_i == `REQ_WRITE;
-assign r_trans    = user_req_i == `REQ_READ;
+assign w_trans    = user_req_i == `YSYX210544_REQ_WRITE;
+assign r_trans    = user_req_i == `YSYX210544_REQ_READ;
 assign w_valid    = user_valid_i & w_trans & (!rw_ready);
 assign r_valid    = user_valid_i & r_trans & (!rw_ready);
 
@@ -479,10 +413,10 @@ always @(*) begin
     end
     else begin
     case (user_size_i)
-        `SIZE_B: axi_w_strb_orig = 8'b0000_0001;
-        `SIZE_H: axi_w_strb_orig = 8'b0000_0011;
-        `SIZE_W: axi_w_strb_orig = 8'b0000_1111;
-        `SIZE_D: axi_w_strb_orig = 8'b1111_1111;
+        `YSYX210544_SIZE_B: axi_w_strb_orig = 8'b0000_0001;
+        `YSYX210544_SIZE_H: axi_w_strb_orig = 8'b0000_0011;
+        `YSYX210544_SIZE_W: axi_w_strb_orig = 8'b0000_1111;
+        `YSYX210544_SIZE_D: axi_w_strb_orig = 8'b1111_1111;
         default: axi_w_strb_orig = 8'b0000_0000; // 不支持
     endcase 
     end
@@ -515,22 +449,22 @@ assign axi_ar_burst_o   = 2'b01;// `AXI_BURST_TYPE_INCR;
 assign axi_r_ready_o    = r_state_read;
 
 // User Data Size
-assign size_b             = user_size_i == `SIZE_B;
-assign size_h             = user_size_i == `SIZE_H;
-assign size_w             = user_size_i == `SIZE_W;
-assign size_d             = user_size_i == `SIZE_D;
+assign YSYX210544_SIZE_B             = user_size_i == `YSYX210544_SIZE_B;
+assign YSYX210544_SIZE_H             = user_size_i == `YSYX210544_SIZE_H;
+assign YSYX210544_SIZE_W             = user_size_i == `YSYX210544_SIZE_W;
+assign YSYX210544_SIZE_D             = user_size_i == `YSYX210544_SIZE_D;
 
 // Read data mask
-// assign mask_rdata   = (({64{size_b}} & {{64- 8{1'b0}},  8'hff}) 
-//                      | ({64{size_h}} & {{64-16{1'b0}}, 16'hffff})
-//                      | ({64{size_w}} & {{64-32{1'b0}}, 32'hffffffff})
-//                      | ({64{size_d}} & {{64-64{1'b0}}, 64'hffffffff_ffffffff})
+// assign mask_rdata   = (({64{YSYX210544_SIZE_B}} & {{64- 8{1'b0}},  8'hff}) 
+//                      | ({64{YSYX210544_SIZE_H}} & {{64-16{1'b0}}, 16'hffff})
+//                      | ({64{YSYX210544_SIZE_W}} & {{64-32{1'b0}}, 32'hffffffff})
+//                      | ({64{YSYX210544_SIZE_D}} & {{64-64{1'b0}}, 64'hffffffff_ffffffff})
 //                       );
 always @(*) begin
-    if (size_d)         mask_rdata = 64'hffffffff_ffffffff;
-    else if (size_w)    mask_rdata = 64'h00000000_ffffffff;
-    else if (size_h)    mask_rdata = 64'h00000000_0000ffff;
-    else if (size_b)    mask_rdata = 64'h00000000_000000ff;
+    if (YSYX210544_SIZE_D)         mask_rdata = 64'hffffffff_ffffffff;
+    else if (YSYX210544_SIZE_W)    mask_rdata = 64'h00000000_ffffffff;
+    else if (YSYX210544_SIZE_H)    mask_rdata = 64'h00000000_0000ffff;
+    else if (YSYX210544_SIZE_B)    mask_rdata = 64'h00000000_000000ff;
     else                mask_rdata = 64'd0;
 end
 
@@ -615,7 +549,7 @@ module ysyx_210544_cache_axi(
     assign hs_ok    = o_axi_io_valid & i_axi_io_ready;
     
     // axi每次传输的大小：64bit
-    assign o_axi_io_size = is_flash ? `SIZE_W : `SIZE_D;
+    assign o_axi_io_size = is_flash ? `YSYX210544_SIZE_W : `YSYX210544_SIZE_D;
     
     // 块数：0~7表示1~8块
     assign o_axi_io_blks = is_flash ? 8'd0 : 8'd7;
@@ -758,12 +692,12 @@ module ysyx_210544_cache_basic (
   input   wire                rst,
 
   // 常规通道
-  input   wire  [`BUS_64]     i_cache_basic_addr,         // 地址。保证与操作数大小相加后不能跨界。
-  input   wire  [`BUS_64]     i_cache_basic_wdata,        // 写入的数据
+  input   wire  [`YSYX210544_BUS_64]     i_cache_basic_addr,         // 地址。保证与操作数大小相加后不能跨界。
+  input   wire  [`YSYX210544_BUS_64]     i_cache_basic_wdata,        // 写入的数据
   input   wire  [2 : 0]       i_cache_basic_bytes,        // 操作的字节数: 0~7表示1~8字节
   input   wire                i_cache_basic_op,           // 操作: 0:read, 1:write
   input   wire                i_cache_basic_req,          // 请求
-  output  reg   [`BUS_64]     o_cache_basic_rdata,        // 读出的数据
+  output  reg   [`YSYX210544_BUS_64]     o_cache_basic_rdata,        // 读出的数据
   output  reg                 o_cache_basic_ack,          // 应答
 
   // 同步通道
@@ -817,15 +751,15 @@ parameter [2:0] STATE_LOAD_TO_RAM       = 3'd5;
 parameter [2:0] STATE_FENCE_RD          = 3'd6;
 parameter [2:0] STATE_FENCE_WR          = 3'd7;
 
-`define WAYS                  4             // 路数
-`define BLKS                  16            // 块数
-`define BUS_WAYS              0:3           // 各路的总线。4路
+`define YSYX210544_WAYS                  4             // 路数
+`define YSYX210544_BLKS                  16            // 块数
+`define YSYX210544_BUS_WAYS              0:3           // 各路的总线。4路
 
-`define c_tag_BUS             21:0          // cache的tag所在的总线 
-`define c_tag_msb_BUS         21            // cache的tag最高位所在的总线，若为1则是主存地址，即：8000_0000 ~ 4GB-1 
-`define c_v_BUS               22            // cache的v所在的总线 
-`define c_d_BUS               23            // cache的d所在的总线 
-`define c_s_BUS               25:24         // cache的s所在的总线
+`define YSYX210544_C_TAG_BUS             21:0          // cache的tag所在的总线 
+`define YSYX210544_C_TAG_MSG_BUS         21            // cache的tag最高位所在的总线，若为1则是主存地址，即：8000_0000 ~ 4GB-1 
+`define YSYX210544_C_V_BUS               22            // cache的v所在的总线 
+`define YSYX210544_C_D_BUS               23            // cache的d所在的总线 
+`define YSYX210544_C_S_BUS               25:24         // cache的s所在的总线
 
 
 reg                           o_cache_axi_req;            // 请求
@@ -864,20 +798,20 @@ wire  [8 : 0]                 mem_offset_bits;            // mem块内偏移(按
 wire  [21: 0]                 mem_tag;                    // mem标记
 
 // =============== Cache Info 缓存信息 ===============
-reg   [25 : 0]                cache_info[`BUS_WAYS][0:`BLKS-1];   // cache信息块
+reg   [25 : 0]                cache_info[`YSYX210544_BUS_WAYS][0:`YSYX210544_BLKS-1];   // cache信息块
 wire  [5 : 0]                 c_data_lineno;                      // cache数据行号(0~63)
 //wire  [3 : 0]                 c_offset_bytes;                     // cache行内偏移(按字节)(0~15)
 wire  [6 : 0]                 c_offset_bits;                      // cache行内偏移(按位)(0~127)
 wire  [127:0]                 c_wdata;                            // cache行要写入的数据
 wire  [127:0]                 c_wmask;                            // cache行要写入的掩码
 
-wire                          c_v[`BUS_WAYS];                     // cache valid bit 有效位，1位有效
-wire                          c_d[`BUS_WAYS];                     // cache dirty bit 脏位，1为脏
-wire  [1 : 0]                 c_s[`BUS_WAYS];                     // cache seqence bit 顺序位，越大越需要先被替换走
-wire  [21: 0]                 c_tag[`BUS_WAYS];                   // cache标记
+wire                          c_v[`YSYX210544_BUS_WAYS];                     // cache valid bit 有效位，1位有效
+wire                          c_d[`YSYX210544_BUS_WAYS];                     // cache dirty bit 脏位，1为脏
+wire  [1 : 0]                 c_s[`YSYX210544_BUS_WAYS];                     // cache seqence bit 顺序位，越大越需要先被替换走
+wire  [21: 0]                 c_tag[`YSYX210544_BUS_WAYS];                   // cache标记
 
 // =============== cache选中 ===============
-wire                          hit[`BUS_WAYS];     // 各路是否命中
+wire                          hit[`YSYX210544_BUS_WAYS];     // 各路是否命中
 wire                          hit_any;            // 是否有任意一路命中？
 wire [1:0]                    wayID_smin;         // s最小的是哪一路？
 wire [1:0]                    wayID_hit;          // 已命中的是哪一路（至多有一路命中） 
@@ -885,12 +819,12 @@ wire [1:0]                    wayID_select;       // 选择了哪一路？方法
 
 // =============== Cache Data 缓存数据 ===============
 
-reg                           chip_data_cen[`BUS_WAYS];               // RAM 使能，低电平有效
-reg                           chip_data_wen[`BUS_WAYS];               // RAM 写使能，低电平有效
-reg   [5  : 0]                chip_data_addr[`BUS_WAYS];              // RAM 地址
-reg   [127: 0]                chip_data_wdata[`BUS_WAYS];             // RAM 写入数据
-reg   [127: 0]                chip_data_wmask[`BUS_WAYS];             // RAM 写入掩码
-wire  [127: 0]                chip_data_rdata[`BUS_WAYS];             // RAM 读出数据
+reg                           chip_data_cen[`YSYX210544_BUS_WAYS];               // RAM 使能，低电平有效
+reg                           chip_data_wen[`YSYX210544_BUS_WAYS];               // RAM 写使能，低电平有效
+reg   [5  : 0]                chip_data_addr[`YSYX210544_BUS_WAYS];              // RAM 地址
+reg   [127: 0]                chip_data_wdata[`YSYX210544_BUS_WAYS];             // RAM 写入数据
+reg   [127: 0]                chip_data_wmask[`YSYX210544_BUS_WAYS];             // RAM 写入掩码
+wire  [127: 0]                chip_data_rdata[`YSYX210544_BUS_WAYS];             // RAM 读出数据
 
 
 reg [2:0] state;
@@ -926,7 +860,7 @@ assign o_cache_basic_sync_rinfo     = sync_rinfo;
 assign o_cache_basic_sync_rdata     = sync_rdata;
 
 assign sync_rlast                   = !sync_rreq ? 1'd0 : (sync_rwayid == 2'd3) && (sync_rblkid == 4'd15);
-assign sync_r_need                  = sync_rinfo[`c_v_BUS] & sync_rinfo[`c_tag_msb_BUS];
+assign sync_r_need                  = sync_rinfo[`YSYX210544_C_V_BUS] & sync_rinfo[`YSYX210544_C_TAG_MSG_BUS];
 
 assign sync_wwayid                  = i_cache_basic_sync_wwayid;
 assign sync_wblkid                  = i_cache_basic_sync_wblkid;
@@ -972,25 +906,25 @@ assign c_wmask          = {64'd0, user_wmask} << c_offset_bits;
 assign c_wdata          = {64'd0, i_cache_basic_wdata} << c_offset_bits;
 
 // c_tag, c_v, c_d, c_s
-assign c_tag[0]   = cache_info[0][mem_blkno][`c_tag_BUS];
-assign c_tag[1]   = cache_info[1][mem_blkno][`c_tag_BUS];
-assign c_tag[2]   = cache_info[2][mem_blkno][`c_tag_BUS];
-assign c_tag[3]   = cache_info[3][mem_blkno][`c_tag_BUS];
+assign c_tag[0]   = cache_info[0][mem_blkno][`YSYX210544_C_TAG_BUS];
+assign c_tag[1]   = cache_info[1][mem_blkno][`YSYX210544_C_TAG_BUS];
+assign c_tag[2]   = cache_info[2][mem_blkno][`YSYX210544_C_TAG_BUS];
+assign c_tag[3]   = cache_info[3][mem_blkno][`YSYX210544_C_TAG_BUS];
 
-assign c_v[0]     = cache_info[0][mem_blkno][`c_v_BUS];
-assign c_v[1]     = cache_info[1][mem_blkno][`c_v_BUS];
-assign c_v[2]     = cache_info[2][mem_blkno][`c_v_BUS];
-assign c_v[3]     = cache_info[3][mem_blkno][`c_v_BUS];
+assign c_v[0]     = cache_info[0][mem_blkno][`YSYX210544_C_V_BUS];
+assign c_v[1]     = cache_info[1][mem_blkno][`YSYX210544_C_V_BUS];
+assign c_v[2]     = cache_info[2][mem_blkno][`YSYX210544_C_V_BUS];
+assign c_v[3]     = cache_info[3][mem_blkno][`YSYX210544_C_V_BUS];
 
-assign c_d[0]     = cache_info[0][mem_blkno][`c_d_BUS];
-assign c_d[1]     = cache_info[1][mem_blkno][`c_d_BUS];
-assign c_d[2]     = cache_info[2][mem_blkno][`c_d_BUS];
-assign c_d[3]     = cache_info[3][mem_blkno][`c_d_BUS];
+assign c_d[0]     = cache_info[0][mem_blkno][`YSYX210544_C_D_BUS];
+assign c_d[1]     = cache_info[1][mem_blkno][`YSYX210544_C_D_BUS];
+assign c_d[2]     = cache_info[2][mem_blkno][`YSYX210544_C_D_BUS];
+assign c_d[3]     = cache_info[3][mem_blkno][`YSYX210544_C_D_BUS];
 
-assign c_s[0]     = cache_info[0][mem_blkno][`c_s_BUS];
-assign c_s[1]     = cache_info[1][mem_blkno][`c_s_BUS];
-assign c_s[2]     = cache_info[2][mem_blkno][`c_s_BUS];
-assign c_s[3]     = cache_info[3][mem_blkno][`c_s_BUS];
+assign c_s[0]     = cache_info[0][mem_blkno][`YSYX210544_C_S_BUS];
+assign c_s[1]     = cache_info[1][mem_blkno][`YSYX210544_C_S_BUS];
+assign c_s[2]     = cache_info[2][mem_blkno][`YSYX210544_C_S_BUS];
+assign c_s[3]     = cache_info[3][mem_blkno][`YSYX210544_C_S_BUS];
 
 // hit
 assign hit[0] = c_v[0] && (c_tag[0] == mem_tag);
@@ -1006,7 +940,7 @@ assign wayID_select = hit_any ? wayID_hit : wayID_smin;
 // RAM instantiate
 genvar way;
 generate
-  for (way = 0; way < `WAYS; way = way + 1) 
+  for (way = 0; way < `YSYX210544_WAYS; way = way + 1) 
   begin: CACHE_DATA_GEN
     S011HD1P_X32Y2D128_BW  chip_data(
       .CLK                        (clk                  ),
@@ -1232,7 +1166,7 @@ always @(posedge clk) begin
 
       STATE_READY: begin
         if (!hs_cache) begin
-          if (i_cache_basic_op == `REQ_READ) begin
+          if (i_cache_basic_op == `YSYX210544_REQ_READ) begin
             // 读取RAM一个单元
             if (!hs_ramline) begin
               chip_data_cen[wayID_select] <= CHIP_DATA_CEN;
@@ -1260,7 +1194,7 @@ always @(posedge clk) begin
               chip_data_wen[wayID_select] <= !CHIP_DATA_WEN;
               o_cache_basic_ack <= 1'd1;
               // cache更新记录
-              cache_info[wayID_select][mem_blkno][`c_d_BUS]  <= 1'd1;
+              cache_info[wayID_select][mem_blkno][`YSYX210544_C_D_BUS]  <= 1'd1;
             end
           end
         end
@@ -1274,7 +1208,7 @@ always @(posedge clk) begin
         if (!hs_cache_axi) begin
             o_cache_axi_req <= 1'd1;
             o_cache_axi_addr <= user_blk_aligned_bytes;
-            o_cache_axi_op <= `REQ_READ;
+            o_cache_axi_op <= `YSYX210544_REQ_READ;
         end
         else begin
           o_cache_axi_req <= 1'd0;
@@ -1297,14 +1231,14 @@ always @(posedge clk) begin
           chip_data_cen[wayID_select] <= !CHIP_DATA_CEN;
           chip_data_wen[wayID_select] <= !CHIP_DATA_WEN;
           // 更新cache记录一行的 tag,v,d 位
-          cache_info[wayID_select][mem_blkno][`c_tag_BUS]      <= mem_tag; // c_tag
-          cache_info[wayID_select][mem_blkno][`c_v_BUS]        <= 1'd1;       // 有效位
-          cache_info[wayID_select][mem_blkno][`c_d_BUS]        <= 1'd0;       // 脏位
+          cache_info[wayID_select][mem_blkno][`YSYX210544_C_TAG_BUS]      <= mem_tag; // c_tag
+          cache_info[wayID_select][mem_blkno][`YSYX210544_C_V_BUS]        <= 1'd1;       // 有效位
+          cache_info[wayID_select][mem_blkno][`YSYX210544_C_D_BUS]        <= 1'd0;       // 脏位
           // 更新cache记录四行的 s 位，循环移动
-          cache_info[3][mem_blkno][`c_s_BUS] <= cache_info[2][mem_blkno][`c_s_BUS];
-          cache_info[2][mem_blkno][`c_s_BUS] <= cache_info[1][mem_blkno][`c_s_BUS];
-          cache_info[1][mem_blkno][`c_s_BUS] <= cache_info[0][mem_blkno][`c_s_BUS];
-          cache_info[0][mem_blkno][`c_s_BUS] <= cache_info[3][mem_blkno][`c_s_BUS];
+          cache_info[3][mem_blkno][`YSYX210544_C_S_BUS] <= cache_info[2][mem_blkno][`YSYX210544_C_S_BUS];
+          cache_info[2][mem_blkno][`YSYX210544_C_S_BUS] <= cache_info[1][mem_blkno][`YSYX210544_C_S_BUS];
+          cache_info[1][mem_blkno][`YSYX210544_C_S_BUS] <= cache_info[0][mem_blkno][`YSYX210544_C_S_BUS];
+          cache_info[0][mem_blkno][`YSYX210544_C_S_BUS] <= cache_info[3][mem_blkno][`YSYX210544_C_S_BUS];
         end
       end
 
@@ -1326,7 +1260,7 @@ always @(posedge clk) begin
           ram_op_cnt <= 3'd0;
           chip_data_cen[wayID_select] <= !CHIP_DATA_CEN;
           // 更新cache记录一行的 d 位。
-          cache_info[wayID_select][mem_blkno][`c_d_BUS]        <= 1'd0;       // 脏位
+          cache_info[wayID_select][mem_blkno][`YSYX210544_C_D_BUS]        <= 1'd0;       // 脏位
         end
       end
 
@@ -1335,7 +1269,7 @@ always @(posedge clk) begin
         if (!hs_cache_axi) begin
             o_cache_axi_req <= 1'd1;
             o_cache_axi_addr <= {32'd0, c_tag[wayID_select], mem_blkno, 6'd0 };
-            o_cache_axi_op <= `REQ_WRITE;
+            o_cache_axi_op <= `YSYX210544_REQ_WRITE;
         end
         else begin
           o_cache_axi_wdata <= 512'd0;
@@ -1440,7 +1374,7 @@ always @(posedge clk) begin
             chip_data_wen[sync_wwayid] <= !CHIP_DATA_WEN;
             // 更新cache记录一行，并强行置位dirty位，保证在调换时能被写入主存
             // 这里cache s位是否需要考虑？如果是DCache全部搬运，则不需要考虑。如果是搬运v=1的块，则要考虑吧
-            cache_info[sync_wwayid][sync_wblkid] <= sync_winfo | (26'd1 << `c_d_BUS);
+            cache_info[sync_wwayid][sync_wblkid] <= sync_winfo | (26'd1 << `YSYX210544_C_D_BUS);
 
             sync_wack <= 1'd1;
           end
@@ -1493,12 +1427,12 @@ endmodule
 module ysyx_210544_cache_core (
   input   wire                clk,
   input   wire                rst,
-  input   wire  [`BUS_64]     i_cache_core_addr,          // 地址。地址与操作数相加后可以跨界。
-  input   wire  [`BUS_64]     i_cache_core_wdata,         // 写入的数据
+  input   wire  [`YSYX210544_BUS_64]     i_cache_core_addr,          // 地址。地址与操作数相加后可以跨界。
+  input   wire  [`YSYX210544_BUS_64]     i_cache_core_wdata,         // 写入的数据
   input   wire  [2 : 0]       i_cache_core_bytes,         // 操作的字节数: 0~7表示1~8字节
   input   wire                i_cache_core_op,            // 操作: 0:read, 1:write
   input   wire                i_cache_core_req,           // 请求
-  output  reg   [`BUS_64]     o_cache_core_rdata,         // 读出的数据
+  output  reg   [`YSYX210544_BUS_64]     o_cache_core_rdata,         // 读出的数据
   output  reg                 o_cache_core_ack,           // 应答
 
   // 同步通道
@@ -1683,12 +1617,12 @@ endmodule
 module ysyx_210544_cache_nocache (
   input   wire                clk,
   input   wire                rst,
-  input   wire  [`BUS_64]     i_cache_nocache_addr,          // 地址
-  input   wire  [`BUS_64]     i_cache_nocache_wdata,         // 写入的数据
+  input   wire  [`YSYX210544_BUS_64]     i_cache_nocache_addr,          // 地址
+  input   wire  [`YSYX210544_BUS_64]     i_cache_nocache_wdata,         // 写入的数据
   input   wire  [2 : 0]       i_cache_nocache_bytes,         // 操作的字大小: 0~7表示1~8字节
   input   wire                i_cache_nocache_op,            // 操作: 0:read, 1:write
   input   wire                i_cache_nocache_req,           // 请求
-  output  reg   [`BUS_64]     o_cache_nocache_rdata,         // 读出的数据
+  output  reg   [`YSYX210544_BUS_64]     o_cache_nocache_rdata,         // 读出的数据
   output  reg                 o_cache_nocache_ack,           // 应答
 
   // AXI interface
@@ -1711,11 +1645,11 @@ assign hs_axi_io = o_axi_io_valid & i_axi_io_ready;
 
 always @(*) begin
   case (i_cache_nocache_bytes)
-    3'b000: nocache_size = `SIZE_B;
-    3'b001: nocache_size = `SIZE_H;
-    3'b011: nocache_size = `SIZE_W;
-    3'b111: nocache_size = `SIZE_D;
-    default: nocache_size = `SIZE_B;  // 这种情况应该是不支持的。
+    3'b000: nocache_size = `YSYX210544_SIZE_B;
+    3'b001: nocache_size = `YSYX210544_SIZE_H;
+    3'b011: nocache_size = `YSYX210544_SIZE_W;
+    3'b111: nocache_size = `YSYX210544_SIZE_D;
+    default: nocache_size = `YSYX210544_SIZE_B;  // 这种情况应该是不支持的。
   endcase
 end
 
@@ -2058,7 +1992,7 @@ ysyx_210544_cache_core ICache(
   .i_cache_core_addr          (i_icache_addr              ),
   .i_cache_core_wdata         (64'd0                      ),
   .i_cache_core_bytes         (3'd3                       ),
-  .i_cache_core_op            (`REQ_READ                  ),
+  .i_cache_core_op            (`YSYX210544_REQ_READ                  ),
   .i_cache_core_req           (ch_icache ? i_icache_req : 1'b0),
   .o_cache_core_rdata         (icache_rdata               ),
   .o_cache_core_ack           (icache_ack                 ),
@@ -2175,7 +2109,7 @@ assign nocache_req      = ch_nocache ? (i_icache_req | i_dcache_req             
 assign nocache_addr     = ch_nocache ? (i_icache_req ? i_icache_addr  : i_dcache_addr   ) : 64'd0;
 assign nocache_wdata    = ch_nocache ? (i_icache_req ? 64'd0          : i_dcache_wdata  ) : 64'd0;
 assign nocache_bytes    = ch_nocache ? (i_icache_req ? 3'd3           : i_dcache_bytes  ) : 3'd0;
-assign nocache_op       = ch_nocache ? (i_icache_req ? `REQ_READ      : i_dcache_op     ) : `REQ_READ;
+assign nocache_op       = ch_nocache ? (i_icache_req ? `YSYX210544_REQ_READ      : i_dcache_op     ) : `YSYX210544_REQ_READ;
 
 assign o_axi_io_valid   =                   ch_icache ? icache_axi_io_valid   : (ch_dcache ? dcache_axi_io_valid  : nocache_axi_io_valid);
 assign o_axi_io_op      = o_axi_io_valid ? (ch_icache ? icache_axi_io_op      : (ch_dcache ? dcache_axi_io_op     : nocache_axi_io_op   )) : 0;
@@ -2214,10 +2148,10 @@ module ysyx_210544_rtc(
   input   wire              rst,
 
   input   wire              ren,
-  output  [`BUS_64]         rdata
+  output  [`YSYX210544_BUS_64]         rdata
 );
 
-reg   [`BUS_64] clk_cnt     ;   // 内部计时器，用于控制秒的变化
+reg   [`YSYX210544_BUS_64] clk_cnt     ;   // 内部计时器，用于控制秒的变化
 reg   [15: 0]   year        ;   // year: 0000 ~ 9999    2^16-1=65535
 reg   [3 : 0]   month       ;   // 2^4-1=15
 reg   [4 : 0]   day         ;   // 2^5-1=31
@@ -2225,7 +2159,7 @@ reg   [5 : 0]   hour        ;   // 2^6-1=63
 reg   [5 : 0]   minute      ;   // 2^6-1=63
 reg   [5 : 0]   second      ;   // 2^6-1=63
 
-wire  [`BUS_64] rtc_val;
+wire  [`YSYX210544_BUS_64] rtc_val;
 
 
 assign rtc_val = {21'b0, year, month, day, hour, minute, second};
@@ -2243,7 +2177,7 @@ always @(posedge clk) begin
   end
   else begin
     clk_cnt <= clk_cnt + 1;
-    if (clk_cnt == `CLOCKS_PER_SECOND) begin
+    if (clk_cnt == `YSYX210544_CLOCKS_PER_SECOND) begin
       clk_cnt <= 0;
       second <= second + 6'd1;
       if (second == 60) begin
@@ -2289,24 +2223,24 @@ module ysyx_210544_clint(
   input   wire                clk,
   input   wire                rst,
 
-  input   wire [`BUS_64]      i_clint_addr,
+  input   wire [`YSYX210544_BUS_64]      i_clint_addr,
   input   wire                i_clint_ren,
-  output  wire [`BUS_64]      o_clint_rdata,
+  output  wire [`YSYX210544_BUS_64]      o_clint_rdata,
   input   wire                i_clint_wen,
-  input   wire [`BUS_64]      i_clint_wdata,
+  input   wire [`YSYX210544_BUS_64]      i_clint_wdata,
   output  wire                o_clint_mtime_overflow
 );
 
 // reg   [7:0]       reg_mtime_cnt;
-reg   [`BUS_64]   reg_mtime;
-reg   [`BUS_64]   reg_mtimecmp;
+reg   [`YSYX210544_BUS_64]   reg_mtime;
+reg   [`YSYX210544_BUS_64]   reg_mtimecmp;
 wire addr_mtime;
 wire addr_mtimecmp;
 
 
 
-assign addr_mtime = i_clint_addr == `DEV_MTIME;
-assign addr_mtimecmp = i_clint_addr == `DEV_MTIMECMP;
+assign addr_mtime = i_clint_addr == `YSYX210544_DEV_MTIME;
+assign addr_mtimecmp = i_clint_addr == `YSYX210544_DEV_MTIMECMP;
 
 always @(posedge clk) begin
   if (rst) begin
@@ -2347,25 +2281,25 @@ module ysyx_210544_regfile(
   input   wire                  clk,
   input   wire                  rst,
 
-  input   wire  [`BUS_RIDX]     i_rs1,
+  input   wire  [`YSYX210544_BUS_RIDX]     i_rs1,
   input   wire                  i_rs1_ren,
-  input   wire  [`BUS_RIDX]     i_rs2,
+  input   wire  [`YSYX210544_BUS_RIDX]     i_rs2,
   input   wire                  i_rs2_ren,
-  input   wire  [`BUS_RIDX]     i_rd,
+  input   wire  [`YSYX210544_BUS_RIDX]     i_rd,
   input   wire                  i_rd_wen,
-  input   wire  [`BUS_64]       i_rd_data,
-  output  reg   [`BUS_64]       o_rs1_data,
-  output  reg   [`BUS_64]       o_rs2_data
+  input   wire  [`YSYX210544_BUS_64]       i_rd_data,
+  output  reg   [`YSYX210544_BUS_64]       o_rs1_data,
+  output  reg   [`YSYX210544_BUS_64]       o_rs2_data
 
-`ifdef DIFFTEST_YSYX_210544
+`ifdef YSYX210544_DIFFTEST_FLAG
     ,
-  output  wire  [`BUS_64]       o_regs[0:31]
+  output  wire  [`YSYX210544_BUS_64]       o_regs[0:31]
 `endif
 );
 
-reg [`BUS_64] regs[0:31];
+reg [`YSYX210544_BUS_64] regs[0:31];
 
-`ifdef DIFFTEST_YSYX_210544
+`ifdef YSYX210544_DIFFTEST_FLAG
 
 // difftest regs接口
 genvar i;
@@ -2377,38 +2311,38 @@ generate
 endgenerate
 
 // register alias name
-wire  [`BUS_64]   x00_zero;
-wire  [`BUS_64]   x01_ra;
-wire  [`BUS_64]   x02_sp;
-wire  [`BUS_64]   x03_gp;
-wire  [`BUS_64]   x04_tp;
-wire  [`BUS_64]   x05_t0;
-wire  [`BUS_64]   x06_t1;
-wire  [`BUS_64]   x07_t2;
-wire  [`BUS_64]   x08_s0;
-wire  [`BUS_64]   x09_s1;
-wire  [`BUS_64]   x10_a0;
-wire  [`BUS_64]   x11_a1;
-wire  [`BUS_64]   x12_a2;
-wire  [`BUS_64]   x13_a3;
-wire  [`BUS_64]   x14_a4;
-wire  [`BUS_64]   x15_a5;
-wire  [`BUS_64]   x16_a6;
-wire  [`BUS_64]   x17_a7;
-wire  [`BUS_64]   x18_s2;
-wire  [`BUS_64]   x19_s3;
-wire  [`BUS_64]   x20_s4;
-wire  [`BUS_64]   x21_s5;
-wire  [`BUS_64]   x22_s6;
-wire  [`BUS_64]   x23_s7;
-wire  [`BUS_64]   x24_s8;
-wire  [`BUS_64]   x25_s9;
-wire  [`BUS_64]   x26_s10;
-wire  [`BUS_64]   x27_s11;
-wire  [`BUS_64]   x28_t3;
-wire  [`BUS_64]   x29_t4;
-wire  [`BUS_64]   x30_t5;
-wire  [`BUS_64]   x31_t6;
+wire  [`YSYX210544_BUS_64]   x00_zero;
+wire  [`YSYX210544_BUS_64]   x01_ra;
+wire  [`YSYX210544_BUS_64]   x02_sp;
+wire  [`YSYX210544_BUS_64]   x03_gp;
+wire  [`YSYX210544_BUS_64]   x04_tp;
+wire  [`YSYX210544_BUS_64]   x05_t0;
+wire  [`YSYX210544_BUS_64]   x06_t1;
+wire  [`YSYX210544_BUS_64]   x07_t2;
+wire  [`YSYX210544_BUS_64]   x08_s0;
+wire  [`YSYX210544_BUS_64]   x09_s1;
+wire  [`YSYX210544_BUS_64]   x10_a0;
+wire  [`YSYX210544_BUS_64]   x11_a1;
+wire  [`YSYX210544_BUS_64]   x12_a2;
+wire  [`YSYX210544_BUS_64]   x13_a3;
+wire  [`YSYX210544_BUS_64]   x14_a4;
+wire  [`YSYX210544_BUS_64]   x15_a5;
+wire  [`YSYX210544_BUS_64]   x16_a6;
+wire  [`YSYX210544_BUS_64]   x17_a7;
+wire  [`YSYX210544_BUS_64]   x18_s2;
+wire  [`YSYX210544_BUS_64]   x19_s3;
+wire  [`YSYX210544_BUS_64]   x20_s4;
+wire  [`YSYX210544_BUS_64]   x21_s5;
+wire  [`YSYX210544_BUS_64]   x22_s6;
+wire  [`YSYX210544_BUS_64]   x23_s7;
+wire  [`YSYX210544_BUS_64]   x24_s8;
+wire  [`YSYX210544_BUS_64]   x25_s9;
+wire  [`YSYX210544_BUS_64]   x26_s10;
+wire  [`YSYX210544_BUS_64]   x27_s11;
+wire  [`YSYX210544_BUS_64]   x28_t3;
+wire  [`YSYX210544_BUS_64]   x29_t4;
+wire  [`YSYX210544_BUS_64]   x30_t5;
+wire  [`YSYX210544_BUS_64]   x31_t6;
 
 assign x00_zero = regs[00];
 assign x01_ra   = regs[01];
@@ -2448,38 +2382,38 @@ assign x31_t6   = regs[31];
 // i_rd 写入
 always @(posedge clk) begin
   if (rst) begin
-    regs[ 0] <= `ZERO_WORD;
-    regs[ 1] <= `ZERO_WORD;
-    regs[ 2] <= `ZERO_WORD;
-    regs[ 3] <= `ZERO_WORD;
-    regs[ 4] <= `ZERO_WORD;
-    regs[ 5] <= `ZERO_WORD;
-    regs[ 6] <= `ZERO_WORD;
-    regs[ 7] <= `ZERO_WORD;
-    regs[ 8] <= `ZERO_WORD;
-    regs[ 9] <= `ZERO_WORD;
-    regs[10] <= `ZERO_WORD;
-    regs[11] <= `ZERO_WORD;
-    regs[12] <= `ZERO_WORD;
-    regs[13] <= `ZERO_WORD;
-    regs[14] <= `ZERO_WORD;
-    regs[15] <= `ZERO_WORD;
-    regs[16] <= `ZERO_WORD;
-    regs[17] <= `ZERO_WORD;
-    regs[18] <= `ZERO_WORD;
-    regs[19] <= `ZERO_WORD;
-    regs[20] <= `ZERO_WORD;
-    regs[21] <= `ZERO_WORD;
-    regs[22] <= `ZERO_WORD;
-    regs[23] <= `ZERO_WORD;
-    regs[24] <= `ZERO_WORD;
-    regs[25] <= `ZERO_WORD;
-    regs[26] <= `ZERO_WORD;
-    regs[27] <= `ZERO_WORD;
-    regs[28] <= `ZERO_WORD;
-    regs[29] <= `ZERO_WORD;
-    regs[30] <= `ZERO_WORD;
-    regs[31] <= `ZERO_WORD;
+    regs[ 0] <= `YSYX210544_ZERO_WORD;
+    regs[ 1] <= `YSYX210544_ZERO_WORD;
+    regs[ 2] <= `YSYX210544_ZERO_WORD;
+    regs[ 3] <= `YSYX210544_ZERO_WORD;
+    regs[ 4] <= `YSYX210544_ZERO_WORD;
+    regs[ 5] <= `YSYX210544_ZERO_WORD;
+    regs[ 6] <= `YSYX210544_ZERO_WORD;
+    regs[ 7] <= `YSYX210544_ZERO_WORD;
+    regs[ 8] <= `YSYX210544_ZERO_WORD;
+    regs[ 9] <= `YSYX210544_ZERO_WORD;
+    regs[10] <= `YSYX210544_ZERO_WORD;
+    regs[11] <= `YSYX210544_ZERO_WORD;
+    regs[12] <= `YSYX210544_ZERO_WORD;
+    regs[13] <= `YSYX210544_ZERO_WORD;
+    regs[14] <= `YSYX210544_ZERO_WORD;
+    regs[15] <= `YSYX210544_ZERO_WORD;
+    regs[16] <= `YSYX210544_ZERO_WORD;
+    regs[17] <= `YSYX210544_ZERO_WORD;
+    regs[18] <= `YSYX210544_ZERO_WORD;
+    regs[19] <= `YSYX210544_ZERO_WORD;
+    regs[20] <= `YSYX210544_ZERO_WORD;
+    regs[21] <= `YSYX210544_ZERO_WORD;
+    regs[22] <= `YSYX210544_ZERO_WORD;
+    regs[23] <= `YSYX210544_ZERO_WORD;
+    regs[24] <= `YSYX210544_ZERO_WORD;
+    regs[25] <= `YSYX210544_ZERO_WORD;
+    regs[26] <= `YSYX210544_ZERO_WORD;
+    regs[27] <= `YSYX210544_ZERO_WORD;
+    regs[28] <= `YSYX210544_ZERO_WORD;
+    regs[29] <= `YSYX210544_ZERO_WORD;
+    regs[30] <= `YSYX210544_ZERO_WORD;
+    regs[31] <= `YSYX210544_ZERO_WORD;
   end
   else begin
     // if ((w_ena) && (w_addr != 5'h00))    
@@ -2493,21 +2427,21 @@ end
 // i_rs1 读取
 always @(*) begin
   if (rst)
-    o_rs1_data = `ZERO_WORD;
+    o_rs1_data = `YSYX210544_ZERO_WORD;
   else if (i_rs1_ren)
     o_rs1_data = regs[i_rs1];
   else
-    o_rs1_data = `ZERO_WORD;
+    o_rs1_data = `YSYX210544_ZERO_WORD;
 end
 
 // i_rs2 读取
 always @(*) begin
   if (rst)
-    o_rs2_data = `ZERO_WORD;
+    o_rs2_data = `YSYX210544_ZERO_WORD;
   else if (i_rs2_ren)
     o_rs2_data = regs[i_rs2];
   else
-    o_rs2_data = `ZERO_WORD;
+    o_rs2_data = `YSYX210544_ZERO_WORD;
 end
 
 //wire _unused_ok = &{1'b0,
@@ -2558,21 +2492,21 @@ module ysyx_210544_csrfile(
   input                     i_csr_ren,
   input   wire  [11 : 0]    i_csr_addr,
   input                     i_csr_wen,
-  input   wire  [`BUS_64]   i_csr_wdata,
-  output  reg   [`BUS_64]   o_csr_rdata,
+  input   wire  [`YSYX210544_BUS_64]   i_csr_wdata,
+  output  reg   [`YSYX210544_BUS_64]   o_csr_rdata,
 
   // 中断信号，直接控制csr
   output                    o_csr_clint_mstatus_mie,
   output                    o_csr_clint_mie_mtie,
 
-  output  reg   [`BUS_64]   o_csrs_mcycle,
-  output  reg   [`BUS_64]   o_csrs_mstatus,
-  output  reg   [`BUS_64]   o_csrs_mie,
-  output  reg   [`BUS_64]   o_csrs_mtvec,
-  output  reg   [`BUS_64]   o_csrs_mscratch,
-  output  reg   [`BUS_64]   o_csrs_mepc,
-  output  reg   [`BUS_64]   o_csrs_mcause,
-  output  reg   [`BUS_64]   o_csrs_mip
+  output  reg   [`YSYX210544_BUS_64]   o_csrs_mcycle,
+  output  reg   [`YSYX210544_BUS_64]   o_csrs_mstatus,
+  output  reg   [`YSYX210544_BUS_64]   o_csrs_mie,
+  output  reg   [`YSYX210544_BUS_64]   o_csrs_mtvec,
+  output  reg   [`YSYX210544_BUS_64]   o_csrs_mscratch,
+  output  reg   [`YSYX210544_BUS_64]   o_csrs_mepc,
+  output  reg   [`YSYX210544_BUS_64]   o_csrs_mcause,
+  output  reg   [`YSYX210544_BUS_64]   o_csrs_mip
 );
 
 wire              mstatus_sd;
@@ -2589,14 +2523,14 @@ always @(*) begin
   end
   else if (i_csr_ren) begin
     case (i_csr_addr)
-        `CSR_ADR_MCYCLE:    o_csr_rdata = o_csrs_mcycle;
-        `CSR_ADR_MSTATUS:   o_csr_rdata = o_csrs_mstatus;
-        `CSR_ADR_MIE:       o_csr_rdata = o_csrs_mie;
-        `CSR_ADR_MTVEC:     o_csr_rdata = o_csrs_mtvec;
-        `CSR_ADR_MSCRATCH:  o_csr_rdata = o_csrs_mscratch;
-        `CSR_ADR_MEPC:      o_csr_rdata = o_csrs_mepc;
-        `CSR_ADR_MCAUSE:    o_csr_rdata = o_csrs_mcause;
-        `CSR_ADR_MIP:       o_csr_rdata = o_csrs_mip;
+        `YSYX210544_CSR_ADR_MCYCLE:    o_csr_rdata = o_csrs_mcycle;
+        `YSYX210544_CSR_ADR_MSTATUS:   o_csr_rdata = o_csrs_mstatus;
+        `YSYX210544_CSR_ADR_MIE:       o_csr_rdata = o_csrs_mie;
+        `YSYX210544_CSR_ADR_MTVEC:     o_csr_rdata = o_csrs_mtvec;
+        `YSYX210544_CSR_ADR_MSCRATCH:  o_csr_rdata = o_csrs_mscratch;
+        `YSYX210544_CSR_ADR_MEPC:      o_csr_rdata = o_csrs_mepc;
+        `YSYX210544_CSR_ADR_MCAUSE:    o_csr_rdata = o_csrs_mcause;
+        `YSYX210544_CSR_ADR_MIP:       o_csr_rdata = o_csrs_mip;
         default:            o_csr_rdata = 0;
     endcase
   end
@@ -2623,14 +2557,14 @@ always @(posedge clk) begin
         o_csrs_mcycle <= o_csrs_mcycle + 1;
         if (i_csr_wen) begin
             case (i_csr_addr)
-                // `CSR_ADR_MCYCLE:    o_csrs_mcycle <= i_csr_wdata;
-                `CSR_ADR_MSTATUS:   o_csrs_mstatus <= {mstatus_sd, i_csr_wdata[62:0]};
-                `CSR_ADR_MIE:       o_csrs_mie <= i_csr_wdata;
-                `CSR_ADR_MTVEC:     o_csrs_mtvec <= i_csr_wdata;
-                `CSR_ADR_MSCRATCH:  o_csrs_mscratch <= i_csr_wdata;
-                `CSR_ADR_MEPC:      o_csrs_mepc <= i_csr_wdata;
-                `CSR_ADR_MCAUSE:    o_csrs_mcause <= i_csr_wdata;
-                `CSR_ADR_MIP:       o_csrs_mip <= i_csr_wdata;
+                // `YSYX210544_CSR_ADR_MCYCLE:    o_csrs_mcycle <= i_csr_wdata;
+                `YSYX210544_CSR_ADR_MSTATUS:   o_csrs_mstatus <= {mstatus_sd, i_csr_wdata[62:0]};
+                `YSYX210544_CSR_ADR_MIE:       o_csrs_mie <= i_csr_wdata;
+                `YSYX210544_CSR_ADR_MTVEC:     o_csrs_mtvec <= i_csr_wdata;
+                `YSYX210544_CSR_ADR_MSCRATCH:  o_csrs_mscratch <= i_csr_wdata;
+                `YSYX210544_CSR_ADR_MEPC:      o_csrs_mepc <= i_csr_wdata;
+                `YSYX210544_CSR_ADR_MCAUSE:    o_csrs_mcause <= i_csr_wdata;
+                `YSYX210544_CSR_ADR_MIP:       o_csrs_mip <= i_csr_wdata;
                 default: ;
             endcase
         end
@@ -2653,15 +2587,15 @@ module ysyx_210544_if_stage(
   ///////////////////////////////////////////////
   // AXI interface for Fetch
   input                       i_if_bus_ack,
-  input         [`BUS_32]     i_if_bus_rdata,
+  input         [`YSYX210544_BUS_32]     i_if_bus_rdata,
   output                      o_if_bus_req,
-  output        [`BUS_64]     o_if_bus_addr,
+  output        [`YSYX210544_BUS_64]     o_if_bus_addr,
   
   ///////////////////////////////////////////////
   input   wire                i_if_pc_jmp,
-  input   wire  [`BUS_64]     i_if_pc_jmpaddr,
-  output  wire  [`BUS_64]     o_if_pc,
-  output  wire  [`BUS_32]     o_if_inst
+  input   wire  [`YSYX210544_BUS_64]     i_if_pc_jmpaddr,
+  output  wire  [`YSYX210544_BUS_64]     o_if_pc,
+  output  wire  [`YSYX210544_BUS_32]     o_if_inst
 );
 
 ysyx_210544_ifU IfU(
@@ -2693,23 +2627,23 @@ module ysyx_210544_ifU(
   /////////////////////////////////////////////////////////
   // AXI interface for Fetch
   input                       i_bus_ack,
-  input         [`BUS_32]     i_bus_rdata,
+  input         [`YSYX210544_BUS_32]     i_bus_rdata,
   output reg                  o_bus_req,
-  output reg    [`BUS_64]     o_bus_addr,
+  output reg    [`YSYX210544_BUS_64]     o_bus_addr,
   
   /////////////////////////////////////////////////////////
   input                       i_writebacked_req,    // 是否写回阶段完成
   input   wire                i_pc_jmp,
-  input   wire  [`BUS_64]     i_pc_jmpaddr,
-  output  reg   [`BUS_64]     o_pc,
-  output  reg   [`BUS_32]     o_inst,
+  input   wire  [`YSYX210544_BUS_64]     i_pc_jmpaddr,
+  output  reg   [`YSYX210544_BUS_64]     o_pc,
+  output  reg   [`YSYX210544_BUS_32]     o_inst,
   output  reg                 o_fetched             // 取到指令的通知
 );
 
 wire              handshake_done;
-reg [`BUS_64]     saved_pc_jmpaddr;     // 记忆的pc跳转指令
+reg [`YSYX210544_BUS_64]     saved_pc_jmpaddr;     // 记忆的pc跳转指令
 reg               fetch_again;          // 再次取指
-reg [`BUS_64]     pc_pred;              // 预测的下一个PC
+reg [`YSYX210544_BUS_64]     pc_pred;              // 预测的下一个PC
 
 
 
@@ -2741,7 +2675,7 @@ always @( posedge clk ) begin
   if (rst) begin
     fetch_again             <= 0;
     saved_pc_jmpaddr        <= 0;
-    o_bus_addr              <= `PC_START;
+    o_bus_addr              <= `YSYX210544_PC_START;
     o_pc                    <= 0;
     o_inst                  <= 0;
     o_fetched               <= 0;
@@ -2791,30 +2725,30 @@ module ysyx_210544_id_stage(
   input   wire                i_id_fetched_req,
   input   wire                i_id_decoded_ack,
   output  reg                 o_id_decoded_req,
-  input   wire  [`BUS_64]     i_id_pc,
-  input   wire  [`BUS_32]     i_id_inst,
-  input   wire  [`BUS_64]     i_id_rs1_data,
-  input   wire  [`BUS_64]     i_id_rs2_data,
-  output  wire  [`BUS_64]     o_id_pc,
-  output  wire  [`BUS_32]     o_id_inst,
+  input   wire  [`YSYX210544_BUS_64]     i_id_pc,
+  input   wire  [`YSYX210544_BUS_32]     i_id_inst,
+  input   wire  [`YSYX210544_BUS_64]     i_id_rs1_data,
+  input   wire  [`YSYX210544_BUS_64]     i_id_rs2_data,
+  output  wire  [`YSYX210544_BUS_64]     o_id_pc,
+  output  wire  [`YSYX210544_BUS_32]     o_id_inst,
   output  wire                o_id_rs1_ren,
-  output  wire  [`BUS_RIDX]   o_id_rs1,
+  output  wire  [`YSYX210544_BUS_RIDX]   o_id_rs1,
   output  wire                o_id_rs2_ren,
-  output  wire  [`BUS_RIDX]   o_id_rs2,
-  output  wire  [`BUS_RIDX]   o_id_rd,
+  output  wire  [`YSYX210544_BUS_RIDX]   o_id_rs2,
+  output  wire  [`YSYX210544_BUS_RIDX]   o_id_rd,
   output  wire                o_id_rd_wen,
   output  wire  [7 : 0]       o_id_inst_opcode,
-  output  wire  [`BUS_64]     o_id_op1,
-  output  wire  [`BUS_64]     o_id_op2,
-  output  wire  [`BUS_64]     o_id_op3,
+  output  wire  [`YSYX210544_BUS_64]     o_id_op1,
+  output  wire  [`YSYX210544_BUS_64]     o_id_op2,
+  output  wire  [`YSYX210544_BUS_64]     o_id_op3,
   output  wire                o_id_skipcmt
 );
 
 reg                           i_ena;    // 是否使能组合逻辑单元部件
 wire                          i_disable;
 // 保存输入信息
-reg   [`BUS_64]               tmp_i_id_pc;
-reg   [`BUS_32]               tmp_i_id_inst;
+reg   [`YSYX210544_BUS_64]               tmp_i_id_pc;
+reg   [`YSYX210544_BUS_32]               tmp_i_id_inst;
 
 wire fetched_hs;
 wire decoded_hs;
@@ -2882,20 +2816,20 @@ endmodule
 
 module ysyx_210544_idU(
   input   wire                rst,
-  input   wire  [`BUS_32]     i_inst,
-  input   wire  [`BUS_64]     i_rs1_data,
-  input   wire  [`BUS_64]     i_rs2_data,
-  input   wire  [`BUS_64]     i_pc,
+  input   wire  [`YSYX210544_BUS_32]     i_inst,
+  input   wire  [`YSYX210544_BUS_64]     i_rs1_data,
+  input   wire  [`YSYX210544_BUS_64]     i_rs2_data,
+  input   wire  [`YSYX210544_BUS_64]     i_pc,
   output  wire                o_rs1_ren,
-  output  wire  [`BUS_RIDX]   o_rs1,
+  output  wire  [`YSYX210544_BUS_RIDX]   o_rs1,
   output  wire                o_rs2_ren,
-  output  wire  [`BUS_RIDX]   o_rs2,
-  output  wire  [`BUS_RIDX]   o_rd,
+  output  wire  [`YSYX210544_BUS_RIDX]   o_rs2,
+  output  wire  [`YSYX210544_BUS_RIDX]   o_rd,
   output  wire                o_rd_wen,
   output  wire  [7 : 0]       o_inst_opcode,
-  output  reg   [`BUS_64]     o_op1,
-  output  reg   [`BUS_64]     o_op2,
-  output  reg   [`BUS_64]     o_op3,
+  output  reg   [`YSYX210544_BUS_64]     o_op1,
+  output  reg   [`YSYX210544_BUS_64]     o_op2,
+  output  reg   [`YSYX210544_BUS_64]     o_op3,
   output  wire                o_skipcmt
 );
 
@@ -3272,35 +3206,35 @@ module ysyx_210544_exe_stage(
   output  reg                 o_ex_executed_req,
   input   wire                i_ex_executed_ack,
   input   wire  [7 : 0]       i_ex_inst_opcode,
-  input   wire  [`BUS_64]     i_ex_pc,
-  input   wire  [`BUS_32]     i_ex_inst,
-  input   wire  [`BUS_64]     i_ex_op1,
-  input   wire  [`BUS_64]     i_ex_op2,
-  input   wire  [`BUS_64]     i_ex_op3,
-  input   wire  [`BUS_RIDX]   i_ex_rd,
+  input   wire  [`YSYX210544_BUS_64]     i_ex_pc,
+  input   wire  [`YSYX210544_BUS_32]     i_ex_inst,
+  input   wire  [`YSYX210544_BUS_64]     i_ex_op1,
+  input   wire  [`YSYX210544_BUS_64]     i_ex_op2,
+  input   wire  [`YSYX210544_BUS_64]     i_ex_op3,
+  input   wire  [`YSYX210544_BUS_RIDX]   i_ex_rd,
   input   wire                i_ex_rd_wen,
   input   wire                i_ex_clint_mstatus_mie,
   input   wire                i_ex_clint_mie_mtie,
   input   wire                i_ex_clint_mtime_overflow,
   input   wire                i_ex_skipcmt,
-  input   wire  [`BUS_64]     i_ex_csr_rdata,
+  input   wire  [`YSYX210544_BUS_64]     i_ex_csr_rdata,
   output  wire  [11 : 0]      o_ex_csr_addr,
   output  wire                o_ex_csr_ren,
   output  wire                o_ex_csr_wen,
-  output  wire  [`BUS_64]     o_ex_csr_wdata,
-  output  wire  [`BUS_64]     o_ex_pc,
-  output  wire  [`BUS_32]     o_ex_inst,
+  output  wire  [`YSYX210544_BUS_64]     o_ex_csr_wdata,
+  output  wire  [`YSYX210544_BUS_64]     o_ex_pc,
+  output  wire  [`YSYX210544_BUS_32]     o_ex_inst,
   output  wire                o_ex_pc_jmp,
-  output  wire  [`BUS_64]     o_ex_pc_jmpaddr,
-  output  wire  [`BUS_RIDX]   o_ex_rd,
+  output  wire  [`YSYX210544_BUS_64]     o_ex_pc_jmpaddr,
+  output  wire  [`YSYX210544_BUS_RIDX]   o_ex_rd,
   output  wire                o_ex_rd_wen,
-  output  wire  [`BUS_64]     o_ex_rd_wdata,
+  output  wire  [`YSYX210544_BUS_64]     o_ex_rd_wdata,
   output  wire  [7 : 0]       o_ex_inst_opcode,
-  output  wire  [`BUS_64]     o_ex_op1,
-  output  wire  [`BUS_64]     o_ex_op2,
-  output  wire  [`BUS_64]     o_ex_op3,
+  output  wire  [`YSYX210544_BUS_64]     o_ex_op1,
+  output  wire  [`YSYX210544_BUS_64]     o_ex_op2,
+  output  wire  [`YSYX210544_BUS_64]     o_ex_op3,
   output  wire                o_ex_skipcmt,
-  output  reg   [`BUS_32]     o_ex_intrNo
+  output  reg   [`YSYX210544_BUS_32]     o_ex_intrNo
 );
 
 wire                          i_disable;
@@ -3317,27 +3251,27 @@ reg                           o_ena_exeU;
 reg                           o_ena_exceptionU;
 
 wire                          exeU_pc_jmp;
-wire [`BUS_64]                exeU_pc_jmpaddr;
+wire [`YSYX210544_BUS_64]                exeU_pc_jmpaddr;
 wire   [11 : 0]               exeU_csr_addr;
 wire                          exeU_csr_ren;
 wire                          exeU_csr_wen;
-wire   [`BUS_64]              exeU_csr_wdata;
+wire   [`YSYX210544_BUS_64]              exeU_csr_wdata;
 
 wire                          exceptionU_req;
 wire                          exceptionU_pc_jmp;
-wire [`BUS_64]                exceptionU_pc_jmpaddr;
+wire [`YSYX210544_BUS_64]                exceptionU_pc_jmpaddr;
 wire   [11 : 0]               exceptionU_csr_addr;
 wire                          exceptionU_csr_ren;
 wire                          exceptionU_csr_wen;
-wire   [`BUS_64]              exceptionU_csr_wdata;
+wire   [`YSYX210544_BUS_64]              exceptionU_csr_wdata;
 
 // 保存输入信息
 reg   [7 : 0]                 tmp_i_ex_inst_opcode;
-reg   [`BUS_64]               tmp_i_ex_pc;
-reg   [`BUS_32]               tmp_i_ex_inst;
-reg   [`BUS_64]               tmp_i_ex_op1;
-reg   [`BUS_64]               tmp_i_ex_op2;
-reg   [`BUS_64]               tmp_i_ex_op3;
+reg   [`YSYX210544_BUS_64]               tmp_i_ex_pc;
+reg   [`YSYX210544_BUS_32]               tmp_i_ex_inst;
+reg   [`YSYX210544_BUS_64]               tmp_i_ex_op1;
+reg   [`YSYX210544_BUS_64]               tmp_i_ex_op2;
+reg   [`YSYX210544_BUS_64]               tmp_i_ex_op3;
 reg   [4 : 0]                 tmp_i_ex_rd;
 reg                           tmp_i_ex_rd_wen;
 reg                           tmp_i_ex_skipcmt;
@@ -3351,7 +3285,7 @@ assign o_ex_decoded_ack = 1'b1;
 assign decoded_hs = i_ex_decoded_req & o_ex_decoded_ack;
 assign executed_hs = i_ex_executed_ack & o_ex_executed_req;
 
-assign is_inst_exceptionU = (i_ex_inst_opcode == `INST_ECALL) | (i_ex_inst_opcode == `INST_MRET);
+assign is_inst_exceptionU = (i_ex_inst_opcode == `YSYX210544_INST_ECALL) | (i_ex_inst_opcode == `YSYX210544_INST_MRET);
 assign is_time_int_req = i_ex_clint_mstatus_mie & i_ex_clint_mie_mtie & i_ex_clint_mtime_overflow;
 
 always @(posedge clk) begin
@@ -3473,17 +3407,17 @@ endmodule
 module ysyx_210544_exeU(
   input   wire                ena,
   input   wire  [7 : 0]       i_inst_opcode,
-  input   wire  [`BUS_64]     i_op1,
-  input   wire  [`BUS_64]     i_op2,
-  input   wire  [`BUS_64]     i_op3,
-  input   wire  [`BUS_64]     i_csr_rdata,
+  input   wire  [`YSYX210544_BUS_64]     i_op1,
+  input   wire  [`YSYX210544_BUS_64]     i_op2,
+  input   wire  [`YSYX210544_BUS_64]     i_op3,
+  input   wire  [`YSYX210544_BUS_64]     i_csr_rdata,
   output  wire  [11 : 0]      o_csr_addr,
   output  wire                o_csr_ren,
   output  wire                o_csr_wen,
-  output  reg   [`BUS_64]     o_csr_wdata,
+  output  reg   [`YSYX210544_BUS_64]     o_csr_wdata,
   output  reg                 o_pc_jmp,
-  output  reg   [`BUS_64]     o_pc_jmpaddr,
-  output  reg   [`BUS_64]     o_rd_wdata,
+  output  reg   [`YSYX210544_BUS_64]     o_pc_jmpaddr,
+  output  reg   [`YSYX210544_BUS_64]     o_rd_wdata,
   output  wire                o_exeU_skip_cmt    // 这里也会发现需要跳过提交的指令，比如 csr mcycle
 );
 
@@ -3506,48 +3440,48 @@ assign reg32_t1 = i_op1[31:0] >> i_op2[4:0];
 
 always @(*) begin
   if( i_disable ) begin
-    o_rd_wdata = `ZERO_WORD;
+    o_rd_wdata = `YSYX210544_ZERO_WORD;
   end
   else begin
     case( i_inst_opcode )
-      `INST_ADDI    : begin o_rd_wdata = i_op1 + i_op2;  end
-      `INST_ADD     : begin o_rd_wdata = i_op1 + i_op2;  end
-      `INST_SUB     : begin o_rd_wdata = i_op1 - i_op2;  end
-      `INST_SUBW    : begin o_rd_wdata = {{33{reg64_t3[31]}}, reg64_t3[30:0]}; end
-      `INST_ADDIW   : begin o_rd_wdata = {{33{reg64_t1[31]}}, reg64_t1[30:0]}; end
-      `INST_AND     : begin o_rd_wdata = i_op1 & i_op2;  end
-      `INST_ANDI    : begin o_rd_wdata = i_op1 & i_op2;  end
-      `INST_OR      : begin o_rd_wdata = i_op1 | i_op2;  end
-      `INST_ORI     : begin o_rd_wdata = i_op1 | i_op2;  end
-      `INST_XOR     : begin o_rd_wdata = i_op1 ^ i_op2;  end
-      `INST_XORI    : begin o_rd_wdata = i_op1 ^ i_op2;  end
-      `INST_SLL     : begin o_rd_wdata = i_op1 << i_op2[5:0]; end
-      `INST_SLLI    : begin o_rd_wdata = i_op1 << i_op2[5:0]; end
-      `INST_SLLIW   : begin o_rd_wdata = {{33{reg64_t2[31]}}, reg64_t2[30:0]}; end
-      `INST_SLLW    : begin o_rd_wdata = {{33{reg64_t4[31]}}, reg64_t4[30:0]}; end
-      `INST_SLT     : begin o_rd_wdata = ($signed(i_op1) < $signed(i_op2)) ? 1 : 0; end
-      `INST_SLTI    : begin o_rd_wdata = ($signed(i_op1) < $signed(i_op2)) ? 1 : 0; end
-      `INST_SLTIU   : begin o_rd_wdata = i_op1 < i_op2 ? 1 : 0; end
-      `INST_SLTU    : begin o_rd_wdata = (i_op1 < i_op2) ? 1 : 0; end
-      `INST_SRA     : begin o_rd_wdata = $signed(i_op1) >>> i_op2[5:0]; end
-      `INST_SRAW    : begin o_rd_wdata = $signed({{33{i_op1[31]}}, i_op1[30:0]}) >>> i_op2[4:0]; end
-      `INST_SRAI    : begin o_rd_wdata = $signed(i_op1) >>> i_op2[5:0]; end
-      `INST_SRAIW   : begin o_rd_wdata = $signed({{33{i_op1[31]}}, i_op1[30:0]}) >>> i_op2[4:0]; end
-      `INST_SRL     : begin o_rd_wdata = i_op1 >> i_op2[5:0]; end
-      `INST_SRLI    : begin o_rd_wdata = i_op1 >> i_op2[5:0]; end
-      `INST_SRLW    : begin o_rd_wdata = {{32{reg32_t1[31]}}, reg32_t1}; end
-      `INST_SRLIW   : begin o_rd_wdata = {{32{reg32_t1[31]}}, reg32_t1}; end
-      `INST_LUI     : begin o_rd_wdata = i_op1; end
-      `INST_AUIPC   : begin o_rd_wdata = i_op1 + i_op2; end
-      `INST_JAL     : begin o_rd_wdata = i_op1 + i_op2; end
-      `INST_JALR    : begin o_rd_wdata = i_op3; end
-      `INST_CSRRW   : begin o_rd_wdata = i_csr_rdata; end
-      `INST_CSRRS   : begin o_rd_wdata = i_csr_rdata; end
-      `INST_CSRRC   : begin o_rd_wdata = i_csr_rdata; end
-      `INST_CSRRWI  : begin o_rd_wdata = i_csr_rdata; end
-      `INST_CSRRSI  : begin o_rd_wdata = i_csr_rdata; end
-      `INST_CSRRCI  : begin o_rd_wdata = i_csr_rdata; end
-      default       : begin o_rd_wdata = `ZERO_WORD; end
+      `YSYX210544_INST_ADDI    : begin o_rd_wdata = i_op1 + i_op2;  end
+      `YSYX210544_INST_ADD     : begin o_rd_wdata = i_op1 + i_op2;  end
+      `YSYX210544_INST_SUB     : begin o_rd_wdata = i_op1 - i_op2;  end
+      `YSYX210544_INST_SUBW    : begin o_rd_wdata = {{33{reg64_t3[31]}}, reg64_t3[30:0]}; end
+      `YSYX210544_INST_ADDIW   : begin o_rd_wdata = {{33{reg64_t1[31]}}, reg64_t1[30:0]}; end
+      `YSYX210544_INST_AND     : begin o_rd_wdata = i_op1 & i_op2;  end
+      `YSYX210544_INST_ANDI    : begin o_rd_wdata = i_op1 & i_op2;  end
+      `YSYX210544_INST_OR      : begin o_rd_wdata = i_op1 | i_op2;  end
+      `YSYX210544_INST_ORI     : begin o_rd_wdata = i_op1 | i_op2;  end
+      `YSYX210544_INST_XOR     : begin o_rd_wdata = i_op1 ^ i_op2;  end
+      `YSYX210544_INST_XORI    : begin o_rd_wdata = i_op1 ^ i_op2;  end
+      `YSYX210544_INST_SLL     : begin o_rd_wdata = i_op1 << i_op2[5:0]; end
+      `YSYX210544_INST_SLLI    : begin o_rd_wdata = i_op1 << i_op2[5:0]; end
+      `YSYX210544_INST_SLLIW   : begin o_rd_wdata = {{33{reg64_t2[31]}}, reg64_t2[30:0]}; end
+      `YSYX210544_INST_SLLW    : begin o_rd_wdata = {{33{reg64_t4[31]}}, reg64_t4[30:0]}; end
+      `YSYX210544_INST_SLT     : begin o_rd_wdata = ($signed(i_op1) < $signed(i_op2)) ? 1 : 0; end
+      `YSYX210544_INST_SLTI    : begin o_rd_wdata = ($signed(i_op1) < $signed(i_op2)) ? 1 : 0; end
+      `YSYX210544_INST_SLTIU   : begin o_rd_wdata = i_op1 < i_op2 ? 1 : 0; end
+      `YSYX210544_INST_SLTU    : begin o_rd_wdata = (i_op1 < i_op2) ? 1 : 0; end
+      `YSYX210544_INST_SRA     : begin o_rd_wdata = $signed(i_op1) >>> i_op2[5:0]; end
+      `YSYX210544_INST_SRAW    : begin o_rd_wdata = $signed({{33{i_op1[31]}}, i_op1[30:0]}) >>> i_op2[4:0]; end
+      `YSYX210544_INST_SRAI    : begin o_rd_wdata = $signed(i_op1) >>> i_op2[5:0]; end
+      `YSYX210544_INST_SRAIW   : begin o_rd_wdata = $signed({{33{i_op1[31]}}, i_op1[30:0]}) >>> i_op2[4:0]; end
+      `YSYX210544_INST_SRL     : begin o_rd_wdata = i_op1 >> i_op2[5:0]; end
+      `YSYX210544_INST_SRLI    : begin o_rd_wdata = i_op1 >> i_op2[5:0]; end
+      `YSYX210544_INST_SRLW    : begin o_rd_wdata = {{32{reg32_t1[31]}}, reg32_t1}; end
+      `YSYX210544_INST_SRLIW   : begin o_rd_wdata = {{32{reg32_t1[31]}}, reg32_t1}; end
+      `YSYX210544_INST_LUI     : begin o_rd_wdata = i_op1; end
+      `YSYX210544_INST_AUIPC   : begin o_rd_wdata = i_op1 + i_op2; end
+      `YSYX210544_INST_JAL     : begin o_rd_wdata = i_op1 + i_op2; end
+      `YSYX210544_INST_JALR    : begin o_rd_wdata = i_op3; end
+      `YSYX210544_INST_CSRRW   : begin o_rd_wdata = i_csr_rdata; end
+      `YSYX210544_INST_CSRRS   : begin o_rd_wdata = i_csr_rdata; end
+      `YSYX210544_INST_CSRRC   : begin o_rd_wdata = i_csr_rdata; end
+      `YSYX210544_INST_CSRRWI  : begin o_rd_wdata = i_csr_rdata; end
+      `YSYX210544_INST_CSRRSI  : begin o_rd_wdata = i_csr_rdata; end
+      `YSYX210544_INST_CSRRCI  : begin o_rd_wdata = i_csr_rdata; end
+      default       : begin o_rd_wdata = `YSYX210544_ZERO_WORD; end
     endcase
   end
 end
@@ -3559,14 +3493,14 @@ always @(*) begin
   end
   else begin
     case (i_inst_opcode)
-      `INST_BEQ   : begin o_pc_jmp = (i_op1 == i_op2) ? 1'd1 : 1'd0; end
-      `INST_BNE   : begin o_pc_jmp = (i_op1 != i_op2) ? 1'd1 : 1'd0; end
-      `INST_BLT   : begin o_pc_jmp = ($signed(i_op1) <  $signed(i_op2)) ? 1'd1 : 1'd0; end
-      `INST_BGE   : begin o_pc_jmp = ($signed(i_op1) >= $signed(i_op2)) ? 1'd1 : 1'd0; end
-      `INST_BLTU  : begin o_pc_jmp = (i_op1 <  i_op2) ? 1'd1 : 1'd0; end
-      `INST_BGEU  : begin o_pc_jmp = (i_op1 >= i_op2) ? 1'd1 : 1'd0; end
-      `INST_JAL   : begin o_pc_jmp = 1'd1; end
-      `INST_JALR  : begin o_pc_jmp = 1'd1; end
+      `YSYX210544_INST_BEQ   : begin o_pc_jmp = (i_op1 == i_op2) ? 1'd1 : 1'd0; end
+      `YSYX210544_INST_BNE   : begin o_pc_jmp = (i_op1 != i_op2) ? 1'd1 : 1'd0; end
+      `YSYX210544_INST_BLT   : begin o_pc_jmp = ($signed(i_op1) <  $signed(i_op2)) ? 1'd1 : 1'd0; end
+      `YSYX210544_INST_BGE   : begin o_pc_jmp = ($signed(i_op1) >= $signed(i_op2)) ? 1'd1 : 1'd0; end
+      `YSYX210544_INST_BLTU  : begin o_pc_jmp = (i_op1 <  i_op2) ? 1'd1 : 1'd0; end
+      `YSYX210544_INST_BGEU  : begin o_pc_jmp = (i_op1 >= i_op2) ? 1'd1 : 1'd0; end
+      `YSYX210544_INST_JAL   : begin o_pc_jmp = 1'd1; end
+      `YSYX210544_INST_JALR  : begin o_pc_jmp = 1'd1; end
       default     : begin o_pc_jmp = 1'd0; end
     endcase
   end
@@ -3579,14 +3513,14 @@ always @(*) begin
   end
   else begin
     case (i_inst_opcode)
-      `INST_JAL   : begin o_pc_jmpaddr = i_op3; end
-      `INST_JALR  : begin o_pc_jmpaddr = (i_op1 + i_op2) & ~64'd1; end
-      `INST_BEQ   : begin o_pc_jmpaddr = i_op3; end
-      `INST_BNE   : begin o_pc_jmpaddr = i_op3; end
-      `INST_BLT   : begin o_pc_jmpaddr = i_op3; end
-      `INST_BGE   : begin o_pc_jmpaddr = i_op3; end
-      `INST_BLTU  : begin o_pc_jmpaddr = i_op3; end
-      `INST_BGEU  : begin o_pc_jmpaddr = i_op3; end
+      `YSYX210544_INST_JAL   : begin o_pc_jmpaddr = i_op3; end
+      `YSYX210544_INST_JALR  : begin o_pc_jmpaddr = (i_op1 + i_op2) & ~64'd1; end
+      `YSYX210544_INST_BEQ   : begin o_pc_jmpaddr = i_op3; end
+      `YSYX210544_INST_BNE   : begin o_pc_jmpaddr = i_op3; end
+      `YSYX210544_INST_BLT   : begin o_pc_jmpaddr = i_op3; end
+      `YSYX210544_INST_BGE   : begin o_pc_jmpaddr = i_op3; end
+      `YSYX210544_INST_BLTU  : begin o_pc_jmpaddr = i_op3; end
+      `YSYX210544_INST_BGEU  : begin o_pc_jmpaddr = i_op3; end
       default     : begin o_pc_jmpaddr = 64'd0; end
     endcase
   end
@@ -3595,9 +3529,9 @@ end
 // ------------- csr -----------------
 
 assign inst_csr = 
-  (i_inst_opcode == `INST_CSRRW ) | (i_inst_opcode == `INST_CSRRS ) | 
-  (i_inst_opcode == `INST_CSRRC ) | (i_inst_opcode == `INST_CSRRWI) | 
-  (i_inst_opcode == `INST_CSRRSI) | (i_inst_opcode == `INST_CSRRCI) ;
+  (i_inst_opcode == `YSYX210544_INST_CSRRW ) | (i_inst_opcode == `YSYX210544_INST_CSRRS ) | 
+  (i_inst_opcode == `YSYX210544_INST_CSRRC ) | (i_inst_opcode == `YSYX210544_INST_CSRRWI) | 
+  (i_inst_opcode == `YSYX210544_INST_CSRRSI) | (i_inst_opcode == `YSYX210544_INST_CSRRCI) ;
 
 assign o_csr_ren  = (i_disable) ?  1'd0 : inst_csr;
 assign o_csr_wen  = (i_disable) ?  1'd0 : inst_csr;
@@ -3609,12 +3543,12 @@ always @(*) begin
   end
   else begin
     case (i_inst_opcode)
-      `INST_CSRRW   : o_csr_wdata = i_op1;
-      `INST_CSRRS   : o_csr_wdata = i_csr_rdata | i_op1;
-      `INST_CSRRC   : o_csr_wdata = i_csr_rdata & (~i_op1);
-      `INST_CSRRWI  : o_csr_wdata = i_op1;
-      `INST_CSRRSI  : o_csr_wdata = i_csr_rdata | i_op1;
-      `INST_CSRRCI  : o_csr_wdata = i_csr_rdata & (~i_op1);
+      `YSYX210544_INST_CSRRW   : o_csr_wdata = i_op1;
+      `YSYX210544_INST_CSRRS   : o_csr_wdata = i_csr_rdata | i_op1;
+      `YSYX210544_INST_CSRRC   : o_csr_wdata = i_csr_rdata & (~i_op1);
+      `YSYX210544_INST_CSRRWI  : o_csr_wdata = i_op1;
+      `YSYX210544_INST_CSRRSI  : o_csr_wdata = i_csr_rdata | i_op1;
+      `YSYX210544_INST_CSRRCI  : o_csr_wdata = i_csr_rdata & (~i_op1);
       default       : o_csr_wdata = 64'd0;
     endcase
   end
@@ -3643,14 +3577,14 @@ module ysyx_210544_exceptionU(
   input   wire                ack,
   output  reg                 req,
   input   wire  [7 : 0]       i_inst_opcode,
-  input   wire  [`BUS_64]     i_pc,
+  input   wire  [`YSYX210544_BUS_64]     i_pc,
   output  reg                 o_pc_jmp,
-  output  reg   [`BUS_64]     o_pc_jmpaddr,
-  input   wire  [`BUS_64]     i_csr_rdata,
+  output  reg   [`YSYX210544_BUS_64]     o_pc_jmpaddr,
+  input   wire  [`YSYX210544_BUS_64]     i_csr_rdata,
   output  reg   [11 : 0]      o_csr_addr,
   output  reg                 o_csr_ren,
   output  reg                 o_csr_wen,
-  output  reg   [`BUS_64]     o_csr_wdata
+  output  reg   [`YSYX210544_BUS_64]     o_csr_wdata
 );
 
 parameter [3:0] STATE_NULL                    = 4'd0;
@@ -3711,12 +3645,12 @@ always @(posedge clk) begin
         STATE_NULL: begin
           // 如果有使能信号，则进入不同的状态
           if (ena) begin
-            if (i_inst_opcode == `INST_ECALL) begin
+            if (i_inst_opcode == `YSYX210544_INST_ECALL) begin
               next_state <= STATE_ENTER_WRITE_MEPC;
               exception_cause <= 64'd11;
               //$write("#ecall\n"); $fflush();
             end
-            else if (i_inst_opcode == `INST_MRET) begin
+            else if (i_inst_opcode == `YSYX210544_INST_MRET) begin
               next_state <= STATE_LEAVE_READ_MSTATUS;
             end
             else begin
@@ -3737,7 +3671,7 @@ always @(posedge clk) begin
             0:  begin 
               // 防止再次进入
               if (state == next_state) begin 
-                o_csr_addr      <=`CSR_ADR_MEPC; 
+                o_csr_addr      <=`YSYX210544_CSR_ADR_MEPC; 
                 o_csr_wen       <= 1; 
                 o_csr_wdata     <= i_pc;
                 step            <= 1;
@@ -3760,7 +3694,7 @@ always @(posedge clk) begin
             0:  begin 
               // 防止再次进入
               if (state == next_state) begin 
-                o_csr_addr      <=`CSR_ADR_MCAUSE; 
+                o_csr_addr      <=`YSYX210544_CSR_ADR_MCAUSE; 
                 o_csr_wen       <= 1; 
                 o_csr_wdata     <= exception_cause;
                 step            <= 1;
@@ -3783,7 +3717,7 @@ always @(posedge clk) begin
             0:  begin 
               // 防止再次进入
               if (state == next_state) begin 
-                o_csr_addr      <=`CSR_ADR_MTVEC; 
+                o_csr_addr      <=`YSYX210544_CSR_ADR_MTVEC; 
                 o_csr_ren       <= 1; 
                 step            <= 1;
               end
@@ -3806,7 +3740,7 @@ always @(posedge clk) begin
             0:  begin 
               // 防止再次进入
               if (state == next_state) begin 
-                o_csr_addr      <=`CSR_ADR_MSTATUS; 
+                o_csr_addr      <=`YSYX210544_CSR_ADR_MSTATUS; 
                 o_csr_ren       <= 1; 
                 step            <= 1;
               end
@@ -3829,7 +3763,7 @@ always @(posedge clk) begin
             0:  begin 
               // 防止再次进入
               if (state == next_state) begin 
-                o_csr_addr      <=`CSR_ADR_MSTATUS; 
+                o_csr_addr      <=`YSYX210544_CSR_ADR_MSTATUS; 
                 o_csr_wen       <= 1; 
                 o_csr_wdata     <= {
                   csr_rdata_save1[63:13],
@@ -3863,7 +3797,7 @@ always @(posedge clk) begin
             0:  begin
               // 防止再次进入
               if (state == next_state) begin 
-                o_csr_addr      <=`CSR_ADR_MSTATUS; 
+                o_csr_addr      <=`YSYX210544_CSR_ADR_MSTATUS; 
                 o_csr_ren       <= 1; 
                 step            <= 1;
               end
@@ -3886,7 +3820,7 @@ always @(posedge clk) begin
             0:  begin 
               // 防止再次进入
               if (state == next_state) begin 
-                o_csr_addr      <=`CSR_ADR_MEPC; 
+                o_csr_addr      <=`YSYX210544_CSR_ADR_MEPC; 
                 o_csr_ren       <= 1; 
                 step            <= 1;
               end
@@ -3909,7 +3843,7 @@ always @(posedge clk) begin
             0:  begin 
               // 防止再次进入
               if (state == next_state) begin 
-                o_csr_addr      <=`CSR_ADR_MSTATUS; 
+                o_csr_addr      <=`YSYX210544_CSR_ADR_MSTATUS; 
                 o_csr_wen       <= 1; 
                 o_csr_wdata     <= {
                   csr_rdata_save1[63:13],
@@ -3965,25 +3899,25 @@ module ysyx_210544_mem_stage(
   output  wire                o_mem_executed_ack,
   output  reg                 o_mem_memoryed_req,
   input   wire                i_mem_memoryed_ack,
-  input   wire  [`BUS_64]     i_mem_pc,
-  input   wire  [`BUS_32]     i_mem_inst,
-  input   wire  [`BUS_RIDX]   i_mem_rd,
+  input   wire  [`YSYX210544_BUS_64]     i_mem_pc,
+  input   wire  [`YSYX210544_BUS_32]     i_mem_inst,
+  input   wire  [`YSYX210544_BUS_RIDX]   i_mem_rd,
   input   wire                i_mem_rd_wen,
-  input   wire  [`BUS_64]     i_mem_rd_wdata,
+  input   wire  [`YSYX210544_BUS_64]     i_mem_rd_wdata,
   input   wire                i_mem_skipcmt,
   input   wire  [7 : 0]       i_mem_inst_opcode,
-  input   wire  [`BUS_64]     i_mem_op1,
-  input   wire  [`BUS_64]     i_mem_op2,
-  input   wire  [`BUS_64]     i_mem_op3,
-  output  wire  [`BUS_RIDX]   o_mem_rd,
+  input   wire  [`YSYX210544_BUS_64]     i_mem_op1,
+  input   wire  [`YSYX210544_BUS_64]     i_mem_op2,
+  input   wire  [`YSYX210544_BUS_64]     i_mem_op3,
+  output  wire  [`YSYX210544_BUS_RIDX]   o_mem_rd,
   output  wire                o_mem_rd_wen,
-  output  reg   [`BUS_64]     o_mem_rd_wdata,
-  output  wire  [`BUS_64]     o_mem_pc,
-  output  wire  [`BUS_32]     o_mem_inst,
+  output  reg   [`YSYX210544_BUS_64]     o_mem_rd_wdata,
+  output  wire  [`YSYX210544_BUS_64]     o_mem_pc,
+  output  wire  [`YSYX210544_BUS_32]     o_mem_inst,
   output  wire                o_mem_skipcmt,
   output  wire                o_mem_clint_mtime_overflow,
-  input   wire  [`BUS_32]     i_mem_intrNo,
-  output  reg   [`BUS_32]     o_mem_intrNo,
+  input   wire  [`YSYX210544_BUS_32]     i_mem_intrNo,
+  output  reg   [`YSYX210544_BUS_32]     o_mem_intrNo,
   output  wire                o_mem_fencei_req,
   input   wire                i_mem_fencei_ack,
 
@@ -4013,16 +3947,16 @@ wire                          memoryed_req_cachesync;
 wire                          memoryed_req_mem;
 wire                          memoryed_req_mmio;
 wire                          memoryed_req_none;
-wire   [`BUS_64]              rdata_mem;      // readed data from mmio
-wire   [`BUS_64]              rdata_mmio;     // readed data from main memory
-reg    [`BUS_64]              rdata;          // readed data from main memory or mmio
+wire   [`YSYX210544_BUS_64]              rdata_mem;      // readed data from mmio
+wire   [`YSYX210544_BUS_64]              rdata_mmio;     // readed data from main memory
+reg    [`YSYX210544_BUS_64]              rdata;          // readed data from main memory or mmio
 
 // 保存输入信息
-reg   [`BUS_64]               tmp_i_mem_pc;
-reg   [`BUS_32]               tmp_i_mem_inst;
-reg   [`BUS_RIDX]             tmp_i_mem_rd;
+reg   [`YSYX210544_BUS_64]               tmp_i_mem_pc;
+reg   [`YSYX210544_BUS_32]               tmp_i_mem_inst;
+reg   [`YSYX210544_BUS_RIDX]             tmp_i_mem_rd;
 reg                           tmp_i_mem_rd_wen;
-reg   [`BUS_64]               tmp_i_mem_rd_wdata;
+reg   [`YSYX210544_BUS_64]               tmp_i_mem_rd_wdata;
 reg   [7 : 0]                 tmp_i_mem_inst_opcode;
 reg                           tmp_i_mem_skipcmt;
 reg                           tmp_ch_cachesync;
@@ -4048,7 +3982,7 @@ assign addr_is_mmio = (mem_addr[31:24] == 8'h02);// & (64'hFF000000)) == 64'h020
 // channel select, only valid in one pulse
 assign ren_or_wen = mem_ren | mem_wen;
 
-assign ch_cachesync = i_mem_inst_opcode == `INST_FENCEI;
+assign ch_cachesync = i_mem_inst_opcode == `YSYX210544_INST_FENCEI;
 assign ch_mem   = addr_is_mem & ren_or_wen;
 assign ch_mmio  = addr_is_mmio & ren_or_wen;
 assign ch_none  = (!ch_cachesync) & ((!(addr_is_mem | addr_is_mmio)) | (!ren_or_wen));
@@ -4147,13 +4081,13 @@ always @(*) begin
   end
   else begin
     case (i_mem_inst_opcode)
-      `INST_LB  : begin mem_ren = 1; end
-      `INST_LBU : begin mem_ren = 1; end
-      `INST_LH  : begin mem_ren = 1; end
-      `INST_LHU : begin mem_ren = 1; end 
-      `INST_LW  : begin mem_ren = 1; end
-      `INST_LWU : begin mem_ren = 1; end
-      `INST_LD  : begin mem_ren = 1; end
+      `YSYX210544_INST_LB  : begin mem_ren = 1; end
+      `YSYX210544_INST_LBU : begin mem_ren = 1; end
+      `YSYX210544_INST_LH  : begin mem_ren = 1; end
+      `YSYX210544_INST_LHU : begin mem_ren = 1; end 
+      `YSYX210544_INST_LW  : begin mem_ren = 1; end
+      `YSYX210544_INST_LWU : begin mem_ren = 1; end
+      `YSYX210544_INST_LD  : begin mem_ren = 1; end
       default   : begin mem_ren = 0; end
     endcase
   end
@@ -4166,10 +4100,10 @@ always @(*) begin
   end
   else begin
     case (i_mem_inst_opcode)
-      `INST_SB  : begin mem_wen = 1; end
-      `INST_SH  : begin mem_wen = 1; end
-      `INST_SW  : begin mem_wen = 1; end
-      `INST_SD  : begin mem_wen = 1; end
+      `YSYX210544_INST_SB  : begin mem_wen = 1; end
+      `YSYX210544_INST_SH  : begin mem_wen = 1; end
+      `YSYX210544_INST_SW  : begin mem_wen = 1; end
+      `YSYX210544_INST_SD  : begin mem_wen = 1; end
       default   : begin mem_wen = 0; end
     endcase
   end
@@ -4185,17 +4119,17 @@ always @(*) begin
   end
   else begin
     case (i_mem_inst_opcode)
-      `INST_LB  : begin mem_bytes = 0; end
-      `INST_LBU : begin mem_bytes = 0; end
-      `INST_SB  : begin mem_bytes = 0; end
-      `INST_LH  : begin mem_bytes = 1; end
-      `INST_LHU : begin mem_bytes = 1; end 
-      `INST_SH  : begin mem_bytes = 1; end
-      `INST_LW  : begin mem_bytes = 3; end
-      `INST_SW  : begin mem_bytes = 3; end
-      `INST_LWU : begin mem_bytes = 3; end
-      `INST_LD  : begin mem_bytes = 7; end
-      `INST_SD  : begin mem_bytes = 7; end
+      `YSYX210544_INST_LB  : begin mem_bytes = 0; end
+      `YSYX210544_INST_LBU : begin mem_bytes = 0; end
+      `YSYX210544_INST_SB  : begin mem_bytes = 0; end
+      `YSYX210544_INST_LH  : begin mem_bytes = 1; end
+      `YSYX210544_INST_LHU : begin mem_bytes = 1; end 
+      `YSYX210544_INST_SH  : begin mem_bytes = 1; end
+      `YSYX210544_INST_LW  : begin mem_bytes = 3; end
+      `YSYX210544_INST_SW  : begin mem_bytes = 3; end
+      `YSYX210544_INST_LWU : begin mem_bytes = 3; end
+      `YSYX210544_INST_LD  : begin mem_bytes = 7; end
+      `YSYX210544_INST_SD  : begin mem_bytes = 7; end
       default   : begin mem_bytes = 0; end
     endcase
   end
@@ -4208,10 +4142,10 @@ always @(*) begin
   end
   else begin
     case (i_mem_inst_opcode)
-      `INST_SB  : begin mem_wdata = {56'd0, i_mem_op2[7:0]}; end
-      `INST_SH  : begin mem_wdata = {48'd0, i_mem_op2[15:0]}; end
-      `INST_SW  : begin mem_wdata = {32'd0, i_mem_op2[31:0]}; end
-      `INST_SD  : begin mem_wdata = i_mem_op2[63:0]; end
+      `YSYX210544_INST_SB  : begin mem_wdata = {56'd0, i_mem_op2[7:0]}; end
+      `YSYX210544_INST_SH  : begin mem_wdata = {48'd0, i_mem_op2[15:0]}; end
+      `YSYX210544_INST_SW  : begin mem_wdata = {32'd0, i_mem_op2[31:0]}; end
+      `YSYX210544_INST_SD  : begin mem_wdata = i_mem_op2[63:0]; end
       default   : begin mem_wdata = 0; end
     endcase
   end
@@ -4224,13 +4158,13 @@ always @(*) begin
   end
   else begin
     case (tmp_i_mem_inst_opcode)
-      `INST_LB  : begin o_mem_rd_wdata = {{57{rdata[7]}}, rdata[6:0]} ; end
-      `INST_LBU : begin o_mem_rd_wdata = {56'd0, rdata[7:0]}; end
-      `INST_LH  : begin o_mem_rd_wdata = {{49{rdata[15]}}, rdata[14:0]}; end
-      `INST_LHU : begin o_mem_rd_wdata = {48'd0, rdata[15:0]}; end
-      `INST_LW  : begin o_mem_rd_wdata = {{33{rdata[31]}}, rdata[30:0]}; end
-      `INST_LWU : begin o_mem_rd_wdata = {32'd0, rdata[31:0]}; end
-      `INST_LD  : begin o_mem_rd_wdata = rdata[63:0]; end
+      `YSYX210544_INST_LB  : begin o_mem_rd_wdata = {{57{rdata[7]}}, rdata[6:0]} ; end
+      `YSYX210544_INST_LBU : begin o_mem_rd_wdata = {56'd0, rdata[7:0]}; end
+      `YSYX210544_INST_LH  : begin o_mem_rd_wdata = {{49{rdata[15]}}, rdata[14:0]}; end
+      `YSYX210544_INST_LHU : begin o_mem_rd_wdata = {48'd0, rdata[15:0]}; end
+      `YSYX210544_INST_LW  : begin o_mem_rd_wdata = {{33{rdata[31]}}, rdata[30:0]}; end
+      `YSYX210544_INST_LWU : begin o_mem_rd_wdata = {32'd0, rdata[31:0]}; end
+      `YSYX210544_INST_LD  : begin o_mem_rd_wdata = rdata[63:0]; end
       default   : begin o_mem_rd_wdata = tmp_i_mem_rd_wdata; end
     endcase
   end
@@ -4309,12 +4243,12 @@ module ysyx_210544_memU(
   input   wire                ack,
   output  reg                 req,
 
-  input   wire  [`BUS_64]     i_addr,
+  input   wire  [`YSYX210544_BUS_64]     i_addr,
   input   wire  [2:0]         i_bytes,
   input   wire                i_ren,
   input   wire                i_wen,
-  input   wire  [`BUS_64]     i_wdata,
-  output  reg   [`BUS_64]     o_rdata,
+  input   wire  [`YSYX210544_BUS_64]     i_wdata,
+  output  reg   [`YSYX210544_BUS_64]     o_rdata,
 
   ///////////////////////////////////////////////
   // DCache interface
@@ -4348,14 +4282,14 @@ always @(posedge clk) begin
     if (start) begin
       if (i_ren) begin
         o_dcache_req      <= 1;
-        o_dcache_op       <= `REQ_READ;
+        o_dcache_op       <= `YSYX210544_REQ_READ;
         o_dcache_addr     <= i_addr;
         o_dcache_bytes    <= i_bytes;
         wait_finish       <= 1;
       end
       else if (i_wen) begin
         o_dcache_req      <= 1;
-        o_dcache_op       <= `REQ_WRITE;
+        o_dcache_op       <= `YSYX210544_REQ_WRITE;
         o_dcache_addr     <= i_addr;
         o_dcache_bytes    <= i_bytes;
         o_dcache_wdata    <= i_wdata;
@@ -4397,22 +4331,22 @@ module ysyx_210544_mem_mmio(
   output  reg                 req,
   input   wire                ren,
   input   wire                wen,
-  input   wire [`BUS_64]      addr,
-  input   wire [`BUS_64]      wdata,
-  output  reg  [`BUS_64]      rdata,
+  input   wire [`YSYX210544_BUS_64]      addr,
+  input   wire [`YSYX210544_BUS_64]      wdata,
+  output  reg  [`YSYX210544_BUS_64]      rdata,
   output  wire                o_clint_mtime_overflow
 );
 
 // rtc设备
-wire  [`BUS_64]               rtc_rdata;
-wire  [`BUS_64]               i_clint_rdata;
+wire  [`YSYX210544_BUS_64]               rtc_rdata;
+wire  [`YSYX210544_BUS_64]               i_clint_rdata;
 
 
 
 ysyx_210544_rtc Rtc(
   .clk                (clk              ),
   .rst                (rst              ),
-  .ren                (ren & (addr == `DEV_RTC)),
+  .ren                (ren & (addr == `YSYX210544_DEV_RTC)),
   .rdata              (rtc_rdata        )
 );
 
@@ -4437,9 +4371,9 @@ always @(posedge clk) begin
         // set request
         if (start) begin
             if (ren) begin
-                if (addr == `DEV_RTC)             rdata <= rtc_rdata;
-                else if (addr == `DEV_MTIME)      rdata <= i_clint_rdata;
-                else if (addr == `DEV_MTIMECMP)   rdata <= i_clint_rdata;
+                if (addr == `YSYX210544_DEV_RTC)             rdata <= rtc_rdata;
+                else if (addr == `YSYX210544_DEV_MTIME)      rdata <= i_clint_rdata;
+                else if (addr == `YSYX210544_DEV_MTIMECMP)   rdata <= i_clint_rdata;
                 req <= 1;
             end
             else begin
@@ -4547,31 +4481,31 @@ module ysyx_210544_wb_stage(
   output  wire                o_wb_memoryed_ack,
   output  reg                 o_wb_writebacked_req,
   input   wire                i_wb_writebacked_ack,
-  input   wire  [`BUS_64]     i_wb_pc,
-  input   wire  [`BUS_32]     i_wb_inst,
-  input   wire  [`BUS_RIDX]   i_wb_rd,
+  input   wire  [`YSYX210544_BUS_64]     i_wb_pc,
+  input   wire  [`YSYX210544_BUS_32]     i_wb_inst,
+  input   wire  [`YSYX210544_BUS_RIDX]   i_wb_rd,
   input   wire                i_wb_rd_wen,
-  input   wire  [`BUS_64]     i_wb_rd_wdata,
+  input   wire  [`YSYX210544_BUS_64]     i_wb_rd_wdata,
   input   wire                i_wb_skipcmt,
-  output  wire  [`BUS_64]     o_wb_pc,
-  output  wire  [`BUS_32]     o_wb_inst,
-  output  wire  [`BUS_RIDX]   o_wb_rd,
+  output  wire  [`YSYX210544_BUS_64]     o_wb_pc,
+  output  wire  [`YSYX210544_BUS_32]     o_wb_inst,
+  output  wire  [`YSYX210544_BUS_RIDX]   o_wb_rd,
   output  wire                o_wb_rd_wen,
-  output  wire  [`BUS_64]     o_wb_rd_wdata,
+  output  wire  [`YSYX210544_BUS_64]     o_wb_rd_wdata,
   output  wire                o_wb_skipcmt,
-  input   wire  [`BUS_32]     i_wb_intrNo,
-  output  reg   [`BUS_32]     o_wb_intrNo
+  input   wire  [`YSYX210544_BUS_32]     i_wb_intrNo,
+  output  reg   [`YSYX210544_BUS_32]     o_wb_intrNo
 );
 
 reg                           i_ena;    // 是否使能组合逻辑单元部件
 wire                          i_disable = !i_ena;
 
 // 保存输入信息
-reg   [`BUS_64]               tmp_i_wb_pc;
-reg   [`BUS_32]               tmp_i_wb_inst;
+reg   [`YSYX210544_BUS_64]               tmp_i_wb_pc;
+reg   [`YSYX210544_BUS_32]               tmp_i_wb_inst;
 reg   [4 : 0]                 tmp_i_wb_rd;
 reg                           tmp_i_wb_rd_wen;
-reg   [`BUS_64]               tmp_i_wb_rd_wdata;
+reg   [`YSYX210544_BUS_64]               tmp_i_wb_rd_wdata;
 reg                           tmp_i_wb_skipcmt;
 
 wire memoryed_hs;
@@ -4658,94 +4592,94 @@ wire                          writebacked_ack;
 
 // if_stage
 // if_stage -> id_stage
-wire  [`BUS_64]               o_if_pc;
-wire  [`BUS_32]               o_if_inst;
+wire  [`YSYX210544_BUS_64]               o_if_pc;
+wire  [`YSYX210544_BUS_32]               o_if_inst;
 
 // id_stage
 // id_stage -> regfile
 wire                          o_id_rs1_ren;
-wire  [`BUS_RIDX]             o_id_rs1;
+wire  [`YSYX210544_BUS_RIDX]             o_id_rs1;
 wire                          o_id_rs2_ren;
-wire  [`BUS_RIDX]             o_id_rs2;
+wire  [`YSYX210544_BUS_RIDX]             o_id_rs2;
 // id_stage -> exe_stage
-wire  [`BUS_RIDX]             o_id_rd;
+wire  [`YSYX210544_BUS_RIDX]             o_id_rd;
 wire                          o_id_rd_wen;
 wire  [7 : 0]                 o_id_inst_opcode;
-wire  [`BUS_64]               o_id_op1;
-wire  [`BUS_64]               o_id_op2;
-wire  [`BUS_64]               o_id_op3;
+wire  [`YSYX210544_BUS_64]               o_id_op1;
+wire  [`YSYX210544_BUS_64]               o_id_op2;
+wire  [`YSYX210544_BUS_64]               o_id_op3;
 wire                          o_id_skipcmt;
-wire  [`BUS_64]               o_id_pc;
-wire  [`BUS_32]               o_id_inst;
+wire  [`YSYX210544_BUS_64]               o_id_pc;
+wire  [`YSYX210544_BUS_32]               o_id_inst;
 
 // exe_stage
 // exe_stage -> mem_stage
-wire  [`BUS_64]               o_ex_pc;
-wire  [`BUS_32]               o_ex_inst;
+wire  [`YSYX210544_BUS_64]               o_ex_pc;
+wire  [`YSYX210544_BUS_32]               o_ex_inst;
 wire                          o_ex_pc_jmp;
-wire  [`BUS_64]               o_ex_pc_jmpaddr;
+wire  [`YSYX210544_BUS_64]               o_ex_pc_jmpaddr;
 wire  [7 : 0]                 o_ex_inst_opcode;
-wire  [`BUS_RIDX]             o_ex_rd;
+wire  [`YSYX210544_BUS_RIDX]             o_ex_rd;
 wire                          o_ex_rd_wen;
-wire  [`BUS_64]               o_ex_rd_wdata;
-wire  [`BUS_64]               o_ex_op1;
-wire  [`BUS_64]               o_ex_op2;
-wire  [`BUS_64]               o_ex_op3;
+wire  [`YSYX210544_BUS_64]               o_ex_rd_wdata;
+wire  [`YSYX210544_BUS_64]               o_ex_op1;
+wire  [`YSYX210544_BUS_64]               o_ex_op2;
+wire  [`YSYX210544_BUS_64]               o_ex_op3;
 wire                          o_ex_skipcmt;
-wire  [`BUS_32]               o_ex_intrNo;
+wire  [`YSYX210544_BUS_32]               o_ex_intrNo;
 
 // ex_stage -> csrfile
 wire  [11 : 0]                o_ex_csr_addr;
 wire                          o_ex_csr_ren;
 wire                          o_ex_csr_wen;
-wire  [`BUS_64]               o_ex_csr_wdata;
+wire  [`YSYX210544_BUS_64]               o_ex_csr_wdata;
 
 // mem_stage
 // mem_stage -> wb_stage
-wire  [`BUS_64]               o_mem_pc;
-wire  [`BUS_32]               o_mem_inst;
-wire  [`BUS_RIDX]             o_mem_rd;
+wire  [`YSYX210544_BUS_64]               o_mem_pc;
+wire  [`YSYX210544_BUS_32]               o_mem_inst;
+wire  [`YSYX210544_BUS_RIDX]             o_mem_rd;
 wire                          o_mem_rd_wen;
-wire  [`BUS_64]               o_mem_rd_wdata;
+wire  [`YSYX210544_BUS_64]               o_mem_rd_wdata;
 wire                          o_mem_skipcmt;
-wire  [`BUS_32]               o_mem_intrNo;
+wire  [`YSYX210544_BUS_32]               o_mem_intrNo;
 // mem_stage -> cache
 wire                          o_mem_fencei_req;
 wire                          i_mem_fencei_ack;
 
 // wb_stage
 // wb_stage -> cmt_stage
-wire  [`BUS_64]               o_wb_pc;
-wire  [`BUS_32]               o_wb_inst;
+wire  [`YSYX210544_BUS_64]               o_wb_pc;
+wire  [`YSYX210544_BUS_32]               o_wb_inst;
 wire                          o_wb_skipcmt;
-wire  [`BUS_32]               o_wb_intrNo;
+wire  [`YSYX210544_BUS_32]               o_wb_intrNo;
 // wb_stage -> regfile
-wire  [`BUS_RIDX]             o_wb_rd;
+wire  [`YSYX210544_BUS_RIDX]             o_wb_rd;
 wire                          o_wb_rd_wen;
-wire  [`BUS_64]               o_wb_rd_wdata;
+wire  [`YSYX210544_BUS_64]               o_wb_rd_wdata;
 
 // regfile
 // regfile -> id_stage
-wire  [`BUS_64]               o_reg_id_rs1_data;
-wire  [`BUS_64]               o_reg_id_rs2_data;
+wire  [`YSYX210544_BUS_64]               o_reg_id_rs1_data;
+wire  [`YSYX210544_BUS_64]               o_reg_id_rs2_data;
 
-`ifdef DIFFTEST_YSYX_210544
+`ifdef YSYX210544_DIFFTEST_FLAG
 // regfile -> difftest
-wire  [`BUS_64]               o_reg_regs[0 : 31];
+wire  [`YSYX210544_BUS_64]               o_reg_regs[0 : 31];
 `endif
 
 // csrfile
 // csrfile -> ex_stage
-wire  [`BUS_64]               o_csr_rdata;
+wire  [`YSYX210544_BUS_64]               o_csr_rdata;
 // csrfile -> wb_stage
-wire  [`BUS_64]               o_csr_csrs_mcycle;
-wire  [`BUS_64]               o_csr_csrs_mstatus;
-wire  [`BUS_64]               o_csr_csrs_mie;
-wire  [`BUS_64]               o_csr_csrs_mtvec;
-wire  [`BUS_64]               o_csr_csrs_mscratch;
-wire  [`BUS_64]               o_csr_csrs_mepc;
-wire  [`BUS_64]               o_csr_csrs_mcause;
-wire  [`BUS_64]               o_csr_csrs_mip;
+wire  [`YSYX210544_BUS_64]               o_csr_csrs_mcycle;
+wire  [`YSYX210544_BUS_64]               o_csr_csrs_mstatus;
+wire  [`YSYX210544_BUS_64]               o_csr_csrs_mie;
+wire  [`YSYX210544_BUS_64]               o_csr_csrs_mtvec;
+wire  [`YSYX210544_BUS_64]               o_csr_csrs_mscratch;
+wire  [`YSYX210544_BUS_64]               o_csr_csrs_mepc;
+wire  [`YSYX210544_BUS_64]               o_csr_csrs_mcause;
+wire  [`YSYX210544_BUS_64]               o_csr_csrs_mip;
 
 // clint
 wire                          o_clint_mstatus_mie;
@@ -4767,7 +4701,7 @@ wire                          i_dcache_ack;
 wire  [63:0]                  i_dcache_rdata;
 
 
-`ifdef DIFFTEST_YSYX_210544
+`ifdef YSYX210544_DIFFTEST_FLAG
 
 always @(posedge clk) begin
   if (o_if_inst == 32'h7b) begin
@@ -4952,7 +4886,7 @@ ysyx_210544_wb_stage Wb_stage(
   .o_wb_intrNo                (o_wb_intrNo                )
 );
 
-`ifdef DIFFTEST_YSYX_210544
+`ifdef YSYX210544_DIFFTEST_FLAG
 
 ysyx_210544_cmt_stage Cmt_stage(
   .clk                        (clk                        ),
@@ -4994,7 +4928,7 @@ ysyx_210544_regfile Regfile(
   .o_rs1_data                 (o_reg_id_rs1_data          ),
   .o_rs2_data                 (o_reg_id_rs2_data          )
   
-`ifdef DIFFTEST_YSYX_210544
+`ifdef YSYX210544_DIFFTEST_FLAG
     ,
   .o_regs                     (o_reg_regs                 )
 `endif

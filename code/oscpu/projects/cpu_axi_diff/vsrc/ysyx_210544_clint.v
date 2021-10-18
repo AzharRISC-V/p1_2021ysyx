@@ -9,24 +9,24 @@ module ysyx_210544_clint(
   input   wire                clk,
   input   wire                rst,
 
-  input   wire [`BUS_64]      i_clint_addr,
+  input   wire [`YSYX210544_BUS_64]      i_clint_addr,
   input   wire                i_clint_ren,
-  output  wire [`BUS_64]      o_clint_rdata,
+  output  wire [`YSYX210544_BUS_64]      o_clint_rdata,
   input   wire                i_clint_wen,
-  input   wire [`BUS_64]      i_clint_wdata,
+  input   wire [`YSYX210544_BUS_64]      i_clint_wdata,
   output  wire                o_clint_mtime_overflow
 );
 
 // reg   [7:0]       reg_mtime_cnt;
-reg   [`BUS_64]   reg_mtime;
-reg   [`BUS_64]   reg_mtimecmp;
+reg   [`YSYX210544_BUS_64]   reg_mtime;
+reg   [`YSYX210544_BUS_64]   reg_mtimecmp;
 wire addr_mtime;
 wire addr_mtimecmp;
 
 
 
-assign addr_mtime = i_clint_addr == `DEV_MTIME;
-assign addr_mtimecmp = i_clint_addr == `DEV_MTIMECMP;
+assign addr_mtime = i_clint_addr == `YSYX210544_DEV_MTIME;
+assign addr_mtimecmp = i_clint_addr == `YSYX210544_DEV_MTIMECMP;
 
 always @(posedge clk) begin
   if (rst) begin

@@ -3,26 +3,26 @@
 
 // Commit Unit (for difftest)
 
-`ifdef DIFFTEST_YSYX_210544
+`ifdef YSYX210544_DIFFTEST_FLAG
 
 `include "defines.v"
 
 module ysyx_210544_cmtU(
   input   wire                clk,
   input   wire                rst,
-  input   wire [`BUS_RIDX]    i_rd,
+  input   wire [`YSYX210544_BUS_RIDX]    i_rd,
   input   wire                i_rd_wen,
-  input   wire [`BUS_64]      i_rd_wdata,
-  input   wire [`BUS_64]      i_pc,
-  input   wire [`BUS_32]      i_inst,
-  input   wire [`BUS_64]      i_regs[0 : 31],
-  input   wire [`BUS_64]      i_csrs_mstatus,
-  input   wire [`BUS_64]      i_csrs_mie,
-  input   wire [`BUS_64]      i_csrs_mtvec,
-  input   wire [`BUS_64]      i_csrs_mscratch,
-  input   wire [`BUS_64]      i_csrs_mepc,
-  input   wire [`BUS_64]      i_csrs_mcause,
-  input   wire [`BUS_32]      i_intrNo,
+  input   wire [`YSYX210544_BUS_64]      i_rd_wdata,
+  input   wire [`YSYX210544_BUS_64]      i_pc,
+  input   wire [`YSYX210544_BUS_32]      i_inst,
+  input   wire [`YSYX210544_BUS_64]      i_regs[0 : 31],
+  input   wire [`YSYX210544_BUS_64]      i_csrs_mstatus,
+  input   wire [`YSYX210544_BUS_64]      i_csrs_mie,
+  input   wire [`YSYX210544_BUS_64]      i_csrs_mtvec,
+  input   wire [`YSYX210544_BUS_64]      i_csrs_mscratch,
+  input   wire [`YSYX210544_BUS_64]      i_csrs_mepc,
+  input   wire [`YSYX210544_BUS_64]      i_csrs_mcause,
+  input   wire [`YSYX210544_BUS_32]      i_intrNo,
   input   wire                i_cmtvalid,
   input   wire                i_skipcmt
 );
@@ -30,18 +30,18 @@ module ysyx_210544_cmtU(
 // Difftest
 reg                           cmt_wen;
 reg   [7:0]                   cmt_wdest;
-reg   [`BUS_64]               cmt_wdata;
-reg   [`BUS_64]               cmt_pc;
-reg   [`BUS_32]               cmt_inst;
+reg   [`YSYX210544_BUS_64]               cmt_wdata;
+reg   [`YSYX210544_BUS_64]               cmt_pc;
+reg   [`YSYX210544_BUS_32]               cmt_inst;
 reg                           cmt_valid;
 reg                           cmt_skip;       // control commit skip
 reg                           trap;
 reg   [2:0]                   trap_code;
-reg   [`BUS_64]               cycleCnt;
-reg   [`BUS_64]               instrCnt;
-reg   [`BUS_64]               regs_diff [0 : 31];
-wire  [`BUS_64]               instrCnt_inc;
-wire  [`BUS_64]               sstatus;
+reg   [`YSYX210544_BUS_64]               cycleCnt;
+reg   [`YSYX210544_BUS_64]               instrCnt;
+reg   [`YSYX210544_BUS_64]               regs_diff [0 : 31];
+wire  [`YSYX210544_BUS_64]               instrCnt_inc;
+wire  [`YSYX210544_BUS_64]               sstatus;
 
 assign instrCnt_inc = i_cmtvalid ? 1 : 0;
 assign sstatus = i_csrs_mstatus & 64'h80000003_000DE122;
@@ -141,7 +141,7 @@ DifftestTrapEvent DifftestTrapEvent(
 DifftestCSRState DifftestCSRState(
   .clock              (clk),
   .coreid             (0),
-  .priviledgeMode     (`RISCV_PRIV_MODE_M),
+  .priviledgeMode     (`YSYX210544_RISCV_PRIV_MODE_M),
   .mstatus            (i_csrs_mstatus),
   .sstatus            (sstatus),
   .mepc               (i_csrs_mepc),

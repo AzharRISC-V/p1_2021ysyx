@@ -50,9 +50,9 @@ soc-run-all:
 	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal' -a "-i ysyxSoC/flash/hello-flash.bin"
 	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal' -a "-i ysyxSoC/flash/memtest-flash.bin"
 	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal' -a "-i ysyxSoC/flash/rtthread-flash.bin"
-	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal' -a "-i ysyxSoC/flash/hello-flash.bin"
-	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal' -a "-i ysyxSoC/flash/memtest-flash.bin"
-	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal' -a "-i ysyxSoC/flash/rtthread-flash.bin"
+	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal' -a "-i ysyxSoC/loader/hello-loader.bin"
+	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal' -a "-i ysyxSoC/loader/memtest-loader.bin"
+	./build.sh -e soc -b -s -y -v '--timescale "1ns/1ns" -Wno-fatal' -a "-i ysyxSoC/loader/rtthread-loader.bin"
 
 # Clean nemu/build
 clean:

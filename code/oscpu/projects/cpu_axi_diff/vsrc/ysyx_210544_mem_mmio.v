@@ -13,22 +13,22 @@ module ysyx_210544_mem_mmio(
   output  reg                 req,
   input   wire                ren,
   input   wire                wen,
-  input   wire [`BUS_64]      addr,
-  input   wire [`BUS_64]      wdata,
-  output  reg  [`BUS_64]      rdata,
+  input   wire [`YSYX210544_BUS_64]      addr,
+  input   wire [`YSYX210544_BUS_64]      wdata,
+  output  reg  [`YSYX210544_BUS_64]      rdata,
   output  wire                o_clint_mtime_overflow
 );
 
 // rtc设备
-wire  [`BUS_64]               rtc_rdata;
-wire  [`BUS_64]               i_clint_rdata;
+wire  [`YSYX210544_BUS_64]               rtc_rdata;
+wire  [`YSYX210544_BUS_64]               i_clint_rdata;
 
 
 
 ysyx_210544_rtc Rtc(
   .clk                (clk              ),
   .rst                (rst              ),
-  .ren                (ren & (addr == `DEV_RTC)),
+  .ren                (ren & (addr == `YSYX210544_DEV_RTC)),
   .rdata              (rtc_rdata        )
 );
 
@@ -53,9 +53,9 @@ always @(posedge clk) begin
         // set request
         if (start) begin
             if (ren) begin
-                if (addr == `DEV_RTC)             rdata <= rtc_rdata;
-                else if (addr == `DEV_MTIME)      rdata <= i_clint_rdata;
-                else if (addr == `DEV_MTIMECMP)   rdata <= i_clint_rdata;
+                if (addr == `YSYX210544_DEV_RTC)             rdata <= rtc_rdata;
+                else if (addr == `YSYX210544_DEV_MTIME)      rdata <= i_clint_rdata;
+                else if (addr == `YSYX210544_DEV_MTIMECMP)   rdata <= i_clint_rdata;
                 req <= 1;
             end
             else begin

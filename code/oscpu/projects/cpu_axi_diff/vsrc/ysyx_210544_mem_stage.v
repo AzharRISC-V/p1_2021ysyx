@@ -12,25 +12,25 @@ module ysyx_210544_mem_stage(
   output  wire                o_mem_executed_ack,
   output  reg                 o_mem_memoryed_req,
   input   wire                i_mem_memoryed_ack,
-  input   wire  [`BUS_64]     i_mem_pc,
-  input   wire  [`BUS_32]     i_mem_inst,
-  input   wire  [`BUS_RIDX]   i_mem_rd,
+  input   wire  [`YSYX210544_BUS_64]     i_mem_pc,
+  input   wire  [`YSYX210544_BUS_32]     i_mem_inst,
+  input   wire  [`YSYX210544_BUS_RIDX]   i_mem_rd,
   input   wire                i_mem_rd_wen,
-  input   wire  [`BUS_64]     i_mem_rd_wdata,
+  input   wire  [`YSYX210544_BUS_64]     i_mem_rd_wdata,
   input   wire                i_mem_skipcmt,
   input   wire  [7 : 0]       i_mem_inst_opcode,
-  input   wire  [`BUS_64]     i_mem_op1,
-  input   wire  [`BUS_64]     i_mem_op2,
-  input   wire  [`BUS_64]     i_mem_op3,
-  output  wire  [`BUS_RIDX]   o_mem_rd,
+  input   wire  [`YSYX210544_BUS_64]     i_mem_op1,
+  input   wire  [`YSYX210544_BUS_64]     i_mem_op2,
+  input   wire  [`YSYX210544_BUS_64]     i_mem_op3,
+  output  wire  [`YSYX210544_BUS_RIDX]   o_mem_rd,
   output  wire                o_mem_rd_wen,
-  output  reg   [`BUS_64]     o_mem_rd_wdata,
-  output  wire  [`BUS_64]     o_mem_pc,
-  output  wire  [`BUS_32]     o_mem_inst,
+  output  reg   [`YSYX210544_BUS_64]     o_mem_rd_wdata,
+  output  wire  [`YSYX210544_BUS_64]     o_mem_pc,
+  output  wire  [`YSYX210544_BUS_32]     o_mem_inst,
   output  wire                o_mem_skipcmt,
   output  wire                o_mem_clint_mtime_overflow,
-  input   wire  [`BUS_32]     i_mem_intrNo,
-  output  reg   [`BUS_32]     o_mem_intrNo,
+  input   wire  [`YSYX210544_BUS_32]     i_mem_intrNo,
+  output  reg   [`YSYX210544_BUS_32]     o_mem_intrNo,
   output  wire                o_mem_fencei_req,
   input   wire                i_mem_fencei_ack,
 
@@ -60,16 +60,16 @@ wire                          memoryed_req_cachesync;
 wire                          memoryed_req_mem;
 wire                          memoryed_req_mmio;
 wire                          memoryed_req_none;
-wire   [`BUS_64]              rdata_mem;      // readed data from mmio
-wire   [`BUS_64]              rdata_mmio;     // readed data from main memory
-reg    [`BUS_64]              rdata;          // readed data from main memory or mmio
+wire   [`YSYX210544_BUS_64]              rdata_mem;      // readed data from mmio
+wire   [`YSYX210544_BUS_64]              rdata_mmio;     // readed data from main memory
+reg    [`YSYX210544_BUS_64]              rdata;          // readed data from main memory or mmio
 
 // 保存输入信息
-reg   [`BUS_64]               tmp_i_mem_pc;
-reg   [`BUS_32]               tmp_i_mem_inst;
-reg   [`BUS_RIDX]             tmp_i_mem_rd;
+reg   [`YSYX210544_BUS_64]               tmp_i_mem_pc;
+reg   [`YSYX210544_BUS_32]               tmp_i_mem_inst;
+reg   [`YSYX210544_BUS_RIDX]             tmp_i_mem_rd;
 reg                           tmp_i_mem_rd_wen;
-reg   [`BUS_64]               tmp_i_mem_rd_wdata;
+reg   [`YSYX210544_BUS_64]               tmp_i_mem_rd_wdata;
 reg   [7 : 0]                 tmp_i_mem_inst_opcode;
 reg                           tmp_i_mem_skipcmt;
 reg                           tmp_ch_cachesync;
@@ -95,7 +95,7 @@ assign addr_is_mmio = (mem_addr[31:24] == 8'h02);// & (64'hFF000000)) == 64'h020
 // channel select, only valid in one pulse
 assign ren_or_wen = mem_ren | mem_wen;
 
-assign ch_cachesync = i_mem_inst_opcode == `INST_FENCEI;
+assign ch_cachesync = i_mem_inst_opcode == `YSYX210544_INST_FENCEI;
 assign ch_mem   = addr_is_mem & ren_or_wen;
 assign ch_mmio  = addr_is_mmio & ren_or_wen;
 assign ch_none  = (!ch_cachesync) & ((!(addr_is_mem | addr_is_mmio)) | (!ren_or_wen));
@@ -194,13 +194,13 @@ always @(*) begin
   end
   else begin
     case (i_mem_inst_opcode)
-      `INST_LB  : begin mem_ren = 1; end
-      `INST_LBU : begin mem_ren = 1; end
-      `INST_LH  : begin mem_ren = 1; end
-      `INST_LHU : begin mem_ren = 1; end 
-      `INST_LW  : begin mem_ren = 1; end
-      `INST_LWU : begin mem_ren = 1; end
-      `INST_LD  : begin mem_ren = 1; end
+      `YSYX210544_INST_LB  : begin mem_ren = 1; end
+      `YSYX210544_INST_LBU : begin mem_ren = 1; end
+      `YSYX210544_INST_LH  : begin mem_ren = 1; end
+      `YSYX210544_INST_LHU : begin mem_ren = 1; end 
+      `YSYX210544_INST_LW  : begin mem_ren = 1; end
+      `YSYX210544_INST_LWU : begin mem_ren = 1; end
+      `YSYX210544_INST_LD  : begin mem_ren = 1; end
       default   : begin mem_ren = 0; end
     endcase
   end
@@ -213,10 +213,10 @@ always @(*) begin
   end
   else begin
     case (i_mem_inst_opcode)
-      `INST_SB  : begin mem_wen = 1; end
-      `INST_SH  : begin mem_wen = 1; end
-      `INST_SW  : begin mem_wen = 1; end
-      `INST_SD  : begin mem_wen = 1; end
+      `YSYX210544_INST_SB  : begin mem_wen = 1; end
+      `YSYX210544_INST_SH  : begin mem_wen = 1; end
+      `YSYX210544_INST_SW  : begin mem_wen = 1; end
+      `YSYX210544_INST_SD  : begin mem_wen = 1; end
       default   : begin mem_wen = 0; end
     endcase
   end
@@ -232,17 +232,17 @@ always @(*) begin
   end
   else begin
     case (i_mem_inst_opcode)
-      `INST_LB  : begin mem_bytes = 0; end
-      `INST_LBU : begin mem_bytes = 0; end
-      `INST_SB  : begin mem_bytes = 0; end
-      `INST_LH  : begin mem_bytes = 1; end
-      `INST_LHU : begin mem_bytes = 1; end 
-      `INST_SH  : begin mem_bytes = 1; end
-      `INST_LW  : begin mem_bytes = 3; end
-      `INST_SW  : begin mem_bytes = 3; end
-      `INST_LWU : begin mem_bytes = 3; end
-      `INST_LD  : begin mem_bytes = 7; end
-      `INST_SD  : begin mem_bytes = 7; end
+      `YSYX210544_INST_LB  : begin mem_bytes = 0; end
+      `YSYX210544_INST_LBU : begin mem_bytes = 0; end
+      `YSYX210544_INST_SB  : begin mem_bytes = 0; end
+      `YSYX210544_INST_LH  : begin mem_bytes = 1; end
+      `YSYX210544_INST_LHU : begin mem_bytes = 1; end 
+      `YSYX210544_INST_SH  : begin mem_bytes = 1; end
+      `YSYX210544_INST_LW  : begin mem_bytes = 3; end
+      `YSYX210544_INST_SW  : begin mem_bytes = 3; end
+      `YSYX210544_INST_LWU : begin mem_bytes = 3; end
+      `YSYX210544_INST_LD  : begin mem_bytes = 7; end
+      `YSYX210544_INST_SD  : begin mem_bytes = 7; end
       default   : begin mem_bytes = 0; end
     endcase
   end
@@ -255,10 +255,10 @@ always @(*) begin
   end
   else begin
     case (i_mem_inst_opcode)
-      `INST_SB  : begin mem_wdata = {56'd0, i_mem_op2[7:0]}; end
-      `INST_SH  : begin mem_wdata = {48'd0, i_mem_op2[15:0]}; end
-      `INST_SW  : begin mem_wdata = {32'd0, i_mem_op2[31:0]}; end
-      `INST_SD  : begin mem_wdata = i_mem_op2[63:0]; end
+      `YSYX210544_INST_SB  : begin mem_wdata = {56'd0, i_mem_op2[7:0]}; end
+      `YSYX210544_INST_SH  : begin mem_wdata = {48'd0, i_mem_op2[15:0]}; end
+      `YSYX210544_INST_SW  : begin mem_wdata = {32'd0, i_mem_op2[31:0]}; end
+      `YSYX210544_INST_SD  : begin mem_wdata = i_mem_op2[63:0]; end
       default   : begin mem_wdata = 0; end
     endcase
   end
@@ -271,13 +271,13 @@ always @(*) begin
   end
   else begin
     case (tmp_i_mem_inst_opcode)
-      `INST_LB  : begin o_mem_rd_wdata = {{57{rdata[7]}}, rdata[6:0]} ; end
-      `INST_LBU : begin o_mem_rd_wdata = {56'd0, rdata[7:0]}; end
-      `INST_LH  : begin o_mem_rd_wdata = {{49{rdata[15]}}, rdata[14:0]}; end
-      `INST_LHU : begin o_mem_rd_wdata = {48'd0, rdata[15:0]}; end
-      `INST_LW  : begin o_mem_rd_wdata = {{33{rdata[31]}}, rdata[30:0]}; end
-      `INST_LWU : begin o_mem_rd_wdata = {32'd0, rdata[31:0]}; end
-      `INST_LD  : begin o_mem_rd_wdata = rdata[63:0]; end
+      `YSYX210544_INST_LB  : begin o_mem_rd_wdata = {{57{rdata[7]}}, rdata[6:0]} ; end
+      `YSYX210544_INST_LBU : begin o_mem_rd_wdata = {56'd0, rdata[7:0]}; end
+      `YSYX210544_INST_LH  : begin o_mem_rd_wdata = {{49{rdata[15]}}, rdata[14:0]}; end
+      `YSYX210544_INST_LHU : begin o_mem_rd_wdata = {48'd0, rdata[15:0]}; end
+      `YSYX210544_INST_LW  : begin o_mem_rd_wdata = {{33{rdata[31]}}, rdata[30:0]}; end
+      `YSYX210544_INST_LWU : begin o_mem_rd_wdata = {32'd0, rdata[31:0]}; end
+      `YSYX210544_INST_LD  : begin o_mem_rd_wdata = rdata[63:0]; end
       default   : begin o_mem_rd_wdata = tmp_i_mem_rd_wdata; end
     endcase
   end

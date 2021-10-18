@@ -44,10 +44,10 @@ reg [2:0] reg_rand_idx;
 // 指示读出的数据是否与写入的一致
 wire equal_flag = o_cache_basic_wdata == i_cache_basic_rdata;
 
-reg [`BUS_64] cnt;
+reg [`YSYX210544_BUS_64] cnt;
 wire hs = o_cache_basic_req & i_cache_basic_ack;
-wire hs_read  = hs & (o_cache_basic_op == `REQ_READ);
-wire hs_write = hs & (o_cache_basic_op == `REQ_WRITE);
+wire hs_read  = hs & (o_cache_basic_op == `YSYX210544_REQ_READ);
+wire hs_write = hs & (o_cache_basic_op == `YSYX210544_REQ_WRITE);
 
 // 演示：延时；写入64字节；延时；读取64字节；。。。
 reg f1;
@@ -56,9 +56,9 @@ always @(posedge clk) begin
     cnt <= 0;
     o_cache_basic_req     <= 0;
     o_cache_basic_bytes   <= 7;
-    o_cache_basic_addr    <= 64'h8000_0000;//3D;// 64'h8000_0400;// `PC_START;
+    o_cache_basic_addr    <= 64'h8000_0000;//3D;// 64'h8000_0400;// `YSYX210544_PC_START;
     o_cache_basic_wdata   <= 64'h01234567_0000_0000 | 64'h8000_0000;
-    o_cache_basic_op      <= `REQ_READ;// `REQ_READ;// `REQ_WRITE;
+    o_cache_basic_op      <= `YSYX210544_REQ_READ;// `YSYX210544_REQ_READ;// `YSYX210544_REQ_WRITE;
     reg_rand_idx    <= 0;
     f1 <= 0;
   end
@@ -67,7 +67,7 @@ always @(posedge clk) begin
     if (hs_write) begin
       o_cache_basic_req     <= 0;
       cnt             <= 0;
-      o_cache_basic_op      <= `REQ_READ;
+      o_cache_basic_op      <= `YSYX210544_REQ_READ;
       o_cache_basic_addr    <= o_cache_basic_addr + 64'h8;    // 地址偏移
       o_cache_basic_wdata   <= 64'h01234567_0000_0000 | (o_cache_basic_addr + 64'h8);
 
@@ -83,7 +83,7 @@ always @(posedge clk) begin
       o_cache_basic_req     <= 0;
       cnt             <= 0;
       if (!f1) begin
-        o_cache_basic_op      <= `REQ_WRITE;
+        o_cache_basic_op      <= `YSYX210544_REQ_WRITE;
       end
       else begin
         o_cache_basic_addr    <= o_cache_basic_addr + 64'h8;    // 地址偏移

@@ -12,23 +12,23 @@ module ysyx_210544_ifU(
   /////////////////////////////////////////////////////////
   // AXI interface for Fetch
   input                       i_bus_ack,
-  input         [`BUS_32]     i_bus_rdata,
+  input         [`YSYX210544_BUS_32]     i_bus_rdata,
   output reg                  o_bus_req,
-  output reg    [`BUS_64]     o_bus_addr,
+  output reg    [`YSYX210544_BUS_64]     o_bus_addr,
   
   /////////////////////////////////////////////////////////
   input                       i_writebacked_req,    // 是否写回阶段完成
   input   wire                i_pc_jmp,
-  input   wire  [`BUS_64]     i_pc_jmpaddr,
-  output  reg   [`BUS_64]     o_pc,
-  output  reg   [`BUS_32]     o_inst,
+  input   wire  [`YSYX210544_BUS_64]     i_pc_jmpaddr,
+  output  reg   [`YSYX210544_BUS_64]     o_pc,
+  output  reg   [`YSYX210544_BUS_32]     o_inst,
   output  reg                 o_fetched             // 取到指令的通知
 );
 
 wire              handshake_done;
-reg [`BUS_64]     saved_pc_jmpaddr;     // 记忆的pc跳转指令
+reg [`YSYX210544_BUS_64]     saved_pc_jmpaddr;     // 记忆的pc跳转指令
 reg               fetch_again;          // 再次取指
-reg [`BUS_64]     pc_pred;              // 预测的下一个PC
+reg [`YSYX210544_BUS_64]     pc_pred;              // 预测的下一个PC
 
 
 
@@ -60,7 +60,7 @@ always @( posedge clk ) begin
   if (rst) begin
     fetch_again             <= 0;
     saved_pc_jmpaddr        <= 0;
-    o_bus_addr              <= `PC_START;
+    o_bus_addr              <= `YSYX210544_PC_START;
     o_pc                    <= 0;
     o_inst                  <= 0;
     o_fetched               <= 0;

@@ -12,14 +12,14 @@ module ysyx_210544_exceptionU(
   input   wire                ack,
   output  reg                 req,
   input   wire  [7 : 0]       i_inst_opcode,
-  input   wire  [`BUS_64]     i_pc,
+  input   wire  [`YSYX210544_BUS_64]     i_pc,
   output  reg                 o_pc_jmp,
-  output  reg   [`BUS_64]     o_pc_jmpaddr,
-  input   wire  [`BUS_64]     i_csr_rdata,
+  output  reg   [`YSYX210544_BUS_64]     o_pc_jmpaddr,
+  input   wire  [`YSYX210544_BUS_64]     i_csr_rdata,
   output  reg   [11 : 0]      o_csr_addr,
   output  reg                 o_csr_ren,
   output  reg                 o_csr_wen,
-  output  reg   [`BUS_64]     o_csr_wdata
+  output  reg   [`YSYX210544_BUS_64]     o_csr_wdata
 );
 
 parameter [3:0] STATE_NULL                    = 4'd0;
@@ -80,12 +80,12 @@ always @(posedge clk) begin
         STATE_NULL: begin
           // 如果有使能信号，则进入不同的状态
           if (ena) begin
-            if (i_inst_opcode == `INST_ECALL) begin
+            if (i_inst_opcode == `YSYX210544_INST_ECALL) begin
               next_state <= STATE_ENTER_WRITE_MEPC;
               exception_cause <= 64'd11;
               //$write("#ecall\n"); $fflush();
             end
-            else if (i_inst_opcode == `INST_MRET) begin
+            else if (i_inst_opcode == `YSYX210544_INST_MRET) begin
               next_state <= STATE_LEAVE_READ_MSTATUS;
             end
             else begin
@@ -106,7 +106,7 @@ always @(posedge clk) begin
             0:  begin 
               // 防止再次进入
               if (state == next_state) begin 
-                o_csr_addr      <=`CSR_ADR_MEPC; 
+                o_csr_addr      <=`YSYX210544_CSR_ADR_MEPC; 
                 o_csr_wen       <= 1; 
                 o_csr_wdata     <= i_pc;
                 step            <= 1;
@@ -129,7 +129,7 @@ always @(posedge clk) begin
             0:  begin 
               // 防止再次进入
               if (state == next_state) begin 
-                o_csr_addr      <=`CSR_ADR_MCAUSE; 
+                o_csr_addr      <=`YSYX210544_CSR_ADR_MCAUSE; 
                 o_csr_wen       <= 1; 
                 o_csr_wdata     <= exception_cause;
                 step            <= 1;
@@ -152,7 +152,7 @@ always @(posedge clk) begin
             0:  begin 
               // 防止再次进入
               if (state == next_state) begin 
-                o_csr_addr      <=`CSR_ADR_MTVEC; 
+                o_csr_addr      <=`YSYX210544_CSR_ADR_MTVEC; 
                 o_csr_ren       <= 1; 
                 step            <= 1;
               end
@@ -175,7 +175,7 @@ always @(posedge clk) begin
             0:  begin 
               // 防止再次进入
               if (state == next_state) begin 
-                o_csr_addr      <=`CSR_ADR_MSTATUS; 
+                o_csr_addr      <=`YSYX210544_CSR_ADR_MSTATUS; 
                 o_csr_ren       <= 1; 
                 step            <= 1;
               end
@@ -198,7 +198,7 @@ always @(posedge clk) begin
             0:  begin 
               // 防止再次进入
               if (state == next_state) begin 
-                o_csr_addr      <=`CSR_ADR_MSTATUS; 
+                o_csr_addr      <=`YSYX210544_CSR_ADR_MSTATUS; 
                 o_csr_wen       <= 1; 
                 o_csr_wdata     <= {
                   csr_rdata_save1[63:13],
@@ -232,7 +232,7 @@ always @(posedge clk) begin
             0:  begin
               // 防止再次进入
               if (state == next_state) begin 
-                o_csr_addr      <=`CSR_ADR_MSTATUS; 
+                o_csr_addr      <=`YSYX210544_CSR_ADR_MSTATUS; 
                 o_csr_ren       <= 1; 
                 step            <= 1;
               end
@@ -255,7 +255,7 @@ always @(posedge clk) begin
             0:  begin 
               // 防止再次进入
               if (state == next_state) begin 
-                o_csr_addr      <=`CSR_ADR_MEPC; 
+                o_csr_addr      <=`YSYX210544_CSR_ADR_MEPC; 
                 o_csr_ren       <= 1; 
                 step            <= 1;
               end
@@ -278,7 +278,7 @@ always @(posedge clk) begin
             0:  begin 
               // 防止再次进入
               if (state == next_state) begin 
-                o_csr_addr      <=`CSR_ADR_MSTATUS; 
+                o_csr_addr      <=`YSYX210544_CSR_ADR_MSTATUS; 
                 o_csr_wen       <= 1; 
                 o_csr_wdata     <= {
                   csr_rdata_save1[63:13],

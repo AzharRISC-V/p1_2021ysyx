@@ -10,10 +10,10 @@ module ysyx_210544_rtc(
   input   wire              rst,
 
   input   wire              ren,
-  output  [`BUS_64]         rdata
+  output  [`YSYX210544_BUS_64]         rdata
 );
 
-reg   [`BUS_64] clk_cnt     ;   // 内部计时器，用于控制秒的变化
+reg   [`YSYX210544_BUS_64] clk_cnt     ;   // 内部计时器，用于控制秒的变化
 reg   [15: 0]   year        ;   // year: 0000 ~ 9999    2^16-1=65535
 reg   [3 : 0]   month       ;   // 2^4-1=15
 reg   [4 : 0]   day         ;   // 2^5-1=31
@@ -21,7 +21,7 @@ reg   [5 : 0]   hour        ;   // 2^6-1=63
 reg   [5 : 0]   minute      ;   // 2^6-1=63
 reg   [5 : 0]   second      ;   // 2^6-1=63
 
-wire  [`BUS_64] rtc_val;
+wire  [`YSYX210544_BUS_64] rtc_val;
 
 
 assign rtc_val = {21'b0, year, month, day, hour, minute, second};
@@ -39,7 +39,7 @@ always @(posedge clk) begin
   end
   else begin
     clk_cnt <= clk_cnt + 1;
-    if (clk_cnt == `CLOCKS_PER_SECOND) begin
+    if (clk_cnt == `YSYX210544_CLOCKS_PER_SECOND) begin
       clk_cnt <= 0;
       second <= second + 6'd1;
       if (second == 60) begin
