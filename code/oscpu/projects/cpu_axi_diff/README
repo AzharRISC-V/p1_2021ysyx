@@ -48,9 +48,6 @@ sed '/`timescale/d' ysyx_210544.v -i
 ## 替换顶层模块名称
 sed 's/module SimTop/module ysyx_210544/g' ysyx_210544.v -i
 
-## 删除 SUPPORT_DIFFTEST 宏
-sed '/`define SUPPORT_DIFFTEST/d' ysyx_210544.v -i
-
 ## 顶部插入一行
 sed -i "1i/* verilator lint_off DECLFILENAME */" ysyx_210544.v
 
