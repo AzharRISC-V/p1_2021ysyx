@@ -18,8 +18,8 @@ static const char mainargs[] = MAINARGS;
 void putch(char ch) {
   // char * s = ".word 0x00000007";
   // asm volatile (s);
-  // asm volatile("mv a0, %0; .word 0x0000007b" : : "r"(ch));
-  drv_uart_putc(ch);
+  asm volatile("mv a0, %0; .word 0x0000007b" : : "r"(ch));
+  // drv_uart_putc(ch);
 }
 
 void halt(int code) {
@@ -28,7 +28,7 @@ void halt(int code) {
 }
 
 void _trm_init() {
-  virt_uart_init();
+  // virt_uart_init();
 
   int ret = main(mainargs);
   halt(ret);

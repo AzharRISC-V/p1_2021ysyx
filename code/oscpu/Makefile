@@ -20,6 +20,8 @@ run:
 run-all:
 	./build.sh -e cpu_axi_diff -b -r "non-output/cpu-tests non-output/riscv-tests" -m "WITH_DRAMSIM3=1"
 
+copyright:
+	./build.sh -e cpu_axi_diff -d -s -a "-i custom-output/hello/amtest-hello-copyright.bin" -m "WITH_DRAMSIM3=1"
 
 # ysyx soc
 soc:
